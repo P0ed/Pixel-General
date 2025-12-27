@@ -22,43 +22,44 @@ extension Unit {
 		sprite.texture?.filteringMode = .nearest
 		node.addChild(sprite)
 
-		let plate = SKSpriteNode(imageNamed: "Plate")
-		plate.position = CGPoint(x: 0, y: -14.0)
+		let plate = SKSpriteNode(imageNamed: "HP\(stats.hp)")
+		plate.position = CGPoint(x: 0, y: -12.0)
 		plate.zPosition = 2.3
 		plate.texture?.filteringMode = .nearest
+		plate.name = "hp"
 		node.addChild(plate)
-
-		let label = SKLabelNode(size: .s, color: .textDefault)
-		label.name = "hp"
-		label.text = "\(stats.hp)"
-		label.position = CGPoint(x: 0, y: -19.0)
-		label.zPosition = 2.4
-		node.addChild(label)
 
 		return node
 	}
 
 	var imageName: String {
 		switch stats.unitType {
-		case .inf: "Inf"
-		case .ifv: "Recon"
-		case .tank: "Tank"
+		case .fighter:
+			switch stats.moveType {
+			case .leg: "Inf"
+			case .wheel: "Truck"
+			case .track:
+				switch stats.targetType {
+				case .heavy: "Tank"
+				default: "Recon"
+				}
+			case .air: "MH6"
+			}
 		case .art: "Art"
-		case .antiAir: "AA"
-		case .air: "MH6"
-		case .engineer, .supply: "Truck"
+		case .aa: "AA"
+		case .support: "Truck"
 		}
 	}
 }
 
 extension SKNode {
 
-	var unitHP: SKLabelNode? {
-		childNode(withName: "hp") as? SKLabelNode
+	var unitHP: SKSpriteNode? {
+		childNode(withName: "hp") as? SKSpriteNode
 	}
 
 	func update(_ unit: Unit) {
-		unitHP?.text = "\(unit.stats.hp)"
+		unitHP?.texture = .init(imageNamed: "HP\(unit.stats.hp)")
 	}
 
 	func showSight(for duration: TimeInterval) {

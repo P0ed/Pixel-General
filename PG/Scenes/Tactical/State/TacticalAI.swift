@@ -18,9 +18,10 @@ extension TacticalState {
 	}
 
 	private var nextPurchase: (Unit, XY)? {
-		player.prestige < 500 ? .none : buildings.firstMap { [country] _, b in
+		player.prestige < 400 ? .none : buildings.firstMap { [country] _, b in
 			b.country == country && b.type == .city && units[b.position] == nil
-			? unitTemplates.firstMap { t in (t, b.position) }
+			? unitTemplates.randomElement()
+				.flatMap { t in t.cost <= player.prestige ? (t, b.position) : nil }
 			: nil
 		}
 	}

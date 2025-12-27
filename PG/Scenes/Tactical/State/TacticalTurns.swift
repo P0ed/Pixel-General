@@ -3,7 +3,7 @@ extension TacticalState {
 	var day: Int { Int(turn) / players.count + 1 }
 
 	private var aliveTeams: Set<Team> {
-		Set(players.compactMap { _, p in p.alive ? p.country.team : nil })
+		Set(players.map { _, p in p.country.team })
 	}
 
 	mutating func endTurn() {
@@ -18,7 +18,9 @@ extension TacticalState {
 		for _ in 0..<players.count {
 			turn += 1
 			if playerIndex == 0 { startNextDay() }
-			if player.alive { return aliveTeams.count > 1 }
+			if player.alive {
+				return players.firstMap { _, p in !p.ai ? () : nil } != nil
+			}
 		}
 		return false
 	}
@@ -70,20 +72,15 @@ extension TacticalState {
 		}
 		let hasSupport = ns.contains { n in
 			units[n].country.team == unit.country.team
-			&& units[n].stats.unitType == .supply
+			&& units[n].stats.unitType == .support
 		}
-		let hasEngi = ns.contains { n in
-			units[n].country.team == unit.country.team
-			&& units[n].stats.unitType == .engineer
-		}
-
 		unit.stats.ent.increment(
-			by: (unit.untouched ? 1 : 0) + (hasEngi ? 1 : 0),
+			by: (unit.untouched ? 1 : 0),
 			cap: 7
 		)
 		unit.stats.ammo.increment(
 			by: (unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupport ? 2 : 0),
-			cap: 0xF
+			cap: 0x7
 		)
 		let dhp = unit.stats.hp.increment(
 			by: ((unit.untouched ? 4 : 0) + (hasSupport ? 4 : 0)) / (noEnemy ? 1 : 3),

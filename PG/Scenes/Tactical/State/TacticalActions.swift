@@ -4,8 +4,8 @@ extension TacticalState {
 
 	func vision(for unit: Unit) -> SetXY {
 		let range = switch unit.stats.unitType {
-		case .ifv: 3
-		case .inf, .tank, .air: 2
+		case .aa: 3
+		case .fighter: 2
 		default: 1
 		}
 		return SetXY(unit.position.circle(range * 3))

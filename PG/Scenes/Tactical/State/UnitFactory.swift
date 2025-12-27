@@ -17,27 +17,19 @@ extension Stats {
 		.make { stats in stats.exp = 0x20 }
 	}
 
-	static var builder: Self {
-		.make { stats in
-			stats.unitType = .engineer
-			stats.mov = 5
-			stats.moveType = .wheel
-		}
-	}
-
 	static var truck: Self {
 		.make { stats in
-			stats.unitType = .supply
+			stats.unitType = .support
+			stats.moveType = .wheel
+			stats.mov = 8
 			stats.groundDef = 3
 			stats.airDef = 1
-			stats.mov = 8
-			stats.moveType = .wheel
 		}
 	}
 
 	static var inf: Self {
 		.make { stats in
-			stats.unitType = .inf
+			stats.unitType = .fighter
 			stats.ini = 4
 			stats.softAtk = 6
 			stats.hardAtk = 2
@@ -51,8 +43,9 @@ extension Stats {
 
 	static var t72: Self {
 		.make { stats in
-			stats.unitType = .tank
+			stats.unitType = .fighter
 			stats.moveType = .track
+			stats.targetType = .heavy
 			stats.ini = 7
 			stats.softAtk = 8
 			stats.hardAtk = 9
@@ -66,8 +59,9 @@ extension Stats {
 
 	static var m1A2: Self {
 		.make { stats in
-			stats.unitType = .tank
+			stats.unitType = .fighter
 			stats.moveType = .track
+			stats.targetType = .heavy
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 11
@@ -81,8 +75,9 @@ extension Stats {
 
 	static var strv122: Self {
 		.make { stats in
-			stats.unitType = .tank
+			stats.unitType = .fighter
 			stats.moveType = .track
+			stats.targetType = .heavy
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 10
@@ -96,12 +91,13 @@ extension Stats {
 
 	static var strf90: Self {
 		.make { stats in
-			stats.unitType = .ifv
+			stats.unitType = .fighter
 			stats.moveType = .track
+			stats.targetType = .light
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 9
-			stats.airAtk = 2
+			stats.airAtk = 4
 			stats.mov = 7
 			stats.rng = 1
 			stats.groundDef = 10
@@ -125,11 +121,13 @@ extension Stats {
 
 	static var recon: Self {
 		.make { stats in
-			stats.unitType = .ifv
+			stats.unitType = .fighter
 			stats.moveType = .track
+			stats.targetType = .light
 			stats.ini = 9
 			stats.softAtk = 5
 			stats.hardAtk = 3
+			stats.airAtk = 3
 			stats.groundDef = 7
 			stats.airDef = 8
 			stats.mov = 7
@@ -154,12 +152,13 @@ extension Stats {
 
 	static var lvkv90: Self {
 		.make { stats in
-			stats.unitType = .antiAir
+			stats.unitType = .aa
 			stats.moveType = .track
+			stats.targetType = .light
 			stats.ini = 9
 			stats.softAtk = 8
 			stats.hardAtk = 8
-			stats.airAtk = 11
+			stats.airAtk = 12
 			stats.groundDef = 9
 			stats.airDef = 10
 			stats.mov = 7
@@ -169,13 +168,14 @@ extension Stats {
 
 	static var mh6: Self {
 		.make { stats in
-			stats.unitType = .air
+			stats.unitType = .fighter
 			stats.moveType = .air
+			stats.targetType = .air
 			stats.ini = 9
 			stats.softAtk = 8
 			stats.hardAtk = 9
-			stats.airAtk = 10
-			stats.groundDef = 11
+			stats.airAtk = 9
+			stats.groundDef = 7
 			stats.airDef = 7
 			stats.mov = 9
 			stats.rng = 1

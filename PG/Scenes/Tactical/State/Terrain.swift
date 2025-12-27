@@ -13,7 +13,7 @@ extension Terrain {
 		case .forest, .hill: min(stats.mov, 2)
 		case .forestHill: 3
 		case .river: stats.mov
-		case .mountain: stats.unitType == .inf ? stats.mov : .max
+		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : .max
 		case .none: .max
 		}
 		case .wheel: switch self {
@@ -33,11 +33,12 @@ extension Terrain {
 		}
 	}
 
-	var defBonus: UInt8 {
+	var defBonus: Int {
 		switch self {
 		case .forest, .hill: 1
 		case .forestHill, .mountain, .city: 2
-		case .field, .river, .none: 0
+		case .field, .none: 0
+		case .river: -1
 		}
 	}
 

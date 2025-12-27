@@ -50,7 +50,7 @@ enum BuildingType: UInt8, Hashable {
 enum TacticalEvent: Hashable {
 	case spawn(UID)
 	case move(UID, Int)
-	case attack(UID, UID, Unit)
+	case attack(UID, UID, Unit, UInt8)
 	case nextDay
 	case shop
 	case menu

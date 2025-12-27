@@ -17,6 +17,7 @@ final class Core {
 				units: .init(head: units, tail: .dead)
 			)
 		)
+		save()
 	}
 
 	func load() {
@@ -52,7 +53,7 @@ final class Core {
 			modifying(u, { u in
 				u.position = XY(i % 4, i / 4)
 				u.stats.hp = 0xF
-				u.stats.ammo = 0xF
+				u.stats.ammo = 0x7
 				u.stats.ap = 1
 				u.stats.mp = 1
 			})
@@ -72,6 +73,7 @@ extension [Unit] {
 
 	static func template(_ country: Country) -> [Unit] {
 		[
+			Unit(country: country, position: .zero, stats: .base >< .truck),
 			Unit(country: country, position: .zero, stats: .base >< .inf),
 			Unit(country: country, position: .zero, stats: .base >< .ifv(country)),
 			Unit(country: country, position: .zero, stats: .base >< .tank(country)),

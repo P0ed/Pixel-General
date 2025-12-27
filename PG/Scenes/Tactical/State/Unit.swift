@@ -43,56 +43,68 @@ extension Stats {
 		set { set(newValue, width: 1, offset: 5) }
 	}
 	var ammo: UInt8 {
-		get { get(width: 4, offset: 6) }
-		set { set(newValue, width: 4, offset: 6) }
+		get { get(width: 3, offset: 6) }
+		set { set(newValue, width: 3, offset: 6) }
 	}
-	var exp: UInt8 {
-		get { get(width: 8, offset: 10) }
-		set { set(newValue, width: 8, offset: 10) }
+	var atm: UInt8 {
+		get { get(width: 2, offset: 9) }
+		set { set(newValue, width: 2, offset: 9) }
+	}
+	var aam: UInt8 {
+		get { get(width: 2, offset: 11) }
+		set { set(newValue, width: 2, offset: 11) }
 	}
 	var ent: UInt8 {
-		get { get(width: 3, offset: 18) }
-		set { set(newValue, width: 3, offset: 18) }
+		get { get(width: 3, offset: 13) }
+		set { set(newValue, width: 3, offset: 13) }
+	}
+	var exp: UInt8 {
+		get { get(width: 8, offset: 16) }
+		set { set(newValue, width: 8, offset: 16) }
 	}
 	var unitType: UnitType {
-		get { UnitType(rawValue: get(width: 3, offset: 21)) ?? .inf }
-		set { set(newValue.rawValue, width: 3, offset: 21) }
-	}
-	var moveType: MoveType {
-		get { MoveType(rawValue: get(width: 2, offset: 24)) ?? .leg }
+		get { UnitType(rawValue: get(width: 2, offset: 24)) ?? .fighter }
 		set { set(newValue.rawValue, width: 2, offset: 24) }
 	}
-	var ini: UInt8 {
-		get { get(width: 4, offset: 26) }
-		set { set(newValue, width: 4, offset: 26) }
+	var moveType: MoveType {
+		get { MoveType(rawValue: get(width: 2, offset: 26)) ?? .leg }
+		set { set(newValue.rawValue, width: 2, offset: 26) }
 	}
-	var softAtk: UInt8 {
-		get { get(width: 4, offset: 30) }
-		set { set(newValue, width: 4, offset: 30) }
-	}
-	var hardAtk: UInt8 {
-		get { get(width: 4, offset: 34) }
-		set { set(newValue, width: 4, offset: 34) }
-	}
-	var airAtk: UInt8 {
-		get { get(width: 4, offset: 38) }
-		set { set(newValue, width: 4, offset: 38) }
-	}
-	var groundDef: UInt8 {
-		get { get(width: 4, offset: 42) }
-		set { set(newValue, width: 4, offset: 42) }
-	}
-	var airDef: UInt8 {
-		get { get(width: 4, offset: 46) }
-		set { set(newValue, width: 4, offset: 46) }
-	}
-	var mov: UInt8 {
-		get { get(width: 4, offset: 50) }
-		set { set(newValue, width: 4, offset: 50) }
+	var targetType: TargetType {
+		get { TargetType(rawValue: get(width: 2, offset: 28)) ?? .soft }
+		set { set(newValue.rawValue, width: 2, offset: 28) }
 	}
 	var rng: UInt8 {
-		get { get(width: 3, offset: 54) }
-		set { set(newValue, width: 3, offset: 54) }
+		get { get(width: 2, offset: 30) }
+		set { set(newValue, width: 2, offset: 30) }
+	}
+	var mov: UInt8 {
+		get { get(width: 4, offset: 32) }
+		set { set(newValue, width: 4, offset: 32) }
+	}
+	var ini: UInt8 {
+		get { get(width: 4, offset: 36) }
+		set { set(newValue, width: 4, offset: 36) }
+	}
+	var softAtk: UInt8 {
+		get { get(width: 4, offset: 40) }
+		set { set(newValue, width: 4, offset: 40) }
+	}
+	var hardAtk: UInt8 {
+		get { get(width: 4, offset: 44) }
+		set { set(newValue, width: 4, offset: 44) }
+	}
+	var airAtk: UInt8 {
+		get { get(width: 4, offset: 48) }
+		set { set(newValue, width: 4, offset: 48) }
+	}
+	var groundDef: UInt8 {
+		get { get(width: 4, offset: 52) }
+		set { set(newValue, width: 4, offset: 52) }
+	}
+	var airDef: UInt8 {
+		get { get(width: 4, offset: 56) }
+		set { set(newValue, width: 4, offset: 56) }
 	}
 }
 
@@ -103,24 +115,29 @@ extension Stats {
 	}
 
 	func atk(_ dst: Stats) -> UInt8 {
-		switch dst.moveType {
-		case .leg, .wheel: softAtk
-		case .track: hardAtk
+		switch dst.targetType {
+		case .soft: softAtk
+		case .light: (softAtk + hardAtk) >> 1
+		case .heavy: hardAtk
 		case .air: airAtk
 		}
 	}
 
 	func def(_ src: Stats) -> UInt8 {
-		src.moveType == .air ? airDef : groundDef
+		src.targetType == .air ? airDef : groundDef
 	}
 }
 
-enum MoveType: UInt8, Hashable, Codable {
-	case leg, wheel, track, air
+enum UnitType: UInt8, Hashable {
+	case fighter, art, aa, support
 }
 
-enum UnitType: UInt8, Hashable, Codable {
-	case inf, ifv, tank, art, antiAir, air, engineer, supply
+enum TargetType: UInt8, Hashable {
+	case soft, light, heavy, air
+}
+
+enum MoveType: UInt8, Hashable {
+	case leg, wheel, track, air
 }
 
 extension Unit: DeadOrAlive {
@@ -145,13 +162,15 @@ extension Unit {
 
 	var cost: UInt16 {
 		switch stats.unitType {
-		case .inf: 80
-		case .ifv: 180
-		case .tank: 240
-		case .art: 160
-		case .antiAir: 220
+		case .fighter: switch stats.moveType {
+		case .leg: 80
+		case .wheel: 180
+		case .track: 240
 		case .air: 320
-		default: 120
+		}
+		case .art: 220
+		case .aa: 280
+		case .support: 60
 		}
 	}
 }
