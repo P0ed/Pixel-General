@@ -13,21 +13,21 @@ extension Terrain {
 		case .forest, .hill: min(stats.mov, 2)
 		case .forestHill: 3
 		case .river: stats.mov
-		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : .max
-		case .none: .max
+		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : 16
+		case .none: 16
 		}
 		case .wheel: switch self {
 		case .city: 1
 		case .field: 2
 		case .forest, .hill: 3
 		case .forestHill, .river: stats.mov
-		case .none, .mountain: .max
+		case .none, .mountain: 16
 		}
 		case .track: switch self {
 		case .field, .city: 1
 		case .forest, .hill: 2
 		case .forestHill, .river: stats.mov
-		case .none, .mountain: .max
+		case .none, .mountain: 16
 		}
 		case .air: 1
 		}

@@ -37,11 +37,32 @@ extension TacticalState {
 				xys = .init(unit.position.circle(Int(unit.stats.mov) * 2))
 				return
 			}
-			var front = [(unit.position, unit.stats.mov)]
+			var front: [(XY, UInt8)] = [(unit.position, unit.stats.mov)]
 			repeat {
-				front = front.flatMap { xy, mp in
-					xy.n8.compactMap { xy in
-						let moveCost = map[xy].moveCost(unit.stats)
+				front = front.flatMap { from, mp in
+					let enemies = from.n8.compactMap {
+						if let u = units[$0]?.1, u.country != unit.country {
+							u
+						} else {
+							nil
+						}
+					}
+					return from.n8.compactMap { (xy: XY) -> (XY, UInt8)? in
+						if let (_, u) = units[xy], u.stats.moveType != .air,
+						   u.country.team != unit.country.team {
+							return .none
+						}
+						if (xy - from).manhattan == 2,
+						   let a = units[XY(from.x, xy.y)],
+						   let b = units[XY(xy.x, from.y)],
+						   a.1.country.team != unit.country.team,
+						   b.1.country.team != unit.country.team,
+						   a.1.stats.moveType != .air, b.1.stats.moveType != .air
+						{
+							return .none
+						}
+
+						let moveCost = map[xy].moveCost(unit.stats) * UInt8(1 + min(2, enemies.count))
 						return !xys[xy] && moveCost <= mp
 						? (xy, mp - moveCost)
 						: .none

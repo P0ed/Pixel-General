@@ -67,36 +67,38 @@ extension TacticalState {
 			  units[src].canAttack, units[src].canHit(unit: units[dst])
 		else { return }
 
-		let srcIni = UInt8(d20()) + units[src].stats.ini * 2 + 15
-		let dstIni = UInt8(d20()) + units[dst].stats.ini * 2 + units[dst].stats.ent * 2
+		let srcStats = units[src].stats
+		let dstStats = units[dst].stats
+		let srcIni = UInt8(d20()) + srcStats.ini * 2 + 15
+		let dstIni = UInt8(d20()) + dstStats.ini * 2 + dstStats.ent * 2
 		print("ini: \(srcIni) vs \(dstIni)")
 
-		if units[src].stats.targetType != .air, units[src].stats.unitType != .art,
+		if srcStats.targetType != .air, dstStats.targetType != .air, !srcStats.noEnemyRetaliation,
 			let art = support(request: .art, defender: dst, attacker: src) {
 			fire(src: art, dst: src, defBonus: 0)
 		}
-		if units[src].stats.targetType == .air,
+		if srcStats.targetType == .air,
 		   let aa = support(request: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defBonus: 0)
 		}
 		if srcIni > dstIni, units[src].alive {
-			let defBonus = Int(units[dst].stats.ent) + map[units[dst].position].defBonus
+			let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus
 			fire(src: src, dst: dst, defBonus: defBonus)
 			units[src].stats.ap.decrement()
 		}
 		if units[dst].alive, units[src].alive,
 		   units[dst].canHit(unit: units[src]),
-		   !units[src].stats.noEnemyRetaliation {
+		   !srcStats.noEnemyRetaliation {
 
-			let defBonus = switch units[src].stats.targetType {
-			case .light where units[dst].stats.targetType != .air: -Int(map[units[dst].position].defBonus)
-			case .heavy where units[dst].stats.targetType != .air: -Int(map[units[dst].position].defBonus * 2)
+			let defBonus = switch srcStats.targetType {
+			case .light where dstStats.targetType != .air: -Int(map[units[dst].position].defBonus)
+			case .heavy where dstStats.targetType != .air: -Int(map[units[dst].position].defBonus * 2)
 			default: 0
 			}
 			fire(src: dst, dst: src, defBonus: defBonus)
 		}
 		if srcIni <= dstIni, units[src].alive {
-			let defBonus = Int(units[dst].stats.ent) + map[units[dst].position].defBonus
+			let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus
 			fire(src: src, dst: dst, defBonus: defBonus)
 			units[src].stats.ap.decrement()
 		}
