@@ -79,7 +79,10 @@ extension TacticalState {
 			cap: 7
 		)
 		unit.stats.ammo.increment(
-			by: (unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupport ? 2 : 0),
+			by: unit.stats.unitType == .support
+			? 0 : (
+				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupport ? 2 : 0)
+			),
 			cap: 0x7
 		)
 		let dhp = unit.stats.hp.increment(

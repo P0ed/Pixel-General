@@ -12,7 +12,7 @@ extension HQState {
 	var reducible: Bool { !events.isEmpty }
 
 	var statusText: String {
-		.makeStatus { add in
+		selected.map { units[$0].status } ?? .makeStatus { add in
 			add("prestige: \(player.prestige)")
 		}
 	}
@@ -20,11 +20,20 @@ extension HQState {
 	mutating func apply(_ input: Input) {
 		switch input {
 		case .direction(let direction): moveCursor(direction)
-		case .action(.a): processMainAction()
+		case .action(.a): mainAction()
+		case .action(.b): secondaryAction()
 		case .action(.c): processScenario()
 		case .action(.d): events.add(.new)
+		case .tile(let xy): select(xy)
 		default: break
 		}
+	}
+
+	mutating func select(_ xy: XY) {
+		guard inputable, HQNodes.map.contains(xy) else { return }
+
+		cursor = xy
+		mainAction()
 	}
 
 	mutating func moveCursor(_ direction: Direction) {
@@ -32,7 +41,7 @@ extension HQState {
 		if HQNodes.map.contains(xy) { cursor = xy }
 	}
 
-	mutating func processMainAction() {
+	mutating func mainAction() {
 		if let selected {
 			if selected == units[cursor]?.0 {
 				self.selected = .none
@@ -52,6 +61,10 @@ extension HQState {
 				events.add(.shop)
 			}
 		}
+	}
+
+	mutating func secondaryAction() {
+		selected = .none
 	}
 
 	mutating func processScenario() {

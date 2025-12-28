@@ -50,9 +50,12 @@ extension HQScene {
 		show(.init(
 			layout: .inspector,
 			items: [Unit].template(state.country).map { [xy = state.cursor] u in
-				.init(icon: u.imageName, text: u.description) { state in
-					state.buy(u, at: xy)
-				}
+				.init(
+					icon: u.imageName,
+					text: u.stats.shortDescription,
+					description: u.description + " / \(state.player.prestige)",
+					action: { state in state.buy(u, at: xy) }
+				)
 			}
 		))
 	}

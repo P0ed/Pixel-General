@@ -1,24 +1,27 @@
 extension Unit {
 
 	var status: String {
-		.makeStatus(pad: 10) { add in
-			add("\(stats.unitType)")
+		.makeStatus(pad: 16) { add in
+			add("\(stats.shortDescription)")
+		} + .makeStatus(pad: 8) { add in
 			add("\(stats.starsString)")
-			add("Ammo: \(stats.softAtk > 0 ? stats.ammo : 0)")
-			add("Ini: \(stats.ini)")
+		} + .makeStatus(pad: 14) { add in
+			add("AM: \(stats.ammo)/\(stats.atm)/\(stats.aam)")
+		} + .makeStatus(pad: 10) { add in
+			add("INI: \(stats.ini)")
 			add("SA: \(stats.softAtk)")
 			add("HA: \(stats.hardAtk)")
 			add("AA: \(stats.airAtk)")
 			add("GD: \(stats.groundDef)")
 			add("AD: \(stats.airDef)")
-			add("Mov: \(stats.mov)")
-			add("Ent: \(stats.ent)")
+			add("MOV: \(stats.mov)")
+			add("ENT: \(stats.ent)")
 		}
 	}
 
 	var description: String {
 		"""
-		\(stats.unitType)
+		\(stats.shortDescription)
 		
 		ATK: \(stats.softAtk) / \(stats.hardAtk) / \(stats.airAtk)
 		DEF: \(stats.groundDef) / \(stats.airDef)

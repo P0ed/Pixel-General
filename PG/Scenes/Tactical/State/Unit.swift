@@ -117,7 +117,7 @@ extension Stats {
 	func atk(_ dst: Stats) -> UInt8 {
 		switch dst.targetType {
 		case .soft: softAtk
-		case .light: (softAtk + hardAtk) >> 1
+		case .light: (softAtk + 2 * hardAtk) / 3
 		case .heavy: hardAtk
 		case .air: airAtk
 		}
@@ -158,6 +158,7 @@ extension Unit {
 
 	func canHit(unit: Unit) -> Bool {
 		position.distance(to: unit.position) <= stats.rng * 2 + 1
+		&& stats.atk(unit.stats) > 0
 	}
 
 	var cost: UInt16 {

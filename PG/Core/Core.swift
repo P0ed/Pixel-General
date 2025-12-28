@@ -53,7 +53,7 @@ final class Core {
 			modifying(u, { u in
 				u.position = XY(i % 4, i / 4)
 				u.stats.hp = 0xF
-				u.stats.ammo = 0x7
+				u.stats.ammo = u.stats.unitType == .support ? 0 : 0x7
 				u.stats.ap = 1
 				u.stats.mp = 1
 			})
@@ -95,21 +95,6 @@ extension [Unit] {
 			Unit(country: country, position: XY(2, 0), stats: .base >< .ifv(country) >< .elite),
 			Unit(country: country, position: XY(1, 1), stats: .base >< .art >< .veteran),
 			Unit(country: country, position: XY(1, 2), stats: .base >< .art >< .veteran),
-		]
-	}
-
-	static func enemy(_ country: Country) -> [Unit] {
-		[
-			Unit(country: .usa, position: XY(5, 7), stats: .base >< .inf),
-			Unit(country: .usa, position: XY(4, 6), stats: .base >< .inf),
-			Unit(country: .usa, position: XY(4, 5), stats: .base >< .m1A2),
-			Unit(country: .usa, position: XY(5, 5), stats: .base >< .art),
-			Unit(country: .usa, position: XY(5, 4), stats: .base >< .art),
-
-			Unit(country: .rus, position: XY(10, 0), stats: .base >< .t72),
-			Unit(country: .rus, position: XY(10, 1), stats: .base >< .t72),
-			Unit(country: .rus, position: XY(11, 1), stats: .base >< .t72),
-			Unit(country: .rus, position: XY(11, 3), stats: .base >< .t72),
 		]
 	}
 }

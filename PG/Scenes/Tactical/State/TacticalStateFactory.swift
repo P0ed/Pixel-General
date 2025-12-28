@@ -2,25 +2,44 @@ extension TacticalState {
 
 	static func random(
 		player: Player = Player(country: .ukr),
-		units: [Unit]? = nil,
+		units: [Unit],
 		size: Int = .random(in: 16...32),
 		seed: Int = .random(in: 0...1023)
 	) -> TacticalState {
-		TacticalState(
-			map: Map(size: size, seed: seed),
+		let citiesCount = min(32, size * size / 64)
+		let map = Map<Terrain>(size: size, seed: seed)
+		let buildings: [Building] = (0 ..< citiesCount).map { i in
+			let p = XY(1 + 8 * (i % (size / 8)), 1 + 8 * (i / (size / 8)))
+			let cp = map[p] != .river ? p : p.n8.firstMap { p in map[p] != .river ? p : nil }
+			return Building(
+				country: i == 0 ? player.country
+				: i < citiesCount / 2 ? .usa
+				: .rus,
+				position: cp ?? p,
+				type: .city
+			)
+		}
+		let playerCity = buildings[0].position
+		let rusCity = buildings.filter { $0.country == .rus }.sorted(by: { b1, b2 in
+			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
+		}).first?.position ?? .zero
+		let usaCity = buildings.filter { $0.country == .usa }.sorted(by: { b1, b2 in
+			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
+		}).first?.position ?? .zero
+
+		let us: [Unit] = units.mapInPlace { $0.position = $0.position + playerCity }
+		+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity }
+		+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity }
+
+		return TacticalState(
+			map: map,
 			players: [
 				player,
-				Player(country: .usa, ai: true),
-				Player(country: .rus, ai: true),
+				Player(country: .usa, ai: true, prestige: 0x600),
+				Player(country: .rus, ai: true, prestige: 0x600),
 			],
-			buildings: [
-				Building(country: player.country, position: XY(1, 1), type: .city),
-				Building(country: .usa, position: XY(5, 10), type: .city),
-				Building(country: .usa, position: XY(8, 8), type: .city),
-				Building(country: .rus, position: XY(13, 1), type: .city),
-				Building(country: .rus, position: XY(11, 5), type: .city),
-			],
-			units: (units ?? .base(player.country)) + .enemy(player.country)
+			buildings: buildings,
+			units: us
 		)
 	}
 }

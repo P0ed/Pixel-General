@@ -1,11 +1,17 @@
 extension TacticalState {
 
 	func targets(unit: Unit) -> [(UID, Unit)] {
-		!unit.canAttack ? [] : units.compactMap { i, u in
-			u.country.team != unit.country.team
-			&& player.visible[u.position]
-			&& unit.canHit(unit: u)
-			? (i, u) : nil
+		!unit.canAttack ? [] : units.reduce(into: []) { r, i, u in
+			if u.country.team != unit.country.team,
+			   player.visible[u.position],
+			   unit.canHit(unit: u)
+			{
+				if unit.stats.unitType == .aa && u.stats.targetType == .air {
+					r = [(i, u)] + r
+				} else {
+					r += [(i, u)]
+				}
+			}
 		}
 	}
 
@@ -40,8 +46,8 @@ extension TacticalState {
 		}
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
 
-		let srcStr = "\(units[src].country) \(units[src].stats.unitType)"
-		let dstStr = "\(units[dst].country) \(units[dst].stats.unitType)"
+		let srcStr = units[src].shortDescription
+		let dstStr = units[dst].shortDescription
 		let dmgLine = "ds: \(ds) ts: \([t1, t2, t3, t4]) dmg: \(dmgs)"
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
 
@@ -80,7 +86,7 @@ extension TacticalState {
 		}
 		if units[dst].alive, units[src].alive,
 		   units[dst].canHit(unit: units[src]),
-		   units[src].stats.unitType != .art {
+		   !units[src].stats.noEnemyRetaliation {
 
 			let defBonus = switch units[src].stats.targetType {
 			case .light where units[dst].stats.targetType != .air: -Int(map[units[dst].position].defBonus)
@@ -96,5 +102,20 @@ extension TacticalState {
 		}
 
 		selectUnit(units[src].alive && units[src].hasActions ? src : .none)
+	}
+}
+
+extension Stats {
+	var shortDescription: String {
+		"\(targetType) \(unitType)"
+	}
+	var noEnemyRetaliation: Bool {
+		unitType == .art
+	}
+}
+
+extension Unit {
+	var shortDescription: String {
+		"\(country) \(stats.shortDescription)"
 	}
 }

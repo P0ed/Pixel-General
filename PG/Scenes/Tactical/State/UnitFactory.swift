@@ -47,13 +47,13 @@ extension Stats {
 			stats.moveType = .track
 			stats.targetType = .heavy
 			stats.ini = 7
-			stats.softAtk = 8
+			stats.softAtk = 9
 			stats.hardAtk = 9
 			stats.airAtk = 1
 			stats.mov = 6
 			stats.rng = 1
 			stats.groundDef = 10
-			stats.airDef = 4
+			stats.airDef = 5
 		}
 	}
 
@@ -95,13 +95,29 @@ extension Stats {
 			stats.moveType = .track
 			stats.targetType = .light
 			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 9
+			stats.softAtk = 9
+			stats.hardAtk = 8
 			stats.airAtk = 4
 			stats.mov = 7
 			stats.rng = 1
-			stats.groundDef = 10
+			stats.groundDef = 11
 			stats.airDef = 7
+		}
+	}
+
+	static var lvkv90: Self {
+		.make { stats in
+			stats.unitType = .aa
+			stats.moveType = .track
+			stats.targetType = .light
+			stats.ini = 10
+			stats.softAtk = 8
+			stats.hardAtk = 8
+			stats.airAtk = 12
+			stats.groundDef = 9
+			stats.airDef = 11
+			stats.mov = 7
+			stats.rng = 1
 		}
 	}
 
@@ -125,8 +141,8 @@ extension Stats {
 			stats.moveType = .track
 			stats.targetType = .light
 			stats.ini = 9
-			stats.softAtk = 5
-			stats.hardAtk = 3
+			stats.softAtk = 6
+			stats.hardAtk = 4
 			stats.airAtk = 3
 			stats.groundDef = 7
 			stats.airDef = 8
@@ -147,22 +163,6 @@ extension Stats {
 		case .ukr, .swe: .strv122
 		case .usa, .isr: .m1A2
 		case .rus, .irn, .dnr, .lnr: .t72
-		}
-	}
-
-	static var lvkv90: Self {
-		.make { stats in
-			stats.unitType = .aa
-			stats.moveType = .track
-			stats.targetType = .light
-			stats.ini = 9
-			stats.softAtk = 8
-			stats.hardAtk = 8
-			stats.airAtk = 12
-			stats.groundDef = 9
-			stats.airDef = 10
-			stats.mov = 7
-			stats.rng = 1
 		}
 	}
 
