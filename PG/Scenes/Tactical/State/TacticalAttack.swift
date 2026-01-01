@@ -58,7 +58,7 @@ extension TacticalState {
 		units[src].stats.exp.increment(by: hpLeft != 0 ? dmg : dmg * 2)
 
 		camera = units[dst].position
-		events.add(.attack(src, dst, units[dst], dmg))
+		events.add(.attack(src, dst, dmg, units[dst].stats.hp))
 	}
 
 	mutating func attack(src: UID, dst: UID) {
@@ -90,12 +90,13 @@ extension TacticalState {
 		   units[dst].canHit(unit: units[src]),
 		   !srcStats.noEnemyRetaliation {
 
-			let defBonus = switch srcStats.targetType {
-			case .light where dstStats.targetType != .air: -Int(map[units[dst].position].defBonus)
-			case .heavy where dstStats.targetType != .air: -Int(map[units[dst].position].defBonus * 2)
+			let defBonus = max(0, map[units[dst].position].defBonus)
+			let defPenalty = switch srcStats.targetType {
+			case .light where dstStats.targetType != .air: -Int(defBonus)
+			case .heavy where dstStats.targetType != .air: -Int(defBonus * 2)
 			default: 0
 			}
-			fire(src: dst, dst: src, defBonus: defBonus)
+			fire(src: dst, dst: src, defBonus: defPenalty)
 		}
 		if srcIni <= dstIni, units[src].alive {
 			let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus

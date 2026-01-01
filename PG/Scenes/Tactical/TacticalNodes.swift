@@ -95,7 +95,7 @@ extension TacticalNodes {
 
 	func updateUnits(_ state: borrowing TacticalState) {
 		state.units.forEach { i, u in
-			units[i]?.update(u)
+			units[i]?.update(hp: u.stats.hp)
 		}
 	}
 

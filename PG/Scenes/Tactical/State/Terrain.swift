@@ -11,23 +11,23 @@ extension Terrain {
 		case .leg: switch self {
 		case .field, .city: 1
 		case .forest, .hill: min(stats.mov, 2)
-		case .forestHill: 3
+		case .forestHill: min(stats.mov, 3)
 		case .river: stats.mov
-		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : 16
-		case .none: 16
+		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : 0x10
+		case .none: 0x10
 		}
 		case .wheel: switch self {
 		case .city: 1
 		case .field: 2
 		case .forest, .hill: 3
 		case .forestHill, .river: stats.mov
-		case .none, .mountain: 16
+		case .none, .mountain: 0x10
 		}
 		case .track: switch self {
 		case .field, .city: 1
 		case .forest, .hill: 2
 		case .forestHill, .river: stats.mov
-		case .none, .mountain: 16
+		case .none, .mountain: 0x10
 		}
 		case .air: 1
 		}

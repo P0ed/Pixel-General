@@ -13,7 +13,7 @@ private extension TacticalScene {
 		switch event {
 		case let .spawn(uid): processSpawn(uid: uid)
 		case let .move(uid, distance): await processMove(uid: uid, distance: distance)
-		case let .attack(src, dst, unit, dmg): await processAttack(src: src, dst: dst, unit: unit, dmg: dmg)
+		case let .attack(src, dst, dmg, hp): await processAttack(src: src, dst: dst, dmg: dmg, hp: hp)
 		case .nextDay: nodes?.updateUnits(state)
 		case .shop: processShop()
 		case .menu: processMenu()
@@ -47,19 +47,19 @@ private extension TacticalScene {
 		unit.zPosition = z
 	}
 
-	func processAttack(src: UID, dst: UID, unit: Unit, dmg: UInt8) async {
-		nodes?.units[src]?.showSight(for: 0.68)
-		await run(.wait(forDuration: 0.33))
-		nodes?.units[dst]?.showSight(for: 0.68 - 0.33)
-		await run(.wait(forDuration: 0.33))
+	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
+		nodes?.units[src]?.showSight(for: 0.47)
+		await run(.wait(forDuration: 0.22))
+		nodes?.units[dst]?.showSight(for: 0.47 - 0.22)
+		await run(.wait(forDuration: 0.22))
 
-		if unit.alive {
+		if hp > 0 {
 			if dmg > 0 {
 				nodes?.sounds.boomM.play()
 			} else {
 				nodes?.sounds.boomS.play()
 			}
-			nodes?.units[dst]?.update(unit)
+			nodes?.units[dst]?.update(hp: hp)
 		} else {
 			nodes?.sounds.boomL.play()
 			removeUnit(dst)

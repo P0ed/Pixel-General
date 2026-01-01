@@ -58,8 +58,8 @@ extension SKNode {
 		childNode(withName: "hp") as? SKSpriteNode
 	}
 
-	func update(_ unit: Unit) {
-		unitHP?.texture = .init(imageNamed: "HP\(unit.stats.hp)")
+	func update(hp: UInt8) {
+		unitHP?.texture = .init(imageNamed: "HP\(hp)")
 	}
 
 	func showSight(for duration: TimeInterval) {

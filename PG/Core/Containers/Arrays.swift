@@ -44,6 +44,14 @@ extension InlineArray {
 		return arr
 	}
 
+	func reduce<R>(into result: R, _ fold: (inout R, Element) -> Void) -> R {
+		var result = result
+		for i in indices {
+			fold(&result, self[i])
+		}
+		return result
+	}
+
 	func firstMap<A>(_ transform: (Element) -> A?) -> A? {
 		for i in indices {
 			if let some = transform(self[i]) { return some }

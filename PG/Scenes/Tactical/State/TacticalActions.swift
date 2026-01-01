@@ -35,41 +35,41 @@ extension TacticalState {
 		!unit.canMove ? .empty : .make { xys in
 			if unit.stats.moveType == .air {
 				xys = .init(unit.position.circle(Int(unit.stats.mov) * 2))
-				return
-			}
-			var front: [(XY, UInt8)] = [(unit.position, unit.stats.mov)]
-			repeat {
-				front = front.flatMap { from, mp in
-					let enemies = from.n8.compactMap {
-						if let u = units[$0]?.1, u.country != unit.country {
-							u
-						} else {
-							nil
-						}
-					}
-					return from.n8.compactMap { (xy: XY) -> (XY, UInt8)? in
-						if let (_, u) = units[xy], u.stats.moveType != .air,
-						   u.country.team != unit.country.team {
-							return .none
-						}
-						if (xy - from).manhattan == 2,
-						   let a = units[XY(from.x, xy.y)],
-						   let b = units[XY(xy.x, from.y)],
-						   a.1.country.team != unit.country.team,
-						   b.1.country.team != unit.country.team,
-						   a.1.stats.moveType != .air, b.1.stats.moveType != .air
-						{
-							return .none
-						}
+			} else {
+				var front: [(XY, UInt8)] = [(unit.position, unit.stats.mov)]
+				let team = unit.country.team
+				repeat {
+					front = front.flatMap { from, mp in
 
-						let moveCost = map[xy].moveCost(unit.stats) * UInt8(1 + min(2, enemies.count))
-						return !xys[xy] && moveCost <= mp
-						? (xy, mp - moveCost)
-						: .none
+						func landEnemy(at xy: XY) -> Bool {
+							units[xy].map { _, u in
+								u.country.team != team && u.stats.moveType != .air
+							} ?? false
+						}
+						let enemies = from.n4.reduce(into: 0 as UInt8) { r, xy in
+							if landEnemy(at: xy) { r += 1 }
+						}
+						return from.n8.compactMap { (xy: XY) -> (XY, UInt8)? in
+							if landEnemy(at: xy) {
+								return .none
+							}
+							if (xy - from).manhattan == 2,
+							   landEnemy(at: XY(from.x, xy.y)),
+							   landEnemy(at: XY(xy.x, from.y))
+							{
+								return .none
+							}
+
+							let moveCost = map[xy].moveCost(unit.stats) + enemies
+							if !xys[xy] && moveCost <= mp {
+								return (xy, mp - moveCost)
+							}
+							return .none
+						}
 					}
-				}
-				xys.formUnion(SetXY(front.map { pos, _ in pos }))
-			} while !front.isEmpty
+					xys.formUnion(SetXY(front.map { pos, _ in pos }))
+				} while !front.isEmpty
+			}
 		}
 		.subtracting(units.map { _, u in u.position })
 	}
