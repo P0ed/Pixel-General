@@ -1,4 +1,4 @@
-struct SetXY {
+struct SetXY: BitwiseCopyable {
 	private var storage: InlineArray<32, UInt32>
 }
 
@@ -23,13 +23,6 @@ extension SetXY: Equatable {
 	}
 }
 
-private extension XY {
-
-	var inBounds: Bool {
-		x >= 0 && x < 32 && y >= 0 && y < 32
-	}
-}
-
 extension SetXY {
 
 	var set: Set<XY> {
@@ -50,11 +43,11 @@ extension SetXY {
 
 	subscript(_ xy: XY) -> Bool {
 		get {
-			guard xy.inBounds else { return false }
+			guard bounds(xy) else { return false }
 			return storage[xy.y] & 1 << xy.x != 0
 		}
 		set {
-			guard xy.inBounds else { return }
+			guard bounds(xy) else { return }
 			if newValue {
 				storage[xy.y] |= 1 << xy.x
 			} else {
@@ -63,9 +56,19 @@ extension SetXY {
 		}
 	}
 
+	private func bounds(_ xy: XY) -> Bool {
+		xy.x >= 0 && xy.x < 32 && xy.y >= 0 && xy.y < 32
+	}
+
 	mutating func formUnion(_ set: Self) {
 		for i in storage.indices {
 			storage[i] |= set.storage[i]
+		}
+	}
+
+	mutating func formIntersection(_ set: Self) {
+		for i in storage.indices {
+			storage[i] &= set.storage[i]
 		}
 	}
 

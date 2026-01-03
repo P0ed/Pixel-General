@@ -6,7 +6,7 @@ extension TacticalState {
 			   player.visible[u.position],
 			   unit.canHit(unit: u)
 			{
-				if unit.stats.unitType == .aa && u.stats.targetType == .air {
+				if unit.stats[.aa] && u.stats.isAir {
 					r = [(i, u)] + r
 				} else {
 					r += [(i, u)]
@@ -15,11 +15,11 @@ extension TacticalState {
 		}
 	}
 
-	func support(request: UnitType, defender: UID, attacker: UID) -> UID? {
+	func support(trait: Trait, defender: UID, attacker: UID) -> UID? {
 		units[defender].position.n8.firstMap { hx in
 			units[hx].flatMap { i, u in
 				u.country.team == units[defender].country.team
-				&& u.stats.unitType == request
+				&& u.stats[trait]
 				? i : nil
 			}
 		}
@@ -61,7 +61,7 @@ extension TacticalState {
 		events.add(.attack(src, dst, dmg, units[dst].stats.hp))
 	}
 
-	mutating func attack(src: UID, dst: UID) {
+	mutating func attack(src: UID, dst: UID, atkIni: UInt8 = 15) {
 		guard units[src].country == country,
 			  units[src].country.team != units[dst].country.team,
 			  units[src].canAttack, units[src].canHit(unit: units[dst])
@@ -69,16 +69,15 @@ extension TacticalState {
 
 		let srcStats = units[src].stats
 		let dstStats = units[dst].stats
-		let srcIni = UInt8(d20()) + srcStats.ini * 2 + 15
+		let srcIni = UInt8(d20()) + srcStats.ini * 2 + atkIni
 		let dstIni = UInt8(d20()) + dstStats.ini * 2 + dstStats.ent * 2
 		print("ini: \(srcIni) vs \(dstIni)")
 
-		if srcStats.targetType != .air, dstStats.targetType != .air, !srcStats.noEnemyRetaliation,
-			let art = support(request: .art, defender: dst, attacker: src) {
+		if !srcStats.isAir, !dstStats.isAir, !srcStats.noEnemyRetaliation,
+			let art = support(trait: .art, defender: dst, attacker: src) {
 			fire(src: art, dst: src, defBonus: 0)
 		}
-		if srcStats.targetType == .air,
-		   let aa = support(request: .aa, defender: dst, attacker: src) {
+		if srcStats.isAir, let aa = support(trait: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defBonus: 0)
 		}
 		if srcIni > dstIni, units[src].alive {
@@ -91,9 +90,9 @@ extension TacticalState {
 		   !srcStats.noEnemyRetaliation {
 
 			let defBonus = max(0, map[units[dst].position].defBonus)
-			let defPenalty = switch srcStats.targetType {
-			case .light where dstStats.targetType != .air: -Int(defBonus)
-			case .heavy where dstStats.targetType != .air: -Int(defBonus * 2)
+			let defPenalty = switch srcStats.type {
+			case .lightWheel where !dstStats.isAir, .lightTrack where !dstStats.isAir: -Int(defBonus)
+			case .heavyTrack where !dstStats.isAir: -Int(defBonus * 2)
 			default: 0
 			}
 			fire(src: dst, dst: src, defBonus: defPenalty)
@@ -110,10 +109,10 @@ extension TacticalState {
 
 extension Stats {
 	var shortDescription: String {
-		"\(targetType) \(unitType)"
+		"\(type)"
 	}
 	var noEnemyRetaliation: Bool {
-		unitType == .art
+		self[.art]
 	}
 }
 

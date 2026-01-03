@@ -72,14 +72,14 @@ extension TacticalState {
 		}
 		let hasSupport = ns.contains { n in
 			units[n].country.team == unit.country.team
-			&& units[n].stats.unitType == .support
+			&& units[n].stats[.supply]
 		}
 		unit.stats.ent.increment(
-			by: (unit.untouched ? 1 : 0),
+			by: (unit.untouched && !unit.stats.isAir ? 1 : 0),
 			cap: 7
 		)
 		unit.stats.ammo.increment(
-			by: unit.stats.unitType == .support
+			by: unit.stats[.supply]
 			? 0 : (
 				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupport ? 2 : 0)
 			),

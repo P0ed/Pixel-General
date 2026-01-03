@@ -25,7 +25,7 @@ extension Unit {
 		
 		ATK: \(stats.softAtk) / \(stats.hardAtk) / \(stats.airAtk)
 		DEF: \(stats.groundDef) / \(stats.airDef)
-		MOV: \(stats.mov) \(stats.moveType)
+		MOV: \(stats.mov)
 		RNG: \(stats.rng)
 		
 		
@@ -59,7 +59,7 @@ extension TacticalState {
 				add("controller: \(building.country.team)")
 			}
 		} else {
-			"(\(cursor.x), \(cursor.y)) \(map[cursor])"
+			"\(cursor) \(map[cursor])"
 		}
 	}
 }

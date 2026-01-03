@@ -36,7 +36,7 @@ private extension TacticalState {
 		if let selectedID = selectedUnit {
 			let unit = units[selectedID]
 
-			if let (dstID, dst) = units[cursor] {
+			if let (dstID, dst) = units[cursor], player.visible[cursor] {
 				if dst.country.team != unit.country.team {
 					attack(src: selectedID, dst: dstID)
 				} else {

@@ -1,9 +1,6 @@
 extension TacticalState {
 
 	mutating func runAI() {
-		let target = buildings.firstMap { [country] _, b in
-			b.country.team != country.team ? b.position : nil
-		}
 		guard let target else { return }
 
 		if let nextPurchase {
@@ -15,6 +12,19 @@ extension TacticalState {
 		} else {
 			endTurn()
 		}
+	}
+
+	private var target: XY? {
+		let ownCities = buildings.compactMap { [country] _, b in
+			b.country == country ? b : nil
+		}
+		let cnt = XY(ownCities.count, ownCities.count)
+		let mid = ownCities.reduce(.zero as XY) { r, e in r + e.position / cnt }
+		return buildings.compactMap { [country] _, b in
+			b.country.team != country.team ? b.position : nil
+		}
+		.sorted { a, b in a.distance(to: mid) < b.distance(to: mid) }
+		.first
 	}
 
 	private var nextPurchase: (Unit, XY)? {
@@ -39,10 +49,10 @@ extension TacticalState {
 			u.country == country
 			? moves(for: u)
 				.set
-				.min(by: { ha, hb in
-					target.distance(to: ha) < target.distance(to: hb)
+				.min(by: { a, b in
+					target.distance(to: a) < target.distance(to: b)
 				})
-				.map { hx in (i, hx) }
+				.map { x in (i, x) }
 			: nil
 		}
 	}

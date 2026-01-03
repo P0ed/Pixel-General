@@ -13,6 +13,10 @@ struct XY: Hashable, Codable {
 	}
 }
 
+extension XY: CustomStringConvertible {
+	var description: String { "(\(x), \(y))" }
+}
+
 extension XY {
 
 	static var zero: XY {
@@ -35,12 +39,20 @@ extension XY {
 		[XY(1, 0), XY(0, 1), XY(-1, 0), XY(0, -1)]
 	}
 
+	private static var x4: [4 of XY] {
+		[XY(1, 1), XY(-1, 1), XY(-1, -1), XY(1, -1)]
+	}
+
 	private static var d8: [8 of XY] {
 		[XY(1, 0), XY(1, 1), XY(0, 1), XY(-1, 1), XY(-1, 0), XY(-1, -1), XY(0, -1), XY(1, -1)]
 	}
 
 	var n4: [4 of XY] {
 		Self.d4.map { xy in xy + self }
+	}
+
+	var x4: [4 of XY] {
+		Self.x4.map { xy in xy + self }
 	}
 
 	var n8: [8 of XY] {
@@ -66,6 +78,10 @@ extension XY {
 
 	static func - (lhs: XY, rhs: XY) -> XY {
 		XY(lhs.x - rhs.x, lhs.y - rhs.y)
+	}
+
+	static func / (lhs: XY, rhs: XY) -> XY {
+		XY(lhs.x / rhs.x, lhs.y / rhs.y)
 	}
 
 	func circle(_ dr: Int) -> [XY] {

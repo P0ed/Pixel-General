@@ -7,28 +7,31 @@ enum Terrain: UInt8, Hashable, Codable {
 extension Terrain {
 
 	func moveCost(_ stats: Stats) -> UInt8 {
-		switch stats.moveType {
-		case .leg: switch self {
-		case .field, .city: 1
-		case .forest, .hill: min(stats.mov, 2)
-		case .forestHill: min(stats.mov, 3)
-		case .river: stats.mov
-		case .mountain: stats.unitType == .fighter && stats.moveType == .leg ? stats.mov : 0x10
-		case .none: 0x10
-		}
-		case .wheel: switch self {
-		case .city: 1
-		case .field: 2
-		case .forest, .hill: 3
-		case .forestHill, .river: stats.mov
-		case .none, .mountain: 0x10
-		}
-		case .track: switch self {
-		case .field, .city: 1
-		case .forest, .hill: 2
-		case .forestHill, .river: stats.mov
-		case .none, .mountain: 0x10
-		}
+		switch stats.type {
+		case .soft:
+			switch self {
+			case .field, .city: 1
+			case .forest, .hill: min(stats.mov, 2)
+			case .forestHill: min(stats.mov, 3)
+			case .river: stats.mov
+			case .mountain: stats.mov
+			case .none: 0x10
+			}
+		case .softWheel, .lightWheel, .mediumWheel:
+			switch self {
+			case .city: 1
+			case .field: 2
+			case .forest, .hill: 3
+			case .forestHill, .river: stats.mov
+			case .none, .mountain: 0x10
+			}
+		case .lightTrack, .mediumTrack, .heavyTrack:
+			switch self {
+			case .field, .city: 1
+			case .forest, .hill: 2
+			case .forestHill, .river: stats.mov
+			case .none, .mountain: 0x10
+			}
 		case .air: 1
 		}
 	}

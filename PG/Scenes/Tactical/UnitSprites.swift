@@ -33,21 +33,21 @@ extension Unit {
 	}
 
 	var imageName: String {
-		switch stats.unitType {
-		case .fighter:
-			switch stats.moveType {
-			case .leg: "Inf"
-			case .wheel: "Truck"
-			case .track:
-				switch stats.targetType {
-				case .heavy: "Tank"
-				default: "Recon"
-				}
-			case .air: "MH6"
-			}
-		case .art: "Art"
-		case .aa: "AA"
-		case .support: "Truck"
+		switch stats.type {
+		case .soft:
+			if stats[.art] { "Art" }
+			else { "Inf" }
+		case .softWheel:
+			if stats[.supply] { "Truck" }
+			else if stats[.aa] { "Neva" }
+			else { "Truck" }
+		case .lightWheel, .mediumWheel: "Truck"
+		case .lightTrack, .mediumTrack:
+			if stats[.aa] { "SPAA" }
+			else if stats[.art] { "PZH" }
+			else { "Recon" }
+		case .heavyTrack: "Tank"
+		case .air: "MH6"
 		}
 	}
 }
@@ -59,7 +59,10 @@ extension SKNode {
 	}
 
 	func update(hp: UInt8) {
-		unitHP?.texture = .init(imageNamed: "HP\(hp)")
+		unitHP.map {
+			$0.texture = .init(imageNamed: "HP\(hp)")
+			$0.texture?.filteringMode = .nearest
+		}
 	}
 
 	func showSight(for duration: TimeInterval) {

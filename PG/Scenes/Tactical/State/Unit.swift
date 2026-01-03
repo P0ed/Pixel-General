@@ -62,21 +62,13 @@ extension Stats {
 		get { get(width: 8, offset: 16) }
 		set { set(newValue, width: 8, offset: 16) }
 	}
-	var unitType: UnitType {
-		get { UnitType(rawValue: get(width: 2, offset: 24)) ?? .fighter }
-		set { set(newValue.rawValue, width: 2, offset: 24) }
-	}
-	var moveType: MoveType {
-		get { MoveType(rawValue: get(width: 2, offset: 26)) ?? .leg }
-		set { set(newValue.rawValue, width: 2, offset: 26) }
-	}
-	var targetType: TargetType {
-		get { TargetType(rawValue: get(width: 2, offset: 28)) ?? .soft }
-		set { set(newValue.rawValue, width: 2, offset: 28) }
+	var type: UnitType {
+		get { UnitType(rawValue: get(width: 3, offset: 24)) ?? .soft }
+		set { set(newValue.rawValue, width: 3, offset: 24) }
 	}
 	var rng: UInt8 {
-		get { get(width: 2, offset: 30) }
-		set { set(newValue, width: 2, offset: 30) }
+		get { get(width: 3, offset: 27) }
+		set { set(newValue, width: 3, offset: 27) }
 	}
 	var mov: UInt8 {
 		get { get(width: 4, offset: 32) }
@@ -106,6 +98,14 @@ extension Stats {
 		get { get(width: 4, offset: 56) }
 		set { set(newValue, width: 4, offset: 56) }
 	}
+	subscript(_ trait: Trait) -> Bool {
+		get { get(width: 1, offset: 60 + trait.rawValue) == 1 }
+		set { set(newValue ? 1 : 0, width: 1, offset: 60 + trait.rawValue) }
+	}
+}
+
+enum Trait: UInt8 {
+	case art, aa, supply
 }
 
 extension Stats {
@@ -114,30 +114,25 @@ extension Stats {
 		modifying(4) { stars in stars.decrement(by: UInt8(exp.leadingZeroBitCount)) }
 	}
 
+	var isAir: Bool { type == .air }
+
 	func atk(_ dst: Stats) -> UInt8 {
-		switch dst.targetType {
-		case .soft: softAtk
-		case .light: (softAtk + 2 * hardAtk) / 3
-		case .heavy: hardAtk
+		switch dst.type {
+		case .soft, .softWheel: softAtk
+		case .lightWheel, .lightTrack: (2 * softAtk + hardAtk) / 3
+		case .mediumWheel, .mediumTrack: (softAtk + 2 * hardAtk) / 3
+		case .heavyTrack: hardAtk
 		case .air: airAtk
 		}
 	}
 
 	func def(_ src: Stats) -> UInt8 {
-		src.targetType == .air ? airDef : groundDef
+		src.type == .air ? airDef : groundDef
 	}
 }
 
 enum UnitType: UInt8, Hashable {
-	case fighter, art, aa, support
-}
-
-enum TargetType: UInt8, Hashable {
-	case soft, light, heavy, air
-}
-
-enum MoveType: UInt8, Hashable {
-	case leg, wheel, track, air
+	case soft, softWheel, lightWheel, mediumWheel, lightTrack, mediumTrack, heavyTrack, air
 }
 
 extension Unit: DeadOrAlive {
@@ -161,17 +156,38 @@ extension Unit {
 		&& stats.atk(unit.stats) > 0
 	}
 
+	var cost: UInt16 { stats.cost }
+}
+
+extension Stats {
+
 	var cost: UInt16 {
-		switch stats.unitType {
-		case .fighter: switch stats.moveType {
-		case .leg: 80
-		case .wheel: 180
-		case .track: 240
+		expCost + typeCost + traitCost + sum
+	}
+
+	private var expCost: UInt16 {
+		UInt16(stars) * (typeCost + traitCost) >> 2
+	}
+
+	private var traitCost: UInt16 {
+		(self[.aa] ? 100 : 0)
+		+ (self[.art] ? 80 : 0)
+	}
+
+	private var typeCost: UInt16 {
+		switch type {
+		case .soft: 20
+		case .softWheel: 80
+		case .lightWheel: 120
+		case .mediumWheel: 220
+		case .lightTrack: 180
+		case .mediumTrack: 220
+		case .heavyTrack: 260
 		case .air: 320
 		}
-		case .art: 220
-		case .aa: 280
-		case .support: 60
-		}
+	}
+
+	private var sum: UInt16 {
+		UInt16(softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng)
 	}
 }

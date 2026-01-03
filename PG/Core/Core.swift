@@ -53,7 +53,7 @@ final class Core {
 			modifying(u, { u in
 				u.position = XY(i % 4, i / 4)
 				u.stats.hp = 0xF
-				u.stats.ammo = u.stats.unitType == .support ? 0 : 0x7
+				u.stats.ammo = u.stats[.supply] ? 0 : 0x7
 				u.stats.ap = 1
 				u.stats.mp = 1
 			})
@@ -77,7 +77,8 @@ extension [Unit] {
 			Unit(country: country, position: .zero, stats: .base >< .inf),
 			Unit(country: country, position: .zero, stats: .base >< .ifv(country)),
 			Unit(country: country, position: .zero, stats: .base >< .tank(country)),
-			Unit(country: country, position: .zero, stats: .base >< .art),
+			Unit(country: country, position: .zero, stats: .base >< .tank2(country)),
+			Unit(country: country, position: .zero, stats: .base >< .art(country)),
 			Unit(country: country, position: .zero, stats: .base >< .aa(country)),
 			Unit(country: country, position: .zero, stats: .base >< .heli(country)),
 		]
@@ -93,8 +94,8 @@ extension [Unit] {
 			Unit(country: country, position: XY(0, 3), stats: .base >< .tank(country) >< .veteran),
 			Unit(country: country, position: XY(1, 0), stats: .base >< .ifv(country) >< .veteran),
 			Unit(country: country, position: XY(2, 0), stats: .base >< .ifv(country) >< .elite),
-			Unit(country: country, position: XY(1, 1), stats: .base >< .art >< .veteran),
-			Unit(country: country, position: XY(1, 2), stats: .base >< .art >< .veteran),
+			Unit(country: country, position: XY(1, 1), stats: .base >< .art(country) >< .veteran),
+			Unit(country: country, position: XY(1, 2), stats: .base >< .art(country) >< .veteran),
 		]
 	}
 }
