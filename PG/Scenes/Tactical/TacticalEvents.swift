@@ -5,6 +5,12 @@ extension TacticalScene {
 	func process(events: [TacticalEvent]) async {
 		for e in events { await process(e) }
 	}
+
+	func respawn() {
+		state.units.forEach { i, u in
+			processSpawn(uid: i)
+		}
+	}
 }
 
 private extension TacticalScene {

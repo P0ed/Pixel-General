@@ -11,6 +11,7 @@ extension HQMode {
 			update: { state, nodes in nodes.update(state: state) },
 			reducible: { state in state.reducible },
 			reduce: { state in state.reduce() },
+			respawn: { scene in scene.respawn() },
 			process: { scene, events in await scene.process(events: events) },
 			status: { state in state.statusText },
 			mouse: { nodes, event in nodes.mouse(event: event) },

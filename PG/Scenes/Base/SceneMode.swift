@@ -7,6 +7,7 @@ struct SceneMode<State: ~Copyable, Event, Nodes> {
 	var update: (borrowing State, Nodes) -> Void
 	var reducible: (borrowing State) -> Bool
 	var reduce: (inout State) -> [Event]
+	var respawn: (Scene<State, Event, Nodes>) -> Void
 	var process: (Scene<State, Event, Nodes>, [Event]) async -> Void
 	var status: (borrowing State) -> String
 	var mouse: (Nodes, NSEvent) -> Input?

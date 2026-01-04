@@ -20,6 +20,10 @@ extension HQScene {
 		for event in events { await process(event) }
 	}
 
+	func respawn() {
+		state.units.forEach { i, u in processSpawn(uid: i) }
+	}
+
 	private func process(_ event: Event) async {
 		switch event {
 		case .move(let uid, let xy): processMove(uid: uid, xy: xy)

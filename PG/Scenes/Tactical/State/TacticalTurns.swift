@@ -65,28 +65,28 @@ extension TacticalState {
 
 	private mutating func endTurn(unit id: UID) {
 		var unit = units[id]
-		let ns = neighbors(at: unit.position)
+		let neighbors = neighbors(at: unit.position)
 
-		let noEnemy = !ns.contains { n in
+		let noEnemy = !neighbors.contains { n in
 			units[n].country.team != unit.country.team
 		}
-		let hasSupport = ns.contains { n in
+		let hasSupply = neighbors.contains { n in
 			units[n].country.team == unit.country.team
 			&& units[n].stats[.supply]
 		}
 		unit.stats.ent.increment(
-			by: (unit.untouched && !unit.stats.isAir ? 1 : 0),
+			by: unit.stats.isAir ? 0 : (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
 			cap: 7
 		)
 		unit.stats.ammo.increment(
 			by: unit.stats[.supply]
 			? 0 : (
-				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupport ? 2 : 0)
+				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0)
 			),
 			cap: 0x7
 		)
 		let dhp = unit.stats.hp.increment(
-			by: ((unit.untouched ? 4 : 0) + (hasSupport ? 4 : 0)) / (noEnemy ? 1 : 3),
+			by: ((unit.untouched ? 4 : 0) + (hasSupply ? 4 : 0)) / (noEnemy ? 1 : 3),
 			cap: 0xF
 		)
 		unit.stats.exp.decrement(by: dhp * 1 << unit.stats.stars)
@@ -118,11 +118,11 @@ extension TacticalState {
 	}
 
 	private mutating func eliminatePlayers() {
-		let hasCity = Dictionary(uniqueKeysWithValues: players.map { i, p in
+		let alive = Dictionary(uniqueKeysWithValues: players.map { i, p in
 			(i, countryHasCities(p.country))
 		})
 		players.modifyEach { i, player in
-			player.alive = hasCity[i] ?? false
+			player.alive = alive[i] ?? false
 		}
 	}
 

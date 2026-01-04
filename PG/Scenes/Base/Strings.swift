@@ -3,8 +3,8 @@ extension Unit {
 	var status: String {
 		.makeStatus(pad: 16) { add in
 			add("\(stats.shortDescription)")
-		} + .makeStatus(pad: 8) { add in
-			add("\(stats.starsString)")
+		} + .makeStatus(pad: 11) { add in
+			add("\(mpString)\(apString) \(stats.starsString)")
 		} + .makeStatus(pad: 14) { add in
 			add("AM: \(stats.ammo)/\(stats.atm)/\(stats.aam)")
 		} + .makeStatus(pad: 10) { add in
@@ -17,6 +17,14 @@ extension Unit {
 			add("MOV: \(stats.mov)")
 			add("ENT: \(stats.ent)")
 		}
+	}
+
+	private var mpString: String {
+		stats.mp == 0 ? " " : "⇧"
+	}
+
+	private var apString: String {
+		stats.ap == 0 || stats[.supply] ? "⦾" : "⦿"
 	}
 
 	var description: String {

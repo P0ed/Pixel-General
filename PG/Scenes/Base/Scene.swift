@@ -40,6 +40,8 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 		baseNodes = makeBaseNodes()
 		baseNodes?.layout(size: size)
 
+		mode.respawn(self)
+
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
@@ -142,15 +144,11 @@ private extension SKScene {
 
 	static func make(_ state: borrowing State) -> SKScene {
 		if state.tactical != nil {
-			var state = clone(state.tactical!)
-			state.events = .init(head: state.units.map { i, _ in .spawn(i) } , tail: .none)
-			return Scene(mode: .tactical, state: state)
+			Scene(mode: .tactical, state: clone(state.tactical!))
 		} else if state.strategic != nil {
 			fatalError()
 		} else {
-			var state = clone(state.hq!)
-			state.events = .init(head: state.units.map { i, _ in .spawn(i) } , tail: .none)
-			return Scene(mode: .hq, state: state)
+			Scene(mode: .hq, state: clone(state.hq!))
 		}
 	}
 }

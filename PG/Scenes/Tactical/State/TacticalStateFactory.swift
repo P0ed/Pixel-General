@@ -14,7 +14,8 @@ extension TacticalState {
 			return Building(
 				country: i == 0 ? player.country
 				: i < citiesCount / 2 ? .usa
-				: .rus,
+				: i < citiesCount * 3 / 4 ? .rus
+				: .swe,
 				position: cp ?? p,
 				type: .city
 			)
@@ -27,7 +28,7 @@ extension TacticalState {
 			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
 		}).first?.position ?? .zero
 
-		let us: [Unit] = units.mapInPlace { $0.position = $0.position + playerCity }
+		let units: [Unit] = units.mapInPlace { $0.position = $0.position + playerCity }
 		+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity }
 		+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity }
 
@@ -37,9 +38,10 @@ extension TacticalState {
 				player,
 				Player(country: .usa, ai: true, prestige: 0x600),
 				Player(country: .rus, ai: true, prestige: 0x600),
+				Player(country: .swe, ai: true, prestige: 0x600),
 			],
 			buildings: buildings,
-			units: us
+			units: units
 		)
 	}
 }

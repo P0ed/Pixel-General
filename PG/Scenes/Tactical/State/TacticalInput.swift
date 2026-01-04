@@ -33,17 +33,17 @@ private extension TacticalState {
 	}
 
 	mutating func primaryAction() {
-		if let selectedID = selectedUnit {
-			let unit = units[selectedID]
+		if let selectedUnit {
+			let unit = units[selectedUnit]
 
 			if let (dstID, dst) = units[cursor], player.visible[cursor] {
 				if dst.country.team != unit.country.team {
-					attack(src: selectedID, dst: dstID)
+					attack(src: selectedUnit, dst: dstID)
 				} else {
 					selectUnit(dst == unit ? .none : dstID)
 				}
 			} else if unit.canMove {
-				move(unit: selectedID, to: cursor)
+				move(unit: selectedUnit, to: cursor)
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
 			} else {
@@ -67,15 +67,17 @@ private extension TacticalState {
 	}
 
 	mutating func nextUnit(reversed: Bool = false) {
-		var idx = selectedUnit ?? (reversed ? units.count - 1 : 0)
+		let cnt = units.count
+		var idx = selectedUnit ?? (reversed ? cnt - 1 : 0)
 		let country = country
 
 		for _ in units.indices {
-			let u = units[idx % units.count]
-			if u.alive, u.country == country, u.hasActions {
-				return selectUnit(idx)
-			}
 			idx += reversed ? -1 : 1
+			let u = units[idx % cnt]
+
+			if u.alive, u.country == country, u.hasActions {
+				return selectUnit(idx % cnt)
+			}
 		}
 		selectUnit(nil)
 	}

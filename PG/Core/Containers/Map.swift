@@ -30,7 +30,7 @@ struct Map<Element>: ~Copyable {
 	}
 
 	func contains(_ xy: XY) -> Bool {
-		return xy.x >= 0 && xy.x < size && xy.y >= 0 && xy.y < size
+		xy.x >= 0 && xy.x < size && xy.y >= 0 && xy.y < size
 	}
 
 	func forEachEdge(_ body: (XY, Edge) -> Void) {
