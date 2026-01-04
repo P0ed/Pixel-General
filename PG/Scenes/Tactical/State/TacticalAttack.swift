@@ -31,14 +31,12 @@ extension TacticalState {
 
 		let dif = atk - def
 		let t1 = max(1, 7 - dif)
-		let t2 = t1 + 4
-		let t3 = t2 + 6
-		let t4 = t3 + 8
-		let rounds = units[src].stats.hp >> 2 + 1
+		let t2 = t1 + 5
+		let t3 = t2 + 7
+		let rounds = (units[src].stats.hp + 2) / 3
 
 		let ds = (0 ..< rounds).map { _ in d20() }
 		let dmgs = ds.map { d in
-			d > t4 ? 4 :
 			d > t3 ? 3 :
 			d > t2 ? 2 :
 			d > t1 ? 1 :
@@ -48,7 +46,7 @@ extension TacticalState {
 
 		let srcStr = units[src].shortDescription
 		let dstStr = units[dst].shortDescription
-		let dmgLine = "ds: \(ds) ts: \([t1, t2, t3, t4]) dmg: \(dmgs)"
+		let dmgLine = "ts: \([t1, t2, t3]) ds: \(ds) dmg: \(dmg) \(dmgs)"
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
 
 		let hpLeft = units[dst].stats.hp.decrement(by: dmg)
@@ -61,14 +59,26 @@ extension TacticalState {
 		events.add(.attack(src, dst, dmg, units[dst].stats.hp))
 	}
 
+	private func encirclement(uid: UID) -> Int {
+		max(0, units[uid].position.n4
+			.reduce(into: -1) { [country = units[uid].country] r, xy in
+				units[xy].map { _, u in
+					if u.country.team != country.team { r += 1 }
+				}
+			}
+		)
+	}
+
 	mutating func attack(src: UID, dst: UID, atkIni: UInt8 = 15) {
 		guard units[src].country == country,
 			  units[src].country.team != units[dst].country.team,
 			  units[src].canAttack, units[src].canHit(unit: units[dst])
 		else { return }
 
+		let encirclement = encirclement(uid: dst)
 		let srcStats = units[src].stats
 		let dstStats = units[dst].stats
+		let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus - encirclement
 		let srcIni = UInt8(d20()) + srcStats.ini * 2 + atkIni
 		let dstIni = UInt8(d20()) + dstStats.ini * 2 + dstStats.ent * 2
 		print("ini: \(srcIni) vs \(dstIni)")
@@ -81,7 +91,6 @@ extension TacticalState {
 			fire(src: aa, dst: src, defBonus: 0)
 		}
 		if srcIni > dstIni, units[src].alive {
-			let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus
 			fire(src: src, dst: dst, defBonus: defBonus)
 			units[src].stats.ap.decrement()
 		}
@@ -98,7 +107,6 @@ extension TacticalState {
 			fire(src: dst, dst: src, defBonus: defPenalty)
 		}
 		if srcIni <= dstIni, units[src].alive {
-			let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus
 			fire(src: src, dst: dst, defBonus: defBonus)
 			units[src].stats.ap.decrement()
 		}

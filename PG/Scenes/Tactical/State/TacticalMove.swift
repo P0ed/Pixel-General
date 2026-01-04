@@ -113,7 +113,7 @@ struct Moves: ~Copyable {
 
 	func route(to target: XY) -> [XY] {
 		moves[target] == 0 ? [] : .make { route in
-			print("routing:")
+			print("routing to \(target)")
 			var pos = target
 			while pos != start {
 				route.append(pos)

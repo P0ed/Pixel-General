@@ -41,7 +41,7 @@ extension Terrain {
 		case .forest, .hill: 1
 		case .forestHill, .mountain, .city: 2
 		case .field, .none: 0
-		case .river: -1
+		case .river: -2
 		}
 	}
 

@@ -1,7 +1,7 @@
 struct HQState: ~Copyable {
 	var player: Player
 	var units: Speicher<16, Unit>
-	var events: Speicher<16, HQEvent> = .init(head: [], tail: .none)
+	var events: Speicher<4, HQEvent> = .init(head: [], tail: .none)
 	var cursor: XY = .zero
 	var selected: UID?
 }
