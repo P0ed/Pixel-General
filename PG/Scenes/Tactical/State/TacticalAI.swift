@@ -1,7 +1,7 @@
 extension TacticalState {
 
 	mutating func runAI() {
-		guard let target else { return }
+		guard let target else { return endTurn() }
 
 		if let nextPurchase {
 			buy(nextPurchase.0, at: nextPurchase.1)

@@ -22,8 +22,9 @@ extension HQState {
 		case .direction(let direction): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): processScenario()
-		case .action(.d): events.add(.new)
+		case .action(.c): shopAction()
+		case .action(.d): processScenario()
+		case .menu: events.add(.new)
 		case .tile(let xy): select(xy)
 		default: break
 		}
@@ -54,17 +55,19 @@ extension HQState {
 				events.add(.move(selected, cursor))
 				self.selected = .none
 			}
-		} else {
-			if let (i, _) = units[cursor] {
-				selected = i
-			} else {
-				events.add(.shop)
-			}
+		} else if let (i, _) = units[cursor] {
+			selected = i
 		}
 	}
 
 	mutating func secondaryAction() {
 		selected = .none
+	}
+
+	mutating func shopAction() {
+		if selected == nil, units[cursor] == nil {
+			events.add(.shop)
+		}
 	}
 
 	mutating func processScenario() {

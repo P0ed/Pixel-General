@@ -20,8 +20,8 @@ final class Core {
 		save()
 	}
 
-	func load() {
-		if let data = UserDefaults.standard.data(forKey: "state") {
+	func load(auto: Bool = true) {
+		if let data = UserDefaults.standard.data(forKey: auto ? "auto" : "main") {
 			let decoded: State? = decode(data)
 			if decoded != nil { state = decoded! }
 		} else {
@@ -29,19 +29,19 @@ final class Core {
 		}
 	}
 
-	func save() {
-		UserDefaults.standard.set(encode(state), forKey: "state")
+	func save(auto: Bool = true) {
+		UserDefaults.standard.set(encode(state), forKey: auto ? "auto" : "main")
 	}
 
-	func store(hq: borrowing HQState) {
+	func store(hq: borrowing HQState, auto: Bool = true) {
 		state.hq = clone(hq)
-		save()
+		save(auto: auto)
 	}
 
-	func store(tactical: borrowing TacticalState) {
+	func store(tactical: borrowing TacticalState, auto: Bool = true) {
 		guard state.hq != nil else { return }
 		state.tactical = clone(tactical)
-		save()
+		save(auto: auto)
 	}
 
 	func complete(tactical: borrowing TacticalState) {
@@ -53,9 +53,10 @@ final class Core {
 			modifying(u, { u in
 				u.position = XY(i % 4, i / 4)
 				u.stats.hp = 0xF
-				u.stats.ammo = u.stats[.supply] ? 0 : 0x7
-				u.stats.ap = 1
 				u.stats.mp = 1
+				u.stats.ap = 1
+				u.stats.ammo = 0x7
+				u.stats.ent = 0
 			})
 		}
 		state.hq?.units = .init(head: units, tail: .dead)
@@ -66,36 +67,5 @@ final class Core {
 
 		state.tactical = nil
 		save()
-	}
-}
-
-extension [Unit] {
-
-	static func template(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country, position: .zero, stats: .base >< .truck),
-			Unit(country: country, position: .zero, stats: .base >< .inf),
-			Unit(country: country, position: .zero, stats: .base >< .ifv(country)),
-			Unit(country: country, position: .zero, stats: .base >< .tank(country)),
-			Unit(country: country, position: .zero, stats: .base >< .tank2(country)),
-			Unit(country: country, position: .zero, stats: .base >< .art(country)),
-			Unit(country: country, position: .zero, stats: .base >< .aa(country)),
-			Unit(country: country, position: .zero, stats: .base >< .heli(country)),
-		]
-	}
-
-	static func base(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country, position: XY(0, 0), stats: .base >< .truck),
-			Unit(country: country, position: XY(0, 1), stats: .base >< .inf >< .veteran),
-			Unit(country: country, position: XY(3, 0), stats: .base >< .inf >< .veteran),
-			Unit(country: country, position: XY(2, 1), stats: .base >< .inf >< .veteran),
-			Unit(country: country, position: XY(0, 2), stats: .base >< .tank(country) >< .elite),
-			Unit(country: country, position: XY(0, 3), stats: .base >< .tank(country) >< .veteran),
-			Unit(country: country, position: XY(1, 0), stats: .base >< .ifv(country) >< .veteran),
-			Unit(country: country, position: XY(2, 0), stats: .base >< .ifv(country) >< .elite),
-			Unit(country: country, position: XY(1, 1), stats: .base >< .art(country) >< .veteran),
-			Unit(country: country, position: XY(1, 2), stats: .base >< .art(country) >< .veteran),
-		]
 	}
 }

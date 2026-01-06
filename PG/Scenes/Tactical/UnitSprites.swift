@@ -36,12 +36,13 @@ extension Unit {
 		switch stats.type {
 		case .soft:
 			if stats[.art] { "Art" }
-			else { "Inf" }
+			else if stats[.hardcore] { "SF" }
+			else { "Reg" }
 		case .softWheel:
 			if stats[.supply] { "Truck" }
 			else if stats[.aa] { "Neva" }
 			else { "Truck" }
-		case .lightWheel, .mediumWheel: "Truck"
+		case .lightWheel, .mediumWheel: "boxer"
 		case .lightTrack, .mediumTrack:
 			if stats[.aa] { "SPAA" }
 			else if stats[.art] { "PZH" }

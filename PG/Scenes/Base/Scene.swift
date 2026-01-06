@@ -40,8 +40,6 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 		baseNodes = makeBaseNodes()
 		baseNodes?.layout(size: size)
 
-		mode.respawn(self)
-
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
@@ -110,7 +108,9 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	}
 
 	private func updateStatus() {
-		baseNodes?.status.text = menuState?.statusText ?? mode.status(state)
+		let (status, global) = menuState.map { ($0.statusText, "") } ?? mode.status(state)
+		baseNodes?.status.text = status
+		baseNodes?.global.text = global
 	}
 
 	func saveAndExit() {

@@ -8,8 +8,8 @@ extension TacticalState {
 		case .menu: events.add(.menu)
 		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): endTurn()
-		case .action(.d): events.add(.gameOver)
+		case .action(.c): break
+		case .action(.d): endTurn()
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)

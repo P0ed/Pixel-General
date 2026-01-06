@@ -25,15 +25,16 @@ extension TacticalState {
 		}
 	}
 
-	mutating func fire(src: UID, dst: UID, defBonus: Int) {
-		let atk = Int(units[src].stats.atk(units[dst].stats) + units[src].stats.stars)
-		let def = Int(units[dst].stats.def(units[src].stats) + units[dst].stats.stars) + defBonus
+	mutating func fire(src: UID, dst: UID, defMod: Int) {
+		let atkMod = units[src].stats.ammo == 0x7 ? 1 : 0
+		let atk = Int(units[src].stats.atk(units[dst].stats) + units[src].stats.stars) + atkMod
+		let def = Int(units[dst].stats.def(units[src].stats) + units[dst].stats.stars) + defMod
 
 		let dif = atk - def
 		let t1 = max(1, 7 - dif)
-		let t2 = t1 + 5
-		let t3 = t2 + 7
-		let rounds = (units[src].stats.hp + 2) / 3
+		let t2 = max(3, 15 - dif)
+		let t3 = max(7, 22 - dif)
+		let rounds = (units[src].stats.hp + 3) / 3
 
 		let ds = (0 ..< rounds).map { _ in d20() }
 		let dmgs = ds.map { d in
@@ -44,15 +45,15 @@ extension TacticalState {
 		}
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
 
+		///# ˘˘Logs˘˘
 		let srcStr = units[src].shortDescription
 		let dstStr = units[dst].shortDescription
 		let dmgLine = "ts: \([t1, t2, t3]) ds: \(ds) dmg: \(dmg) \(dmgs)"
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
-
-		let hpLeft = units[dst].stats.hp.decrement(by: dmg)
-		units[dst].stats.ent.decrement()
+		///# ¯¯Logs¯¯
 
 		units[src].stats.ammo.decrement()
+		let hpLeft = units[dst].stats.hp.decrement(by: dmg)
 		units[src].stats.exp.increment(by: hpLeft != 0 ? dmg : dmg * 2)
 
 		camera = units[dst].position
@@ -78,54 +79,44 @@ extension TacticalState {
 		let encirclement = encirclement(uid: dst)
 		let srcStats = units[src].stats
 		let dstStats = units[dst].stats
-		let defBonus = Int(dstStats.ent) + map[units[dst].position].defBonus - encirclement
+		let srcTerrain = map[units[src].position]
+		let dstTerrain = map[units[dst].position]
+		let srcRiver = -min(0, srcTerrain.def)
+		let dstDef = Int(dstStats.ent) + dstTerrain.def - encirclement + srcRiver
 		let srcIni = UInt8(d20()) + srcStats.ini * 2 + atkIni
 		let dstIni = UInt8(d20()) + dstStats.ini * 2 + dstStats.ent * 2
 		print("ini: \(srcIni) vs \(dstIni)")
+		units[src].stats.ap.decrement()
 
-		if !srcStats.isAir, !dstStats.isAir, !srcStats.noEnemyRetaliation,
+		if !srcStats.isAir, !dstStats.isAir, !srcStats.noRetaliation,
 			let art = support(trait: .art, defender: dst, attacker: src) {
-			fire(src: art, dst: src, defBonus: 0)
+			fire(src: art, dst: src, defMod: srcStats[.hardcore] ? 1 : 0)
 		}
 		if srcStats.isAir, let aa = support(trait: .aa, defender: dst, attacker: src) {
-			fire(src: aa, dst: src, defBonus: 0)
+			fire(src: aa, dst: src, defMod: 0)
 		}
 		if srcIni > dstIni, units[src].alive {
-			fire(src: src, dst: dst, defBonus: defBonus)
-			units[src].stats.ap.decrement()
+			fire(src: src, dst: dst, defMod: dstDef)
+			units[dst].stats.ent.decrement()
 		}
 		if units[dst].alive, units[src].alive,
 		   units[dst].canHit(unit: units[src]),
-		   !srcStats.noEnemyRetaliation {
+		   !srcStats.noRetaliation {
 
-			let defBonus = max(0, map[units[dst].position].defBonus)
-			let defPenalty = switch srcStats.type {
-			case .lightWheel where !dstStats.isAir, .lightTrack where !dstStats.isAir: -Int(defBonus)
-			case .heavyTrack where !dstStats.isAir: -Int(defBonus * 2)
-			default: 0
-			}
-			fire(src: dst, dst: src, defBonus: defPenalty)
+			let srcDef = dstStats.isAir ? 0 : dstTerrain.closeCombatPenalty(srcStats.type)
+			fire(src: dst, dst: src, defMod: srcDef)
 		}
 		if srcIni <= dstIni, units[src].alive {
-			fire(src: src, dst: dst, defBonus: defBonus)
-			units[src].stats.ap.decrement()
+			fire(src: src, dst: dst, defMod: dstDef)
+			units[dst].stats.ent.decrement()
 		}
-
 		selectUnit(units[src].alive && units[src].hasActions ? src : .none)
 	}
 }
 
 extension Stats {
-	var shortDescription: String {
-		"\(type)"
-	}
-	var noEnemyRetaliation: Bool {
-		self[.art]
-	}
-}
 
-extension Unit {
-	var shortDescription: String {
-		"\(country) \(stats.shortDescription)"
+	var noRetaliation: Bool {
+		self[.art]
 	}
 }

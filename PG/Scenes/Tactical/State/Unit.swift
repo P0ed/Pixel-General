@@ -46,66 +46,62 @@ extension Stats {
 		get { get(width: 3, offset: 6) }
 		set { set(newValue, width: 3, offset: 6) }
 	}
-	var atm: UInt8 {
+	var mtm: UInt8 {
 		get { get(width: 2, offset: 9) }
 		set { set(newValue, width: 2, offset: 9) }
 	}
-	var aam: UInt8 {
-		get { get(width: 2, offset: 11) }
-		set { set(newValue, width: 2, offset: 11) }
-	}
 	var ent: UInt8 {
-		get { get(width: 3, offset: 13) }
-		set { set(newValue, width: 3, offset: 13) }
+		get { get(width: 3, offset: 11) }
+		set { set(newValue, width: 3, offset: 11) }
 	}
 	var exp: UInt8 {
-		get { get(width: 8, offset: 16) }
-		set { set(newValue, width: 8, offset: 16) }
+		get { get(width: 8, offset: 14) }
+		set { set(newValue, width: 8, offset: 14) }
 	}
 	var type: UnitType {
-		get { UnitType(rawValue: get(width: 3, offset: 24)) ?? .soft }
-		set { set(newValue.rawValue, width: 3, offset: 24) }
+		get { UnitType(rawValue: get(width: 3, offset: 22)) ?? .soft }
+		set { set(newValue.rawValue, width: 3, offset: 22) }
 	}
 	var rng: UInt8 {
-		get { get(width: 3, offset: 27) }
-		set { set(newValue, width: 3, offset: 27) }
+		get { get(width: 3, offset: 25) }
+		set { set(newValue, width: 3, offset: 25) }
 	}
 	var mov: UInt8 {
+		get { get(width: 4, offset: 28) }
+		set { set(newValue, width: 4, offset: 28) }
+	}
+	var ini: UInt8 {
 		get { get(width: 4, offset: 32) }
 		set { set(newValue, width: 4, offset: 32) }
 	}
-	var ini: UInt8 {
+	var softAtk: UInt8 {
 		get { get(width: 4, offset: 36) }
 		set { set(newValue, width: 4, offset: 36) }
 	}
-	var softAtk: UInt8 {
+	var hardAtk: UInt8 {
 		get { get(width: 4, offset: 40) }
 		set { set(newValue, width: 4, offset: 40) }
 	}
-	var hardAtk: UInt8 {
+	var airAtk: UInt8 {
 		get { get(width: 4, offset: 44) }
 		set { set(newValue, width: 4, offset: 44) }
 	}
-	var airAtk: UInt8 {
+	var groundDef: UInt8 {
 		get { get(width: 4, offset: 48) }
 		set { set(newValue, width: 4, offset: 48) }
 	}
-	var groundDef: UInt8 {
+	var airDef: UInt8 {
 		get { get(width: 4, offset: 52) }
 		set { set(newValue, width: 4, offset: 52) }
 	}
-	var airDef: UInt8 {
-		get { get(width: 4, offset: 56) }
-		set { set(newValue, width: 4, offset: 56) }
-	}
 	subscript(_ trait: Trait) -> Bool {
-		get { get(width: 1, offset: 60 + trait.rawValue) == 1 }
-		set { set(newValue ? 1 : 0, width: 1, offset: 60 + trait.rawValue) }
+		get { get(width: 1, offset: 56 + trait.rawValue) == 1 }
+		set { set(newValue ? 1 : 0, width: 1, offset: 56 + trait.rawValue) }
 	}
 }
 
 enum Trait: UInt8 {
-	case art, aa, supply
+	case art, aa, supply, hardcore, transport, xf, xg, xh
 }
 
 extension Stats {
@@ -146,10 +142,10 @@ extension Unit: DeadOrAlive {
 
 extension Unit {
 
-	var untouched: Bool { stats.mp != 0 && stats.ap != 0 }
+	var untouched: Bool { stats.mp == 1 && stats.ap == 1 }
 	var hasActions: Bool { canMove || canAttack }
-	var canMove: Bool { stats.mp != 0 }
-	var canAttack: Bool { stats.ap != 0 && stats.ammo != 0 }
+	var canMove: Bool { stats.mp > 0 }
+	var canAttack: Bool { stats.ap > 0 && stats.ammo > 0 }
 
 	func canHit(unit: Unit) -> Bool {
 		position.distance(to: unit.position) <= stats.rng * 2 + 1
@@ -160,6 +156,8 @@ extension Unit {
 }
 
 extension Stats {
+
+	var hasAmmo: Bool { softAtk + hardAtk + airAtk > 0 }
 
 	var cost: UInt16 {
 		expCost + typeCost + traitCost + sum
@@ -172,11 +170,12 @@ extension Stats {
 	private var traitCost: UInt16 {
 		(self[.aa] ? 100 : 0)
 		+ (self[.art] ? 80 : 0)
+		+ (self[.hardcore] ? 60 + typeCost >> 2 : 0)
 	}
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .soft: 20
+		case .soft: 40
 		case .softWheel: 80
 		case .lightWheel: 120
 		case .mediumWheel: 220

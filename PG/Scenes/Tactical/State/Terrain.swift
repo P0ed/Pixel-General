@@ -36,12 +36,23 @@ extension Terrain {
 		}
 	}
 
-	var defBonus: Int {
+	var def: Int {
 		switch self {
 		case .forest, .hill: 1
-		case .forestHill, .mountain, .city: 2
+		case .forestHill, .city: 2
+		case .mountain: 3
 		case .field, .none: 0
 		case .river: -2
+		}
+	}
+
+	func closeCombatPenalty(_ type: UnitType) -> Int {
+		let def = max(0, def)
+		return switch type {
+		case .lightWheel, .lightTrack: -Int(def)
+		case .mediumWheel, .mediumTrack: -Int(def * 2)
+		case .heavyTrack: -Int(def * 3)
+		default: 0
 		}
 	}
 

@@ -54,6 +54,7 @@
 		5FBA4D832EF7016F00D7C1B0 /* Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D822EF7016D00D7C1B0 /* Input.swift */; };
 		5FCABBC82EAA701D008EE894 /* mov.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5FCABBC72EAA701D008EE894 /* mov.wav */; };
 		5FCABBCA2EAA787D008EE894 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCABBC92EAA787B008EE894 /* Strings.swift */; };
+		5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */; };
 		5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF200762EF44FC500B659E7 /* SceneMode.swift */; };
 		5FF679772F06FB1300586323 /* TacticalMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF679762F06FB0D00586323 /* TacticalMove.swift */; };
 		5FF679792F08694A00586323 /* Crystal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF679782F08694A00586323 /* Crystal.swift */; };
@@ -111,6 +112,7 @@
 		5FBA4D822EF7016D00D7C1B0 /* Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Input.swift; sourceTree = "<group>"; };
 		5FCABBC72EAA701D008EE894 /* mov.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = mov.wav; sourceTree = "<group>"; };
 		5FCABBC92EAA787B008EE894 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
+		5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNodes.swift; sourceTree = "<group>"; };
 		5FF200762EF44FC500B659E7 /* SceneMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneMode.swift; sourceTree = "<group>"; };
 		5FF679762F06FB0D00586323 /* TacticalMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMove.swift; sourceTree = "<group>"; };
 		5FF679782F08694A00586323 /* Crystal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crystal.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				5F2A33BA2EA93AC3008A0A95 /* SceneInput.swift */,
 				5F2A33BD2EA93AC3008A0A95 /* HIDController.swift */,
 				5F2A33BB2EA93AC3008A0A95 /* BaseNodes.swift */,
+				5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */,
 				5F2A33BF2EA93AC3008A0A95 /* TileSprites.swift */,
 				5FCABBC92EAA787B008EE894 /* Strings.swift */,
 			);
@@ -392,6 +395,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */,
 				5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
 				5F919D5E2EA9596E0037A208 /* Unit.swift in Sources */,

@@ -3,6 +3,14 @@ import Foundation
 func id<A>(_ x: A) -> A { x }
 func ø<each A>(_ x: repeat each A) {}
 
+precedencegroup ApplicationPrecedence {
+	associativity: right
+	higherThan: AssignmentPrecedence
+}
+
+infix operator §: ApplicationPrecedence
+func § <A, B> (_ f: (A) -> B, x: A) -> B { f(x) }
+
 func modifying<A>(_ value: A, _ tfm: (inout A) -> Void) -> A {
 	var value = value
 	tfm(&value)

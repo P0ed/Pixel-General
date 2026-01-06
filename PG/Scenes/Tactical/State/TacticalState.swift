@@ -4,7 +4,7 @@ struct TacticalState: ~Copyable {
 	var buildings: Speicher<32, Building>
 	var units: Speicher<128, Unit>
 	var events: Speicher<4, TacticalEvent> = .init(head: [], tail: .none)
-	var d20: D20 = .init(seed: 0)
+	var seed: Crystals = .empty
 	var turn: UInt32 = 0
 	var cursor: XY = .zero
 	var camera: XY = .zero
@@ -34,6 +34,15 @@ extension TacticalState {
 			(i, vision(for: p.country))
 		})
 		self.players.modifyEach { i, p in p.visible = v[i] ?? .empty }
+	}
+
+	var d20: D20 {
+		get {
+			D20(seed: UInt64(seed.rawValue) | UInt64(player.crystals.rawValue) << 8)
+		}
+		set {
+			seed = Crystals(rawValue: UInt8(newValue.seed & 0xFF))
+		}
 	}
 }
 

@@ -1,7 +1,6 @@
 import SpriteKit
 
 struct TacticalNodes {
-	var cursor: SKNode
 	var camera: SKCameraNode
 	var map: MapNodes
 	var sounds: SoundNodes
@@ -16,20 +15,23 @@ struct SoundNodes {
 	var mov: SKAudioNode
 }
 
-struct MapNodes {
-	var layers: [SKTileMapNode]
-	var size: Int
-}
-
 extension TacticalNodes {
 
 	init(parent: SKNode, state: borrowing TacticalState) {
 		self = TacticalNodes(
-			cursor: Self.addCursor(parent: parent),
 			camera: Self.addCamera(parent: parent),
 			map: Self.addMap(parent: parent, state: state),
 			sounds: Self.addSounds(parent: parent)
 		)
+		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
+			let sprite = state.units[i].sprite
+			let xy = state.units[i].position
+			sprite.position = state.map.point(at: xy)
+			sprite.zPosition = map.zPosition(at: xy)
+			sprite.isHidden = !state.player.visible[xy]
+			parent.addChild(sprite)
+			return (i, sprite)
+		})
 	}
 
 	private static func addSounds(parent: SKNode) -> SoundNodes {
@@ -62,7 +64,9 @@ extension TacticalNodes {
 
 		let map = MapNodes(
 			layers: layers,
-			size: state.map.size
+			size: state.map.size,
+			cursor: MapNodes.addCursor(parent: parent),
+			selection: MapNodes.addCursor(parent: parent, z: -0.05, color: .selectedCursor)
 		)
 
 		state.map.indices.forEach { xy in
@@ -79,20 +83,6 @@ extension TacticalNodes {
 		return camera
 	}
 
-	private static func addCursor(parent: SKNode) -> SKNode {
-		let node = SKNode()
-		node.position = .init(x: -1.0, y: -1.0)
-
-		let cursor = SKSpriteNode(texture: .init(image: .cursor))
-		cursor.texture?.filteringMode = .nearest
-		cursor.zPosition = 0.1
-
-		node.addChild(cursor)
-		parent.addChild(node)
-
-		return node
-	}
-
 	func updateUnits(_ state: borrowing TacticalState) {
 		state.units.forEach { i, u in
 			units[i]?.update(hp: u.stats.hp)
@@ -100,15 +90,15 @@ extension TacticalNodes {
 	}
 
 	func update(state: borrowing TacticalState) {
-		let cursorPosition = state.map.point(at: state.cursor)
-		if cursor.position != cursorPosition {
-			cursor.position = cursorPosition
-			cursor.zPosition = map.zPosition(at: state.cursor)
-		}
 		let cameraPosition = state.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
+		map.update(
+			map: state.map,
+			cursor: state.cursor,
+			selected: state.selectedUnit.map { i in state.units[i].position }
+		)
 		let cameraScale = CGFloat(state.scale)
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
@@ -140,20 +130,5 @@ extension TacticalNodes {
 				map.layers[0].tileRowIndex(fromPosition: location)
 			)
 		)
-	}
-}
-
-extension MapNodes {
-
-	func layer(at xy: XY) -> Int {
-		xy.x + size - 1 - xy.y
-	}
-
-	func setTileGroup(_ tileGroup: SKTileGroup?, at xy: XY) {
-		layers[layer(at: xy)].setTileGroup(tileGroup, at: xy)
-	}
-
-	func zPosition(at xy: XY) -> CGFloat {
-		CGFloat(layer(at: xy))
 	}
 }

@@ -7,16 +7,28 @@ extension TacticalState {
 		seed: Int = .random(in: 0...1023)
 	) -> TacticalState {
 		let citiesCount = min(32, size * size / 64)
+		let div = size / 8
+		let dw = (size - 4) / (div - 1) - 1
+		let div2 = citiesCount / div + (citiesCount % div == 0 ? 0 : 1)
+		let dh = (size - 2) / (div2 - 1) - 1
+		print("citiesCount:", citiesCount, "div:", div, div2, dw, dh)
 		let map = Map<Terrain>(size: size, seed: seed)
 		let buildings: [Building] = (0 ..< citiesCount).map { i in
-			let p = XY(1 + 8 * (i % (size / 8)), 1 + 8 * (i / (size / 8)))
-			let cp = map[p] != .river ? p : p.n8.firstMap { p in map[p] != .river ? p : nil }
+			let x = i % div
+			let y = (i / div)
+			let p = modifying(
+				XY(1 + dw * x + 2 * (y & 1), 1 + dh * y)
+			) { p in
+				if map[p] == .river, let x = p.n8.firstMap({ p in map[p] != .river ? p : nil }) {
+					p = x
+				}
+			}
 			return Building(
 				country: i == 0 ? player.country
 				: i < citiesCount / 2 ? .usa
 				: i < citiesCount * 3 / 4 ? .rus
 				: .swe,
-				position: cp ?? p,
+				position: p,
 				type: .city
 			)
 		}
@@ -27,10 +39,12 @@ extension TacticalState {
 		let usaCity = buildings.filter { $0.country == .usa }.sorted(by: { b1, b2 in
 			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
 		}).first?.position ?? .zero
+		let sweCity = buildings.filter { $0.country == .swe }.first?.position ?? .zero
 
 		let units: [Unit] = units.mapInPlace { $0.position = $0.position + playerCity }
-		+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity }
-		+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity }
+		+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity - .one }
+		+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity - .one }
+		+ .small(.swe).mapInPlace { $0.position = $0.position + sweCity - .one }
 
 		return TacticalState(
 			map: map,

@@ -8,10 +8,10 @@ extension TacticalState {
 
 	func vision(for country: Country) -> SetXY {
 		units.reduce(into: SetXY.empty) { v, i, u in
-			if u.country == country { v.formUnion(vision(for: u)) }
+			if u.country.team == country.team { v.formUnion(vision(for: u)) }
 		}
 		.union(buildings.flatMap { _, building in
-			building.country == country ? building.position.circle(3) : []
+			building.country.team == country.team ? building.position.circle(3) : []
 		})
 	}
 

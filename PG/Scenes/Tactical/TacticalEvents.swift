@@ -23,7 +23,7 @@ private extension TacticalScene {
 		case .nextDay: nodes?.updateUnits(state)
 		case .shop: processShop()
 		case .menu: processMenu()
-		case .gameOver: processGameOver()
+		case .gameOver: restartGame(state: state)
 		case .none: break
 		}
 	}
@@ -105,13 +105,28 @@ private extension TacticalScene {
 				.init(
 					icon: "Restart", text: "Restart",
 					action: { [weak self] state in self?.restartGame(state: state) }
-				)
+				),
+				.init(
+					icon: "Save", text: "Save",
+					action: { state in
+						core.store(tactical: state, auto: false)
+					}
+				),
+				.init(
+					icon: "Load", text: "Load",
+					action: { [weak self] state in
+						core.load(auto: false)
+						self?.view?.present(core.state)
+					}
+				),
+				.init(
+					icon: "HQ", text: "HQ",
+					action: { [weak self] state in
+						self?.restartGame(state: state)
+					}
+				),
 			]
 		))
-	}
-
-	func processGameOver() {
-		restartGame(state: state)
 	}
 
 	private func restartGame(state: borrowing TacticalState) {

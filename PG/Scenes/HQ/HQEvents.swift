@@ -21,7 +21,7 @@ extension HQScene {
 	}
 
 	func respawn() {
-		state.units.forEach { i, u in processSpawn(uid: i) }
+		state.units.forEach { i, u in processSpawn(uid: i) }		
 	}
 
 	private func process(_ event: Event) async {

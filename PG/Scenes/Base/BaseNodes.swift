@@ -3,6 +3,7 @@ import SpriteKit
 struct BaseNodes {
 	var menu: SKNode
 	var status: SKLabelNode
+	var global: SKLabelNode
 }
 
 extension Scene where State: ~Copyable {
@@ -10,7 +11,8 @@ extension Scene where State: ~Copyable {
 	func makeBaseNodes() -> BaseNodes {
 		BaseNodes(
 			menu: addMenu(),
-			status: addStatus()
+			status: addStatus(),
+			global: addStatus(alignment: .right),
 		)
 	}
 
@@ -28,11 +30,11 @@ extension Scene where State: ~Copyable {
 		return menu
 	}
 
-	func addStatus() -> SKLabelNode {
+	func addStatus(alignment: SKLabelHorizontalAlignmentMode = .left) -> SKLabelNode {
 		let label = SKLabelNode(size: .s)
 		camera?.addChild(label)
 		label.zPosition = 66.0
-		label.horizontalAlignmentMode = .left
+		label.horizontalAlignmentMode = alignment
 		label.verticalAlignmentMode = .baseline
 		return label
 	}
@@ -58,6 +60,10 @@ extension BaseNodes {
 	func layout(size: CGSize) {
 		status.position = CGPoint(
 			x: Self.inset - size.width / 2.0,
+			y: Self.inset - size.height / 2.0
+		)
+		global.position = CGPoint(
+			x: size.width / 2.0 - Self.inset,
 			y: Self.inset - size.height / 2.0
 		)
 	}

@@ -7,6 +7,8 @@ extension SKColor {
 	static var lineSelection: SKColor { .init(white: 0.22, alpha: 0.47) }
 	static var lineCursor: SKColor { .init(white: 0.22, alpha: 0.82) }
 
+	static var selectedCursor: SKColor { .init(red: 0.82, green: 0.33, blue: 0.2, alpha: 1) }
+
 	static var textDefault: SKColor { .init(white: 0.01, alpha: 1.0) }
 }
 

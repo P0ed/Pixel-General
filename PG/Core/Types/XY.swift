@@ -23,6 +23,10 @@ extension XY {
 		XY(0, 0)
 	}
 
+	static var one: XY {
+		XY(1, 1)
+	}
+
 	var dr: Int {
 		2 * max(abs(x), abs(y)) + min(abs(x), abs(y))
 	}
@@ -58,6 +62,11 @@ extension XY {
 	var n8: [8 of XY] {
 		Self.d8.map { xy in xy + self }
 	}
+
+	// 20
+	var r2: [XY] { [] }
+	// 36
+	var r3: [XY] { [] }
 
 	func neighbor(_ direction: Direction) -> XY {
 		switch direction {

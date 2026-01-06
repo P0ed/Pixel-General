@@ -1,13 +1,13 @@
 extension Unit {
 
 	var status: String {
-		.makeStatus(pad: 16) { add in
+		.makeStatus(pad: 12) { add in
 			add("\(stats.shortDescription)")
-		} + .makeStatus(pad: 11) { add in
-			add("\(mpString)\(apString) \(stats.starsString)")
-		} + .makeStatus(pad: 14) { add in
-			add("AM: \(stats.ammo)/\(stats.atm)/\(stats.aam)")
 		} + .makeStatus(pad: 10) { add in
+			add("\(mpString)\(apString)  \(stats.starsString)")
+		} + .makeStatus(pad: 12) { add in
+			add(stats.ammoString)
+		} + .makeStatus(pad: 9) { add in
 			add("INI: \(stats.ini)")
 			add("SA: \(stats.softAtk)")
 			add("HA: \(stats.hardAtk)")
@@ -54,6 +54,13 @@ extension Stats {
 		default: "☆☆☆☆"
 		}
 	}
+
+	var ammoString: String {
+		!hasAmmo ? "" : String(repeating: ".", count: 0x7 - Int(ammo))
+		+ String(repeating: "!", count: Int(ammo))
+		+ String(repeating: "*", count: Int(mtm))
+		+ String(repeating: ".", count: 0x3 - Int(mtm))
+	}
 }
 
 extension TacticalState {
@@ -64,11 +71,17 @@ extension TacticalState {
 		} else if let building = buildings[cursor] {
 			.makeStatus { add in
 				add("\(building.type)")
-				add("controller: \(building.country.team)")
+				add("controller: \(building.country)")
 			}
 		} else {
 			"\(cursor) \(map[cursor])"
 		}
+	}
+
+	var globalText: String {
+		let cs = player.crystals
+		let rs = Crystals(rawValue: UInt8(d20.seed & 0xFF))
+		return "\(cs) \(rs)"
 	}
 }
 
@@ -97,6 +110,51 @@ extension String {
 			}
 
 			mk(add)
+		}
+	}
+}
+
+extension Stats {
+
+	var shortDescription: String {
+		switch type {
+		case .soft: traitDescription ?? "inf"
+		case .softWheel: traitDescription ?? "ifv"
+		case .lightWheel: traitDescription ?? "ifv"
+		case .mediumWheel: traitDescription ?? "ifv"
+		case .lightTrack: traitDescription ?? "ifv"
+		case .mediumTrack: traitDescription ?? "ifv"
+		case .heavyTrack: "tank"
+		case .air: "heli"
+		}
+	}
+
+	private var traitDescription: String? {
+		self[.art] ? "art" : self[.aa] ? "anti-air" : self[.supply] ? "supply" : .none
+	}
+}
+
+extension Unit {
+	var shortDescription: String {
+		"\(country) \(stats.shortDescription)"
+	}
+}
+
+extension Crystals: CustomStringConvertible {
+
+	var description: String {
+		(0 ..< 4).map { i in self[i].symbol }.joined()
+	}
+}
+
+extension Crystal {
+
+	var symbol: String {
+		switch self {
+		case .red: "♚"
+		case .amber: "♛"
+		case .turquoise: "♜"
+		case .blue: "♝"
 		}
 	}
 }

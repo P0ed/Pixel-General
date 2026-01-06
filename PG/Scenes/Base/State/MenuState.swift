@@ -37,8 +37,8 @@ extension MenuState where State: ~Copyable {
 
 	mutating func moveCursor(_ direction: Direction) {
 		cursor = switch direction {
-		case .down: (cursor + cols) % items.count
-		case .up: (cursor - cols + items.count) % items.count
+		case .down: (cursor + min(cols, items.count)) % items.count
+		case .up: (cursor - min(cols, items.count) + items.count) % items.count
 		case .right: (cursor + 1) % items.count
 		case .left: (cursor - 1 + items.count) % items.count
 		}

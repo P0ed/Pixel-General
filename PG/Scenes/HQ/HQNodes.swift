@@ -1,7 +1,6 @@
 import SpriteKit
 
 struct HQNodes {
-	var cursor: SKNode
 	var camera: SKCameraNode
 	var map: MapNodes
 	var units: [UID: SKNode] = [:]
@@ -13,11 +12,14 @@ extension HQNodes {
 
 	init(parent: SKNode, state: borrowing HQState) {
 		self = HQNodes(
-			cursor: Self.addCursor(parent: parent),
 			camera: Self.addCamera(parent: parent),
-			map: Self.addMap(parent: parent, state: state),
-			units: [:]
+			map: Self.addMap(parent: parent, state: state)
 		)
+		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
+			let node = unitSprite(uid: i, unit: u)
+			parent.addChild(node)
+			return (i, node)
+		})
 	}
 
 	private static func addMap(parent: SKNode, state: borrowing HQState) -> MapNodes {
@@ -34,7 +36,9 @@ extension HQNodes {
 
 		let nodes = MapNodes(
 			layers: layers,
-			size: map.size
+			size: map.size,
+			cursor: MapNodes.addCursor(parent: parent),
+			selection: MapNodes.addCursor(parent: parent, z: -0.05, color: .selectedCursor)
 		)
 
 		map.indices.forEach { xy in
@@ -52,13 +56,16 @@ extension HQNodes {
 		return camera
 	}
 
-	private static func addCursor(parent: SKNode) -> SKNode {
+	private static func addCursor(parent: SKNode, xz: CGFloat = 0.0, color: SKColor? = nil) -> SKNode {
 		let node = SKNode()
 		node.position = .init(x: -1.0, y: -1.0)
 
 		let cursor = SKSpriteNode(texture: .init(image: .cursor))
 		cursor.texture?.filteringMode = .nearest
-		cursor.zPosition = 0.1
+		cursor.color = color ?? .white
+		cursor.colorBlendFactor = color == nil ? 0.0 : 0.68
+		cursor.blendMode = .alpha
+		cursor.zPosition = 0.1 + xz
 
 		node.addChild(cursor)
 		parent.addChild(node)
@@ -67,11 +74,11 @@ extension HQNodes {
 	}
 
 	func update(state: borrowing HQState) {
-		let cursorPosition = Self.map.point(at: state.cursor)
-		if cursor.position != cursorPosition {
-			cursor.position = cursorPosition
-			cursor.zPosition = map.zPosition(at: state.cursor)
-		}
+		map.update(
+			map: Self.map,
+			cursor: state.cursor,
+			selected: state.selected.map { i in state.units[i].position }
+		)
 	}
 
 	func mouse(event: NSEvent) -> Input? {
@@ -82,5 +89,13 @@ extension HQNodes {
 				map.layers[0].tileRowIndex(fromPosition: location)
 			)
 		)
+	}
+
+	func unitSprite(uid: UID, unit: Unit) -> SKNode {
+		let sprite = unit.hqSprite
+		let xy = unit.position
+		sprite.position = HQNodes.map.point(at: xy)
+		sprite.zPosition = map.zPosition(at: xy)
+		return sprite
 	}
 }

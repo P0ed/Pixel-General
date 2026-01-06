@@ -14,10 +14,11 @@ extension TacticalState {
 			} ?? false
 		}
 
-		mov.moves[unit.position] = unit.stats.mov * 2 + 1
+		let r = unit.stats.mov + (hasTransport(unit: unit) ? 1 : 0)
+		mov.moves[unit.position] = r * 2 + 1
 		print("mov started at \(mov.start) \(mov.moves[mov.start])")
 		var front: [XY] = [unit.position]
-		for _ in 0 ..< unit.stats.mov where !front.isEmpty {
+		for _ in 0 ..< r where !front.isEmpty {
 			front = front.flatMap { from in
 				let mp = mov.moves[from]
 				let n4 = from.n4
@@ -63,6 +64,16 @@ extension TacticalState {
 		}
 
 		return mov
+	}
+
+	func hasTransport(unit: Unit) -> Bool {
+		guard unit.stats.type == .soft else { return false }
+
+		return unit.position.n8.firstMap { xy in
+			units[xy].flatMap { _, u in
+				u.country == unit.country && u.stats[.transport] ? true : nil
+			}
+		} ?? false
 	}
 
 	mutating func move(unit uid: UID, to position: XY) {
