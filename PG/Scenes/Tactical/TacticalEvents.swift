@@ -99,32 +99,22 @@ private extension TacticalScene {
 		show(MenuState(
 			layout: .compact,
 			items: [
-				.init(icon: "End", text: "End turn", action: { state in
+				.init(icon: "End", text: "End turn") { state in
 					state.endTurn()
-				}),
-				.init(
-					icon: "Restart", text: "Restart",
-					action: { [weak self] state in self?.restartGame(state: state) }
-				),
-				.init(
-					icon: "Save", text: "Save",
-					action: { state in
-						core.store(tactical: state, auto: false)
-					}
-				),
-				.init(
-					icon: "Load", text: "Load",
-					action: { [weak self] state in
-						core.load(auto: false)
-						self?.view?.present(core.state)
-					}
-				),
-				.init(
-					icon: "HQ", text: "HQ",
-					action: { [weak self] state in
-						self?.restartGame(state: state)
-					}
-				),
+				},
+				.init(icon: "Restart", text: "Restart") { [weak self] state in
+					self?.restartGame(state: state)
+				},
+				.init(icon: "Save", text: "Save") { state in
+					core.store(tactical: state, auto: false)
+				},
+				.init(icon: "Load", text: "Load") { [weak self] state in
+					core.load(auto: false)
+					self?.view?.present(core.state)
+				},
+				.init(icon: "HQ", text: "HQ") { [weak self] state in
+					self?.restartGame(state: state)
+				},
 			]
 		))
 	}

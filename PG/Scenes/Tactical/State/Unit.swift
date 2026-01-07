@@ -134,7 +134,7 @@ enum UnitType: UInt8, Hashable {
 extension Unit: DeadOrAlive {
 
 	static var dead: Unit {
-		.init(country: .dnr, position: .zero, stats: .empty)
+		.init(country: .ind, position: .zero, stats: .empty)
 	}
 
 	var alive: Bool { stats.hp > 0 }
@@ -160,7 +160,7 @@ extension Stats {
 	var hasAmmo: Bool { softAtk + hardAtk + airAtk > 0 }
 
 	var cost: UInt16 {
-		expCost + typeCost + traitCost + sum
+		expCost + typeCost + traitCost + sum * (isAir ? 2 : 1)
 	}
 
 	private var expCost: UInt16 {
@@ -168,7 +168,7 @@ extension Stats {
 	}
 
 	private var traitCost: UInt16 {
-		(self[.aa] ? 100 : 0)
+		(self[.aa] ? 80 : 0)
 		+ (self[.art] ? 80 : 0)
 		+ (self[.hardcore] ? 60 + typeCost >> 2 : 0)
 	}
@@ -177,12 +177,12 @@ extension Stats {
 		switch type {
 		case .soft: 40
 		case .softWheel: 80
-		case .lightWheel: 120
-		case .mediumWheel: 220
-		case .lightTrack: 180
-		case .mediumTrack: 220
-		case .heavyTrack: 260
-		case .air: 320
+		case .lightWheel: 110
+		case .mediumWheel: 140
+		case .lightTrack: 120
+		case .mediumTrack: 150
+		case .heavyTrack: 180
+		case .air: 220
 		}
 	}
 

@@ -2,14 +2,14 @@ extension Stats {
 
 	static func inf(_ country: Country) -> Self {
 		switch country.team {
-		case .axis, .allies: .regular >< .veteran
+		case .axis, .allies: .regular
 		case .soviet: .regular
 		}
 	}
 
 	static func inf2(_ country: Country) -> Self {
 		switch country.team {
-		case .axis, .allies: .special >< .elite
+		case .axis, .allies: .special >< .veteran
 		case .soviet: .special
 		}
 	}
@@ -23,18 +23,20 @@ extension Stats {
 
 	static func tank(_ country: Country) -> Self {
 		switch country {
-		case .ukr, .swe: .strv122
+		case .ned, .swe, .ukr: .strv122
 		case .usa, .isr: .m1A2
-		case .rus, .irn, .dnr, .lnr: .t72
+		case .pak: .m1A1
+		case .rus, .irn, .ind: .t72
 		}
 	}
 
 	static func tank2(_ country: Country) -> Self {
 		switch country {
-		case .ukr, .swe: .strv122 >< .veteran
+		case .ned, .swe, .ukr: .strv122 >< .veteran
 		case .usa, .isr: .m1A2 >< .veteran
+		case .pak: .m1A2
 		case .rus: .t90m_proryv
-		case .irn, .dnr, .lnr: .t72 >< .veteran
+		case .irn, .ind: .t72 >< .veteran
 		}
 	}
 
@@ -102,6 +104,7 @@ extension Stats {
 	static var special: Self {
 		.make { stats in
 			stats.type = .soft
+			stats[.hardcore] = true
 			stats.ini = 7
 			stats.softAtk = 8
 			stats.hardAtk = 5
@@ -110,7 +113,6 @@ extension Stats {
 			stats.airDef = 8
 			stats.mov = 4
 			stats.rng = 1
-			stats[.hardcore] = true
 		}
 	}
 
@@ -132,6 +134,19 @@ extension Stats {
 			stats.type = .heavyTrack
 			stats.ini = 8
 			stats.softAtk = 9
+			stats.hardAtk = 11
+			stats.mov = 6
+			stats.rng = 1
+			stats.groundDef = 11
+			stats.airDef = 6
+		}
+	}
+
+	static var m1A1: Self {
+		.make { stats in
+			stats.type = .heavyTrack
+			stats.ini = 8
+			stats.softAtk = 10
 			stats.hardAtk = 11
 			stats.mov = 6
 			stats.rng = 1

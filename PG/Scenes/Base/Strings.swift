@@ -29,7 +29,7 @@ extension Unit {
 
 	var description: String {
 		"""
-		\(stats.shortDescription)
+		\(stats.shortDescription) \(String(repeating: "★", count: Int(stats.stars)))
 		
 		ATK: \(stats.softAtk) / \(stats.hardAtk) / \(stats.airAtk)
 		DEF: \(stats.groundDef) / \(stats.airDef)

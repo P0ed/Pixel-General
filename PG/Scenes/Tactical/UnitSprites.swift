@@ -17,6 +17,9 @@ extension Unit {
 		let node = SKNode()
 
 		let sprite = SKSpriteNode(imageNamed: imageName)
+		sprite.blendMode = .alpha
+		sprite.colorBlendFactor = 0.1
+		sprite.color = country.color
 		sprite.zPosition = 0.2
 		sprite.xScale = country.team == .axis ? 1.0 : -1.0
 		sprite.texture?.filteringMode = .nearest
@@ -47,8 +50,25 @@ extension Unit {
 			if stats[.aa] { "SPAA" }
 			else if stats[.art] { "PZH" }
 			else { "Recon" }
-		case .heavyTrack: "Tank"
+		case .heavyTrack:
+			switch country {
+			case .usa: "M1A1"
+			default: "Tank"
+			}
 		case .air: "MH6"
+		}
+	}
+}
+
+extension Country {
+
+	var color: SKColor {
+		switch self {
+		case .usa: .red
+		case .swe: .blue
+		case .ukr: .yellow
+		case .rus: .green
+		default: .white
 		}
 	}
 }

@@ -5,7 +5,7 @@ enum HQEvent {
 	case spawn(UID)
 	case shop
 	case scenario
-	case new
+	case menu
 	case none
 }
 
@@ -30,7 +30,7 @@ extension HQScene {
 		case .spawn(let uid): processSpawn(uid: uid)
 		case .shop: processShop()
 		case .scenario: processScenario()
-		case .new: processNew()
+		case .menu: processMenu()
 		case .none: break
 		}
 	}
@@ -73,8 +73,19 @@ extension HQScene {
 		view?.present(core.state)
 	}
 
-	private func processNew() {
-		core.new()
-		view?.present(core.state)
+	private func processMenu() {
+		show(.init(layout: .compact, items: [
+			.init(icon: "New", text: "New") { [weak self] _ in
+				core.new()
+				self?.view?.present(core.state)
+			},
+			.init(icon: "Save", text: "Save") { state in
+				core.store(hq: state, auto: false)
+			},
+			.init(icon: "Load", text: "Load") { [weak self] _ in
+				core.load(auto: false)
+				self?.view?.present(core.state)
+			},
+		]))
 	}
 }

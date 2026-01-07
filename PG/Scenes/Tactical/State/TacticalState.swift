@@ -20,7 +20,7 @@ extension TacticalState {
 		self.players = .init(head: players, tail: .dead)
 		self.buildings = .init(
 			head: buildings,
-			tail: .init(country: .dnr, position: .zero, type: .city)
+			tail: .init(country: .ind, position: .zero, type: .city)
 		)
 		self.units = .init(head: units, tail: .dead)
 
@@ -94,7 +94,7 @@ extension Building {
 
 	var income: UInt16 {
 		switch type {
-		case .city: 40
+		case .city: 0x10
 		}
 	}
 }

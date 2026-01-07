@@ -24,7 +24,7 @@ extension HQState {
 		case .action(.b): secondaryAction()
 		case .action(.c): shopAction()
 		case .action(.d): processScenario()
-		case .menu: events.add(.new)
+		case .menu: events.add(.menu)
 		case .tile(let xy): select(xy)
 		default: break
 		}

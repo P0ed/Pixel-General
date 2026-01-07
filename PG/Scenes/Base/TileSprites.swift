@@ -12,13 +12,6 @@ extension SKTileGroup {
 		)
 	}
 
-	static let ukr = make(.UKR)
-	static let usa = make(.USA)
-	static let rus = make(.RUS)
-	static let lnr = make(.LNR)
-	static let dnr = make(.DNR)
-	static let irn = make(.IRN)
-
 	static let city = make(.city)
 	static let field = make(.field)
 	static let forest = make(.forest)
@@ -69,22 +62,6 @@ extension Terrain {
 			case .river: .river00Fog
 			case .none: .none
 			}
-		}
-	}
-}
-
-extension Country {
-
-	var flag: SKTileGroup {
-		switch self {
-		case .dnr: .dnr
-		case .lnr: .lnr
-		case .irn: .irn
-		case .isr: .usa
-		case .rus: .rus
-		case .swe: .ukr
-		case .ukr: .ukr
-		case .usa: .usa
 		}
 	}
 }
