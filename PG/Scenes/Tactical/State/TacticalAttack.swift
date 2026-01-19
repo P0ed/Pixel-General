@@ -6,11 +6,7 @@ extension TacticalState {
 			   player.visible[u.position],
 			   unit.canHit(unit: u)
 			{
-				if unit.stats[.aa] && u.stats.isAir {
-					r = [(i, u)] + r
-				} else {
-					r += [(i, u)]
-				}
+				r.append((i, u))
 			}
 		}
 	}
@@ -44,6 +40,7 @@ extension TacticalState {
 			0 as UInt8
 		}
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
+		let targetPos = units[dst].position
 
 		///# ˘˘Logs˘˘
 		let srcStr = units[src].shortDescription
@@ -53,10 +50,12 @@ extension TacticalState {
 		///# ¯¯Logs¯¯
 
 		units[src].stats.ammo.decrement()
-		let hpLeft = units[dst].stats.hp.decrement(by: dmg)
-		units[src].stats.exp.increment(by: hpLeft != 0 ? dmg : dmg * 2)
+		units[dst].stats.hp.decrement(by: dmg)
+		let alive = units[dst].alive
+		units[src].stats.exp.increment(by: alive ? dmg : dmg * 2)
+		if !alive { unitsMap[targetPos] = -1 }
 
-		camera = units[dst].position
+		camera = targetPos
 		events.add(.attack(src, dst, dmg, units[dst].stats.hp))
 	}
 
@@ -70,7 +69,7 @@ extension TacticalState {
 		)
 	}
 
-	mutating func attack(src: UID, dst: UID, atkIni: UInt8 = 15) {
+	mutating func attack(src: UID, dst: UID, surprise: Bool = false) {
 		guard units[src].country == country,
 			  units[src].country.team != units[dst].country.team,
 			  units[src].canAttack, units[src].canHit(unit: units[dst])
@@ -83,9 +82,12 @@ extension TacticalState {
 		let dstTerrain = map[units[dst].position]
 		let srcRiver = -min(0, srcTerrain.def)
 		let dstDef = Int(dstStats.ent) + dstTerrain.def - encirclement + srcRiver
-		let srcIni = UInt8(d20()) + srcStats.ini * 2 + atkIni
-		let dstIni = UInt8(d20()) + dstStats.ini * 2 + dstStats.ent * 2
-		print("ini: \(srcIni) vs \(dstIni)")
+		let ruggedDefence: Bool = !surprise && srcStats.noRetaliation ? false : (
+			d20() + Int(srcStats.ini + srcStats.stars) * 2
+		) < (
+			Int(dstStats.ent + dstStats.ini + dstStats.stars) * 2 + (surprise ? 10 : 0)
+		)
+		if ruggedDefence { print("Rugged Defence!") }
 		units[src].stats.ap.decrement()
 
 		if !srcStats.isAir, !dstStats.isAir, !srcStats.noRetaliation,
@@ -95,18 +97,19 @@ extension TacticalState {
 		if srcStats.isAir, let aa = support(trait: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defMod: 0)
 		}
-		if srcIni > dstIni, units[src].alive {
+		if !ruggedDefence, units[src].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[dst].stats.ent.decrement()
 		}
 		if units[dst].alive, units[src].alive,
 		   units[dst].canHit(unit: units[src]),
-		   !srcStats.noRetaliation {
+		   !srcStats.noRetaliation || surprise {
 
-			let srcDef = dstStats.isAir ? 0 : dstTerrain.closeCombatPenalty(srcStats.type)
+			let srcDef = (dstStats.isAir ? 0 : dstTerrain.closeCombatPenalty(srcStats.type))
+			+ (ruggedDefence ? -3 : 0)
 			fire(src: dst, dst: src, defMod: srcDef)
 		}
-		if srcIni <= dstIni, units[src].alive {
+		if ruggedDefence, units[src].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[dst].stats.ent.decrement()
 		}
@@ -116,7 +119,5 @@ extension TacticalState {
 
 extension Stats {
 
-	var noRetaliation: Bool {
-		self[.art]
-	}
+	var noRetaliation: Bool { self[.art] }
 }

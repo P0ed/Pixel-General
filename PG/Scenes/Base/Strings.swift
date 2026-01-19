@@ -151,10 +151,10 @@ extension Crystal {
 
 	var symbol: String {
 		switch self {
-		case .red: "♚"
-		case .amber: "♛"
-		case .turquoise: "♜"
-		case .blue: "♝"
+		case .red: "♟"
+		case .amber: "♞"
+		case .turquoise: "♝"
+		case .blue: "♜"
 		}
 	}
 }

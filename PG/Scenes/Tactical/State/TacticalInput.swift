@@ -36,11 +36,11 @@ private extension TacticalState {
 		if let selectedUnit {
 			let unit = units[selectedUnit]
 
-			if let (dstID, dst) = units[cursor], player.visible[cursor] {
+			if let (dst) = unitAt(cursor), player.visible[cursor] {
 				if dst.country.team != unit.country.team {
-					attack(src: selectedUnit, dst: dstID)
+					attack(src: selectedUnit, dst: unitsMap[cursor])
 				} else {
-					selectUnit(dst == unit ? .none : dstID)
+					selectUnit(dst == unit ? .none : unitsMap[cursor])
 				}
 			} else if unit.canMove {
 				move(unit: selectedUnit, to: cursor)
@@ -50,8 +50,8 @@ private extension TacticalState {
 				selectUnit(.none)
 			}
 		} else {
-			if let (i, u) = units[cursor], u.country == country {
-				selectUnit(i)
+			if let u = unitAt(cursor), u.country == country {
+				selectUnit(unitsMap[cursor])
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
 			}

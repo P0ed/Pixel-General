@@ -3,6 +3,7 @@ struct TacticalState: ~Copyable {
 	var players: Speicher<4, Player>
 	var buildings: Speicher<32, Building>
 	var units: Speicher<128, Unit>
+	var unitsMap: Map<UID>
 	var events: Speicher<4, TacticalEvent> = .init(head: [], tail: .none)
 	var seed: Crystals = .empty
 	var turn: UInt32 = 0
@@ -17,12 +18,17 @@ extension TacticalState {
 
 	init(map: consuming Map<Terrain>, players: [Player], buildings: [Building], units: [Unit]) {
 		self.map = map
-		self.players = .init(head: players, tail: .dead)
+		self.players = .init(head: players, tail: .none)
 		self.buildings = .init(
 			head: buildings,
 			tail: .init(country: .ind, position: .zero, type: .city)
 		)
-		self.units = .init(head: units, tail: .dead)
+		self.units = .init(head: units, tail: .none)
+		unitsMap = .init(size: self.map.size, zero: -1)
+		self.units.map { i, u in (i, u.position) }.forEach { i, xy in
+			guard unitsMap[xy] < 0 else { fatalError() }
+			unitsMap[xy] = i
+		}
 
 		buildings.forEach { b in
 			switch b.type {
@@ -34,6 +40,17 @@ extension TacticalState {
 			(i, vision(for: p.country))
 		})
 		self.players.modifyEach { i, p in p.visible = v[i] ?? .empty }
+	}
+
+	subscript(_ xy: XY) -> Unit? {
+		get {
+			let idx = unitsMap[xy]
+			return if idx < 0 { nil } else { units[idx] }
+		}
+		set {
+			let idx = unitsMap[xy]
+			if idx >= 0 { units[idx] = newValue ?? .none }
+		}
 	}
 
 	var d20: D20 {
@@ -85,12 +102,6 @@ extension TacticalState {
 }
 
 extension Building {
-
-	var cost: UInt16 {
-		switch type {
-		case .city: 1600
-		}
-	}
 
 	var income: UInt16 {
 		switch type {

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
+		5F2E296D2F1012600010E6E9 /* Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E296C2F10125D0010E6E9 /* Templates.swift */; };
 		5F41DDD52EE32745008FBF17 /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F41DDD42EE32744008FBF17 /* Map.swift */; };
 		5F43D4A52EF051A80046AD2A /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F43D4A42EF051A80046AD2A /* Player.swift */; };
 		5F51E5BE2EF308B400A711DF /* Swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F51E5BD2EF308B200A711DF /* Swift.swift */; };
@@ -28,7 +29,7 @@
 		5F919D5C2EA959670037A208 /* SpriteKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33BE2EA93AC3008A0A95 /* SpriteKit.swift */; };
 		5F919D5D2EA959670037A208 /* BaseNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33BB2EA93AC3008A0A95 /* BaseNodes.swift */; };
 		5F919D5E2EA9596E0037A208 /* Unit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33B42EA93AC3008A0A95 /* Unit.swift */; };
-		5F919D5F2EA9596E0037A208 /* UnitFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33B52EA93AC3008A0A95 /* UnitFactory.swift */; };
+		5F919D5F2EA9596E0037A208 /* Units.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33B52EA93AC3008A0A95 /* Units.swift */; };
 		5F919D602EA9596E0037A208 /* TacticalAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AB2EA93AC3008A0A95 /* TacticalAI.swift */; };
 		5F919D612EA9596E0037A208 /* Arrays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33A82EA93AC3008A0A95 /* Arrays.swift */; };
 		5F919D632EA9596E0037A208 /* Monoid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33B32EA93AC3008A0A95 /* Monoid.swift */; };
@@ -78,7 +79,7 @@
 		5F2A33B22EA93AC3008A0A95 /* MenuState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuState.swift; sourceTree = "<group>"; };
 		5F2A33B32EA93AC3008A0A95 /* Monoid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Monoid.swift; sourceTree = "<group>"; };
 		5F2A33B42EA93AC3008A0A95 /* Unit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Unit.swift; sourceTree = "<group>"; };
-		5F2A33B52EA93AC3008A0A95 /* UnitFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFactory.swift; sourceTree = "<group>"; };
+		5F2A33B52EA93AC3008A0A95 /* Units.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Units.swift; sourceTree = "<group>"; };
 		5F2A33B92EA93AC3008A0A95 /* TacticalEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalEvents.swift; sourceTree = "<group>"; };
 		5F2A33BA2EA93AC3008A0A95 /* SceneInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneInput.swift; sourceTree = "<group>"; };
 		5F2A33BB2EA93AC3008A0A95 /* BaseNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseNodes.swift; sourceTree = "<group>"; };
@@ -89,6 +90,7 @@
 		5F2A33C02EA93AC3008A0A95 /* UnitSprites.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSprites.swift; sourceTree = "<group>"; };
 		5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5F2A33C42EA93AC3008A0A95 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
+		5F2E296C2F10125D0010E6E9 /* Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Templates.swift; sourceTree = "<group>"; };
 		5F41DDD42EE32744008FBF17 /* Map.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Map.swift; sourceTree = "<group>"; };
 		5F43D4A42EF051A80046AD2A /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		5F51E5BD2EF308B200A711DF /* Swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swift.swift; sourceTree = "<group>"; };
@@ -202,12 +204,7 @@
 				5F2A33AB2EA93AC3008A0A95 /* TacticalAI.swift */,
 				5F2A33AC2EA93AC3008A0A95 /* TacticalInput.swift */,
 				5F2A33AD2EA93AC3008A0A95 /* TacticalShop.swift */,
-				5F2A33B12EA93AC3008A0A95 /* Terrain.swift */,
-				5F43D4A42EF051A80046AD2A /* Player.swift */,
-				5F2A33B42EA93AC3008A0A95 /* Unit.swift */,
-				5FF679782F08694A00586323 /* Crystal.swift */,
 				5F2A33AE2EA93AC3008A0A95 /* TacticalStateFactory.swift */,
-				5F2A33B52EA93AC3008A0A95 /* UnitFactory.swift */,
 				5FF7EB3C2EB6428B00E287FF /* MapGeneration.swift */,
 			);
 			path = State;
@@ -298,6 +295,12 @@
 				5FBA4D822EF7016D00D7C1B0 /* Input.swift */,
 				5F2A33AF2EA93AC3008A0A95 /* XY.swift */,
 				5FA0F0982EF2255B0022EC68 /* D20.swift */,
+				5F2A33B12EA93AC3008A0A95 /* Terrain.swift */,
+				5F43D4A42EF051A80046AD2A /* Player.swift */,
+				5FF679782F08694A00586323 /* Crystal.swift */,
+				5F2A33B42EA93AC3008A0A95 /* Unit.swift */,
+				5F2A33B52EA93AC3008A0A95 /* Units.swift */,
+				5F2E296C2F10125D0010E6E9 /* Templates.swift */,
 			);
 			path = Types;
 			sourceTree = "<group>";
@@ -399,7 +402,7 @@
 				5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
 				5F919D5E2EA9596E0037A208 /* Unit.swift in Sources */,
-				5F919D5F2EA9596E0037A208 /* UnitFactory.swift in Sources */,
+				5F919D5F2EA9596E0037A208 /* Units.swift in Sources */,
 				5FA0F0972EF21C3A0022EC68 /* SetXY.swift in Sources */,
 				5F5561052EF5B89B00C08E14 /* HQEvents.swift in Sources */,
 				5F919D602EA9596E0037A208 /* TacticalAI.swift in Sources */,
@@ -436,6 +439,7 @@
 				5F51E5BE2EF308B400A711DF /* Swift.swift in Sources */,
 				5F919D582EA959670037A208 /* SceneInput.swift in Sources */,
 				5FBA4D802EF6FD8900D7C1B0 /* Core.swift in Sources */,
+				5F2E296D2F1012600010E6E9 /* Templates.swift in Sources */,
 				5F919D5A2EA959670037A208 /* TileSprites.swift in Sources */,
 				5F919D5B2EA959670037A208 /* TacticalEvents.swift in Sources */,
 				5F919D5C2EA959670037A208 /* SpriteKit.swift in Sources */,

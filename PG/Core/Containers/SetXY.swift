@@ -8,6 +8,10 @@ extension SetXY: Monoid {
 		.init(storage: .init(repeating: 0))
 	}
 
+	static var full: Self {
+		.init(storage: .init(repeating: .max))
+	}
+
 	mutating func combine(_ other: Self) {
 		formUnion(other)
 	}

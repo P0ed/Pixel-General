@@ -50,7 +50,7 @@ extension TacticalState {
 		cursor = units.firstMap { [country] _, u in
 			u.country == country ? u.position : nil
 		}
-		?? buildings.firstMap { _, b in
+		?? buildings.firstMap { [country] _, b in
 			b.country == country ? b.position : nil
 		}
 		?? .zero
@@ -74,10 +74,12 @@ extension TacticalState {
 			units[n].country.team == unit.country.team
 			&& units[n].stats[.supply]
 		}
-		unit.stats.ent.increment(
-			by: unit.stats.isAir ? 0 : (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
-			cap: 7
-		)
+		if !unit.stats.isAir {
+			unit.stats.ent.increment(
+				by: (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
+				cap: 7
+			)
+		}
 		unit.stats.ammo.increment(
 			by: unit.stats.hasAmmo ? (
 				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0)

@@ -28,8 +28,8 @@ extension TacticalState {
 	}
 
 	private var nextPurchase: (Unit, XY)? {
-		player.prestige < 400 ? .none : buildings.firstMap { [country] _, b in
-			b.country == country && b.type == .city && units[b.position] == nil
+		player.prestige < 0x200 ? .none : buildings.firstMap { [country] _, b in
+			b.country == country && b.type == .city && unitsMap[b.position] < 0
 			? unitTemplates.randomElement()
 				.flatMap { t in t.cost <= player.prestige ? (t, b.position) : nil }
 			: nil
@@ -38,9 +38,23 @@ extension TacticalState {
 
 	private var nextAttack: (UID, UID)? {
 		units.firstMap { [country] i, u in
-			u.country == country
-			? targets(unit: u).firstMap { t in (i, t.0) }
-			: nil
+			u.country != country
+			? nil
+			: targets(unit: u)
+				.max(by: { a, b in
+					(
+						(a.1.stats[.art] ? 5 : 0)
+						+ (a.1.stats[.aa] ? 6 : 0)
+						+ (0xF - a.1.stats.hp)
+						+ (u.stats[.aa] && a.1.stats.isAir ? 10 : 0)
+					) < (
+						(b.1.stats[.art] ? 5 : 0)
+						+ (b.1.stats[.aa] ? 6 : 0)
+						+ (0xF - b.1.stats.hp)
+						+ (u.stats[.aa] && b.1.stats.isAir ? 10 : 0)
+					)
+				})
+				.map { t in (i, t.0) }
 		}
 	}
 
@@ -49,8 +63,12 @@ extension TacticalState {
 			u.country == country
 			? moves(for: u)
 				.set
-				.min(by: { a, b in
-					target.distance(to: a) < target.distance(to: b)
+				.max(by: { a, b in
+					(
+						max(0, map[a].def) - target.distance(to: a)
+					) < (
+						max(0, map[b].def) - target.distance(to: b)
+					)
 				})
 				.map { x in (i, x) }
 			: nil

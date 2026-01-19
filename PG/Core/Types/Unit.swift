@@ -123,7 +123,7 @@ extension Stats {
 	}
 
 	func def(_ src: Stats) -> UInt8 {
-		src.type == .air ? airDef : groundDef
+		src.isAir ? airDef : groundDef
 	}
 }
 
@@ -133,8 +133,8 @@ enum UnitType: UInt8, Hashable {
 
 extension Unit: DeadOrAlive {
 
-	static var dead: Unit {
-		.init(country: .ind, position: .zero, stats: .empty)
+	static var none: Unit {
+		.init(country: .zero, position: .zero, stats: .empty)
 	}
 
 	var alive: Bool { stats.hp > 0 }
@@ -160,7 +160,7 @@ extension Stats {
 	var hasAmmo: Bool { softAtk + hardAtk + airAtk > 0 }
 
 	var cost: UInt16 {
-		expCost + typeCost + traitCost + sum * (isAir ? 2 : 1)
+		expCost + typeCost + traitCost + sum * 3 / (isAir ? 1 : 2)
 	}
 
 	private var expCost: UInt16 {
@@ -168,9 +168,9 @@ extension Stats {
 	}
 
 	private var traitCost: UInt16 {
-		(self[.aa] ? 80 : 0)
-		+ (self[.art] ? 80 : 0)
-		+ (self[.hardcore] ? 60 + typeCost >> 2 : 0)
+		(self[.aa] ? 40 + typeCost >> 2 : 0)
+		+ (self[.art] ? 40 + typeCost >> 2 : 0)
+		+ (self[.hardcore] ? 60 + typeCost >> 1 : 0)
 	}
 
 	private var typeCost: UInt16 {

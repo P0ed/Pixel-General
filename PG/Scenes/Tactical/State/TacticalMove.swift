@@ -1,5 +1,10 @@
 extension TacticalState {
 
+	func unitAt(_ xy: XY) -> Unit? {
+		let id = unitsMap[xy]
+		return id < 0 ? nil : units[id]
+	}
+
 	func moves(for unit: Unit, target: XY? = nil) -> Moves {
 		var mov = Moves(start: unit.position, size: map.size)
 		if !unit.canMove { return mov }
@@ -9,7 +14,7 @@ extension TacticalState {
 		let visible = player.visible
 
 		func enemy(at xy: XY) -> Bool {
-			!visible[xy] ? false : units[xy].map { _, u in
+			!visible[xy] ? false : unitAt(xy).map { u in
 				u.country.team != team && u.stats.isAir == air
 			} ?? false
 		}
@@ -70,7 +75,7 @@ extension TacticalState {
 		guard unit.stats.type == .soft else { return false }
 
 		return unit.position.n8.firstMap { xy in
-			units[xy].flatMap { _, u in
+			unitAt(xy).flatMap { u in
 				u.country == unit.country && u.stats[.transport] ? true : nil
 			}
 		} ?? false
@@ -87,9 +92,9 @@ extension TacticalState {
 		var pos = moves.start
 		var interruptor: UID?
 		for xy in route.reversed() {
-			if let (i, u) = units[xy] {
+			if let u = unitAt(xy) {
 				if u.country.team != units[uid].country.team, !player.visible[u.position] {
-					interruptor = i
+					interruptor = unitsMap[xy]
 					break
 				}
 			} else {
@@ -98,6 +103,8 @@ extension TacticalState {
 		}
 
 		let distance = units[uid].position.distance(to: pos)
+		unitsMap[units[uid].position] = -1
+		unitsMap[pos] = uid
 		units[uid].position = pos
 		units[uid].stats.mp = 0
 		units[uid].stats.ent = 0
@@ -112,7 +119,7 @@ extension TacticalState {
 		if let interruptor,
 		   units[interruptor].country.team != units[uid].country.team,
 		   units[uid].canAttack
-		{ attack(src: uid, dst: interruptor, atkIni: units[uid].stats.stars * 2) }
+		{ attack(src: uid, dst: interruptor, surprise: true) }
 	}
 }
 

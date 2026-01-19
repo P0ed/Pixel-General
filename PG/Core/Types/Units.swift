@@ -3,21 +3,22 @@ extension Stats {
 	static func inf(_ country: Country) -> Self {
 		switch country.team {
 		case .axis, .allies: .regular
-		case .soviet: .regular
+		case .soviet: .militia
 		}
 	}
 
 	static func inf2(_ country: Country) -> Self {
 		switch country.team {
 		case .axis, .allies: .special >< .veteran
-		case .soviet: .special
+		case .soviet: .regular >< .veteran
 		}
 	}
 
 	static func ifv(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .boxer
-		case .allies, .soviet: .recon
+		case .allies: .m2A2
+		case .soviet: .bmp
 		}
 	}
 
@@ -25,7 +26,7 @@ extension Stats {
 		switch country {
 		case .ned, .swe, .ukr: .strv122
 		case .usa, .isr: .m1A2
-		case .pak: .m1A1
+		case .pak: .m48
 		case .rus, .irn, .ind: .t72
 		}
 	}
@@ -43,7 +44,8 @@ extension Stats {
 	static func art(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .pzh
-		default: .art105
+		case .allies: .m777
+		case .soviet: .art105
 		}
 	}
 
@@ -88,6 +90,19 @@ extension Stats {
 		}
 	}
 
+	static var militia: Self {
+		.make { stats in
+			stats.type = .soft
+			stats.ini = 3
+			stats.softAtk = 5
+			stats.hardAtk = 1
+			stats.groundDef = 5
+			stats.airDef = 3
+			stats.mov = 3
+			stats.rng = 1
+		}
+	}
+
 	static var regular: Self {
 		.make { stats in
 			stats.type = .soft
@@ -113,6 +128,19 @@ extension Stats {
 			stats.airDef = 8
 			stats.mov = 4
 			stats.rng = 1
+		}
+	}
+
+	static var t55: Self {
+		.make { stats in
+			stats.type = .heavyTrack
+			stats.ini = 6
+			stats.softAtk = 8
+			stats.hardAtk = 9
+			stats.mov = 6
+			stats.rng = 1
+			stats.groundDef = 9
+			stats.airDef = 5
 		}
 	}
 
@@ -142,29 +170,16 @@ extension Stats {
 		}
 	}
 
-	static var m1A1: Self {
+	static var m48: Self {
 		.make { stats in
 			stats.type = .heavyTrack
-			stats.ini = 8
-			stats.softAtk = 10
-			stats.hardAtk = 11
-			stats.mov = 6
+			stats.ini = 7
+			stats.softAtk = 9
+			stats.hardAtk = 10
+			stats.mov = 5
 			stats.rng = 1
 			stats.groundDef = 11
 			stats.airDef = 6
-		}
-	}
-
-	static var m1A2: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 12
-			stats.mov = 6
-			stats.rng = 1
-			stats.groundDef = 12
-			stats.airDef = 7
 		}
 	}
 
@@ -226,17 +241,16 @@ extension Stats {
 		}
 	}
 
-	static var neva: Self {
+	static var pzh: Self {
 		.make { stats in
-			stats.type = .softWheel
-			stats[.aa] = true
-			stats.ini = 10
-			stats.softAtk = 0
-			stats.hardAtk = 0
-			stats.airAtk = 13
-			stats.groundDef = 4
-			stats.airDef = 9
-			stats.mov = 6
+			stats.type = .lightTrack
+			stats[.art] = true
+			stats.ini = 5
+			stats.softAtk = 11
+			stats.hardAtk = 7
+			stats.groundDef = 7
+			stats.airDef = 6
+			stats.mov = 5
 			stats.rng = 3
 		}
 	}
@@ -255,32 +269,75 @@ extension Stats {
 		}
 	}
 
-	static var pzh: Self {
+	static var m777: Self {
 		.make { stats in
-			stats.type = .lightTrack
+			stats.type = .soft
 			stats[.art] = true
-			stats.ini = 5
+			stats.ini = 2
 			stats.softAtk = 11
 			stats.hardAtk = 7
-			stats.groundDef = 7
-			stats.airDef = 6
-			stats.mov = 5
+			stats.groundDef = 5
+			stats.airDef = 4
+			stats.mov = 1
 			stats.rng = 3
 		}
 	}
 
-	static var recon: Self {
+	static var neva: Self {
+		.make { stats in
+			stats.type = .softWheel
+			stats[.aa] = true
+			stats.ini = 10
+			stats.softAtk = 0
+			stats.hardAtk = 0
+			stats.airAtk = 13
+			stats.groundDef = 4
+			stats.airDef = 9
+			stats.mov = 6
+			stats.rng = 3
+		}
+	}
+
+	static var bmp: Self {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.transport] = true
 			stats.ini = 9
 			stats.softAtk = 6
-			stats.hardAtk = 4
+			stats.hardAtk = 6
 			stats.airAtk = 3
 			stats.groundDef = 7
 			stats.airDef = 8
 			stats.mov = 7
 			stats.rng = 1
+		}
+	}
+
+	static var m2A2: Self {
+		.make { stats in
+			stats.type = .mediumTrack
+			stats[.transport] = true
+			stats.ini = 9
+			stats.softAtk = 9
+			stats.hardAtk = 8
+			stats.airAtk = 4
+			stats.mov = 7
+			stats.rng = 1
+			stats.groundDef = 10
+			stats.airDef = 7
+		}
+	}
+
+	static var m1A2: Self {
+		.make { stats in
+			stats.type = .heavyTrack
+			stats.ini = 9
+			stats.softAtk = 10
+			stats.hardAtk = 12
+			stats.mov = 6
+			stats.rng = 1
+			stats.groundDef = 12
+			stats.airDef = 7
 		}
 	}
 
@@ -296,48 +353,5 @@ extension Stats {
 			stats.mov = 14
 			stats.rng = 1
 		}
-	}
-}
-
-extension [Unit] {
-
-	static func template(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country, position: .zero, stats: .base >< .truck),
-			Unit(country: country, position: .zero, stats: .base >< .inf(country)),
-			Unit(country: country, position: .zero, stats: .base >< .inf2(country)),
-			Unit(country: country, position: .zero, stats: .base >< .ifv(country)),
-			Unit(country: country, position: .zero, stats: .base >< .tank(country)),
-			Unit(country: country, position: .zero, stats: .base >< .tank2(country)),
-			Unit(country: country, position: .zero, stats: .base >< .art(country)),
-			Unit(country: country, position: .zero, stats: .base >< .aa(country)),
-			Unit(country: country, position: .zero, stats: .base >< .heli(country)),
-		]
-	}
-
-	static func base(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country, position: XY(0, 0), stats: .base >< .truck),
-			Unit(country: country, position: XY(0, 1), stats: .base >< .regular >< .veteran),
-			Unit(country: country, position: XY(3, 0), stats: .base >< .regular >< .veteran),
-			Unit(country: country, position: XY(2, 1), stats: .base >< .regular >< .veteran),
-			Unit(country: country, position: XY(0, 2), stats: .base >< .tank(country) >< .veteran),
-			Unit(country: country, position: XY(0, 3), stats: .base >< .tank(country) >< .veteran),
-			Unit(country: country, position: XY(1, 0), stats: .base >< .ifv(country) >< .veteran),
-			Unit(country: country, position: XY(1, 1), stats: .base >< .art(country) >< .veteran),
-			Unit(country: country, position: XY(1, 2), stats: .base >< .art(country) >< .veteran),
-		]
-	}
-
-	static func small(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country, position: XY(0, 0), stats: .base >< .truck),
-			Unit(country: country, position: XY(0, 1), stats: .base >< .regular >< .veteran),
-			Unit(country: country, position: XY(2, 0), stats: .base >< .regular >< .veteran),
-			Unit(country: country, position: XY(0, 2), stats: .base >< .tank(country) >< .veteran),
-			Unit(country: country, position: XY(1, 0), stats: .base >< .ifv(country) >< .veteran),
-			Unit(country: country, position: XY(1, 2), stats: .base >< .art(country) >< .veteran),
-			Unit(country: country, position: XY(1, 2), stats: .base >< .aa(country) >< .veteran),
-		]
 	}
 }
