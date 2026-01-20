@@ -6,11 +6,14 @@ extension [Unit] {
 			Unit(country: country, position: .zero, stats: .base >< .inf(country)),
 			Unit(country: country, position: .zero, stats: .base >< .inf2(country)),
 			Unit(country: country, position: .zero, stats: .base >< .ifv(country)),
+			Unit(country: country, position: .zero, stats: .base >< .ifv2(country)),
 			Unit(country: country, position: .zero, stats: .base >< .tank(country)),
 			Unit(country: country, position: .zero, stats: .base >< .tank2(country)),
 			Unit(country: country, position: .zero, stats: .base >< .art(country)),
+			Unit(country: country, position: .zero, stats: .base >< .art2(country)),
 			Unit(country: country, position: .zero, stats: .base >< .aa(country)),
 			Unit(country: country, position: .zero, stats: .base >< .heli(country)),
+			Unit(country: country, position: .zero, stats: .base >< .fighter(country)),
 		]
 	}
 

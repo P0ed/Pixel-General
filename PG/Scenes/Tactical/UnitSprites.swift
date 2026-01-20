@@ -55,6 +55,7 @@ extension Unit {
 			case .usa: "M1A1"
 			default: "Tank"
 			}
+		case .air where stats[.hardcore]: "F64"
 		case .air: "MH6"
 		}
 	}

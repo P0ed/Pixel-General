@@ -108,7 +108,7 @@ extension TacticalState {
 				b.position == u.position ? i : nil
 			}
 
-			if let idx, buildings[idx].country.team != u.country.team {
+			if let idx, buildings[idx].country.team != u.country.team, !u.stats.isAir {
 				buildings[idx].country = u.country
 				reflag = true
 			}

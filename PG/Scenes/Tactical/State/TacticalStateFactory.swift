@@ -1,9 +1,9 @@
 extension TacticalState {
 
-	static func random(
+	static func make(
 		player: Player = Player(country: .ukr),
 		units: [Unit],
-		size: Int = .random(in: 16...32),
+		size: Int = .random(in: 24...32),
 		seed: Int = .random(in: 0...1023)
 	) -> TacticalState {
 		let citiesCount = min(32, size * size / 64)
@@ -24,8 +24,8 @@ extension TacticalState {
 				}
 			}
 			return Building(
-				country: i == 0 ? player.country
-				: i < citiesCount / 2 ? .usa
+				country: i < citiesCount * 1 / 4 ? player.country
+				: i < citiesCount * 2 / 4 ? .usa
 				: i < citiesCount * 3 / 4 ? .rus
 				: .swe,
 				position: p,
@@ -50,9 +50,9 @@ extension TacticalState {
 			map: map,
 			players: [
 				player,
-				Player(country: .usa, ai: true, prestige: 0x600),
-				Player(country: .rus, ai: true, prestige: 0x500),
-				Player(country: .swe, ai: true, prestige: 0x400),
+				Player(country: .usa, ai: true, prestige: 0xF00),
+				Player(country: .rus, ai: true, prestige: 0xA00),
+				Player(country: .swe, ai: true, prestige: 0x600),
 			],
 			buildings: buildings,
 			units: units

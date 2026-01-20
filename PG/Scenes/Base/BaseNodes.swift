@@ -85,7 +85,7 @@ extension BaseNodes {
 			let frame = SKShapeNode(rectOf: Self.itemSize, cornerRadius: Self.innerR)
 
 			let x = CGFloat(idx % menuState.cols) * (Self.itemSize.width + Self.spacing)
-			let y = CGFloat(idx / menuState.cols) * (Self.itemSize.height + Self.spacing)
+			let y = CGFloat(idx % 9 / menuState.cols) * (Self.itemSize.height + Self.spacing)
 
 			frame.position = CGPoint(
 				x: Self.inset + Self.itemSize.width / 2.0 - Self.menuSize.width / 2.0 + x,
@@ -129,6 +129,7 @@ extension BaseNodes {
 			if let frame = item as? SKShapeNode, frame.name == nil {
 				frame.fillColor = menuState.cursor == idx ? .gray : .darkGray
 				frame.strokeColor = menuState.cursor == idx ? .darkGray : .black
+				frame.isHidden = idx / 9 != menuState.cursor / 9
 			}
 			if idx == menuState.cursor, let inspector = menu.menuInspectorLabel {
 				inspector.text = menuState.items[idx].description

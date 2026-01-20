@@ -138,6 +138,11 @@ extension HQScene {
 		addChild(node)
 		nodes?.units[uid] = node
 	}
+
+	func removeUnit(_ uid: UID) {
+		nodes?.units[uid]?.removeFromParent()
+		nodes?.units[uid] = nil
+	}
 }
 
 private extension SKScene {

@@ -22,6 +22,14 @@ extension Stats {
 		}
 	}
 
+	static func ifv2(_ country: Country) -> Self {
+		switch country.team {
+		case .axis: .strf90
+		case .allies: .m2A2 >< .veteran
+		case .soviet: .bmp >< .veteran
+		}
+	}
+
 	static func tank(_ country: Country) -> Self {
 		switch country {
 		case .ned, .swe, .ukr: .strv122
@@ -43,15 +51,31 @@ extension Stats {
 
 	static func art(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .pzh
+		case .axis: .art155
 		case .allies: .m777
 		case .soviet: .art105
+		}
+	}
+
+	static func art2(_ country: Country) -> Self {
+		switch country.team {
+		case .axis: .pzh
+		case .allies: .m777 >< .veteran
+		case .soviet: .art155
 		}
 	}
 
 	static func heli(_ country: Country) -> Self {
 		switch country.team {
 		default: .mh6
+		}
+	}
+
+	static func fighter(_ country: Country) -> Self {
+		switch country.team {
+		case .axis: .gripen
+		case .allies: .f16
+		case .soviet: .mig
 		}
 	}
 
@@ -269,6 +293,20 @@ extension Stats {
 		}
 	}
 
+	static var art155: Self {
+		.make { stats in
+			stats.type = .soft
+			stats[.art] = true
+			stats.ini = 2
+			stats.softAtk = 11
+			stats.hardAtk = 7
+			stats.groundDef = 5
+			stats.airDef = 4
+			stats.mov = 1
+			stats.rng = 3
+		}
+	}
+
 	static var m777: Self {
 		.make { stats in
 			stats.type = .soft
@@ -350,7 +388,55 @@ extension Stats {
 			stats.airAtk = 9
 			stats.groundDef = 7
 			stats.airDef = 7
-			stats.mov = 14
+			stats.mov = 12
+			stats.rng = 1
+		}
+	}
+
+	static var gripen: Self {
+		.make { stats in
+			stats.type = .air
+			stats[.hardcore] = true
+			stats[.aa] = true
+			stats.ini = 12
+			stats.softAtk = 9
+			stats.hardAtk = 11
+			stats.airAtk = 12
+			stats.groundDef = 10
+			stats.airDef = 11
+			stats.mov = 15
+			stats.rng = 1
+		}
+	}
+
+	static var f16: Self {
+		.make { stats in
+			stats.type = .air
+			stats[.hardcore] = true
+			stats[.aa] = true
+			stats.ini = 11
+			stats.softAtk = 8
+			stats.hardAtk = 10
+			stats.airAtk = 13
+			stats.groundDef = 10
+			stats.airDef = 11
+			stats.mov = 15
+			stats.rng = 1
+		}
+	}
+
+	static var mig: Self {
+		.make { stats in
+			stats.type = .air
+			stats[.hardcore] = true
+			stats[.aa] = true
+			stats.ini = 10
+			stats.softAtk = 8
+			stats.hardAtk = 10
+			stats.airAtk = 11
+			stats.groundDef = 9
+			stats.airDef = 10
+			stats.mov = 15
 			stats.rng = 1
 		}
 	}

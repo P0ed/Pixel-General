@@ -65,7 +65,12 @@ extension HQState {
 	}
 
 	mutating func shopAction() {
-		if selected == nil, units[cursor] == nil {
+		if let selected {
+			units[selected].stats.hp = 0
+			player.prestige.increment(by: units[selected].cost / 2)
+			events.add(.remove(selected))
+			self.selected = .none
+		} else if units[cursor] == nil {
 			events.add(.shop)
 		}
 	}

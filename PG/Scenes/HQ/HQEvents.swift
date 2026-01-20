@@ -3,6 +3,7 @@ import SpriteKit
 enum HQEvent {
 	case move(UID, XY)
 	case spawn(UID)
+	case remove(UID)
 	case shop
 	case scenario
 	case menu
@@ -28,6 +29,7 @@ extension HQScene {
 		switch event {
 		case .move(let uid, let xy): processMove(uid: uid, xy: xy)
 		case .spawn(let uid): processSpawn(uid: uid)
+		case .remove(let uid): removeUnit(uid)
 		case .shop: processShop()
 		case .scenario: processScenario()
 		case .menu: processMenu()
@@ -65,7 +67,7 @@ extension HQScene {
 	}
 
 	private func processScenario() {
-		let state = TacticalState.random(
+		let state = TacticalState.make(
 			player: state.player,
 			units: state.units.map { $1 }
 		)
