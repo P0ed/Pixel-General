@@ -25,7 +25,7 @@ extension Unit {
 		sprite.texture?.filteringMode = .nearest
 		node.addChild(sprite)
 
-		let plate = SKSpriteNode(imageNamed: "HP\(stats.hp)")
+		let plate = SKSpriteNode(imageNamed: "HP\(hp)")
 		plate.position = CGPoint(x: 0, y: -12.0)
 		plate.zPosition = 2.3
 		plate.texture?.filteringMode = .nearest
@@ -36,26 +36,26 @@ extension Unit {
 	}
 
 	var imageName: String {
-		switch stats.type {
+		switch type {
 		case .soft:
-			if stats[.art] { "Art" }
-			else if stats[.hardcore] { "SF" }
+			if self[.art] { "Art" }
+			else if self[.hardcore] { "SF" }
 			else { "Reg" }
 		case .softWheel:
-			if stats[.supply] { "Truck" }
-			else if stats[.aa] { "Neva" }
+			if self[.supply] { "Truck" }
+			else if self[.aa] { "Neva" }
 			else { "Truck" }
 		case .lightWheel, .mediumWheel: "boxer"
 		case .lightTrack, .mediumTrack:
-			if stats[.aa] { "SPAA" }
-			else if stats[.art] { "PZH" }
+			if self[.aa] { "SPAA" }
+			else if self[.art] { "PZH" }
 			else { "Recon" }
 		case .heavyTrack:
 			switch country {
 			case .usa: "M1A1"
 			default: "Tank"
 			}
-		case .air where stats[.hardcore]: "F64"
+		case .air where self[.hardcore]: "F64"
 		case .air: "MH6"
 		}
 	}

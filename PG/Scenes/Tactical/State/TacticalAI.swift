@@ -43,15 +43,15 @@ extension TacticalState {
 			: targets(unit: u)
 				.max(by: { a, b in
 					(
-						(a.1.stats[.art] ? 5 : 0)
-						+ (a.1.stats[.aa] ? 6 : 0)
-						+ (0xF - a.1.stats.hp)
-						+ (u.stats[.aa] && a.1.stats.isAir ? 10 : 0)
+						(a.1[.art] ? 5 : 0)
+						+ (a.1[.aa] ? 6 : 0)
+						+ (0xF - a.1.hp)
+						+ (u[.aa] && a.1.isAir ? 10 : 0)
 					) < (
-						(b.1.stats[.art] ? 5 : 0)
-						+ (b.1.stats[.aa] ? 6 : 0)
-						+ (0xF - b.1.stats.hp)
-						+ (u.stats[.aa] && b.1.stats.isAir ? 10 : 0)
+						(b.1[.art] ? 5 : 0)
+						+ (b.1[.aa] ? 6 : 0)
+						+ (0xF - b.1.hp)
+						+ (u[.aa] && b.1.isAir ? 10 : 0)
 					)
 				})
 				.map { t in (i, t.0) }

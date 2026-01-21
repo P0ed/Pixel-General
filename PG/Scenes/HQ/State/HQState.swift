@@ -66,7 +66,7 @@ extension HQState {
 
 	mutating func shopAction() {
 		if let selected {
-			units[selected].stats.hp = 0
+			units[selected].hp = 0
 			player.prestige.increment(by: units[selected].cost / 2)
 			events.add(.remove(selected))
 			self.selected = .none

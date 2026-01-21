@@ -10,18 +10,17 @@ extension TacticalState {
 		if !unit.canMove { return mov }
 
 		let team = unit.country.team
-		let air = unit.stats.isAir
+		let air = unit.isAir
 		let visible = player.visible
 
 		func enemy(at xy: XY) -> Bool {
 			!visible[xy] ? false : unitAt(xy).map { u in
-				u.country.team != team && u.stats.isAir == air
+				u.country.team != team && u.isAir == air
 			} ?? false
 		}
 
-		let r = unit.stats.mov + (hasTransport(unit: unit) ? 1 : 0)
+		let r = unit.mov + (hasTransport(unit: unit) ? 1 : 0)
 		mov.moves[unit.position] = r * 2 + 1
-		print("mov started at \(mov.start) \(mov.moves[mov.start])")
 		var front: [XY] = [unit.position]
 		for _ in 0 ..< r where !front.isEmpty {
 			front = front.flatMap { from in
@@ -37,10 +36,9 @@ extension TacticalState {
 					if mov[xy] { continue }
 					if enemy(at: xy) { continue }
 
-					let moveCost = map[xy].moveCost(unit.stats) * 2 + enemies
+					let moveCost = map[xy].moveCost(unit) * 2 + enemies
 					if moveCost + 1 <= mp {
 						mov.moves[xy] = mp - moveCost
-						print("put d \(xy) \(mov.moves[xy])")
 						if mp - moveCost != 1 { next.append(xy) }
 					}
 				}
@@ -51,10 +49,9 @@ extension TacticalState {
 						if mov[xy] { continue }
 						if enemy(at: xy) { continue }
 
-						let moveCost = map[xy].moveCost(unit.stats) * 3 + enemies
+						let moveCost = map[xy].moveCost(unit) * 3 + enemies
 						if moveCost + 1 <= mp {
 							mov.moves[xy] = mp - moveCost
-							print("put x \(xy) \(mov.moves[xy])")
 							if mp - moveCost != 1 { next.append(xy) }
 						}
 					}
@@ -72,11 +69,11 @@ extension TacticalState {
 	}
 
 	func hasTransport(unit: Unit) -> Bool {
-		guard unit.stats.type == .soft else { return false }
+		guard unit.type == .soft else { return false }
 
 		return unit.position.n8.firstMap { xy in
 			unitAt(xy).flatMap { u in
-				u.country == unit.country && u.stats[.transport] ? true : nil
+				u.country == unit.country && u[.transport] ? true : nil
 			}
 		} ?? false
 	}
@@ -106,10 +103,10 @@ extension TacticalState {
 		unitsMap[units[uid].position] = -1
 		unitsMap[pos] = uid
 		units[uid].position = pos
-		units[uid].stats.mp = 0
-		units[uid].stats.ent = 0
-		if units[uid].stats.type == .soft, units[uid].stats[.art] {
-			units[uid].stats.ap = 0
+		units[uid].mp = 0
+		units[uid].ent = 0
+		if units[uid].type == .soft, units[uid][.art] {
+			units[uid].ap = 0
 		}
 
 		player.visible.formUnion(vision(for: units[uid]))
@@ -131,11 +128,9 @@ struct Moves: ~Copyable {
 
 	func route(to target: XY) -> [XY] {
 		moves[target] == 0 ? [] : .make { route in
-			print("routing to \(target)")
 			var pos = target
 			while pos != start {
 				route.append(pos)
-				print("\(pos)")
 
 				if route.count > 0xF {
 					route = []; return

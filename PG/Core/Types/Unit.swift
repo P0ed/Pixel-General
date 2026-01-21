@@ -1,21 +1,19 @@
-struct Unit: Hashable {
-	var country: Country
-	var position: XY
-	var stats: Stats
+struct Unit: RawRepresentable, Hashable {
+	var rawValue: UInt128
 }
 
 typealias UID = Int
 
-struct Stats: RawRepresentable, Hashable {
-	var rawValue: UInt64
-}
-
-extension Stats: Monoid {
+extension Unit: Monoid {
 	static var empty: Self { .init(rawValue: 0) }
 	mutating func combine(_ other: Self) { rawValue |= other.rawValue }
 }
 
-extension Stats {
+extension Unit {
+
+	init(country: Country) {
+		self = .make { $0.country = country }
+	}
 
 	private static func mask(width: UInt8, offset: UInt8) -> RawValue {
 		((1 << width) - 1) << offset
@@ -98,13 +96,29 @@ extension Stats {
 		get { get(width: 1, offset: 56 + trait.rawValue) == 1 }
 		set { set(newValue ? 1 : 0, width: 1, offset: 56 + trait.rawValue) }
 	}
+	var position: XY {
+		get {
+			XY(
+				Int(Int8(bitPattern: get(width: 8, offset: 64))),
+				Int(Int8(bitPattern: get(width: 8, offset: 72)))
+			)
+		}
+		set {
+			set(UInt8(bitPattern: Int8(clamping: newValue.x)), width: 8, offset: 64)
+			set(UInt8(bitPattern: Int8(clamping: newValue.y)), width: 8, offset: 72)
+		}
+	}
+	var country: Country {
+		get { .init(rawValue: get(width: 4, offset: 80)) ?? .zero }
+		set { set(newValue.rawValue, width: 4, offset: 80) }
+	}
 }
 
 enum Trait: UInt8 {
 	case art, aa, supply, hardcore, transport, xf, xg, xh
 }
 
-extension Stats {
+extension Unit {
 
 	var stars: UInt8 {
 		modifying(4) { stars in stars.decrement(by: UInt8(exp.leadingZeroBitCount)) }
@@ -112,7 +126,7 @@ extension Stats {
 
 	var isAir: Bool { type == .air }
 
-	func atk(_ dst: Stats) -> UInt8 {
+	func atk(_ dst: Unit) -> UInt8 {
 		switch dst.type {
 		case .soft, .softWheel: softAtk
 		case .lightWheel, .lightTrack: (2 * softAtk + hardAtk) / 3
@@ -122,7 +136,7 @@ extension Stats {
 		}
 	}
 
-	func def(_ src: Stats) -> UInt8 {
+	func def(_ src: Unit) -> UInt8 {
 		src.isAir ? airDef : groundDef
 	}
 }
@@ -132,30 +146,26 @@ enum UnitType: UInt8, Hashable {
 }
 
 extension Unit: DeadOrAlive {
-
-	static var none: Unit {
-		.init(country: .zero, position: .zero, stats: .empty)
-	}
-
-	var alive: Bool { stats.hp > 0 }
+	var alive: Bool { hp > 0 }
 }
 
 extension Unit {
 
-	var untouched: Bool { stats.mp == 1 && stats.ap == 1 }
+	static var none: Unit { .empty }
+
+	var untouched: Bool { mp == 1 && ap == 1 }
 	var hasActions: Bool { canMove || canAttack }
-	var canMove: Bool { stats.mp > 0 }
-	var canAttack: Bool { stats.ap > 0 && stats.ammo > 0 }
+	var canMove: Bool { mp > 0 }
+	var canAttack: Bool { ap > 0 && ammo > 0 }
+	var noRetaliation: Bool { self[.art] }
 
 	func canHit(unit: Unit) -> Bool {
-		position.distance(to: unit.position) <= stats.rng * 2 + 1
-		&& stats.atk(unit.stats) > 0
+		position.distance(to: unit.position) <= rng * 2 + 1
+		&& atk(unit) > 0
 	}
-
-	var cost: UInt16 { stats.cost }
 }
 
-extension Stats {
+extension Unit {
 
 	var hasAmmo: Bool { softAtk + hardAtk + airAtk > 0 }
 

@@ -72,28 +72,28 @@ extension TacticalState {
 		}
 		let hasSupply = neighbors.contains { n in
 			units[n].country.team == unit.country.team
-			&& units[n].stats[.supply]
+			&& units[n][.supply]
 		}
-		if !unit.stats.isAir {
-			unit.stats.ent.increment(
+		if !unit.isAir {
+			unit.ent.increment(
 				by: (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
 				cap: 7
 			)
 		}
-		unit.stats.ammo.increment(
-			by: unit.stats.hasAmmo ? (
+		unit.ammo.increment(
+			by: unit.hasAmmo ? (
 				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0)
 			) : 0,
 			cap: 0x7
 		)
-		let dhp = unit.stats.hp.increment(
+		let dhp = unit.hp.increment(
 			by: ((unit.untouched ? 4 : 0) + (hasSupply ? 4 : 0)) / (noEnemy ? 1 : 3),
 			cap: 0xF
 		)
-		unit.stats.exp.decrement(by: dhp * 1 << unit.stats.stars)
+		unit.exp.decrement(by: dhp * 1 << unit.stars)
 
-		unit.stats.mp = 1
-		unit.stats.ap = 1
+		unit.mp = 1
+		unit.ap = 1
 		units[id] = unit
 	}
 
@@ -108,7 +108,7 @@ extension TacticalState {
 				b.position == u.position ? i : nil
 			}
 
-			if let idx, buildings[idx].country.team != u.country.team, !u.stats.isAir {
+			if let idx, buildings[idx].country.team != u.country.team, !u.isAir {
 				buildings[idx].country = u.country
 				reflag = true
 			}

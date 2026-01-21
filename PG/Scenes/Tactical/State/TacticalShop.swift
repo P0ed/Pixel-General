@@ -7,8 +7,8 @@ extension TacticalState {
 
 		let unit = modifying(template) { u in
 			u.position = position
-			u.stats.mp = 0
-			u.stats.ap = 0
+			u.mp = 0
+			u.ap = 0
 		}
 		let id = units.add(unit)
 		unitsMap[position] = id

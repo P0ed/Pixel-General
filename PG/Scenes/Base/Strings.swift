@@ -2,39 +2,39 @@ extension Unit {
 
 	var status: String {
 		.makeStatus(pad: 12) { add in
-			add("\(stats.shortDescription)")
+			add("\(shortDescription)")
 		} + .makeStatus(pad: 10) { add in
-			add("\(mpString)\(apString)  \(stats.starsString)")
+			add("\(mpString)\(apString)  \(starsString)")
 		} + .makeStatus(pad: 12) { add in
-			add(stats.ammoString)
+			add(ammoString)
 		} + .makeStatus(pad: 9) { add in
-			add("INI: \(stats.ini)")
-			add("SA: \(stats.softAtk)")
-			add("HA: \(stats.hardAtk)")
-			add("AA: \(stats.airAtk)")
-			add("GD: \(stats.groundDef)")
-			add("AD: \(stats.airDef)")
-			add("MOV: \(stats.mov)")
-			add("ENT: \(stats.ent)")
+			add("INI: \(ini)")
+			add("SA: \(softAtk)")
+			add("HA: \(hardAtk)")
+			add("AA: \(airAtk)")
+			add("GD: \(groundDef)")
+			add("AD: \(airDef)")
+			add("MOV: \(mov)")
+			add("ENT: \(ent)")
 		}
 	}
 
 	private var mpString: String {
-		stats.mp == 0 ? " " : "⇧"
+		mp == 0 ? " " : "⇧"
 	}
 
 	private var apString: String {
-		stats.ap == 0 || stats[.supply] ? "⦾" : "⦿"
+		ap == 0 || self[.supply] ? "⦾" : "⦿"
 	}
 
 	var description: String {
 		"""
-		\(stats.shortDescription) \(String(repeating: "★", count: Int(stats.stars)))
+		\(shortDescription) \(String(repeating: "★", count: Int(stars)))
 		
-		ATK: \(stats.softAtk) / \(stats.hardAtk) / \(stats.airAtk)
-		DEF: \(stats.groundDef) / \(stats.airDef)
-		MOV: \(stats.mov)
-		RNG: \(stats.rng)
+		ATK: \(softAtk) / \(hardAtk) / \(airAtk)
+		DEF: \(groundDef) / \(airDef)
+		MOV: \(mov)
+		RNG: \(rng)
 		
 		
 		- - - - - - - -
@@ -43,7 +43,7 @@ extension Unit {
 	}
 }
 
-extension Stats {
+extension Unit {
 
 	var starsString: String {
 		switch stars {
@@ -114,9 +114,9 @@ extension String {
 	}
 }
 
-extension Stats {
+extension Unit {
 
-	var shortDescription: String {
+	var typeDescription: String {
 		switch type {
 		case .soft: traitDescription ?? "inf"
 		case .softWheel: traitDescription ?? "ifv"
@@ -136,7 +136,7 @@ extension Stats {
 
 extension Unit {
 	var shortDescription: String {
-		"\(country) \(stats.shortDescription)"
+		"\(country) \(typeDescription)"
 	}
 }
 

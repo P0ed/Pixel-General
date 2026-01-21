@@ -6,7 +6,7 @@ enum Terrain: UInt8, Hashable, Codable {
 
 extension Terrain {
 
-	func moveCost(_ stats: Stats) -> UInt8 {
+	func moveCost(_ stats: Unit) -> UInt8 {
 		switch stats.type {
 		case .soft:
 			switch self {

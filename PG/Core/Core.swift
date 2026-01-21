@@ -10,7 +10,7 @@ final class Core {
 	private(set) var state = State()
 
 	func new(country: Country = .ukr) {
-		let units: [Unit] = .base(country)
+		let units: [Unit] = [Unit].base(country)
 		state = State(
 			hq: HQState(
 				player: Player(country: country),
@@ -47,16 +47,13 @@ final class Core {
 	func complete(tactical: borrowing TacticalState) {
 		guard let c = state.hq?.player.country else { return }
 
-		let units = tactical.units
-		.compactMap { _, u in u.country == c ? u : nil }
-		.enumerated().map { i, u in
-			modifying(u, { u in
-				u.position = XY(i % 4, i / 4)
-				u.stats.hp = 0xF
-				u.stats.mp = 1
-				u.stats.ap = 1
-				u.stats.ammo = 0x7
-				u.stats.ent = 0
+		let units: [Unit] = \.grid4x4 § tactical.units.compactMap { _, u in
+			u.country != c ? nil : modifying(u, { u in
+				u.hp = 0xF
+				u.mp = 1
+				u.ap = 1
+				u.ammo = 0x7
+				u.ent = 0
 			})
 		}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .none)

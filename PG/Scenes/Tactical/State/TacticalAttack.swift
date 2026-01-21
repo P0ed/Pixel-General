@@ -15,22 +15,22 @@ extension TacticalState {
 		units[defender].position.n8.firstMap { hx in
 			units[hx].flatMap { i, u in
 				u.country.team == units[defender].country.team
-				&& u.stats[trait]
+				&& u[trait]
 				? i : nil
 			}
 		}
 	}
 
 	mutating func fire(src: UID, dst: UID, defMod: Int) {
-		let atkMod = units[src].stats.ammo == 0x7 ? 1 : 0
-		let atk = Int(units[src].stats.atk(units[dst].stats) + units[src].stats.stars) + atkMod
-		let def = Int(units[dst].stats.def(units[src].stats) + units[dst].stats.stars) + defMod
+		let atkMod = units[src].ammo == 0x7 ? 1 : 0
+		let atk = Int(units[src].atk(units[dst]) + units[src].stars) + atkMod
+		let def = Int(units[dst].def(units[src]) + units[dst].stars) + defMod
 
 		let dif = atk - def
 		let t1 = max(1, 7 - dif)
 		let t2 = max(3, 15 - dif)
 		let t3 = max(7, 22 - dif)
-		let rounds = (units[src].stats.hp + 3) / 3
+		let rounds = (units[src].hp + 3) / 3
 
 		let ds = (0 ..< rounds).map { _ in d20() }
 		let dmgs = ds.map { d in
@@ -49,14 +49,14 @@ extension TacticalState {
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
 		///# ¯¯Logs¯¯
 
-		units[src].stats.ammo.decrement()
-		units[dst].stats.hp.decrement(by: dmg)
+		units[src].ammo.decrement()
+		units[dst].hp.decrement(by: dmg)
 		let alive = units[dst].alive
-		units[src].stats.exp.increment(by: alive ? dmg : dmg * 2)
+		units[src].exp.increment(by: alive ? dmg : dmg * 2)
 		if !alive { unitsMap[targetPos] = -1 }
 
 		camera = targetPos
-		events.add(.attack(src, dst, dmg, units[dst].stats.hp))
+		events.add(.attack(src, dst, dmg, units[dst].hp))
 	}
 
 	private func encirclement(uid: UID) -> Int {
@@ -76,8 +76,8 @@ extension TacticalState {
 		else { return }
 
 		let encirclement = encirclement(uid: dst)
-		let srcStats = units[src].stats
-		let dstStats = units[dst].stats
+		let srcStats = units[src]
+		let dstStats = units[dst]
 		let srcTerrain = map[units[src].position]
 		let dstTerrain = map[units[dst].position]
 		let srcRiver = -min(0, srcTerrain.def)
@@ -88,7 +88,7 @@ extension TacticalState {
 			Int(dstStats.ent + dstStats.ini + dstStats.stars) * 2 + (surprise ? 10 : 0)
 		)
 		if ruggedDefence { print("Rugged Defence!") }
-		units[src].stats.ap.decrement()
+		units[src].ap.decrement()
 
 		if !srcStats.isAir, !dstStats.isAir, !srcStats.noRetaliation,
 			let art = support(trait: .art, defender: dst, attacker: src) {
@@ -99,7 +99,7 @@ extension TacticalState {
 		}
 		if !ruggedDefence, units[src].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[dst].stats.ent.decrement()
+			units[dst].ent.decrement()
 		}
 		if units[dst].alive, units[src].alive,
 		   units[dst].canHit(unit: units[src]),
@@ -111,13 +111,8 @@ extension TacticalState {
 		}
 		if ruggedDefence, units[src].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[dst].stats.ent.decrement()
+			units[dst].ent.decrement()
 		}
 		selectUnit(units[src].alive && units[src].hasActions ? src : .none)
 	}
-}
-
-extension Stats {
-
-	var noRetaliation: Bool { self[.art] }
 }

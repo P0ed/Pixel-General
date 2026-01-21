@@ -1,4 +1,4 @@
-extension Stats {
+extension Unit {
 
 	static func inf(_ country: Country) -> Self {
 		switch country.team {
@@ -87,30 +87,30 @@ extension Stats {
 	}
 
 	static var base: Self {
-		.make { stats in
-			stats.hp = 0xF
-			stats.mp = 0x1
-			stats.ap = 0x1
-			stats.ammo = 0x7
+		.make { u in
+			u.hp = 0xF
+			u.mp = 0x1
+			u.ap = 0x1
+			u.ammo = 0x7
 		}
 	}
 
 	static var veteran: Self {
-		.make { stats in stats.exp = 0x10 }
+		.make { u in u.exp = 0x10 }
 	}
 
 	static var elite: Self {
-		.make { stats in stats.exp = 0x20 }
+		.make { u in u.exp = 0x20 }
 	}
 
 	static var truck: Self {
-		.make { stats in
-			stats.type = .softWheel
-			stats[.supply] = true
-			stats[.transport] = true
-			stats.mov = 8
-			stats.groundDef = 3
-			stats.airDef = 1
+		.make { u in
+			u.type = .softWheel
+			u[.supply] = true
+			u[.transport] = true
+			u.mov = 8
+			u.groundDef = 3
+			u.airDef = 1
 		}
 	}
 

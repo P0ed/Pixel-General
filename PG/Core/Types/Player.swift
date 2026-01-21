@@ -31,6 +31,6 @@ extension Country {
 extension Player {
 
 	static var none: Self {
-		.init(country: .ind, alive: false)
+		.init(country: .zero, alive: false)
 	}
 }

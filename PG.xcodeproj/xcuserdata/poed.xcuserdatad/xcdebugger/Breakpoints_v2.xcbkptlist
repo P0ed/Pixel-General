@@ -14,10 +14,40 @@
             filePath = "PG/Scenes/Tactical/State/TacticalMove.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "148"
-            endingLineNumber = "148"
+            startingLineNumber = "143"
+            endingLineNumber = "143"
             landmarkName = "route(to:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "F0FB6F0E-2F71-493F-BC58-23DDC80773FC - 53c562f522eda9c0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (inout Swift.Array&lt;PG.XY&gt;) -&gt; () in PG.Moves.route(to: PG.XY) -&gt; Swift.Array&lt;PG.XY&gt;"
+                  moduleName = "PG.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/poed/Source/PG/PG/Scenes/Tactical/State/TacticalMove.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "143"
+                  endingLineNumber = "143">
+               </Location>
+               <Location
+                  uuid = "F0FB6F0E-2F71-493F-BC58-23DDC80773FC - 53c562f522eda9c0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (inout Swift.Array&lt;PG.XY&gt;) -&gt; () in PG.Moves.route(to: PG.XY) -&gt; Swift.Array&lt;PG.XY&gt;"
+                  moduleName = "PG.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/poed/Source/PG/PG/Scenes/Tactical/State/TacticalMove.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "143"
+                  endingLineNumber = "143">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -30,10 +60,40 @@
             filePath = "PG/Scenes/Tactical/State/TacticalMove.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "141"
-            endingLineNumber = "141"
+            startingLineNumber = "136"
+            endingLineNumber = "136"
             landmarkName = "route(to:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "B148CA14-81E9-442E-B43C-6452C35A9B22 - 53c562f522edaaeb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (inout Swift.Array&lt;PG.XY&gt;) -&gt; () in PG.Moves.route(to: PG.XY) -&gt; Swift.Array&lt;PG.XY&gt;"
+                  moduleName = "PG.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/poed/Source/PG/PG/Scenes/Tactical/State/TacticalMove.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+               <Location
+                  uuid = "B148CA14-81E9-442E-B43C-6452C35A9B22 - 53c562f522edaaeb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (inout Swift.Array&lt;PG.XY&gt;) -&gt; () in PG.Moves.route(to: PG.XY) -&gt; Swift.Array&lt;PG.XY&gt;"
+                  moduleName = "PG.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/poed/Source/PG/PG/Scenes/Tactical/State/TacticalMove.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
