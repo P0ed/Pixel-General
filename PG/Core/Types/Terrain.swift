@@ -6,6 +6,24 @@ enum Terrain: UInt8, Hashable, Codable {
 
 extension Terrain {
 
+	var elevation: CGFloat {
+		switch self {
+		case .hill, .forestHill: 4.0
+		case .mountain: 8.0
+		default: 0.0
+		}
+	}
+}
+
+extension Map<Terrain> {
+
+	func point(at xy: XY) -> CGPoint {
+		xy.point + CGPoint(x: 0, y: self[xy].elevation)
+	}
+}
+
+extension Terrain {
+
 	func moveCost(_ stats: Unit) -> UInt8 {
 		switch stats.type {
 		case .soft:
@@ -54,20 +72,5 @@ extension Terrain {
 		case .heavyTrack: -Int(def * 3)
 		default: 0
 		}
-	}
-
-	var elevation: CGFloat {
-		switch self {
-		case .hill, .forestHill: 4.0
-		case .mountain: 8.0
-		default: 0.0
-		}
-	}
-}
-
-extension Map<Terrain> {
-
-	func point(at xy: XY) -> CGPoint {
-		xy.point + CGPoint(x: 0, y: self[xy].elevation)
 	}
 }

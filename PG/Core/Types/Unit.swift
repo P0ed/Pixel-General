@@ -200,3 +200,17 @@ extension Unit {
 		UInt16(softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng)
 	}
 }
+
+extension Speicher where Element == Unit {
+
+	subscript(_ xy: XY) -> (UID, Unit)? {
+		firstMap { i, u in u.position == xy ? (i, u) : nil }
+	}
+}
+
+extension Speicher where Element == Building {
+
+	subscript(_ xy: XY) -> Building? {
+		firstMap { _, b in b.position == xy ? b : nil }
+	}
+}

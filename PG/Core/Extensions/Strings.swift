@@ -85,11 +85,6 @@ extension TacticalState {
 	}
 }
 
-extension MenuState where State: ~Copyable {
-
-	var statusText: String { items[cursor].text }
-}
-
 extension String {
 
 	mutating func pad(to length: Int) {

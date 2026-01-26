@@ -8,7 +8,7 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	private(set) var menuState: MenuState<State>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
-	private(set) var nodes: Nodes?
+	var nodes: Nodes?
 	private var willCloseWindow: Any?
 
 	init(mode: SceneMode<State, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
@@ -119,36 +119,17 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	}
 }
 
-extension TacticalScene {
+extension MenuState where State: ~Copyable {
 
-	func addUnit(_ uid: UID, node: SKNode) {
-		addChild(node)
-		nodes?.units[uid] = node
-	}
-
-	func removeUnit(_ uid: UID) {
-		nodes?.units[uid]?.removeFromParent()
-		nodes?.units[uid] = .none
-	}
-}
-
-extension HQScene {
-
-	func addUnit(_ uid: UID, node: SKNode) {
-		addChild(node)
-		nodes?.units[uid] = node
-	}
-
-	func removeUnit(_ uid: UID) {
-		nodes?.units[uid]?.removeFromParent()
-		nodes?.units[uid] = nil
-	}
+	var statusText: String { items[cursor].text }
 }
 
 private extension SKScene {
 
 	static func make(_ state: borrowing State) -> SKScene {
-		if state.tactical != nil {
+		if true {
+			Scene(mode: .medieval, state: .initial)
+		} else if state.tactical != nil {
 			Scene(mode: .tactical, state: clone(state.tactical!))
 		} else if state.strategic != nil {
 			fatalError()

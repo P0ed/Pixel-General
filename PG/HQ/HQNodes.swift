@@ -99,3 +99,16 @@ extension HQNodes {
 		return sprite
 	}
 }
+
+extension HQScene {
+
+	func addUnit(_ uid: UID, node: SKNode) {
+		addChild(node)
+		nodes?.units[uid] = node
+	}
+
+	func removeUnit(_ uid: UID) {
+		nodes?.units[uid]?.removeFromParent()
+		nodes?.units[uid] = nil
+	}
+}

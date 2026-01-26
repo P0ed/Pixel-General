@@ -82,7 +82,7 @@ extension Speicher {
 		return array
 	}
 
-	func reduce<R>(into result: R, _ fold: (inout R, UID, Element) -> Void) -> R {
+	func reduce<R>(into result: R, _ fold: (inout R, Int, Element) -> Void) -> R {
 		var result = result
 		for i in indices where elements[i].alive {
 			fold(&result, i, elements[i])
@@ -95,19 +95,5 @@ extension Speicher {
 			if let some = transform(i, elements[i]) { return some }
 		}
 		return nil
-	}
-}
-
-extension Speicher where Element == Unit {
-
-	subscript(_ xy: XY) -> (UID, Unit)? {
-		firstMap { i, u in u.position == xy ? (i, u) : nil }
-	}
-}
-
-extension Speicher where Element == Building {
-
-	subscript(_ xy: XY) -> Building? {
-		firstMap { _, b in b.position == xy ? b : nil }
 	}
 }

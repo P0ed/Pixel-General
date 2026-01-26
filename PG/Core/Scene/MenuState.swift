@@ -27,7 +27,7 @@ extension MenuState where State: ~Copyable {
 
 	mutating func apply(_ input: Input) {
 		switch input {
-		case .direction(let direction): moveCursor(direction)
+		case .direction(let direction?): moveCursor(direction)
 		case .tile(let xy): cursor = xy.x
 		case .action(.a): action = .apply(cursor)
 		case .menu, .action(.b): action = .close

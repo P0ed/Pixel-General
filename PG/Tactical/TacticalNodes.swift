@@ -132,3 +132,16 @@ extension TacticalNodes {
 		)
 	}
 }
+
+extension TacticalScene {
+
+	func addUnit(_ uid: UID, node: SKNode) {
+		addChild(node)
+		nodes?.units[uid] = node
+	}
+
+	func removeUnit(_ uid: UID) {
+		nodes?.units[uid]?.removeFromParent()
+		nodes?.units[uid] = .none
+	}
+}

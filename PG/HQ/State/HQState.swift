@@ -19,7 +19,7 @@ extension HQState {
 
 	mutating func apply(_ input: Input) {
 		switch input {
-		case .direction(let direction): moveCursor(direction)
+		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
 		case .action(.c): shopAction()

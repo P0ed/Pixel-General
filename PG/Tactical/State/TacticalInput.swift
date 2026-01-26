@@ -4,7 +4,7 @@ extension TacticalState {
 
 	mutating func apply(_ input: Input) {
 		switch input {
-		case .direction(let direction): moveCursor(direction)
+		case .direction(let direction?): moveCursor(direction)
 		case .menu: events.add(.menu)
 		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
@@ -14,6 +14,7 @@ extension TacticalState {
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)
 		case .scale(let value): scale = value
+		default: break
 		}
 	}
 }
