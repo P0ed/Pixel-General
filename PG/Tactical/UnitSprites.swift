@@ -45,9 +45,9 @@ extension Unit {
 			if self[.supply] { "Truck" }
 			else if self[.aa] { "Neva" }
 			else { "Truck" }
-		case .lightWheel, .mediumWheel: "boxer"
-		case .lightTrack, .mediumTrack:
-			if self[.aa] { "SPAA" }
+		case .lightWheel: "boxer"
+		case .lightTrack:
+			if self[.radar] { "SPAA" }
 			else if self[.art] { "PZH" }
 			else { "Recon" }
 		case .heavyTrack:
@@ -55,8 +55,8 @@ extension Unit {
 			case .usa: "M1A1"
 			default: "Tank"
 			}
-		case .air where self[.hardcore]: "F64"
-		case .air: "MH6"
+		case .heli: "MH6"
+		case .jet: "F64"
 		}
 	}
 }

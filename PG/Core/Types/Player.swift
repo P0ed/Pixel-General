@@ -8,7 +8,7 @@ struct Player: DeadOrAlive {
 }
 
 enum Country: UInt8, Hashable {
-	case ind, irn, isr, ned, pak, rus, swe, ukr, usa
+	case swe, ind, irn, isr, ned, pak, rus, ukr, usa
 
 	static var zero: Self { .init(rawValue: 0)! }
 }

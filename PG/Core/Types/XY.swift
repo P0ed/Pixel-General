@@ -27,7 +27,7 @@ extension XY {
 		XY(1, 1)
 	}
 
-	var dr: Int {
+	private var doubleRadius: Int {
 		2 * max(abs(x), abs(y)) + min(abs(x), abs(y))
 	}
 
@@ -36,7 +36,7 @@ extension XY {
 	}
 
 	func distance(to xy: XY) -> Int {
-		(self - xy).dr
+		(self - xy).doubleRadius
 	}
 
 	private static var d4: [4 of XY] {
@@ -103,7 +103,7 @@ extension XY {
 		for x in 0...rng {
 			for y in 1...rng {
 				let xy = XY(x, y)
-				if xy.dr <= dr {
+				if xy.doubleRadius <= dr {
 					let mirrored = xy.mirror
 					for i in mirrored.indices {
 						arr.append(self + mirrored[i])

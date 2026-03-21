@@ -83,7 +83,7 @@ private extension TacticalScene {
 			items: state.unitTemplates.map { template in
 				MenuItem(
 					icon: template.imageName,
-					text: template.shortDescription,
+					text: template.typeDescription,
 					description: template.description + " / \(state.player.prestige)",
 					action: { [xy = state.cursor] state in
 						state.buy(template, at: xy)

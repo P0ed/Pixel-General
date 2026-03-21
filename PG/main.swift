@@ -1,6 +1,7 @@
 import SpriteKit
 
 let core = Core()
+//core.new()
 core.load()
 
 private let window: NSWindow = .make { window in

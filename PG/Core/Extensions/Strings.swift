@@ -2,10 +2,10 @@ extension Unit {
 
 	var status: String {
 		.makeStatus(pad: 12) { add in
-			add("\(shortDescription)")
+			add("\(typeDescription)")
 		} + .makeStatus(pad: 10) { add in
 			add("\(mpString)\(apString)  \(starsString)")
-		} + .makeStatus(pad: 12) { add in
+		} + .makeStatus(pad: 9) { add in
 			add(ammoString)
 		} + .makeStatus(pad: 9) { add in
 			add("INI: \(ini)")
@@ -20,16 +20,16 @@ extension Unit {
 	}
 
 	private var mpString: String {
-		mp == 0 ? " " : "⇧"
+		ap & 0b01 == 0 ? " " : "⇧"
 	}
 
 	private var apString: String {
-		ap == 0 || self[.supply] ? "⦾" : "⦿"
+		ap & 0b10 == 0 || self[.supply] ? "⦾" : "⦿"
 	}
 
 	var description: String {
 		"""
-		\(shortDescription) \(String(repeating: "★", count: Int(stars)))
+		\(typeDescription) \(String(repeating: "★", count: Int(stars)))
 		
 		ATK: \(softAtk) / \(hardAtk) / \(airAtk)
 		DEF: \(groundDef) / \(airDef)
@@ -56,10 +56,8 @@ extension Unit {
 	}
 
 	var ammoString: String {
-		!hasAmmo ? "" : String(repeating: ".", count: 0x7 - Int(ammo))
-		+ String(repeating: "!", count: Int(ammo))
-		+ String(repeating: "*", count: Int(mtm))
-		+ String(repeating: ".", count: 0x3 - Int(mtm))
+		!hasAmmo ? "" : String(repeating: "•", count: Int(ammo))
+		+ String(repeating: "_", count: 0x7 - Int(ammo))
 	}
 }
 
@@ -116,11 +114,10 @@ extension Unit {
 		case .soft: traitDescription ?? "inf"
 		case .softWheel: traitDescription ?? "ifv"
 		case .lightWheel: traitDescription ?? "ifv"
-		case .mediumWheel: traitDescription ?? "ifv"
 		case .lightTrack: traitDescription ?? "ifv"
-		case .mediumTrack: traitDescription ?? "ifv"
 		case .heavyTrack: "tank"
-		case .air: "heli"
+		case .heli: "heli"
+		case .jet: "jet"
 		}
 	}
 

@@ -14,7 +14,7 @@ final class Core {
 		state = State(
 			hq: HQState(
 				player: Player(country: country),
-				units: .init(head: units, tail: .none)
+				units: .init(head: units, tail: .empty)
 			)
 		)
 		save()
@@ -50,13 +50,12 @@ final class Core {
 		let units: [Unit] = \.grid4x4 § tactical.units.compactMap { _, u in
 			u.country != c ? nil : modifying(u, { u in
 				u.hp = 0xF
-				u.mp = 1
-				u.ap = 1
+				u.ap = 0b11
 				u.ammo = 0x7
 				u.ent = 0
 			})
 		}
-		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .none)
+		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)
 		state.hq?.cursor = .zero
 		state.hq?.player.prestige = tactical.players.firstMap {
 			$1.country == c ? $1.prestige : nil

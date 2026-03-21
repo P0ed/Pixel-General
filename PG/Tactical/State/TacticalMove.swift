@@ -78,6 +78,12 @@ extension TacticalState {
 		} ?? false
 	}
 
+	private mutating func _move(uid: UID, pos: XY) {
+		unitsMap[units[uid].position] = -1
+		unitsMap[pos] = uid
+		units[uid].position = pos
+	}
+
 	mutating func move(unit uid: UID, to position: XY) {
 		guard units[uid].alive, units[uid].country == country, units[uid].canMove
 		else { return }
@@ -100,13 +106,11 @@ extension TacticalState {
 		}
 
 		let distance = units[uid].position.distance(to: pos)
-		unitsMap[units[uid].position] = -1
-		unitsMap[pos] = uid
-		units[uid].position = pos
-		units[uid].mp = 0
+		_move(uid: uid, pos: pos)
+		units[uid].ap &= 0b10
 		units[uid].ent = 0
 		if units[uid].type == .soft, units[uid][.art] {
-			units[uid].ap = 0
+			units[uid].ap &= 0b01
 		}
 
 		player.visible.formUnion(vision(for: units[uid]))

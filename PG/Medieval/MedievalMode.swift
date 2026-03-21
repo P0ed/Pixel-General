@@ -217,4 +217,3 @@ extension MedievalScene {
 		nodes?.units[uid] = .none
 	}
 }
-

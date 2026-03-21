@@ -1,138 +1,112 @@
-struct Unit: RawRepresentable, Hashable {
-	var rawValue: UInt128
-}
-
 typealias UID = Int
 
-extension Unit: Monoid {
-	static var empty: Self { .init(rawValue: 0) }
-	mutating func combine(_ other: Self) { rawValue |= other.rawValue }
+struct Unit: Hashable {
+	var country: Country
+	var position: XY = .zero
+	var hp: UInt8 = 0
+	var ap: UInt8 = 0
+	var ammo: UInt8 = 0
+	var ent: UInt8 = 0
+	var exp: UInt8 = 0
+	var type: UnitType = .soft
+	var ini: UInt8 = 0
+	var softAtk: UInt8 = 0
+	var hardAtk: UInt8 = 0
+	var airAtk: UInt8 = 0
+	var groundDef: UInt8 = 0
+	var airDef: UInt8 = 0
+	var traits: Traits = []
 }
 
-extension Unit {
+extension Unit: Monoid {
+	static var empty: Self { .init(country: .swe) }
+	mutating func combine(_ other: Self) {
+		hp |= other.hp
+		ap |= other.ap
+		ammo |= other.ammo
+		ent |= other.ent
+		exp |= other.exp
+		type = .init(rawValue: type.rawValue | other.type.rawValue) ?? other.type
+		ini |= other.ini
+		softAtk |= other.softAtk
+		hardAtk |= other.hardAtk
+		airAtk |= other.airAtk
+		groundDef |= other.groundDef
+		airDef |= other.airDef
+		traits.rawValue |= other.traits.rawValue
+	}
+}
 
-	init(country: Country) {
-		self = .make { $0.country = country }
-	}
+struct Traits: OptionSet, Hashable {
+	var rawValue: UInt8
 
-	private static func mask(width: UInt8, offset: UInt8) -> RawValue {
-		((1 << width) - 1) << offset
-	}
-	private func get(width: UInt8, offset: UInt8) -> UInt8 {
-		let mask = Self.mask(width: width, offset: offset)
-		return UInt8((rawValue & mask) >> offset)
-	}
-	private mutating func set(_ value: UInt8, width: UInt8, offset: UInt8) {
-		let mask = Self.mask(width: width, offset: offset)
-		rawValue &= ~mask
-		rawValue |= RawValue(value) << offset & mask
-	}
+	static var art: Self { .init(.art) }
+	static var aa: Self { .init(.aa) }
+	static var supply: Self { .init(.supply) }
+	static var hardcore: Self { .init(.hardcore) }
+	static var transport: Self { .init(.transport) }
+	static var radar: Self { .init(.radar) }
+	static var fast: Self { .init(.fast) }
+	static var com: Self { .init(.com) }
+}
 
-	var hp: UInt8 {
-		get { get(width: 4, offset: 0) }
-		set { set(newValue, width: 4, offset: 0) }
-	}
-	var mp: UInt8 {
-		get { get(width: 1, offset: 4) }
-		set { set(newValue, width: 1, offset: 4) }
-	}
-	var ap: UInt8 {
-		get { get(width: 1, offset: 5) }
-		set { set(newValue, width: 1, offset: 5) }
-	}
-	var ammo: UInt8 {
-		get { get(width: 3, offset: 6) }
-		set { set(newValue, width: 3, offset: 6) }
-	}
-	var mtm: UInt8 {
-		get { get(width: 2, offset: 9) }
-		set { set(newValue, width: 2, offset: 9) }
-	}
-	var ent: UInt8 {
-		get { get(width: 3, offset: 11) }
-		set { set(newValue, width: 3, offset: 11) }
-	}
-	var exp: UInt8 {
-		get { get(width: 8, offset: 14) }
-		set { set(newValue, width: 8, offset: 14) }
-	}
-	var type: UnitType {
-		get { UnitType(rawValue: get(width: 3, offset: 22)) ?? .soft }
-		set { set(newValue.rawValue, width: 3, offset: 22) }
-	}
-	var rng: UInt8 {
-		get { get(width: 3, offset: 25) }
-		set { set(newValue, width: 3, offset: 25) }
-	}
-	var mov: UInt8 {
-		get { get(width: 4, offset: 28) }
-		set { set(newValue, width: 4, offset: 28) }
-	}
-	var ini: UInt8 {
-		get { get(width: 4, offset: 32) }
-		set { set(newValue, width: 4, offset: 32) }
-	}
-	var softAtk: UInt8 {
-		get { get(width: 4, offset: 36) }
-		set { set(newValue, width: 4, offset: 36) }
-	}
-	var hardAtk: UInt8 {
-		get { get(width: 4, offset: 40) }
-		set { set(newValue, width: 4, offset: 40) }
-	}
-	var airAtk: UInt8 {
-		get { get(width: 4, offset: 44) }
-		set { set(newValue, width: 4, offset: 44) }
-	}
-	var groundDef: UInt8 {
-		get { get(width: 4, offset: 48) }
-		set { set(newValue, width: 4, offset: 48) }
-	}
-	var airDef: UInt8 {
-		get { get(width: 4, offset: 52) }
-		set { set(newValue, width: 4, offset: 52) }
-	}
-	subscript(_ trait: Trait) -> Bool {
-		get { get(width: 1, offset: 56 + trait.rawValue) == 1 }
-		set { set(newValue ? 1 : 0, width: 1, offset: 56 + trait.rawValue) }
-	}
-	var position: XY {
-		get {
-			XY(
-				Int(Int8(bitPattern: get(width: 8, offset: 64))),
-				Int(Int8(bitPattern: get(width: 8, offset: 72)))
-			)
-		}
-		set {
-			set(UInt8(bitPattern: Int8(clamping: newValue.x)), width: 8, offset: 64)
-			set(UInt8(bitPattern: Int8(clamping: newValue.y)), width: 8, offset: 72)
-		}
-	}
-	var country: Country {
-		get { .init(rawValue: get(width: 4, offset: 80)) ?? .zero }
-		set { set(newValue.rawValue, width: 4, offset: 80) }
-	}
+extension Traits {
+	init(_ trait: Trait) { rawValue = 1 << trait.rawValue }
 }
 
 enum Trait: UInt8 {
-	case art, aa, supply, hardcore, transport, xf, xg, xh
+	case art, aa, supply, hardcore, transport, radar, fast, com
 }
 
 extension Unit {
+
+	var isAir: Bool {
+		switch type {
+		case .heli, .jet: true
+		default: false
+		}
+	}
+
+	var spot: UInt8 {
+		self[.radar] ? 3 : 2
+	}
+
+	var rng: UInt8 {
+		if self[.supply] {
+			0
+		} else if self[.art] || self[.aa] {
+			isAir ? 2 : 3
+		} else {
+			1
+		}
+	}
+
+	var mov: UInt8 {
+		switch type {
+		case .soft: (self[.art] || self[.aa] ? 1 : 3) + (self[.fast] ? 1 : 0)
+		case .softWheel, .lightWheel: 8 + (self[.fast] ? 1 : 0)
+		case .lightTrack: 7 + (self[.fast] ? 1 : 0)
+		case .heavyTrack: 6 + (self[.fast] ? 1 : 0)
+		case .heli: 11 + (self[.fast] ? 2 : 0)
+		case .jet: 13 + (self[.fast] ? 2 : 0)
+		}
+	}
+
+	subscript(_ trait: Trait) -> Bool {
+		get { traits.contains(.init(trait)) }
+		set { traits.insert(.init(trait)) }
+	}
 
 	var stars: UInt8 {
 		modifying(4) { stars in stars.decrement(by: UInt8(exp.leadingZeroBitCount)) }
 	}
 
-	var isAir: Bool { type == .air }
-
 	func atk(_ dst: Unit) -> UInt8 {
 		switch dst.type {
 		case .soft, .softWheel: softAtk
-		case .lightWheel, .lightTrack: (2 * softAtk + hardAtk) / 3
-		case .mediumWheel, .mediumTrack: (softAtk + 2 * hardAtk) / 3
+		case .lightWheel, .lightTrack: (softAtk + hardAtk * 2) / 3
 		case .heavyTrack: hardAtk
-		case .air: airAtk
+		case .heli, .jet: airAtk
 		}
 	}
 
@@ -142,7 +116,7 @@ extension Unit {
 }
 
 enum UnitType: UInt8, Hashable {
-	case soft, softWheel, lightWheel, mediumWheel, lightTrack, mediumTrack, heavyTrack, air
+	case soft, softWheel, lightWheel, lightTrack, heavyTrack, heli, jet
 }
 
 extension Unit: DeadOrAlive {
@@ -150,13 +124,10 @@ extension Unit: DeadOrAlive {
 }
 
 extension Unit {
-
-	static var none: Unit { .empty }
-
-	var untouched: Bool { mp == 1 && ap == 1 }
+	var untouched: Bool { ap == 0b11 }
 	var hasActions: Bool { canMove || canAttack }
-	var canMove: Bool { mp > 0 }
-	var canAttack: Bool { ap > 0 && ammo > 0 }
+	var canMove: Bool { ap & 0b01 > 0 }
+	var canAttack: Bool { ap & 0b10 > 0 && ammo > 0 }
 	var noRetaliation: Bool { self[.art] }
 
 	func canHit(unit: Unit) -> Bool {
@@ -185,14 +156,13 @@ extension Unit {
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .soft: 40
-		case .softWheel: 80
-		case .lightWheel: 110
-		case .mediumWheel: 140
-		case .lightTrack: 120
-		case .mediumTrack: 150
+		case .soft: 47
+		case .softWheel: 68
+		case .lightWheel: 120
+		case .lightTrack: 150
 		case .heavyTrack: 180
-		case .air: 220
+		case .heli: 220
+		case .jet: 330
 		}
 	}
 
@@ -205,12 +175,5 @@ extension Speicher where Element == Unit {
 
 	subscript(_ xy: XY) -> (UID, Unit)? {
 		firstMap { i, u in u.position == xy ? (i, u) : nil }
-	}
-}
-
-extension Speicher where Element == Building {
-
-	subscript(_ xy: XY) -> Building? {
-		firstMap { _, b in b.position == xy ? b : nil }
 	}
 }

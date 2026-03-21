@@ -58,7 +58,7 @@ extension HQScene {
 			items: [Unit].template(state.country).map { [xy = state.cursor] u in
 				.init(
 					icon: u.imageName,
-					text: u.shortDescription,
+					text: u.typeDescription,
 					description: u.description + " / \(state.player.prestige)",
 					action: { state in state.buy(u, at: xy) }
 				)

@@ -89,8 +89,7 @@ extension Unit {
 	static var base: Self {
 		.make { u in
 			u.hp = 0xF
-			u.mp = 0x1
-			u.ap = 0x1
+			u.ap = 0b11
 			u.ammo = 0x7
 		}
 	}
@@ -108,7 +107,6 @@ extension Unit {
 			u.type = .softWheel
 			u[.supply] = true
 			u[.transport] = true
-			u.mov = 8
 			u.groundDef = 3
 			u.airDef = 1
 		}
@@ -122,8 +120,6 @@ extension Unit {
 			stats.hardAtk = 1
 			stats.groundDef = 5
 			stats.airDef = 3
-			stats.mov = 3
-			stats.rng = 1
 		}
 	}
 
@@ -135,8 +131,6 @@ extension Unit {
 			stats.hardAtk = 2
 			stats.groundDef = 6
 			stats.airDef = 4
-			stats.mov = 3
-			stats.rng = 1
 		}
 	}
 
@@ -144,14 +138,13 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.hardcore] = true
+			stats[.fast] = true
 			stats.ini = 7
 			stats.softAtk = 8
 			stats.hardAtk = 5
 			stats.airAtk = 2
 			stats.groundDef = 9
 			stats.airDef = 8
-			stats.mov = 4
-			stats.rng = 1
 		}
 	}
 
@@ -161,8 +154,6 @@ extension Unit {
 			stats.ini = 6
 			stats.softAtk = 8
 			stats.hardAtk = 9
-			stats.mov = 6
-			stats.rng = 1
 			stats.groundDef = 9
 			stats.airDef = 5
 		}
@@ -174,8 +165,6 @@ extension Unit {
 			stats.ini = 7
 			stats.softAtk = 9
 			stats.hardAtk = 10
-			stats.mov = 6
-			stats.rng = 1
 			stats.groundDef = 10
 			stats.airDef = 5
 		}
@@ -187,21 +176,6 @@ extension Unit {
 			stats.ini = 8
 			stats.softAtk = 9
 			stats.hardAtk = 11
-			stats.mov = 6
-			stats.rng = 1
-			stats.groundDef = 11
-			stats.airDef = 6
-		}
-	}
-
-	static var m48: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.ini = 7
-			stats.softAtk = 9
-			stats.hardAtk = 10
-			stats.mov = 5
-			stats.rng = 1
 			stats.groundDef = 11
 			stats.airDef = 6
 		}
@@ -213,8 +187,6 @@ extension Unit {
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 11
-			stats.mov = 6
-			stats.rng = 1
 			stats.groundDef = 13
 			stats.airDef = 8
 		}
@@ -222,14 +194,12 @@ extension Unit {
 
 	static var boxer: Self {
 		.make { stats in
-			stats.type = .mediumWheel
+			stats.type = .lightWheel
 			stats[.transport] = true
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 7
 			stats.airAtk = 4
-			stats.mov = 8
-			stats.rng = 1
 			stats.groundDef = 10
 			stats.airDef = 7
 		}
@@ -237,14 +207,12 @@ extension Unit {
 
 	static var strf90: Self {
 		.make { stats in
-			stats.type = .mediumTrack
+			stats.type = .lightTrack
 			stats[.transport] = true
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 8
 			stats.airAtk = 4
-			stats.mov = 7
-			stats.rng = 1
 			stats.groundDef = 11
 			stats.airDef = 7
 		}
@@ -252,16 +220,27 @@ extension Unit {
 
 	static var lvkv90: Self {
 		.make { stats in
-			stats.type = .mediumTrack
-			stats[.aa] = true
+			stats.type = .lightTrack
+			stats[.radar] = true
 			stats.ini = 10
 			stats.softAtk = 8
 			stats.hardAtk = 8
 			stats.airAtk = 11
 			stats.groundDef = 9
 			stats.airDef = 11
-			stats.mov = 7
-			stats.rng = 1
+		}
+	}
+
+	static var gripen: Self {
+		.make { stats in
+			stats.type = .jet
+			stats[.aa] = true
+			stats.ini = 12
+			stats.softAtk = 9
+			stats.hardAtk = 11
+			stats.airAtk = 12
+			stats.groundDef = 10
+			stats.airDef = 11
 		}
 	}
 
@@ -274,8 +253,6 @@ extension Unit {
 			stats.hardAtk = 7
 			stats.groundDef = 7
 			stats.airDef = 6
-			stats.mov = 5
-			stats.rng = 3
 		}
 	}
 
@@ -288,8 +265,6 @@ extension Unit {
 			stats.hardAtk = 5
 			stats.groundDef = 4
 			stats.airDef = 3
-			stats.mov = 1
-			stats.rng = 3
 		}
 	}
 
@@ -302,8 +277,6 @@ extension Unit {
 			stats.hardAtk = 7
 			stats.groundDef = 5
 			stats.airDef = 4
-			stats.mov = 1
-			stats.rng = 3
 		}
 	}
 
@@ -316,8 +289,6 @@ extension Unit {
 			stats.hardAtk = 7
 			stats.groundDef = 5
 			stats.airDef = 4
-			stats.mov = 1
-			stats.rng = 3
 		}
 	}
 
@@ -331,8 +302,6 @@ extension Unit {
 			stats.airAtk = 13
 			stats.groundDef = 4
 			stats.airDef = 9
-			stats.mov = 6
-			stats.rng = 3
 		}
 	}
 
@@ -346,73 +315,60 @@ extension Unit {
 			stats.airAtk = 3
 			stats.groundDef = 7
 			stats.airDef = 8
-			stats.mov = 7
-			stats.rng = 1
 		}
 	}
 
-	static var m2A2: Self {
+	static var m48: Self {
 		.make { stats in
-			stats.type = .mediumTrack
-			stats[.transport] = true
-			stats.ini = 9
+			stats.type = .heavyTrack
+			stats.ini = 7
 			stats.softAtk = 9
-			stats.hardAtk = 8
-			stats.airAtk = 4
-			stats.mov = 7
-			stats.rng = 1
-			stats.groundDef = 10
-			stats.airDef = 7
+			stats.hardAtk = 10
+			stats.groundDef = 11
+			stats.airDef = 6
 		}
 	}
 
 	static var m1A2: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats[.fast] = true
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 12
-			stats.mov = 6
-			stats.rng = 1
 			stats.groundDef = 12
+			stats.airDef = 7
+		}
+	}
+
+	static var m2A2: Self {
+		.make { stats in
+			stats.type = .lightTrack
+			stats[.transport] = true
+			stats.ini = 9
+			stats.softAtk = 9
+			stats.hardAtk = 8
+			stats.airAtk = 4
+			stats.groundDef = 10
 			stats.airDef = 7
 		}
 	}
 
 	static var mh6: Self {
 		.make { stats in
-			stats.type = .air
+			stats.type = .heli
 			stats.ini = 9
 			stats.softAtk = 8
 			stats.hardAtk = 9
 			stats.airAtk = 9
 			stats.groundDef = 7
 			stats.airDef = 7
-			stats.mov = 12
-			stats.rng = 1
-		}
-	}
-
-	static var gripen: Self {
-		.make { stats in
-			stats.type = .air
-			stats[.hardcore] = true
-			stats[.aa] = true
-			stats.ini = 12
-			stats.softAtk = 9
-			stats.hardAtk = 11
-			stats.airAtk = 12
-			stats.groundDef = 10
-			stats.airDef = 11
-			stats.mov = 15
-			stats.rng = 1
 		}
 	}
 
 	static var f16: Self {
 		.make { stats in
-			stats.type = .air
-			stats[.hardcore] = true
+			stats.type = .jet
 			stats[.aa] = true
 			stats.ini = 11
 			stats.softAtk = 8
@@ -420,15 +376,12 @@ extension Unit {
 			stats.airAtk = 13
 			stats.groundDef = 10
 			stats.airDef = 11
-			stats.mov = 15
-			stats.rng = 1
 		}
 	}
 
 	static var mig: Self {
 		.make { stats in
-			stats.type = .air
-			stats[.hardcore] = true
+			stats.type = .jet
 			stats[.aa] = true
 			stats.ini = 10
 			stats.softAtk = 8
@@ -436,8 +389,6 @@ extension Unit {
 			stats.airAtk = 11
 			stats.groundDef = 9
 			stats.airDef = 10
-			stats.mov = 15
-			stats.rng = 1
 		}
 	}
 }

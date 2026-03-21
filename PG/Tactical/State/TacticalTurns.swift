@@ -91,9 +91,7 @@ extension TacticalState {
 			cap: 0xF
 		)
 		unit.exp.decrement(by: dhp * 1 << unit.stars)
-
-		unit.mp = 1
-		unit.ap = 1
+		unit.ap = 0b11
 		units[id] = unit
 	}
 

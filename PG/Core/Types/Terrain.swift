@@ -35,7 +35,7 @@ extension Terrain {
 			case .mountain: stats.mov
 			case .none: 0x10
 			}
-		case .softWheel, .lightWheel, .mediumWheel:
+		case .softWheel, .lightWheel:
 			switch self {
 			case .city: 1
 			case .field: 2
@@ -43,14 +43,14 @@ extension Terrain {
 			case .forestHill, .river: stats.mov
 			case .none, .mountain: 0x10
 			}
-		case .lightTrack, .mediumTrack, .heavyTrack:
+		case .lightTrack, .heavyTrack:
 			switch self {
 			case .field, .city: 1
 			case .forest, .hill: 2
 			case .forestHill, .river: stats.mov
 			case .none, .mountain: 0x10
 			}
-		case .air: 1
+		case .heli, .jet: 1
 		}
 	}
 
@@ -67,8 +67,8 @@ extension Terrain {
 	func closeCombatPenalty(_ type: UnitType) -> Int {
 		let def = max(0, def)
 		return switch type {
-		case .lightWheel, .lightTrack: -Int(def)
-		case .mediumWheel, .mediumTrack: -Int(def * 2)
+		case .softWheel, .lightWheel: -Int(def)
+		case .lightTrack: -Int(def * 2)
 		case .heavyTrack: -Int(def * 3)
 		default: 0
 		}

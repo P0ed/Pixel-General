@@ -88,7 +88,7 @@ extension TacticalState {
 			Int(dstStats.ent + dstStats.ini + dstStats.stars) * 2 + (surprise ? 10 : 0)
 		)
 		if ruggedDefence { print("Rugged Defence!") }
-		units[src].ap.decrement()
+		units[src].ap &= 0b01
 
 		if !srcStats.isAir, !dstStats.isAir, !srcStats.noRetaliation,
 			let art = support(trait: .art, defender: dst, attacker: src) {

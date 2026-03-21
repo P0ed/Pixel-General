@@ -23,7 +23,7 @@ extension TacticalState {
 			head: buildings,
 			tail: .init(country: .zero, position: .zero, type: .city)
 		)
-		self.units = .init(head: units, tail: .none)
+		self.units = .init(head: units, tail: .empty)
 		unitsMap = .init(size: self.map.size, zero: -1)
 		self.units.map { i, u in (i, u.position) }.forEach { i, xy in
 			guard unitsMap[xy] < 0 else { fatalError() }
@@ -49,7 +49,7 @@ extension TacticalState {
 		}
 		set {
 			let idx = unitsMap[xy]
-			if idx >= 0 { units[idx] = newValue ?? .none }
+			if idx >= 0 { units[idx] = newValue ?? .empty }
 		}
 	}
 
@@ -71,6 +71,13 @@ struct Building: Hashable, DeadOrAlive {
 
 enum BuildingType: UInt8, Hashable {
 	case city
+}
+
+extension Speicher where Element == Building {
+
+	subscript(_ xy: XY) -> Building? {
+		firstMap { _, b in b.position == xy ? b : nil }
+	}
 }
 
 enum TacticalEvent: Hashable {

@@ -127,9 +127,7 @@ extension MenuState where State: ~Copyable {
 private extension SKScene {
 
 	static func make(_ state: borrowing State) -> SKScene {
-		if true {
-			Scene(mode: .medieval, state: .initial)
-		} else if state.tactical != nil {
+		if state.tactical != nil {
 			Scene(mode: .tactical, state: clone(state.tactical!))
 		} else if state.strategic != nil {
 			fatalError()
