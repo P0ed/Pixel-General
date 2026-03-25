@@ -68,8 +68,8 @@ extension TacticalState {
 			players: [
 				player,
 				Player(country: .usa, ai: true, prestige: 0x1F00),
-				Player(country: .rus, ai: true, prestige: 0xB00),
-				Player(country: .swe, ai: true, prestige: 0x600),
+				Player(country: .rus, ai: true, prestige: 0xF00),
+				Player(country: .swe, ai: true, prestige: 0x800),
 			],
 			buildings: buildings,
 			units: units

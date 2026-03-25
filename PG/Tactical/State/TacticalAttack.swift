@@ -94,7 +94,7 @@ extension TacticalState {
 			let art = support(trait: .art, defender: dst, attacker: src) {
 			fire(src: art, dst: src, defMod: srcStats[.hardcore] ? 1 : 0)
 		}
-		if srcStats.isAir, let aa = support(trait: .aa, defender: dst, attacker: src) {
+		if srcStats.isAir, !dstStats[.aa], let aa = support(trait: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defMod: 0)
 		}
 		if !ruggedDefence, units[src].alive {

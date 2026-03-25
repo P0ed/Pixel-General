@@ -150,7 +150,7 @@ extension Unit {
 	func canHit(unit: Unit) -> Bool {
 		position.distance(to: unit.position) <= rng * 2 + 1
 		&& atk(unit) > 0
-		&& isAir ? ammo > 0 : true
+		&& (isAir ? ammo > 0 : true)
 	}
 
 	var cost: UInt16 {
