@@ -51,7 +51,7 @@ private extension TacticalState {
 				selectUnit(.none)
 			}
 		} else {
-			if unitAt(cursor) != nil {
+			if player.visible[cursor], unitAt(cursor) != nil {
 				selectUnit(unitsMap[cursor])
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
