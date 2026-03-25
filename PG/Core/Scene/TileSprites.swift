@@ -13,6 +13,7 @@ extension SKTileGroup {
 	}
 
 	static let city = make(.city)
+	static let airfield = make(.airfield)
 	static let field = make(.field)
 	static let forest = make(.forest)
 	static let forestHill = make(.forestHill)
@@ -25,6 +26,7 @@ extension SKTileGroup {
 	static let river11 = make(.river11)
 
 	static let cityFog = make(.cityFog)
+	static let airfieldFog = make(.airfieldFog)
 	static let fieldFog = make(.fieldFog)
 	static let forestFog = make(.forestFog)
 	static let forestHillFog = make(.forestHillFog)
@@ -48,6 +50,7 @@ extension Terrain {
 			case .forestHill: .forestHill
 			case .mountain: .mountain
 			case .city: .city
+			case .airfield: .airfield
 			case .river: .river00
 			case .none: .none
 			}
@@ -59,6 +62,7 @@ extension Terrain {
 			case .forestHill: .forestHillFog
 			case .mountain: .mountainFog
 			case .city: .cityFog
+			case .airfield: .airfieldFog
 			case .river: .river00Fog
 			case .none: .none
 			}
@@ -70,9 +74,11 @@ extension SKTileSet {
 
 	static let terrain = SKTileSet(
 		tileGroups: [
-			.city, .field, .forest, .hill, .forestHill, .mountain,
+			.city, .airfield, .field, .forest,
+			.hill, .forestHill, .mountain,
 			.river00, .river01, .river10, .river10,
-			.cityFog, .fieldFog, .forestFog, .hillFog, .forestHillFog, .mountainFog,
+			.cityFog, .airfieldFog, .fieldFog, .forestFog,
+			.hillFog, .forestHillFog, .mountainFog,
 			.river00Fog, .river01Fog, .river10Fog, .river11Fog,
 		],
 		tileSetType: .isometric

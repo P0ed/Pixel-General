@@ -17,6 +17,16 @@ extension HQState {
 		}
 	}
 
+	var actionText: String {
+		if selected != nil {
+			"sell []"
+		} else if units[cursor] == nil {
+			"shop []"
+		} else {
+			""
+		}
+	}
+
 	mutating func apply(_ input: Input) {
 		switch input {
 		case .direction(let direction?): moveCursor(direction)

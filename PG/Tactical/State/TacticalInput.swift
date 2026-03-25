@@ -51,7 +51,7 @@ private extension TacticalState {
 				selectUnit(.none)
 			}
 		} else {
-			if let u = unitAt(cursor), u.country == country {
+			if unitAt(cursor) != nil {
 				selectUnit(unitsMap[cursor])
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
@@ -74,10 +74,11 @@ private extension TacticalState {
 
 		for _ in units.indices {
 			idx += reversed ? -1 : 1
-			let u = units[idx % cnt]
+			let uid = (cnt + idx) % cnt
+			let u = units[uid]
 
 			if u.alive, u.country == country, u.hasActions {
-				return selectUnit(idx % cnt)
+				return selectUnit(uid)
 			}
 		}
 		selectUnit(nil)

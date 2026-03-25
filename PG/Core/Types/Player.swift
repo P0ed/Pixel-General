@@ -2,13 +2,13 @@ struct Player: DeadOrAlive {
 	var country: Country
 	var ai: Bool = false
 	var alive: Bool = true
-	var prestige: UInt16 = 0x300
+	var prestige: UInt16 = 0x800
 	var crystals: Crystals = .empty
 	var visible: SetXY = .empty
 }
 
 enum Country: UInt8, Hashable {
-	case swe, ind, irn, isr, ned, pak, rus, ukr, usa
+	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
 
 	static var zero: Self { .init(rawValue: 0)! }
 }
@@ -21,7 +21,7 @@ extension Country {
 
 	var team: Team {
 		switch self {
-		case .ned, .swe, .ukr: .axis
+		case .den, .ned, .swe, .ukr: .axis
 		case .isr, .pak, .usa: .allies
 		case .ind, .irn, .rus: .soviet
 		}

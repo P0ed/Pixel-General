@@ -26,21 +26,6 @@ extension Unit {
 	private var apString: String {
 		ap & 0b10 == 0 || self[.supply] ? "⦾" : "⦿"
 	}
-
-	var description: String {
-		"""
-		\(typeDescription) \(String(repeating: "★", count: Int(stars)))
-		
-		ATK: \(softAtk) / \(hardAtk) / \(airAtk)
-		DEF: \(groundDef) / \(airDef)
-		MOV: \(mov)
-		RNG: \(rng)
-		
-		
-		- - - - - - - -
-		Cost: \(cost)
-		"""
-	}
 }
 
 extension Unit {
@@ -56,8 +41,8 @@ extension Unit {
 	}
 
 	var ammoString: String {
-		!hasAmmo ? "" : String(repeating: "•", count: Int(ammo))
-		+ String(repeating: "_", count: 0x7 - Int(ammo))
+		String(repeating: "•", count: Int(ammo))
+		+ String(repeating: "_", count: max(0, Int(maxAmmo) - Int(ammo)))
 	}
 }
 
@@ -76,7 +61,7 @@ extension TacticalState {
 		}
 	}
 
-	var globalText: String {
+	var actionText: String {
 		let cs = player.crystals
 		let rs = Crystals(rawValue: UInt8(d20.seed & 0xFF))
 		return "\(cs) \(rs)"
@@ -124,9 +109,7 @@ extension Unit {
 	private var traitDescription: String? {
 		self[.art] ? "art" : self[.aa] ? "anti-air" : self[.supply] ? "supply" : .none
 	}
-}
 
-extension Unit {
 	var shortDescription: String {
 		"\(country) \(typeDescription)"
 	}

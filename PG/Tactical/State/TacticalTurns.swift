@@ -74,23 +74,26 @@ extension TacticalState {
 			units[n].country.team == unit.country.team
 			&& units[n][.supply]
 		}
+		let hasBuildings = buildings.firstMap { _, b in
+			b.country == unit.country && b.position.distance(to: unit.position) <= 2 ? b : nil
+		} != nil
 		if !unit.isAir {
 			unit.ent.increment(
 				by: (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
 				cap: 7
 			)
 		}
-		unit.ammo.increment(
-			by: unit.hasAmmo ? (
-				(unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0)
-			) : 0,
-			cap: 0x7
-		)
-		let dhp = unit.hp.increment(
-			by: ((unit.untouched ? 4 : 0) + (hasSupply ? 4 : 0)) / (noEnemy ? 1 : 3),
-			cap: 0xF
-		)
-		unit.exp.decrement(by: dhp * 1 << unit.stars)
+		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
+			unit.ammo.increment(
+				by: (unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0),
+				cap: unit.maxAmmo
+			)
+		}
+		if !unit.isAir || hasBuildings {
+			unit.healLoosingXP(
+				((unit.untouched ? 4 : 0) + (hasSupply ? 4 : 0)) / (noEnemy ? 1 : 3)
+			)
+		}
 		unit.ap = 0b11
 		units[id] = unit
 	}

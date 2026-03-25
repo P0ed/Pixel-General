@@ -32,20 +32,21 @@ extension Unit {
 
 	static func tank(_ country: Country) -> Self {
 		switch country {
-		case .ned, .swe, .ukr: .strv122
+		case .ned, .den, .swe, .ukr: .strv122
 		case .usa, .isr: .m1A2
 		case .pak: .m48
-		case .rus, .irn, .ind: .t72
+		case .rus: .t72
+		case .irn, .ind: .t55
 		}
 	}
 
 	static func tank2(_ country: Country) -> Self {
 		switch country {
-		case .ned, .swe, .ukr: .strv122 >< .veteran
+		case .ned, .den, .swe, .ukr: .strv122 >< .veteran
 		case .usa, .isr: .m1A2 >< .veteran
 		case .pak: .m1A2
 		case .rus: .t90m_proryv
-		case .irn, .ind: .t72 >< .veteran
+		case .irn, .ind: .t72
 		}
 	}
 
@@ -83,14 +84,6 @@ extension Unit {
 		switch country.team {
 		case .axis: .lvkv90
 		default: .neva
-		}
-	}
-
-	static var base: Self {
-		.make { u in
-			u.hp = 0xF
-			u.ap = 0b11
-			u.ammo = 0x7
 		}
 	}
 
@@ -152,8 +145,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .heavyTrack
 			stats.ini = 6
-			stats.softAtk = 8
-			stats.hardAtk = 9
+			stats.softAtk = 7
+			stats.hardAtk = 10
 			stats.groundDef = 9
 			stats.airDef = 5
 		}
@@ -164,7 +157,7 @@ extension Unit {
 			stats.type = .heavyTrack
 			stats.ini = 7
 			stats.softAtk = 9
-			stats.hardAtk = 10
+			stats.hardAtk = 11
 			stats.groundDef = 10
 			stats.airDef = 5
 		}
@@ -175,7 +168,7 @@ extension Unit {
 			stats.type = .heavyTrack
 			stats.ini = 8
 			stats.softAtk = 9
-			stats.hardAtk = 11
+			stats.hardAtk = 12
 			stats.groundDef = 11
 			stats.airDef = 6
 		}
@@ -185,8 +178,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .heavyTrack
 			stats.ini = 9
-			stats.softAtk = 9
-			stats.hardAtk = 11
+			stats.softAtk = 10
+			stats.hardAtk = 13
 			stats.groundDef = 13
 			stats.airDef = 8
 		}
@@ -221,6 +214,7 @@ extension Unit {
 	static var lvkv90: Self {
 		.make { stats in
 			stats.type = .lightTrack
+			stats[.aa] = true
 			stats[.radar] = true
 			stats.ini = 10
 			stats.softAtk = 8
@@ -235,6 +229,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .jet
 			stats[.aa] = true
+			stats[.radar] = true
+			stats[.range] = true
 			stats.ini = 12
 			stats.softAtk = 9
 			stats.hardAtk = 11
@@ -248,6 +244,7 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.art] = true
+			stats[.range] = true
 			stats.ini = 5
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -260,6 +257,7 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
+			stats[.range] = true
 			stats.ini = 2
 			stats.softAtk = 9
 			stats.hardAtk = 5
@@ -272,6 +270,7 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
+			stats[.range] = true
 			stats.ini = 2
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -284,6 +283,7 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
+			stats[.range] = true
 			stats.ini = 2
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -296,12 +296,13 @@ extension Unit {
 		.make { stats in
 			stats.type = .softWheel
 			stats[.aa] = true
+			stats[.range] = true
 			stats.ini = 10
 			stats.softAtk = 0
 			stats.hardAtk = 0
 			stats.airAtk = 13
 			stats.groundDef = 4
-			stats.airDef = 9
+			stats.airDef = 8
 		}
 	}
 
@@ -370,12 +371,14 @@ extension Unit {
 		.make { stats in
 			stats.type = .jet
 			stats[.aa] = true
+			stats[.radar] = true
+			stats[.range] = true
 			stats.ini = 11
 			stats.softAtk = 8
 			stats.hardAtk = 10
 			stats.airAtk = 13
 			stats.groundDef = 10
-			stats.airDef = 11
+			stats.airDef = 10
 		}
 	}
 
@@ -383,12 +386,14 @@ extension Unit {
 		.make { stats in
 			stats.type = .jet
 			stats[.aa] = true
+			stats[.radar] = true
+			stats[.range] = true
 			stats.ini = 10
 			stats.softAtk = 8
 			stats.hardAtk = 10
 			stats.airAtk = 11
 			stats.groundDef = 9
-			stats.airDef = 10
+			stats.airDef = 9
 		}
 	}
 }

@@ -22,12 +22,12 @@ extension TacticalState {
 	}
 
 	mutating func fire(src: UID, dst: UID, defMod: Int) {
-		let atkMod = units[src].ammo == 0x7 ? 1 : 0
+		let atkMod = units[src].ammo == units[src].maxAmmo ? 1 : 0
 		let atk = Int(units[src].atk(units[dst]) + units[src].stars) + atkMod
 		let def = Int(units[dst].def(units[src]) + units[dst].stars) + defMod
 
 		let dif = atk - def
-		let t1 = max(1, 7 - dif)
+		let t1 = max(1, 6 - dif)
 		let t2 = max(3, 15 - dif)
 		let t3 = max(7, 22 - dif)
 		let rounds = (units[src].hp + 3) / 3
@@ -52,7 +52,7 @@ extension TacticalState {
 		units[src].ammo.decrement()
 		units[dst].hp.decrement(by: dmg)
 		let alive = units[dst].alive
-		units[src].exp.increment(by: alive ? dmg : dmg * 2)
+		units[src].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
 		if !alive { unitsMap[targetPos] = -1 }
 
 		camera = targetPos
@@ -107,6 +107,7 @@ extension TacticalState {
 
 			let srcDef = (dstStats.isAir ? 0 : dstTerrain.closeCombatPenalty(srcStats.type))
 			+ (ruggedDefence ? -3 : 0)
+			+ (dstStats.ammo == 0 ? 5 : 0)
 			fire(src: dst, dst: src, defMod: srcDef)
 		}
 		if ruggedDefence, units[src].alive {

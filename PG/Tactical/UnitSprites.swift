@@ -47,7 +47,7 @@ extension Unit {
 			else { "Truck" }
 		case .lightWheel: "boxer"
 		case .lightTrack:
-			if self[.radar] { "SPAA" }
+			if self[.aa] { "SPAA" }
 			else if self[.art] { "PZH" }
 			else { "Recon" }
 		case .heavyTrack:
@@ -96,20 +96,5 @@ extension SKNode {
 			.wait(forDuration: duration),
 			.removeFromParent()
 		]))
-	}
-}
-
-extension BuildingType {
-
-	var imageName: String {
-		switch self {
-		case .city: "City"
-		}
-	}
-
-	var tile: SKTileGroup {
-		switch self {
-		case .city: .city
-		}
 	}
 }

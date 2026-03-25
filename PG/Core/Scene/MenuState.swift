@@ -1,12 +1,7 @@
 struct MenuState<State: ~Copyable> {
-	var layout: MenuLayout
 	var items: [MenuItem<State>]
 	var cursor: Int = 0
 	var action: MenuAction?
-}
-
-enum MenuLayout {
-	case compact, inspector
 }
 
 enum MenuAction {
@@ -15,15 +10,15 @@ enum MenuAction {
 
 struct MenuItem<State: ~Copyable> {
 	var icon: String
-	var text: String
-	var description: String?
-	var action: (inout State) -> Void
+	var status: String
+	var action: String = ""
+	var update: (inout State) -> Void
 }
 
 extension MenuState where State: ~Copyable {
 
-	var rows: Int { layout == .compact ? 1 : 3 }
-	var cols: Int { layout == .inspector ? 3 : 5 }
+	var rows: Int { 3 }
+	var cols: Int { 4 }
 
 	mutating func apply(_ input: Input) {
 		switch input {

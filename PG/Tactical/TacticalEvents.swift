@@ -78,16 +78,14 @@ private extension TacticalScene {
 			  state.units[state.cursor] == nil
 		else { return }
 
+		let xy = state.cursor
 		show(MenuState(
-			layout: .inspector,
-			items: state.unitTemplates.map { template in
+			items: state.shopUnits(at: xy).map { template in
 				MenuItem(
 					icon: template.imageName,
-					text: template.typeDescription,
-					description: template.description + " / \(state.player.prestige)",
-					action: { [xy = state.cursor] state in
-						state.buy(template, at: xy)
-					}
+					status: template.status,
+					action: "\(template.cost) / \(state.player.prestige) ><",
+					update: { state in state.buy(template, at: xy) }
 				)
 			}
 		))
@@ -97,22 +95,21 @@ private extension TacticalScene {
 		guard case .none = menuState else { return show(.none) }
 
 		show(MenuState(
-			layout: .compact,
 			items: [
-				.init(icon: "End", text: "End turn") { state in
+				.init(icon: "End", status: "End turn") { state in
 					state.endTurn()
 				},
-				.init(icon: "Restart", text: "Restart") { [weak self] state in
+				.init(icon: "Restart", status: "Restart") { [weak self] state in
 					self?.restartGame(state: state)
 				},
-				.init(icon: "Save", text: "Save") { state in
+				.init(icon: "Save", status: "Save") { state in
 					core.store(tactical: state, auto: false)
 				},
-				.init(icon: "Load", text: "Load") { [weak self] state in
+				.init(icon: "Load", status: "Load") { [weak self] state in
 					core.load(auto: false)
 					self?.view?.present(core.state)
 				},
-				.init(icon: "HQ", text: "HQ") { [weak self] state in
+				.init(icon: "HQ", status: "HQ") { [weak self] state in
 					self?.restartGame(state: state)
 				},
 			]

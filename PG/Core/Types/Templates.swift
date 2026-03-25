@@ -1,45 +1,48 @@
 extension [Unit] {
 
-	static func template(_ country: Country) -> [Unit] {
-		[
-			Unit(country: country) >< .base >< .truck,
-			Unit(country: country) >< .base >< .inf(country),
-			Unit(country: country) >< .base >< .inf2(country),
-			Unit(country: country) >< .base >< .ifv(country),
-			Unit(country: country) >< .base >< .ifv2(country),
-			Unit(country: country) >< .base >< .tank(country),
-			Unit(country: country) >< .base >< .tank2(country),
-			Unit(country: country) >< .base >< .art(country),
-			Unit(country: country) >< .base >< .art2(country),
-			Unit(country: country) >< .base >< .aa(country),
-			Unit(country: country) >< .base >< .heli(country),
-			Unit(country: country) >< .base >< .fighter(country),
+	static func shop(country: Country, filterAir: Bool? = nil) -> [Unit] {
+		let ground: [Unit] = [
+			Unit(country: country) >< .truck,
+			Unit(country: country) >< .inf(country),
+			Unit(country: country) >< .inf2(country),
+			Unit(country: country) >< .ifv(country),
+			Unit(country: country) >< .ifv2(country),
+			Unit(country: country) >< .tank(country),
+			Unit(country: country) >< .tank2(country),
+			Unit(country: country) >< .art(country),
+			Unit(country: country) >< .art2(country),
+			Unit(country: country) >< .aa(country),
 		]
+		let air: [Unit] = [
+			Unit(country: country) >< .heli(country),
+			Unit(country: country) >< .fighter(country),
+		]
+		return filterAir.map { $0 ? air : ground } ?? ground + air
 	}
 
 	static func base(_ country: Country) -> [Unit] {
 		\.grid4x4 § [
-			Unit(country: country) >< .base >< .truck,
-			Unit(country: country) >< .base >< .regular >< .veteran,
-			Unit(country: country) >< .base >< .regular >< .veteran,
-			Unit(country: country) >< .base >< .regular >< .veteran,
-			Unit(country: country) >< .base >< .tank(country) >< .veteran,
-			Unit(country: country) >< .base >< .tank(country) >< .veteran,
-			Unit(country: country) >< .base >< .ifv(country) >< .veteran,
-			Unit(country: country) >< .base >< .art(country) >< .veteran,
-			Unit(country: country) >< .base >< .art(country) >< .veteran,
+			Unit(country: country) >< .truck,
+			Unit(country: country) >< .regular >< .veteran,
+			Unit(country: country) >< .regular >< .veteran,
+			Unit(country: country) >< .regular >< .veteran,
+			Unit(country: country) >< .tank(country) >< .veteran,
+			Unit(country: country) >< .tank(country) >< .veteran,
+			Unit(country: country) >< .ifv(country) >< .veteran,
+			Unit(country: country) >< .art(country) >< .veteran,
+			Unit(country: country) >< .art(country) >< .veteran,
 		]
 	}
 
 	static func small(_ country: Country) -> [Unit] {
 		\.grid4x4 § [
-			Unit(country: country) >< .base >< .truck,
-			Unit(country: country) >< .base >< .regular >< .veteran,
-			Unit(country: country) >< .base >< .regular >< .veteran,
-			Unit(country: country) >< .base >< .tank(country) >< .veteran,
-			Unit(country: country) >< .base >< .ifv(country) >< .veteran,
-			Unit(country: country) >< .base >< .art(country) >< .veteran,
-			Unit(country: country) >< .base >< .aa(country) >< .veteran,
+			Unit(country: country) >< .truck,
+			Unit(country: country) >< .regular >< .veteran,
+			Unit(country: country) >< .regular >< .veteran,
+			Unit(country: country) >< .tank(country) >< .veteran,
+			Unit(country: country) >< .ifv(country) >< .veteran,
+			Unit(country: country) >< .art(country) >< .veteran,
+			Unit(country: country) >< .aa(country) >< .veteran,
 		]
 	}
 

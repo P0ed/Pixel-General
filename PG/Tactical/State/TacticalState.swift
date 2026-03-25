@@ -33,6 +33,7 @@ extension TacticalState {
 		buildings.forEach { b in
 			switch b.type {
 			case .city: self.map[b.position] = .city
+			case .airfield: self.map[b.position] = .airfield
 			}
 		}
 
@@ -70,7 +71,7 @@ struct Building: Hashable, DeadOrAlive {
 }
 
 enum BuildingType: UInt8, Hashable {
-	case city
+	case city, airfield
 }
 
 extension Speicher where Element == Building {
@@ -112,7 +113,8 @@ extension Building {
 
 	var income: UInt16 {
 		switch type {
-		case .city: 0x10
+		case .city: 0x12
+		case .airfield: 0x06
 		}
 	}
 }

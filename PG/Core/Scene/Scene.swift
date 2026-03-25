@@ -95,7 +95,7 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	private func didSetMenu() {
 		if let action = menuState?.action {
 			if let menuState, case let .apply(idx) = action {
-				menuState.items[idx].action(&state)
+				menuState.items[idx].update(&state)
 			}
 			return menuState = .none
 		} else if (menuState == nil) != (baseNodes?.menu.isHidden == true) {
@@ -108,9 +108,10 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	}
 
 	private func updateStatus() {
-		let (status, global) = menuState.map { ($0.statusText, "") } ?? mode.status(state)
+		let (status, action) = menuState.map { ($0.statusText, $0.actionText) }
+		?? mode.status(state)
 		baseNodes?.status.text = status
-		baseNodes?.global.text = global
+		baseNodes?.action.text = action
 	}
 
 	func saveAndExit() {
@@ -121,7 +122,8 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 
 extension MenuState where State: ~Copyable {
 
-	var statusText: String { items[cursor].text }
+	var statusText: String { items[cursor].status }
+	var actionText: String { items[cursor].action }
 }
 
 private extension SKScene {

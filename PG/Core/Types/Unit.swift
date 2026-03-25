@@ -3,7 +3,7 @@ typealias UID = Int
 struct Unit: Hashable {
 	var country: Country
 	var position: XY = .zero
-	var hp: UInt8 = 0
+	var hp: UInt8 = 0xF
 	var ap: UInt8 = 0
 	var ammo: UInt8 = 0
 	var ent: UInt8 = 0
@@ -19,14 +19,16 @@ struct Unit: Hashable {
 }
 
 extension Unit: Monoid {
+
 	static var empty: Self { .init(country: .swe) }
+
 	mutating func combine(_ other: Self) {
 		hp |= other.hp
 		ap |= other.ap
-		ammo |= other.ammo
+		ammo = max(ammo, other.ammo)
 		ent |= other.ent
 		exp |= other.exp
-		type = .init(rawValue: type.rawValue | other.type.rawValue) ?? other.type
+		type = type == .soft ? other.type : type
 		ini |= other.ini
 		softAtk |= other.softAtk
 		hardAtk |= other.hardAtk
@@ -47,7 +49,7 @@ struct Traits: OptionSet, Hashable {
 	static var transport: Self { .init(.transport) }
 	static var radar: Self { .init(.radar) }
 	static var fast: Self { .init(.fast) }
-	static var com: Self { .init(.com) }
+	static var range: Self { .init(.range) }
 }
 
 extension Traits {
@@ -55,7 +57,7 @@ extension Traits {
 }
 
 enum Trait: UInt8 {
-	case art, aa, supply, hardcore, transport, radar, fast, com
+	case art, aa, supply, hardcore, transport, radar, fast, range
 }
 
 extension Unit {
@@ -71,11 +73,26 @@ extension Unit {
 		self[.radar] ? 3 : 2
 	}
 
+	var maxAmmo: UInt8 {
+		guard softAtk > 0 || hardAtk > 0 || airAtk > 0 else { return 0 }
+		return switch type {
+		case .jet: self[.range] ? 2 : 3
+		case .heli: 3
+		case .soft where self[.art]: self[.range] ? 6 : 7
+		case .soft where self[.aa]: self[.range] ? 5 : 7
+		case _ where self[.art]: self[.range] ? 5 : 6
+		case _ where self[.aa]: self[.range] ? 4 : 6
+		default: 7
+		}
+	}
+
 	var rng: UInt8 {
 		if self[.supply] {
 			0
-		} else if self[.art] || self[.aa] {
-			isAir ? 2 : 3
+		} else if self[.art] {
+			self[.range] ? 3 : 2
+		} else if self[.aa] {
+			self[.range] ? (isAir ? 2 : 3) : 1
 		} else {
 			1
 		}
@@ -133,25 +150,27 @@ extension Unit {
 	func canHit(unit: Unit) -> Bool {
 		position.distance(to: unit.position) <= rng * 2 + 1
 		&& atk(unit) > 0
+		&& isAir ? ammo > 0 : true
 	}
-}
-
-extension Unit {
-
-	var hasAmmo: Bool { softAtk + hardAtk + airAtk > 0 }
 
 	var cost: UInt16 {
-		expCost + typeCost + traitCost + sum * 3 / (isAir ? 1 : 2)
+		expCost + typeCost + traitCost + sum * 2
+	}
+
+	mutating func healLoosingXP(_ amount: UInt8) {
+		let dhp = hp.increment(
+			by: amount,
+			cap: 0xF
+		)
+		exp.decrement(by: dhp * 1 << stars)
 	}
 
 	private var expCost: UInt16 {
-		UInt16(stars) * (typeCost + traitCost) >> 2
+		UInt16(stars) * (typeCost + traitCost + sum) / 6
 	}
 
 	private var traitCost: UInt16 {
-		(self[.aa] ? 40 + typeCost >> 2 : 0)
-		+ (self[.art] ? 40 + typeCost >> 2 : 0)
-		+ (self[.hardcore] ? 60 + typeCost >> 1 : 0)
+		UInt16(traits.rawValue.nonzeroBitCount) * 30
 	}
 
 	private var typeCost: UInt16 {

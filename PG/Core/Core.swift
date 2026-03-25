@@ -20,7 +20,10 @@ final class Core {
 		save()
 	}
 
-	func load(auto: Bool = true) {
+	func load(auto: Bool = true, reset: Bool = false) {
+		if reset {
+			return new()
+		}
 		if let data = UserDefaults.standard.data(forKey: auto ? "auto" : "main") {
 			let decoded: State? = decode(data)
 			if decoded != nil { state = decoded! }
@@ -51,7 +54,7 @@ final class Core {
 			u.country != c ? nil : modifying(u, { u in
 				u.hp = 0xF
 				u.ap = 0b11
-				u.ammo = 0x7
+				u.ammo = u.maxAmmo
 				u.ent = 0
 			})
 		}

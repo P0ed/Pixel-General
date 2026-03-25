@@ -3,7 +3,7 @@ import SpriteKit
 struct BaseNodes {
 	var menu: SKNode
 	var status: SKLabelNode
-	var global: SKLabelNode
+	var action: SKLabelNode
 }
 
 extension Scene where State: ~Copyable {
@@ -12,7 +12,7 @@ extension Scene where State: ~Copyable {
 		BaseNodes(
 			menu: addMenu(),
 			status: addStatus(),
-			global: addStatus(alignment: .right),
+			action: addStatus(alignment: .right),
 		)
 	}
 
@@ -48,12 +48,8 @@ extension BaseNodes {
 	static let innerR = outerR - inset / 2.0 as CGFloat
 
 	static let itemSize = CGSize(width: 64.0, height: 48.0)
-	static let inspectorSize = CGSize(
-		width: itemSize.width * 2 + spacing,
-		height: itemSize.height * 3 + spacing * 2
-	)
 	static let menuSize = CGSize(
-		width: itemSize.width * 5 + spacing * 4 + inset * 2,
+		width: itemSize.width * 4 + spacing * 3 + inset * 2,
 		height: itemSize.height * 3 + spacing * 2 + inset * 2
 	)
 
@@ -62,7 +58,7 @@ extension BaseNodes {
 			x: Self.inset - size.width / 2.0,
 			y: Self.inset - size.height / 2.0
 		)
-		global.position = CGPoint(
+		action.position = CGPoint(
 			x: size.width / 2.0 - Self.inset,
 			y: Self.inset - size.height / 2.0
 		)
@@ -71,7 +67,6 @@ extension BaseNodes {
 	func showMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
 		menu.isHidden = false
 		addMenuItems(menuState)
-		if menuState.layout == .inspector { addMenuInspector() }
 		updateMenu(menuState)
 	}
 
@@ -85,7 +80,7 @@ extension BaseNodes {
 			let frame = SKShapeNode(rectOf: Self.itemSize, cornerRadius: Self.innerR)
 
 			let x = CGFloat(idx % menuState.cols) * (Self.itemSize.width + Self.spacing)
-			let y = CGFloat(idx % 9 / menuState.cols) * (Self.itemSize.height + Self.spacing)
+			let y = CGFloat(idx % 12 / menuState.cols) * (Self.itemSize.height + Self.spacing)
 
 			frame.position = CGPoint(
 				x: Self.inset + Self.itemSize.width / 2.0 - Self.menuSize.width / 2.0 + x,
@@ -101,46 +96,13 @@ extension BaseNodes {
 		.forEach(menu.addChild)
 	}
 
-	func addMenuInspector() {
-		let frame = SKShapeNode(rectOf: Self.inspectorSize, cornerRadius: Self.innerR)
-		frame.fillColor = .gray
-		frame.strokeColor = .darkGray
-		frame.name = "inspector"
-		frame.position = CGPoint(
-			x: Self.menuSize.width / 2.0 - Self.inset - Self.inspectorSize.width / 2.0,
-			y: Self.menuSize.height / 2.0 - Self.inset - Self.inspectorSize.height / 2.0
-		)
-		menu.addChild(frame)
-
-		let label = SKLabelNode(size: .l)
-		label.verticalAlignmentMode = .top
-		label.horizontalAlignmentMode = .left
-		label.position = CGPoint(
-			x: Self.inset - Self.inspectorSize.width / 2.0,
-			y: Self.inspectorSize.height / 2.0 - Self.inset,
-		)
-		label.zPosition = 0.1
-		label.name = "label"
-		frame.addChild(label)
-	}
-
 	func updateMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
 		menu.children.enumerated().forEach { idx, item in
 			if let frame = item as? SKShapeNode, frame.name == nil {
 				frame.fillColor = menuState.cursor == idx ? .gray : .darkGray
 				frame.strokeColor = menuState.cursor == idx ? .darkGray : .black
-				frame.isHidden = idx / 9 != menuState.cursor / 9
-			}
-			if idx == menuState.cursor, let inspector = menu.menuInspectorLabel {
-				inspector.text = menuState.items[idx].description
+				frame.isHidden = idx / 12 != menuState.cursor / 12
 			}
 		}
-	}
-}
-
-extension SKNode {
-
-	var menuInspectorLabel: SKLabelNode? {
-		childNode(withName: "inspector")?.childNode(withName: "label") as? SKLabelNode
 	}
 }

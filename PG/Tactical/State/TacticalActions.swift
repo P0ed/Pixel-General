@@ -3,7 +3,7 @@ import CoreGraphics
 extension TacticalState {
 
 	func vision(for unit: Unit) -> SetXY {
-		SetXY(unit.position.circle(2 * 2))
+		SetXY(unit.position.circle(2 * Int(unit.spot)))
 	}
 
 	func vision(for country: Country) -> SetXY {

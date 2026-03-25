@@ -13,7 +13,7 @@ extension TacticalState {
 		let dh = (size - 2) / (div2 - 1) - 1
 		print("citiesCount:", citiesCount, "div:", div, div2, dw, dh)
 		let map = Map<Terrain>(size: size, seed: seed)
-		let buildings: [Building] = (0 ..< citiesCount).map { i in
+		let buildings: [Building] = (0 ..< citiesCount).flatMap { i in
 			let x = i % div
 			let y = (i / div)
 			let p = modifying(
@@ -23,14 +23,24 @@ extension TacticalState {
 					p = x
 				}
 			}
-			return Building(
-				country: i < citiesCount * 1 / 4 ? player.country
-				: i < citiesCount * 2 / 4 ? .usa
-				: i < citiesCount * 3 / 4 ? .rus
-				: .swe,
+			var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
+			let ap = i % 3 != 0 ? nil : p.n4.compactMap { p in map[p] != .river ? p : nil }
+				.randomElement(using: &d20)
+			let c: Country = i < citiesCount * 1 / 4 ? player.country
+			: i < citiesCount * 2 / 4 ? .usa
+			: i < citiesCount * 3 / 4 ? .rus
+			: .swe
+			return [Building(
+				country: c,
 				position: p,
 				type: .city
-			)
+			)] + (ap.map { p in
+				[Building(
+					country: c,
+					position: p,
+					type: .airfield
+				)]
+			} ?? [])
 		}
 		let playerCity = buildings[0].position
 		let rusCity = buildings.filter { $0.country == .rus }.sorted(by: { b1, b2 in
@@ -41,17 +51,24 @@ extension TacticalState {
 		}).first?.position ?? .zero
 		let sweCity = buildings.filter { $0.country == .swe }.first?.position ?? .zero
 
-		let units: [Unit] = units.mapInPlace { $0.position = $0.position + playerCity }
-		+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity - .one }
-		+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity - .one }
-		+ .small(.swe).mapInPlace { $0.position = $0.position + sweCity - .one }
+		let units: [Unit] = (
+			units.mapInPlace { $0.position = $0.position + playerCity }
+			+ .base(.usa).mapInPlace { $0.position = $0.position + usaCity - .one }
+			+ .base(.rus).mapInPlace { $0.position = $0.position + rusCity - .one }
+			+ .small(.swe).mapInPlace { $0.position = $0.position + sweCity - .one }
+		)
+		.mapInPlace { u in
+			u.hp = 0xF
+			u.ap = 0b11
+			u.ammo = u.maxAmmo
+		}
 
 		return TacticalState(
 			map: map,
 			players: [
 				player,
-				Player(country: .usa, ai: true, prestige: 0xF00),
-				Player(country: .rus, ai: true, prestige: 0xA00),
+				Player(country: .usa, ai: true, prestige: 0x1F00),
+				Player(country: .rus, ai: true, prestige: 0xB00),
 				Player(country: .swe, ai: true, prestige: 0x600),
 			],
 			buildings: buildings,

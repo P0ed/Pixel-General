@@ -54,37 +54,35 @@ extension HQScene {
 
 	private func processShop() {
 		show(.init(
-			layout: .inspector,
-			items: [Unit].template(state.country).map { [xy = state.cursor] u in
+			items: [Unit].shop(country: state.country).map { [xy = state.cursor] u in
 				.init(
 					icon: u.imageName,
-					text: u.typeDescription,
-					description: u.description + " / \(state.player.prestige)",
-					action: { state in state.buy(u, at: xy) }
+					status: u.status,
+					action: "\(u.cost) / \(state.player.prestige) ><",
+					update: { state in state.buy(u, at: xy) }
 				)
 			}
 		))
 	}
 
 	private func processScenario() {
-		let state = TacticalState.make(
+		core.store(tactical: .make(
 			player: state.player,
 			units: state.units.map { $1 }
-		)
-		core.store(tactical: state)
+		))
 		view?.present(core.state)
 	}
 
 	private func processMenu() {
-		show(.init(layout: .compact, items: [
-			.init(icon: "New", text: "New") { [weak self] _ in
+		show(.init(items: [
+			.init(icon: "New", status: "New") { [weak self] _ in
 				core.new()
 				self?.view?.present(core.state)
 			},
-			.init(icon: "Save", text: "Save") { state in
+			.init(icon: "Save", status: "Save") { state in
 				core.store(hq: state, auto: false)
 			},
-			.init(icon: "Load", text: "Load") { [weak self] _ in
+			.init(icon: "Load", status: "Load") { [weak self] _ in
 				core.load(auto: false)
 				self?.view?.present(core.state)
 			},
