@@ -9,9 +9,12 @@ extension Map<Terrain> {
 		let seed = Int32(bitPattern: UInt32(seed & Int(UInt32.max)))
 		let height = GKNoiseMap.height(size: size, seed: seed)
 		let humidity = GKNoiseMap.humidity(size: size, seed: seed + 1)
+		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
 
 		generateTerrain(height: height, humidity: humidity)
 		placeRivers(height: height)
+		placeCities(d20: &d20)
+		connectCities(height: height)
 	}
 
 	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap) {
@@ -81,6 +84,35 @@ extension Map<Terrain> {
 
 	private func hasNoRivers(at xy: XY) -> Bool {
 		xy.n8.firstMap { xy in self[xy] == .river ? .some(xy) : .none } == .none
+	}
+
+	private mutating func placeCities(d20: inout D20) {
+		let citiesCount = min(32, size * size / 64)
+		let div = size / 8
+		let dw = (size - 4) / (div - 1) - 1
+		let div2 = citiesCount / div + (citiesCount % div == 0 ? 0 : 1)
+		let dh = (size - 2) / (div2 - 1) - 1
+		print("citiesCount:", citiesCount, "div:", div, div2, dw, dh)
+
+		(0 ..< citiesCount).forEach { i in
+			let x = i % div
+			let y = (i / div)
+			let p = modifying(
+				XY(1 + dw * x + 2 * (y & 1), 1 + dh * y)
+			) { p in
+				if self[p] == .river, let x = p.n8.firstMap({ p in self[p] != .river ? p : nil }) {
+					p = x
+				}
+			}
+			let ap = i % 3 != 0 ? nil : p.n4.compactMap { p in self[p] != .river ? p : nil }
+				.randomElement(using: &d20)
+			self[p] = .city
+			if let ap { self[ap] = .airfield }
+		}
+	}
+
+	private mutating func connectCities(height: GKNoiseMap) {
+		
 	}
 }
 
