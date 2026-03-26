@@ -45,7 +45,7 @@ struct Traits: OptionSet, Hashable {
 	static var art: Self { .init(.art) }
 	static var aa: Self { .init(.aa) }
 	static var supply: Self { .init(.supply) }
-	static var hardcore: Self { .init(.hardcore) }
+	static var elite: Self { .init(.elite) }
 	static var transport: Self { .init(.transport) }
 	static var radar: Self { .init(.radar) }
 	static var fast: Self { .init(.fast) }
@@ -57,7 +57,7 @@ extension Traits {
 }
 
 enum Trait: UInt8 {
-	case art, aa, supply, hardcore, transport, radar, fast, range
+	case art, aa, supply, elite, transport, radar, fast, range
 }
 
 extension Unit {

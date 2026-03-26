@@ -92,7 +92,7 @@ extension TacticalState {
 
 		if !srcStats.isAir, !dstStats.isAir, !srcStats.noRetaliation,
 			let art = support(trait: .art, defender: dst, attacker: src) {
-			fire(src: art, dst: src, defMod: srcStats[.hardcore] ? 1 : 0)
+			fire(src: art, dst: src, defMod: srcStats[.elite] ? 1 : 0)
 		}
 		if srcStats.isAir, !dstStats[.aa], let aa = support(trait: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defMod: 0)

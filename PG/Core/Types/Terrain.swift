@@ -1,7 +1,7 @@
 import CoreGraphics
 
 enum Terrain: UInt8, Hashable, Codable {
-	case none, river, field, forest, hill, forestHill, mountain, city, airfield
+	case none, river, field, forest, hill, forestHill, mountain, city, airfield, road
 }
 
 extension Terrain {
@@ -28,7 +28,7 @@ extension Terrain {
 		switch stats.type {
 		case .soft:
 			switch self {
-			case .field, .city, .airfield: 1
+			case .field, .city, .airfield, .road: 1
 			case .forest, .hill: min(stats.mov, 2)
 			case .forestHill: min(stats.mov, 3)
 			case .river: stats.mov
@@ -37,7 +37,7 @@ extension Terrain {
 			}
 		case .softWheel, .lightWheel:
 			switch self {
-			case .city, .airfield: 1
+			case .city, .airfield, .road: 1
 			case .field: 2
 			case .forest, .hill: 3
 			case .forestHill, .river: stats.mov
@@ -45,7 +45,7 @@ extension Terrain {
 			}
 		case .lightTrack, .heavyTrack:
 			switch self {
-			case .field, .city, .airfield: 1
+			case .field, .city, .airfield, .road: 1
 			case .forest, .hill: 2
 			case .forestHill, .river: stats.mov
 			case .none, .mountain: 0x10
@@ -60,6 +60,7 @@ extension Terrain {
 		case .forestHill, .city: 2
 		case .mountain: 3
 		case .field, .none: 0
+		case .road: -1
 		case .river: -2
 		}
 	}

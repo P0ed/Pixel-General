@@ -39,7 +39,7 @@ extension Unit {
 		switch type {
 		case .soft:
 			if self[.art] { "Art" }
-			else if self[.hardcore] { "SF" }
+			else if self[.elite] { "SF" }
 			else { "Reg" }
 		case .softWheel:
 			if self[.supply] { "Truck" }
@@ -51,9 +51,10 @@ extension Unit {
 			else if self[.art] { "PZH" }
 			else { "Recon" }
 		case .heavyTrack:
-			switch country {
-			case .usa: "M1A1"
-			default: "Tank"
+			switch country.team {
+			case .allies: "M1A1"
+			case .axis: "Tank"
+			default: "leo1"
 			}
 		case .heli: "MH6"
 		case .jet: "F64"

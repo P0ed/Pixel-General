@@ -14,6 +14,7 @@ extension SKTileGroup {
 
 	static let city = make(.city)
 	static let airfield = make(.airfield)
+	static let road = make(.road00)
 	static let field = make(.field)
 	static let forest = make(.forest)
 	static let forestHill = make(.forestHill)
@@ -27,6 +28,7 @@ extension SKTileGroup {
 
 	static let cityFog = make(.cityFog)
 	static let airfieldFog = make(.airfieldFog)
+	static let roadFog = make(.road00Fog)
 	static let fieldFog = make(.fieldFog)
 	static let forestFog = make(.forestFog)
 	static let forestHillFog = make(.forestHillFog)
@@ -51,6 +53,7 @@ extension Terrain {
 			case .mountain: .mountain
 			case .city: .city
 			case .airfield: .airfield
+			case .road: .road
 			case .river: .river00
 			case .none: .none
 			}
@@ -63,6 +66,7 @@ extension Terrain {
 			case .mountain: .mountainFog
 			case .city: .cityFog
 			case .airfield: .airfieldFog
+			case .road: .roadFog
 			case .river: .river00Fog
 			case .none: .none
 			}
