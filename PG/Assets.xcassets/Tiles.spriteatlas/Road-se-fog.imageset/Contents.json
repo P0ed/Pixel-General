@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "Road-se-fog.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -14,7 +14,21 @@ extension SKTileGroup {
 
 	static let city = make(.city)
 	static let airfield = make(.airfield)
-	static let road = make(.road00)
+
+	static let roadSN = make(.roadSn)
+	static let roadSE = make(.roadSe)
+	static let roadSW = make(.roadSw)
+	static let roadNE = make(.roadNe)
+	static let roadNW = make(.roadNw)
+	static let roadWE = make(.roadWe)
+
+	static let roadNWE = make(.roadNwe)
+	static let roadSEN = make(.roadSen)
+	static let roadSWE = make(.roadSwe)
+	static let roadSWN = make(.roadSwn)
+
+	static let roadNWSE = make(.roadNwse)
+
 	static let field = make(.field)
 	static let forest = make(.forest)
 	static let forestHill = make(.forestHill)
@@ -28,7 +42,21 @@ extension SKTileGroup {
 
 	static let cityFog = make(.cityFog)
 	static let airfieldFog = make(.airfieldFog)
-	static let roadFog = make(.road00Fog)
+
+	static let roadSNFog = make(.roadSnFog)
+	static let roadSEFog = make(.roadSeFog)
+	static let roadSWFog = make(.roadSwFog)
+	static let roadNEFog = make(.roadNeFog)
+	static let roadNWFog = make(.roadNwFog)
+	static let roadWEFog = make(.roadWeFog)
+
+	static let roadNWEFog = make(.roadNweFog)
+	static let roadSENFog = make(.roadSenFog)
+	static let roadSWEFog = make(.roadSweFog)
+	static let roadSWNFog = make(.roadSwnFog)
+
+	static let roadNWSEFog = make(.roadNwseFog)
+
 	static let fieldFog = make(.fieldFog)
 	static let forestFog = make(.forestFog)
 	static let forestHillFog = make(.forestHillFog)
@@ -53,8 +81,21 @@ extension Terrain {
 			case .mountain: .mountain
 			case .city: .city
 			case .airfield: .airfield
-			case .road: .road
-			case .river: .river00
+			case .river00: .river00
+			case .river01: .river01
+			case .river10: .river10
+			case .river11: .river11
+			case .roadNW: .roadNW
+			case .roadNE: .roadNE
+			case .roadWE: .roadWE
+			case .roadSN: .roadSN
+			case .roadSW: .roadSW
+			case .roadSE: .roadSE
+			case .roadNWE: .roadNWE
+			case .roadSWE: .roadSWE
+			case .roadSEN: .roadSEN
+			case .roadSWN: .roadSWN
+			case .roadNWSE: .roadNWSE
 			case .none: .none
 			}
 		} else {
@@ -66,8 +107,21 @@ extension Terrain {
 			case .mountain: .mountainFog
 			case .city: .cityFog
 			case .airfield: .airfieldFog
-			case .road: .roadFog
-			case .river: .river00Fog
+			case .river00: .river00Fog
+			case .river01: .river01Fog
+			case .river10: .river10Fog
+			case .river11: .river11Fog
+			case .roadNW: .roadNWFog
+			case .roadNE: .roadNEFog
+			case .roadWE: .roadWEFog
+			case .roadSN: .roadSNFog
+			case .roadSW: .roadSWFog
+			case .roadSE: .roadSEFog
+			case .roadNWE: .roadNWEFog
+			case .roadSWE: .roadSWEFog
+			case .roadSEN: .roadSENFog
+			case .roadSWN: .roadSWNFog
+			case .roadNWSE: .roadNWSEFog
 			case .none: .none
 			}
 		}
@@ -79,8 +133,12 @@ extension SKTileSet {
 	static let terrain = SKTileSet(
 		tileGroups: [
 			.city, .airfield, .field, .forest,
+			.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
+			.roadNWE, .roadSWE, .roadSEN, .roadSWN, .roadNWSE,
+			.roadNWFog, .roadNEFog, .roadWEFog, .roadSNFog, .roadSWFog, .roadSEFog,
+			.roadNWEFog, .roadSWEFog, .roadSENFog, .roadSWNFog, .roadNWSEFog,
 			.hill, .forestHill, .mountain,
-			.river00, .river01, .river10, .river10,
+			.river00, .river01, .river10, .river11,
 			.cityFog, .airfieldFog, .fieldFog, .forestFog,
 			.hillFog, .forestHillFog, .mountainFog,
 			.river00Fog, .river01Fog, .river10Fog, .river11Fog,
