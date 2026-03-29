@@ -73,6 +73,18 @@ extension Country {
 		default: .white
 		}
 	}
+
+	var flag: NSImage {
+		switch self {
+		case .usa: .usa
+		case .swe: .swe
+		case .ukr: .ukr
+		case .irn: .irn
+		case .isr: .isr
+		case .rus: .rus
+		default: .swe
+		}
+	}
 }
 
 extension SKNode {
