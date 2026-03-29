@@ -75,7 +75,10 @@ extension TacticalState {
 			&& units[n][.supply]
 		}
 		let hasBuildings = buildings.firstMap { _, b in
-			b.country == unit.country && b.position.distance(to: unit.position) <= 2 ? b : nil
+			b.country == unit.country
+			&& (b.type == .airfield) == unit.isAir
+			&& b.position.distance(to: unit.position) <= 2
+			? b : nil
 		} != nil
 		if !unit.isAir {
 			unit.ent.increment(

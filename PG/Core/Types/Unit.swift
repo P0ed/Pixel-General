@@ -4,9 +4,8 @@ struct Unit: Hashable {
 	var country: Country
 	var position: XY = .zero
 	var hp: UInt8 = 0xF
-	var ap: UInt8 = 0
+	var bits: UInt8 = 0
 	var ammo: UInt8 = 0
-	var ent: UInt8 = 0
 	var exp: UInt8 = 0
 	var type: UnitType = .soft
 	var ini: UInt8 = 0
@@ -24,9 +23,8 @@ extension Unit: Monoid {
 
 	mutating func combine(_ other: Self) {
 		hp |= other.hp
-		ap |= other.ap
+		bits |= other.bits
 		ammo = max(ammo, other.ammo)
-		ent |= other.ent
 		exp |= other.exp
 		type = type == .soft ? other.type : type
 		ini |= other.ini
@@ -40,7 +38,7 @@ extension Unit: Monoid {
 }
 
 struct Traits: OptionSet, Hashable {
-	var rawValue: UInt8
+	var rawValue: UInt16
 
 	static var art: Self { .init(.art) }
 	static var aa: Self { .init(.aa) }
@@ -50,6 +48,7 @@ struct Traits: OptionSet, Hashable {
 	static var radar: Self { .init(.radar) }
 	static var fast: Self { .init(.fast) }
 	static var range: Self { .init(.range) }
+	static var aux: Self { .init(.aux) }
 }
 
 extension Traits {
@@ -57,7 +56,7 @@ extension Traits {
 }
 
 enum Trait: UInt8 {
-	case art, aa, supply, elite, transport, radar, fast, range
+	case art, aa, supply, elite, transport, radar, fast, range, aux
 }
 
 extension Unit {
@@ -101,9 +100,9 @@ extension Unit {
 	var mov: UInt8 {
 		switch type {
 		case .soft: (self[.art] || self[.aa] ? 1 : 3) + (self[.fast] ? 1 : 0)
-		case .softWheel, .lightWheel: 8 + (self[.fast] ? 1 : 0)
-		case .lightTrack: 7 + (self[.fast] ? 1 : 0)
-		case .heavyTrack: 6 + (self[.fast] ? 1 : 0)
+		case .softWheel, .lightWheel: 8 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
+		case .lightTrack: 7 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
+		case .heavyTrack: 6 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
 		case .heli: 11 + (self[.fast] ? 2 : 0)
 		case .jet: 13 + (self[.fast] ? 2 : 0)
 		}
@@ -121,8 +120,7 @@ extension Unit {
 	func atk(_ dst: Unit) -> UInt8 {
 		switch dst.type {
 		case .soft, .softWheel: softAtk
-		case .lightWheel, .lightTrack: (softAtk + hardAtk * 2) / 3
-		case .heavyTrack: hardAtk
+		case .lightWheel, .lightTrack, .heavyTrack: hardAtk
 		case .heli, .jet: airAtk
 		}
 	}
@@ -141,6 +139,14 @@ extension Unit: DeadOrAlive {
 }
 
 extension Unit {
+	var ap: UInt8 {
+		get { bits & 0b1111 }
+		set { bits = (bits & 0b1111 << 4) | newValue & 0b1111 }
+	}
+	var ent: UInt8 {
+		get { bits >> 4 }
+		set { bits = (newValue & 0b1111) << 4 | bits & 0b1111 }
+	}
 	var untouched: Bool { ap == 0b11 }
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { ap & 0b01 > 0 }
@@ -162,7 +168,7 @@ extension Unit {
 			by: amount,
 			cap: 0xF
 		)
-		exp.decrement(by: dhp * 1 << stars)
+		exp.decrement(by: dhp * 1 << (stars > 0 ? stars - 1 : stars))
 	}
 
 	private var expCost: UInt16 {
@@ -170,16 +176,16 @@ extension Unit {
 	}
 
 	private var traitCost: UInt16 {
-		UInt16(traits.rawValue.nonzeroBitCount) * 30
+		UInt16(traits.rawValue.nonzeroBitCount) * 20
 	}
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .soft: 47
-		case .softWheel: 68
-		case .lightWheel: 120
-		case .lightTrack: 150
-		case .heavyTrack: 180
+		case .soft: 33
+		case .softWheel: 47
+		case .lightWheel: 100
+		case .lightTrack: 120
+		case .heavyTrack: 150
 		case .heli: 220
 		case .jet: 330
 		}

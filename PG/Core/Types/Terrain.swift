@@ -89,11 +89,11 @@ extension Terrain {
 	var def: Int {
 		switch self {
 		case .field: 0
-		case .forest, .hill, .airfield: 1
-		case .forestHill, .city: 2
-		case .mountain: 3
+		case .forest, .hill, .airfield: 2
+		case .forestHill, .city: 3
+		case .mountain: 4
 		case _ where isRoad: -1
-		case _ where isRiver: -2
+		case _ where isRiver: -3
 		default: 0
 		}
 	}
@@ -101,9 +101,8 @@ extension Terrain {
 	func closeCombatPenalty(_ type: UnitType) -> Int {
 		let def = max(0, def)
 		return switch type {
-		case .softWheel, .lightWheel: -Int(def)
-		case .lightTrack: -Int(def * 2)
-		case .heavyTrack: -Int(def * 3)
+		case .lightWheel, .lightTrack: -Int(def)
+		case .heavyTrack: -Int(def * 2)
 		default: 0
 		}
 	}

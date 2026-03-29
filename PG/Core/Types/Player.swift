@@ -2,7 +2,7 @@ struct Player: DeadOrAlive {
 	var country: Country
 	var ai: Bool = false
 	var alive: Bool = true
-	var prestige: UInt16 = 0xB00
+	var prestige: UInt16 = 0xF00
 	var crystals: Crystals = .empty
 	var visible: SetXY = .empty
 }

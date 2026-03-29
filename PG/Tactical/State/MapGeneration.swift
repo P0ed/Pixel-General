@@ -121,21 +121,43 @@ extension Map<Terrain> {
 		let cities = cities.filter { xy in self[xy] == .city }
 		guard cities.count > 1 else { return }
 
-		var connected = [] as Set<XY>
+		var connected = [] as [[XY]]
 
-		let isConnected = { xy in connected.contains(xy) }
+		let isConnected = { xy in
+			connected.contains { $0.contains(xy) }
+		}
 		cities.forEach { xy in
-			if isConnected(xy) {
-
-			} else {
+			if !isConnected(xy) {
 				let nxt = cities
 					.filter { ij in ij != xy && !isConnected(ij) }
-					.min { a, b in (a - xy).manhattan < (b - xy).manhattan }
+					.min(by: xy.manhattanComparator)
 				if let nxt, connect(xy, nxt) {
-					connected.insert(xy)
-					connected.insert(nxt)
+					connected.append([xy, nxt])
 				}
 			}
+		}
+
+		guard connected.count > 1 else { return }
+
+		for i in connected.indices {
+			let cs = connected[i]
+			cities
+				.filter { c in
+					!cs.contains(c) && !crossesRiver(cs[0], c)
+				}
+				.min(by: XY((cs[0].x + cs[1].x) / 2, (cs[0].y + cs[1].y) / 2).manhattanComparator)
+				.map { c in
+					let csm = cs.min(by: c.manhattanComparator)
+					if let csm, (c - csm).manhattan < 22, connect(c, csm) {
+						connected.firstIndex { cs in cs.contains(c) }
+							.map { j in
+								let ds = connected[j]
+								connected[j].append(contentsOf: cs)
+								connected[i].append(contentsOf: ds)
+							}
+						?? connected[i].append(c)
+					}
+				}
 		}
 	}
 
@@ -187,20 +209,25 @@ extension Map<Terrain> {
 		}
 	}
 
+	private func crossesRiver(_ start: XY, _ end: XY) -> Bool {
+		start.line(to: end).contains { xy in self[xy].isRiver }
+	}
+
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
-		print("connecting \(start) \(end)")
+		print("Connecting \(start) \(end)")
 		var front = [start]
-		var map = Map<UInt16>(size: size, zero: 0)
+		var map = Map<UInt8>(size: size, zero: 0)
 		map[start] = 1
 
 		while true {
 			let nf: [XY] = front.flatMap { xy in
 				xy.n4.compactMap { [p = map[xy]] ij in
 					if contains(ij), map[ij] == 0,
-					   self[ij] == .field || self[ij] == .city || self[ij] == .airfield
-						|| (p > 2 && self[ij] == .forest)
-						|| (p > 4 && self[ij] == .hill)
-						|| (p > 5 && self[ij] == .forestHill)
+					   self[ij].isBuilding || self[ij].isRoad
+						|| (p > 5 && self[ij] == .field)
+						|| (p > 6 && self[ij] == .forest)
+						|| (p > 9 && self[ij] == .hill)
+						|| (p > 11 && self[ij] == .forestHill)
 					{
 						map[ij] = 1
 						return ij
@@ -212,24 +239,20 @@ extension Map<Terrain> {
 			if nf.contains(end) { break }
 			front.forEach { xy in map[xy] += 1 }
 			front += nf
-			if map[start] >= 127 { return false }
+			if map[start] == .max { return false }
 		}
-		print("found connection")
+		print("Found connection L: \(start.manhattanDistance(to: end))")
 		var head = end
-		if self[end] != .city, self[end] != .airfield {
-			self[end] = .roadNWSE
-		}
+		if !self[end].isBuilding { self[end] = .roadNWSE }
+
 		while head != start {
-			let xy = head.n4.compactMap { xy in
-				contains(xy) && self[xy] != .roadNWSE ? xy : nil
-			}
-			.max { a, b in map[a] < map[b] }
+			let xy = head.n4
+				.compactMap { xy in contains(xy) ? xy : nil }
+				.max { a, b in map[a] < map[b] }
 
 			if let xy {
 				head = xy
-				if !self[xy].isRiver, !self[xy].isBuilding {
-					self[xy] = .roadNWSE
-				}
+				if !self[xy].isBuilding { self[xy] = .roadNWSE }
 			} else {
 				return true
 			}

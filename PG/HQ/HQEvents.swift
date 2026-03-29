@@ -67,7 +67,12 @@ extension HQScene {
 
 	private func processScenario() {
 		core.store(tactical: .make(
-			player: state.player,
+			players: [
+				state.player,
+				Player(country: .isr, ai: true, prestige: 0xF00),
+				Player(country: .usa, ai: true, prestige: 0xF00),
+				Player(country: .irn, ai: true, prestige: 0xF00),
+			],
 			units: state.units.map { $1 }
 		))
 		view?.present(core.state)

@@ -88,7 +88,7 @@ extension Unit {
 	}
 
 	static var veteran: Self {
-		.make { u in u.exp = 0x20 }
+		.make { u in u.exp = 0x10 }
 	}
 
 	static var truck: Self {
@@ -198,8 +198,8 @@ extension Unit {
 			stats.type = .lightWheel
 			stats[.transport] = true
 			stats.ini = 8
-			stats.softAtk = 9
-			stats.hardAtk = 7
+			stats.softAtk = 10
+			stats.hardAtk = 9
 			stats.airAtk = 4
 			stats.groundDef = 10
 			stats.airDef = 7
@@ -211,8 +211,8 @@ extension Unit {
 			stats.type = .lightTrack
 			stats[.transport] = true
 			stats.ini = 9
-			stats.softAtk = 9
-			stats.hardAtk = 8
+			stats.softAtk = 10
+			stats.hardAtk = 9
 			stats.airAtk = 4
 			stats.groundDef = 11
 			stats.airDef = 7
@@ -225,10 +225,10 @@ extension Unit {
 			stats[.aa] = true
 			stats[.radar] = true
 			stats.ini = 10
-			stats.softAtk = 8
+			stats.softAtk = 9
 			stats.hardAtk = 8
 			stats.airAtk = 11
-			stats.groundDef = 9
+			stats.groundDef = 10
 			stats.airDef = 11
 		}
 	}
@@ -319,11 +319,11 @@ extension Unit {
 			stats.type = .lightTrack
 			stats[.transport] = true
 			stats.ini = 8
-			stats.softAtk = 6
-			stats.hardAtk = 6
+			stats.softAtk = 8
+			stats.hardAtk = 7
 			stats.airAtk = 3
 			stats.groundDef = 7
-			stats.airDef = 8
+			stats.airDef = 6
 		}
 	}
 
@@ -341,6 +341,7 @@ extension Unit {
 	static var m1A2: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats[.elite] = true
 			stats[.fast] = true
 			stats.ini = 9
 			stats.softAtk = 10
@@ -355,8 +356,8 @@ extension Unit {
 			stats.type = .lightTrack
 			stats[.transport] = true
 			stats.ini = 9
-			stats.softAtk = 9
-			stats.hardAtk = 8
+			stats.softAtk = 10
+			stats.hardAtk = 9
 			stats.airAtk = 4
 			stats.groundDef = 10
 			stats.airDef = 7

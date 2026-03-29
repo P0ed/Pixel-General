@@ -40,7 +40,7 @@ extension TacticalState {
 
 	private var nextRetreat: (UID, XY)? {
 		units.firstMap { [country] i, u in
-			u.country != country || (u.hp > 5 && u.ammo > u.maxAmmo / 2)
+			u.country != country || (u.hp > 5 && (u.ammo >= u.maxAmmo / 2 || u[.supply]))
 			? nil
 			: buildings.compactMap {
 				$1.country == country && ($1.type == .airfield) == u.isAir ? $1 : nil
