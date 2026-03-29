@@ -3,6 +3,7 @@ import CoreGraphics
 enum Terrain: UInt8, Hashable, Codable {
 	case none
 	case river00, river01, river10, river11
+	case bridge01, bridge10
 	case field, forest, hill, forestHill, mountain
 	case city, airfield
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE
@@ -29,7 +30,15 @@ extension Terrain {
 	var isRoad: Bool {
 		switch self {
 		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE,
-				.roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE: true
+				.roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE,
+				.bridge01, .bridge10: true
+		default: false
+		}
+	}
+
+	var isBridge: Bool {
+		switch self {
+		case .bridge01, .bridge10: true
 		default: false
 		}
 	}

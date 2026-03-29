@@ -39,6 +39,8 @@ extension SKTileGroup {
 	static let river01 = make(.river01)
 	static let river10 = make(.river10)
 	static let river11 = make(.river11)
+	static let bridge01 = make(.bridge01)
+	static let bridge10 = make(.bridge10)
 
 	static let cityFog = make(.cityFog)
 	static let airfieldFog = make(.airfieldFog)
@@ -67,6 +69,8 @@ extension SKTileGroup {
 	static let river01Fog = make(.river01Fog)
 	static let river10Fog = make(.river10Fog)
 	static let river11Fog = make(.river11Fog)
+	static let bridge01Fog = make(.bridge01Fog)
+	static let bridge10Fog = make(.bridge10Fog)
 }
 
 extension Terrain {
@@ -85,6 +89,8 @@ extension Terrain {
 			case .river01: .river01
 			case .river10: .river10
 			case .river11: .river11
+			case .bridge01: .bridge01
+			case .bridge10: .bridge10
 			case .roadNW: .roadNW
 			case .roadNE: .roadNE
 			case .roadWE: .roadWE
@@ -111,6 +117,8 @@ extension Terrain {
 			case .river01: .river01Fog
 			case .river10: .river10Fog
 			case .river11: .river11Fog
+			case .bridge01: .bridge01Fog
+			case .bridge10: .bridge10Fog
 			case .roadNW: .roadNWFog
 			case .roadNE: .roadNEFog
 			case .roadWE: .roadWEFog
@@ -138,10 +146,10 @@ extension SKTileSet {
 			.roadNWFog, .roadNEFog, .roadWEFog, .roadSNFog, .roadSWFog, .roadSEFog,
 			.roadNWEFog, .roadSWEFog, .roadSENFog, .roadSWNFog, .roadNWSEFog,
 			.hill, .forestHill, .mountain,
-			.river00, .river01, .river10, .river11,
+			.river00, .river01, .river10, .river11, .bridge01, .bridge10,
 			.cityFog, .airfieldFog, .fieldFog, .forestFog,
 			.hillFog, .forestHillFog, .mountainFog,
-			.river00Fog, .river01Fog, .river10Fog, .river11Fog,
+			.river00Fog, .river01Fog, .river10Fog, .river11Fog, .bridge01Fog, .bridge10Fog,
 		],
 		tileSetType: .isometric
 	)

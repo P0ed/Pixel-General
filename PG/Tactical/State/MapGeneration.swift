@@ -15,8 +15,8 @@ extension Map<Terrain> {
 		placeRivers(height: height)
 		let cities = placeCities(d20: &d20)
 		connectCities(cities: cities)
-		shapeRivers()
 		shapeRoads()
+		shapeRivers()
 	}
 
 	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap) {
@@ -142,9 +142,7 @@ extension Map<Terrain> {
 		for i in connected.indices {
 			let cs = connected[i]
 			cities
-				.filter { c in
-					!cs.contains(c) && !crossesRiver(cs[0], c)
-				}
+				.filter { c in !cs.contains(c) }
 				.min(by: XY((cs[0].x + cs[1].x) / 2, (cs[0].y + cs[1].y) / 2).manhattanComparator)
 				.map { c in
 					let csm = cs.min(by: c.manhattanComparator)
@@ -162,12 +160,12 @@ extension Map<Terrain> {
 	}
 
 	private mutating func shapeRivers() {
-		var neighbors = [false, false] as [2 of Bool]
 		for xy in indices where self[xy] == .river00 {
 			let n4 = xy.n4
-			neighbors[0] = self[n4[2]].isRiver
-			neighbors[1] = self[n4[1]].isRiver
-			self[xy] = Self.river(neighbors)
+			self[xy] = Self.river([
+				self[n4[2]].isRiver || self[n4[2]].isBridge,
+				self[n4[1]].isRiver || self[n4[1]].isBridge
+			])
 		}
 	}
 
@@ -178,24 +176,32 @@ extension Map<Terrain> {
 			for i in n4.indices {
 				neighbors[i] = self[n4[i]].isRoad || self[n4[i]].isBuilding
 			}
-			self[xy] = Self.road(neighbors)
+			if self[n4[0]].isRiver, self[n4[2]].isRiver {
+				self[xy] = .bridge01
+			} else if self[n4[1]].isRiver, self[n4[3]].isRiver {
+				self[xy] = .bridge10
+			} else {
+				let r = Self.road(neighbors)
+				if r != .none { self[xy] = r }
+			}
 		}
 	}
 
 	private static func road(_ neighbors: [4 of Bool]) -> Terrain {
 		// East, North, West, South
 		switch (neighbors[0], neighbors[1], neighbors[2], neighbors[3]) {
-		case (true, true, false, false): .roadNE
+		case (false, true, false, true): .roadSN
 		case (true, false, true, false): .roadWE
+		case (true, true, false, false): .roadNE
 		case (true, false, false, true): .roadSE
 		case (false, true, true, false): .roadNW
 		case (false, false, true, true): .roadSW
-		case (false, true, false, true): .roadSN
 		case (true, true, true, false): .roadNWE
 		case (true, true, false, true): .roadSEN
 		case (false, true, true, true): .roadSWN
 		case (true, false, true, true): .roadSWE
-		default: .roadNWSE
+		case (true, true, true, true): .roadNWSE
+		default: .none
 		}
 	}
 
@@ -213,6 +219,16 @@ extension Map<Terrain> {
 		start.line(to: end).contains { xy in self[xy].isRiver }
 	}
 
+	private func bridgableRiver(at r: XY, from l: XY) -> Bool {
+		let n4 = r.n4
+		return self[r].isRiver
+		&& self[l] == .field && self[r + r + r - l - l] == .field
+		&& (
+			self[n4[0]].isRiver && self[n4[2]].isRiver
+			|| self[n4[1]].isRiver && self[n4[3]].isRiver
+		)
+	}
+
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
 		print("Connecting \(start) \(end)")
 		var front = [start]
@@ -224,10 +240,11 @@ extension Map<Terrain> {
 				xy.n4.compactMap { [p = map[xy]] ij in
 					if contains(ij), map[ij] == 0,
 					   self[ij].isBuilding || self[ij].isRoad
-						|| (p > 5 && self[ij] == .field)
+						|| (p > 4 && self[ij] == .field)
 						|| (p > 6 && self[ij] == .forest)
-						|| (p > 9 && self[ij] == .hill)
-						|| (p > 11 && self[ij] == .forestHill)
+						|| (p > 8 && bridgableRiver(at: ij, from: xy))
+						|| (p > 10 && self[ij] == .hill)
+						|| (p > 12 && self[ij] == .forestHill)
 					{
 						map[ij] = 1
 						return ij
@@ -257,7 +274,6 @@ extension Map<Terrain> {
 				return true
 			}
 		}
-
 		return true
 	}
 }
