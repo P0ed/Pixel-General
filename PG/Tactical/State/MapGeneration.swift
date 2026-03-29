@@ -171,18 +171,21 @@ extension Map<Terrain> {
 
 	private mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
-		for xy in indices where self[xy] == .roadNWSE {
-			let n4 = xy.n4
-			for i in n4.indices {
-				neighbors[i] = self[n4[i]].isRoad || self[n4[i]].isBuilding
-			}
-			if self[n4[0]].isRiver, self[n4[2]].isRiver {
-				self[xy] = .bridge01
-			} else if self[n4[1]].isRiver, self[n4[3]].isRiver {
-				self[xy] = .bridge10
-			} else {
+		for xy in indices {
+			if self[xy] == .roadNWSE {
+				let n4 = xy.n4
+				for i in n4.indices {
+					neighbors[i] = self[n4[i]].isRoad || self[n4[i]].isBuilding
+				}
 				let r = Self.road(neighbors)
 				if r != .none { self[xy] = r }
+			} else if self[xy].isBridge {
+				let n4 = xy.n4
+				if self[n4[0]].isRiver, self[n4[2]].isRiver {
+					self[xy] = .bridge01
+				} else if self[n4[1]].isRiver, self[n4[3]].isRiver {
+					self[xy] = .bridge10
+				}
 			}
 		}
 	}
@@ -222,7 +225,7 @@ extension Map<Terrain> {
 	private func bridgableRiver(at r: XY, from l: XY) -> Bool {
 		let n4 = r.n4
 		return self[r].isRiver
-		&& self[l] == .field && self[r + r + r - l - l] == .field
+		&& self[l].isBridgable && self[r + r + r - l - l].isBridgable
 		&& (
 			self[n4[0]].isRiver && self[n4[2]].isRiver
 			|| self[n4[1]].isRiver && self[n4[3]].isRiver
@@ -240,11 +243,11 @@ extension Map<Terrain> {
 				xy.n4.compactMap { [p = map[xy]] ij in
 					if contains(ij), map[ij] == 0,
 					   self[ij].isBuilding || self[ij].isRoad
-						|| (p > 4 && self[ij] == .field)
-						|| (p > 6 && self[ij] == .forest)
-						|| (p > 8 && bridgableRiver(at: ij, from: xy))
-						|| (p > 10 && self[ij] == .hill)
-						|| (p > 12 && self[ij] == .forestHill)
+						|| (p > 3 && self[ij] == .field)
+						|| (p > 5 && self[ij] == .forest)
+						|| (p > 7 && bridgableRiver(at: ij, from: xy))
+						|| (p > 9 && self[ij] == .hill)
+						|| (p > 11 && self[ij] == .forestHill)
 					{
 						map[ij] = 1
 						return ij
@@ -260,7 +263,9 @@ extension Map<Terrain> {
 		}
 		print("Found connection L: \(start.manhattanDistance(to: end))")
 		var head = end
-		if !self[end].isBuilding { self[end] = .roadNWSE }
+		if !self[end].isBuilding {
+			self[end] = self[end].isRiver || self[end].isBridge ? .bridge01 : .roadNWSE
+		}
 
 		while head != start {
 			let xy = head.n4
@@ -269,7 +274,9 @@ extension Map<Terrain> {
 
 			if let xy {
 				head = xy
-				if !self[xy].isBuilding { self[xy] = .roadNWSE }
+				if !self[xy].isBuilding {
+					self[xy] = self[xy].isRiver || self[xy].isBridge ? .bridge01 : .roadNWSE
+				}
 			} else {
 				return true
 			}

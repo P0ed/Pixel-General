@@ -20,6 +20,13 @@ extension Terrain {
 		}
 	}
 
+	var isBridgable: Bool {
+		switch self {
+		case .airfield, .city, .field, .forest: true
+		default: false
+		}
+	}
+
 	var isBuilding: Bool {
 		switch self {
 		case .city, .airfield: true
