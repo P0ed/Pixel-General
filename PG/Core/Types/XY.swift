@@ -77,11 +77,6 @@ extension XY {
 		Self.d8.map { xy in xy + self }
 	}
 
-	// 20
-	var r2: [XY] { [] }
-	// 36
-	var r3: [XY] { [] }
-
 	func neighbor(_ direction: Direction) -> XY {
 		switch direction {
 		case .right: XY(1, 0) + self

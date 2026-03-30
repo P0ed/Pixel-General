@@ -23,13 +23,8 @@ extension Unit {
 		}
 	}
 
-	private var mpString: String {
-		ap & 0b01 == 0 ? " " : "⇧"
-	}
-
-	private var apString: String {
-		ap & 0b10 == 0 || self[.supply] ? "⦾" : "⦿"
-	}
+	private var mpString: String { canMove ? "⇧" : " " }
+	private var apString: String { canAttack ? "⦿" : "⦾" }
 }
 
 extension Unit {

@@ -82,6 +82,7 @@ extension TacticalState {
 		let dstTerrain = map[units[dst].position]
 		let srcRiver = -min(0, srcTerrain.def)
 		let dstDef = Int(dstStats.ent) + dstTerrain.def - encirclement + srcRiver
+
 		let ruggedDefence: Bool = !surprise && srcStats.noRetaliation ? false : (
 			d20() + Int(srcStats.ini + srcStats.stars) * 2
 		) < (
@@ -114,6 +115,32 @@ extension TacticalState {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[dst].ent.decrement()
 		}
+		var hpRetreat: Bool {
+			units[dst].hp * 2 + units[dst].ini + UInt8(d20()) < 20
+			&& !units[src].noRetaliation
+		}
+		var airRetreat: Bool {
+			!units[src].isAir && units[dst].isAir
+			&& buildings[units[dst].position].map {
+				$0.country.team != units[dst].country.team
+			} ?? false
+		}
+		if units[dst].alive, hpRetreat || airRetreat {
+			retreat(uid: dst, from: units[src].position)
+		}
 		selectUnit(units[src].alive && units[src].hasActions ? src : .none)
+	}
+
+	mutating func retreat(uid: UID, from xy: XY) {
+		let p = units[uid].position
+		let pos = moves(for: units[uid]).set.min(by: (p + p + p - xy - xy).manhattanComparator)
+		guard let pos, unitAt(pos) == nil else { return }
+
+		let distance = units[uid].position.distance(to: pos)
+		unitsMap[units[uid].position] = -1
+		unitsMap[pos] = uid
+		units[uid].position = pos
+		units[uid].ent = 0
+		events.add(.move(uid, distance))
 	}
 }

@@ -7,9 +7,7 @@ extension TacticalScene {
 	}
 
 	func respawn() {
-		state.units.forEach { i, u in
-			processSpawn(uid: i)
-		}
+		state.units.forEach { i, u in processSpawn(uid: i) }
 	}
 }
 
@@ -51,6 +49,7 @@ private extension TacticalScene {
 			duration: CGFloat(distance) * 0.047
 		))
 		unit.zPosition = z
+		unit.isHidden = !state.player.visible[xy]
 	}
 
 	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {

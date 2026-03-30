@@ -78,15 +78,8 @@ extension TacticalState {
 		} ?? false
 	}
 
-	private mutating func _move(uid: UID, pos: XY) {
-		unitsMap[units[uid].position] = -1
-		unitsMap[pos] = uid
-		units[uid].position = pos
-	}
-
 	mutating func move(unit uid: UID, to position: XY) {
-		guard units[uid].alive, units[uid].country == country, units[uid].canMove
-		else { return }
+		guard units[uid].country == country, units[uid].canMove else { return }
 
 		let moves = moves(for: units[uid], target: position)
 		let route = moves.route(to: position)
@@ -104,23 +97,29 @@ extension TacticalState {
 				pos = xy
 			}
 		}
+		for xy in route.reversed() {
+			xy.circle(2 * Int(units[uid].spot)).forEach { xy in
+				player.visible[xy] = true
+			}
+			if xy == pos { break }
+		}
 
 		let distance = units[uid].position.distance(to: pos)
-		_move(uid: uid, pos: pos)
+		unitsMap[units[uid].position] = -1
+		unitsMap[pos] = uid
+		units[uid].position = pos
 		units[uid].ap &= 0b10
 		units[uid].ent = 0
 		if units[uid].type == .soft, units[uid][.art] {
 			units[uid].ap &= 0b01
 		}
 
-		player.visible.formUnion(vision(for: units[uid]))
 		selectUnit(units[uid].hasActions ? uid : .none)
 		events.add(.move(uid, distance))
 
-		if let interruptor,
-		   units[interruptor].country.team != units[uid].country.team,
-		   units[uid].canAttack
-		{ attack(src: uid, dst: interruptor, surprise: true) }
+		if let interruptor, units[interruptor].country.team != units[uid].country.team {
+			attack(src: uid, dst: interruptor, surprise: true)
+		}
 	}
 }
 
