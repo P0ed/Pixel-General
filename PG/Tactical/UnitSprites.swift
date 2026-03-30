@@ -66,11 +66,16 @@ extension Country {
 
 	var color: SKColor {
 		switch self {
-		case .usa: .red
-		case .swe: .blue
+		case .usa: .purple
+		case .swe: .systemYellow
 		case .ukr: .yellow
-		case .rus: .green
-		default: .white
+		case .den: .white
+		case .ned: .orange
+		case .rus: .red
+		case .irn: .cyan
+		case .pak: .green
+		case .ind: .orange
+		case .isr: .blue
 		}
 	}
 
@@ -82,7 +87,10 @@ extension Country {
 		case .irn: .irn
 		case .isr: .isr
 		case .rus: .rus
-		default: .swe
+		case .pak: .pak
+		case .ind: .ind
+		case .den: .den
+		case .ned: .ned
 		}
 	}
 }

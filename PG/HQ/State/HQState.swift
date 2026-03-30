@@ -11,20 +11,21 @@ extension HQState {
 	var inputable: Bool { true }
 	var reducible: Bool { !events.isEmpty }
 
-	var statusText: String {
-		selected.map { units[$0].status } ?? .makeStatus { add in
-			add("prestige: \(player.prestige)")
-		}
-	}
-
-	var actionText: String {
-		if selected != nil {
-			"sell []"
-		} else if units[cursor] == nil {
-			"shop []"
-		} else {
-			""
-		}
+	var status: Status {
+		Status(
+			text: selected.map { units[$0].status } ?? .makeStatus { add in
+				add("prestige: \(player.prestige)")
+			},
+			action: .init({
+				if selected != nil {
+					"sell []"
+				} else if units[cursor] == nil {
+					"shop []"
+				} else {
+					""
+				}
+			}())
+		)
 	}
 
 	mutating func apply(_ input: Input) {

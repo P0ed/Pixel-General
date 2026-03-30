@@ -4,17 +4,19 @@ struct XY: Hashable, Codable {
 	private var _x: Int8
 	private var _y: Int8
 
-	var x: Int { Int(_x) }
-	var y: Int { Int(_y) }
+	var x: Int {
+		get { Int(_x) }
+		set { _x = Int8(clamping: newValue) }
+	}
+	var y: Int {
+		get { Int(_y) }
+		set { _y = Int8(clamping: newValue) }
+	}
 
 	init(_ x: Int, _ y: Int) {
 		_x = Int8(x)
 		_y = Int8(y)
 	}
-}
-
-extension XY: CustomStringConvertible {
-	var description: String { "(\(x), \(y))" }
 }
 
 extension XY {
@@ -45,6 +47,10 @@ extension XY {
 
 	func distance(to xy: XY) -> Int {
 		(self - xy).doubleRadius
+	}
+
+	func clamped(_ size: Int) -> XY {
+		XY(max(0, min(size - 1, x)), max(0, min(size - 1, y)))
 	}
 
 	private static var d4: [4 of XY] {

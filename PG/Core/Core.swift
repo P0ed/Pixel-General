@@ -9,7 +9,7 @@ struct State: ~Copyable {
 final class Core {
 	private(set) var state = State()
 
-	func new(country: Country = .ukr) {
+	func new(country: Country = .default) {
 		let units: [Unit] = [Unit].base(country)
 		state = State(
 			hq: HQState(

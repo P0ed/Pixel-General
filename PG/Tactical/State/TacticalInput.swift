@@ -14,6 +14,7 @@ extension TacticalState {
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)
 		case .scale(let value): scale = value
+		case .pan(let dxy): handlePan(dxy)
 		default: break
 		}
 	}
@@ -43,7 +44,7 @@ private extension TacticalState {
 				} else {
 					selectUnit(dst == unit ? .none : unitsMap[cursor])
 				}
-			} else if unit.canMove {
+			} else if unit.country == country, unit.canMove {
 				move(unit: selectedUnit, to: cursor)
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
@@ -82,5 +83,10 @@ private extension TacticalState {
 			}
 		}
 		selectUnit(nil)
+	}
+
+	mutating func handlePan(_ dxy: XY) {
+		cursor = (cursor + dxy).clamped(map.size)
+		camera = (camera + dxy).clamped(map.size)
 	}
 }

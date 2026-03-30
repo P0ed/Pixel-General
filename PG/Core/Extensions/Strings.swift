@@ -1,3 +1,7 @@
+extension XY: CustomStringConvertible {
+	var description: String { "[\(x), \(y)]" }
+}
+
 extension Unit {
 
 	var status: String {
@@ -48,23 +52,20 @@ extension Unit {
 
 extension TacticalState {
 
-	var statusText: String {
+	var status: Status {
 		if let selectedUnit {
-			units[selectedUnit].status
+			Status(
+				text: units[selectedUnit].status,
+				action: .init(units[selectedUnit].country.flag)
+			)
 		} else if let building = buildings[cursor] {
-			.makeStatus { add in
-				add("\(building.type)")
-				add("controller: \(building.country)")
-			}
+			Status(
+				text: "\(cursor) \(building.type)",
+				action: .init(building.country.flag)
+			)
 		} else {
-			"\(cursor) \(map[cursor])"
+			Status(text: "\(cursor) \(map[cursor])", action: .init(""))
 		}
-	}
-
-	var actionText: String {
-		let cs = player.crystals
-		let rs = Crystals(rawValue: UInt8(d20.seed & 0xFF))
-		return "\(cs) \(rs)"
 	}
 }
 
@@ -112,6 +113,24 @@ extension Unit {
 
 	var shortDescription: String {
 		"\(country) \(typeDescription)"
+	}
+}
+
+extension Terrain: CustomStringConvertible {
+
+	var description: String {
+		switch self {
+		case .river00, .river01, .river10, .river11: "river"
+		case .bridge01, .bridge10: "bridge"
+		case .field: "field"
+		case .forest: "forest"
+		case .hill, .forestHill: "hill"
+		case .mountain: "mountain"
+		case .city: "city"
+		case .airfield: "airfield"
+		case _ where isRoad: "road"
+		default: ""
+		}
 	}
 }
 

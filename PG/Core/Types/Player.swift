@@ -7,10 +7,10 @@ struct Player: DeadOrAlive {
 	var visible: SetXY = .empty
 }
 
-enum Country: UInt8, Hashable {
+enum Country: UInt8, Hashable, CaseIterable {
 	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
 
-	static var zero: Self { .init(rawValue: 0)! }
+	static var `default`: Self { .swe }
 }
 
 enum Team: UInt8, Hashable {
@@ -31,6 +31,6 @@ extension Country {
 extension Player {
 
 	static var none: Self {
-		.init(country: .zero, alive: false)
+		.init(country: .default, alive: false)
 	}
 }

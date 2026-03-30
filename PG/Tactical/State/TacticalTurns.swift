@@ -88,13 +88,13 @@ extension TacticalState {
 		}
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
 			unit.ammo.increment(
-				by: (unit.untouched ? 2 : 0) + (noEnemy ? 2 : 0) + (hasSupply ? 2 : 0),
+				by: (unit.untouched ? (noEnemy ? 2 : 1) : 0) + (hasSupply ? (noEnemy ? 2 : 0) : 0),
 				cap: unit.maxAmmo
 			)
 		}
 		if !unit.isAir || hasBuildings {
 			unit.healLoosingXP(
-				((unit.untouched ? 4 : 0) + (hasSupply ? 4 : 0)) / (noEnemy ? 1 : 3)
+				(unit.untouched ? (noEnemy ? 4 : 2) : 0) + (hasSupply ? (noEnemy ? 3 : 1) : 0)
 			)
 		}
 		unit.ap = 0b11

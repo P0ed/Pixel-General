@@ -4,6 +4,12 @@ struct BaseNodes {
 	var menu: SKNode
 	var status: SKLabelNode
 	var action: SKLabelNode
+	var icon: SKSpriteNode
+}
+
+struct Status {
+	var text: String
+	var action: Either<String, NSImage>
 }
 
 extension Scene where State: ~Copyable {
@@ -13,6 +19,7 @@ extension Scene where State: ~Copyable {
 			menu: addMenu(),
 			status: addStatus(),
 			action: addStatus(alignment: .right),
+			icon: addIcon()
 		)
 	}
 
@@ -33,10 +40,18 @@ extension Scene where State: ~Copyable {
 	func addStatus(alignment: SKLabelHorizontalAlignmentMode = .left) -> SKLabelNode {
 		let label = SKLabelNode(size: .s)
 		camera?.addChild(label)
-		label.zPosition = 66.0
+		label.zPosition = 67.0
 		label.horizontalAlignmentMode = alignment
 		label.verticalAlignmentMode = .baseline
 		return label
+	}
+
+	func addIcon() -> SKSpriteNode {
+		let node = SKSpriteNode()
+		node.zPosition = 66.0
+		node.size = CGSize(width: 24.0, height: 12.0)
+		camera?.addChild(node)
+		return node
 	}
 }
 
@@ -62,6 +77,17 @@ extension BaseNodes {
 			x: size.width / 2.0 - Self.inset,
 			y: Self.inset - size.height / 2.0
 		)
+		icon.position = CGPoint(
+			x: size.width / 2.0 - 18.0,
+			y: 12.0 - size.height / 2.0
+		)
+	}
+
+	func updateStatus(_ data: Status) {
+		status.text = data.text
+		action.text = data.action.mapA(id)
+		icon.texture = data.action.mapB(SKTexture.init(image:))
+		icon.texture?.filteringMode = .nearest
 	}
 
 	func showMenu<State: ~Copyable>(_ menuState: MenuState<State>) {

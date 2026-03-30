@@ -45,10 +45,10 @@ extension TacticalState {
 
 	private static func buildings(players: [4 of Country], map: borrowing Map<Terrain>) -> [Building] {
 		let cities: [Building] = map.indices.compactMap { xy in
-			map[xy] == .city ? Building(country: .swe, position: xy, type: .city) : nil
+			map[xy] == .city ? Building(country: .default, position: xy, type: .city) : nil
 		}
 		let airfields: [Building] = map.indices.compactMap { xy in
-			map[xy] == .airfield ? Building(country: .swe, position: xy, type: .airfield) : nil
+			map[xy] == .airfield ? Building(country: .default, position: xy, type: .airfield) : nil
 		}
 		var buildings: [Building] = cities.enumerated().map { [cnt = cities.count] i, b in
 			modifying(b) { b in

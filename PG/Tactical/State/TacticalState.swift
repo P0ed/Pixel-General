@@ -21,7 +21,7 @@ extension TacticalState {
 		self.players = .init(head: players, tail: .none)
 		self.buildings = .init(
 			head: buildings,
-			tail: .init(country: .zero, position: .zero, type: .city)
+			tail: .init(country: .default, position: .zero, type: .city)
 		)
 		self.units = .init(head: units, tail: .empty)
 		unitsMap = .init(size: self.map.size, zero: -1)

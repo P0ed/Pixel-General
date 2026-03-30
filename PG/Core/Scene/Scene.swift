@@ -5,11 +5,13 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	private let hid = HIDController()
 
 	private var processing = false
+	private var panAccumulator: CGPoint = .zero
 	private(set) var menuState: MenuState<State>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	var nodes: Nodes?
 	private var willCloseWindow: Any?
+	private var eventsMonitor: Any?
 
 	init(mode: SceneMode<State, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
 		self.state = state
@@ -43,6 +45,12 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
+
+		eventsMonitor = panHandler
+	}
+
+	deinit {
+		if let eventsMonitor { NSEvent.removeMonitor(eventsMonitor) }
 	}
 
 	override func didChangeSize(_ oldSize: CGSize) {
@@ -108,22 +116,52 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	}
 
 	private func updateStatus() {
-		let (status, action) = menuState.map { ($0.statusText, $0.actionText) }
-		?? mode.status(state)
-		baseNodes?.status.text = status
-		baseNodes?.action.text = action
+		baseNodes?.updateStatus(
+			menuState.map { $0.status } ?? mode.status(state)
+		)
 	}
 
 	func saveAndExit() {
 		mode.save(state)
 		exit(0)
 	}
+
+	private var panHandler: Any? {
+		NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] e in
+			guard let self, e.type == .scrollWheel else { return e }
+			let x = e.scrollingDeltaX
+			let y = e.scrollingDeltaY
+			panAccumulator.x += x
+			panAccumulator.y += y
+
+			if panAccumulator.x > 64 {
+				panAccumulator.x -= 64
+				mode.input(&state, .pan(.zero.neighbor(.left).neighbor(.down)))
+			} else if panAccumulator.x < -64 {
+				panAccumulator.x += 64
+				mode.input(&state, .pan(.zero.neighbor(.right).neighbor(.up)))
+			} else if panAccumulator.y > 32 {
+				panAccumulator.y -= 32
+				mode.input(&state, .pan(.zero.neighbor(.up).neighbor(.left)))
+			} else if panAccumulator.y < -32 {
+				panAccumulator.y += 32
+				mode.input(&state, .pan(.zero.neighbor(.down).neighbor(.right)))
+			}
+			if abs(x) < 0.1, abs(y) < 0.1 { panAccumulator = .zero }
+
+			return e
+		}
+	}
 }
 
 extension MenuState where State: ~Copyable {
 
-	var statusText: String { items[cursor].status }
-	var actionText: String { items[cursor].action }
+	var status: Status {
+		Status(
+			text: items[cursor].status,
+			action: .init(items[cursor].action)
+		)
+	}
 }
 
 private extension SKScene {

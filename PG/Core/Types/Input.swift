@@ -9,4 +9,5 @@ enum Input {
 	case menu
 	case tile(XY)
 	case scale(Double)
+	case pan(XY)
 }
