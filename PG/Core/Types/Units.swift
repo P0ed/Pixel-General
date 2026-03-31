@@ -8,16 +8,20 @@ extension Unit {
 	}
 
 	static func inf2(_ country: Country) -> Self {
-		switch country.team {
-		case .axis, .allies: .special >< .veteran
-		case .soviet: .regular >< .veteran
+		switch country {
+		case .pak: .regular >< .veteran
+		default:
+			switch country.team {
+			case .axis, .allies: .special >< .veteran
+			case .soviet: .regular >< .veteran
+			}
 		}
 	}
 
 	static func ifv(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .boxer
-		case .allies: .boxer
+		case .allies: .m113
 		case .soviet: .bmp
 		}
 	}
@@ -89,6 +93,10 @@ extension Unit {
 
 	static var veteran: Self {
 		.make { u in u.exp = 0x10 }
+	}
+
+	static var aux: Self {
+		.make { u in u[.aux] = true }
 	}
 
 	static var truck: Self {
@@ -360,6 +368,19 @@ extension Unit {
 			stats.hardAtk = 9
 			stats.airAtk = 4
 			stats.groundDef = 10
+			stats.airDef = 7
+		}
+	}
+
+	static var m113: Self {
+		.make { stats in
+			stats.type = .lightTrack
+			stats[.transport] = true
+			stats.ini = 7
+			stats.softAtk = 7
+			stats.hardAtk = 3
+			stats.airAtk = 2
+			stats.groundDef = 9
 			stats.airDef = 7
 		}
 	}

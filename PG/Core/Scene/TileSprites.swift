@@ -35,6 +35,7 @@ extension SKTileGroup {
 	static let hill = make(.hill)
 	static let mountain = make(.mountain)
 
+	static let water = make(.water)
 	static let river00 = make(.river00)
 	static let river01 = make(.river01)
 	static let river10 = make(.river10)
@@ -65,6 +66,7 @@ extension SKTileGroup {
 	static let hillFog = make(.hillFog)
 	static let mountainFog = make(.mountainFog)
 
+	static let waterFog = make(.waterFog)
 	static let river00Fog = make(.river00Fog)
 	static let river01Fog = make(.river01Fog)
 	static let river10Fog = make(.river10Fog)
@@ -85,6 +87,7 @@ extension Terrain {
 			case .mountain: .mountain
 			case .city: .city
 			case .airfield: .airfield
+			case .water: .water
 			case .river00: .river00
 			case .river01: .river01
 			case .river10: .river10
@@ -113,6 +116,7 @@ extension Terrain {
 			case .mountain: .mountainFog
 			case .city: .cityFog
 			case .airfield: .airfieldFog
+			case .water: .waterFog
 			case .river00: .river00Fog
 			case .river01: .river01Fog
 			case .river10: .river10Fog

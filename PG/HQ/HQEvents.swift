@@ -10,11 +10,6 @@ enum HQEvent {
 	case none
 }
 
-extension HQEvent: DeadOrAlive {
-
-	var alive: Bool { if case .none = self { false } else { true } }
-}
-
 extension HQScene {
 
 	func process(events: [Event]) async {
@@ -66,20 +61,60 @@ extension HQScene {
 	}
 
 	private func processScenario() {
-		core.store(tactical: .make(
-			players: [
-				state.player,
-				Player(country: .isr, ai: true, prestige: 0xF00),
-				Player(country: .usa, ai: true, prestige: 0xF00),
-				Player(country: .irn, ai: true, prestige: 0xF00),
-			],
-			units: state.units.map { $1 }
-		))
-		view?.present(core.state)
+		var players: [4 of Player] = [
+			state.player,
+			Player(country: .isr, ai: true, prestige: 0xF00),
+			Player(country: .usa, ai: true, prestige: 0xF00),
+			Player(country: .irn, ai: true, prestige: 0xF00)
+		]
+		let showMenu = { [weak self] items in
+			_ = Task { self?.show(MenuState(items: items)) }
+		}
+		var upd = {}
+		let selectCountry: (Int) -> Void = { idx in
+			showMenu(Country.allCases.map { c in
+				.init(icon: "\(c)", status: "\(c)", update: { state in
+					players[idx].country = c
+					Task { upd() }
+				})
+			})
+		}
+		let update = { [weak self] in
+			showMenu(
+				(0..<4).map { idx in
+					MenuItem(icon: "\(players[idx].country)", status: "Player \(idx)", update: { state in
+						selectCountry(idx)
+					})
+				}
+				+ (0..<4).map { idx in
+					MenuItem(icon: "\(players[idx].ai ? "AI" : "Human")", status: "Player \(idx)", update: { state in
+						players[idx].ai.toggle()
+						upd()
+					})
+				}
+				+ (0..<4).map { idx in
+					MenuItem(icon: "\(players[idx].prestige == 0xF00 ? "$$" : "$")", status: "Player \(idx)", update: { state in
+						players[idx].prestige = players[idx].prestige == 0xF00 ? 0xA00 : 0xF00
+						upd()
+					})
+				}
+				+ [
+					MenuItem(icon: "Start", status: "Start", update: { state in
+						core.store(tactical: .make(
+							players: players,
+							units: state.units.map { $1 }
+						))
+						self?.view?.present(core.state)
+					}),
+				]
+			)
+		}
+		upd = update
+		update()
 	}
 
 	private func processMenu() {
-		show(.init(items: [
+		show(MenuState(items: [
 			.init(icon: "New", status: "New") { [weak self] _ in
 				core.new()
 				self?.view?.present(core.state)

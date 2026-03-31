@@ -28,9 +28,9 @@ extension Scene where State: ~Copyable {
 		case "s": apply(.action(.b))
 		case "q": apply(.action(.c))
 		case "w": apply(.action(.d))
-		case "z": apply(.scale(1.0))
-		case "x": apply(.scale(2.0))
-		case "c": apply(.scale(4.0))
+		case "z": apply(.scale(1))
+		case "x": apply(.scale(2))
+		case "c": apply(.scale(4))
 		default: break
 		}
 	}

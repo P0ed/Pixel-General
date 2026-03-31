@@ -19,7 +19,7 @@ struct Unit: Hashable {
 
 extension Unit: Monoid {
 
-	static var empty: Self { .init(country: .swe) }
+	static var empty: Self { .init(country: .default) }
 
 	mutating func combine(_ other: Self) {
 		hp |= other.hp
@@ -40,23 +40,15 @@ extension Unit: Monoid {
 struct Traits: OptionSet, Hashable {
 	var rawValue: UInt16
 
-	static var art: Self { .init(.art) }
-	static var aa: Self { .init(.aa) }
-	static var supply: Self { .init(.supply) }
-	static var elite: Self { .init(.elite) }
-	static var transport: Self { .init(.transport) }
-	static var radar: Self { .init(.radar) }
-	static var fast: Self { .init(.fast) }
-	static var range: Self { .init(.range) }
-	static var aux: Self { .init(.aux) }
-}
-
-extension Traits {
-	init(_ trait: Trait) { rawValue = 1 << trait.rawValue }
-}
-
-enum Trait: UInt8 {
-	case art, aa, supply, elite, transport, radar, fast, range, aux
+	static var art: Self { .init(rawValue: 1 << 0) }
+	static var aa: Self { .init(rawValue: 1 << 1) }
+	static var supply: Self { .init(rawValue: 1 << 2) }
+	static var elite: Self { .init(rawValue: 1 << 3) }
+	static var transport: Self { .init(rawValue: 1 << 4) }
+	static var radar: Self { .init(rawValue: 1 << 5) }
+	static var fast: Self { .init(rawValue: 1 << 6) }
+	static var range: Self { .init(rawValue: 1 << 7) }
+	static var aux: Self { .init(rawValue: 1 << 8) }
 }
 
 extension Unit {
@@ -108,9 +100,9 @@ extension Unit {
 		}
 	}
 
-	subscript(_ trait: Trait) -> Bool {
-		get { traits.contains(.init(trait)) }
-		set { traits.insert(.init(trait)) }
+	subscript(_ ts: Traits) -> Bool {
+		get { !traits.intersection(ts).isEmpty }
+		set { traits.formUnion(ts) }
 	}
 
 	var stars: UInt8 {
@@ -160,7 +152,7 @@ extension Unit {
 	}
 
 	var cost: UInt16 {
-		expCost + typeCost + traitCost + sum * 2
+		(expCost + typeCost + traitCost + sum * 2) / (self[.aux] ? 2 : 1)
 	}
 
 	mutating func healLoosingXP(_ amount: UInt8) {

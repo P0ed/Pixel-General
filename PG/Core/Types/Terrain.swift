@@ -2,7 +2,7 @@ import CoreGraphics
 
 enum Terrain: UInt8, Hashable, Codable {
 	case none
-	case river00, river01, river10, river11
+	case water, river00, river01, river10, river11
 	case bridge01, bridge10
 	case field, forest, hill, forestHill, mountain
 	case city, airfield

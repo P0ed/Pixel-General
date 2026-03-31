@@ -1,17 +1,18 @@
 struct TacticalState: ~Copyable {
 	var map: Map<Terrain>
 	var players: Speicher<4, Player>
-	var buildings: Speicher<32, Building>
+	var buildings: CArray<32, Building>
 	var units: Speicher<128, Unit>
 	var unitsMap: Map<UID>
-	var events: Speicher<4, TacticalEvent> = .init(head: [], tail: .none)
+	var auxilia: [4 of CArray<16, Unit>]
+	var events: CArray<4, TacticalEvent> = .init(tail: .none)
 	var seed: Crystals = .empty
 	var turn: UInt32 = 0
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var selectedUnit: UID?
 	var selectable: SetXY?
-	var scale: Double = 1.0
+	var scale: Int = 1
 }
 
 extension TacticalState {
@@ -25,6 +26,12 @@ extension TacticalState {
 		)
 		self.units = .init(head: units, tail: .empty)
 		unitsMap = .init(size: self.map.size, zero: -1)
+		auxilia = .init { i in
+			CArray(
+				head: .aux(country: players[i].country),
+				tail: .empty
+			)
+		}
 		self.units.map { i, u in (i, u.position) }.forEach { i, xy in
 			guard unitsMap[xy] < 0 else { fatalError() }
 			unitsMap[xy] = i
@@ -64,7 +71,27 @@ extension TacticalState {
 	}
 }
 
-struct Building: Hashable, DeadOrAlive {
+extension [Unit] {
+
+	static func aux(country: Country) -> [Unit] {
+		[
+			Unit(country: country) >< .aux >< .truck,
+			Unit(country: country) >< .aux >< .truck,
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .ifv(country),
+			Unit(country: country) >< .aux >< .tank(country),
+			Unit(country: country) >< .aux >< .tank(country),
+			Unit(country: country) >< .aux >< .art(country),
+			Unit(country: country) >< .aux >< .art(country),
+			Unit(country: country) >< .aux >< .aa(country),
+			Unit(country: country) >< .aux >< .heli(country),
+		]
+	}
+}
+
+struct Building: Hashable {
 	var country: Country
 	var position: XY
 	var type: BuildingType
@@ -74,7 +101,7 @@ enum BuildingType: UInt8, Hashable {
 	case city, airfield
 }
 
-extension Speicher where Element == Building {
+extension CArray where Element == Building {
 
 	subscript(_ xy: XY) -> Building? {
 		firstMap { _, b in b.position == xy ? b : nil }
@@ -90,11 +117,6 @@ enum TacticalEvent: Hashable {
 	case menu
 	case gameOver
 	case none
-}
-
-extension TacticalEvent: DeadOrAlive {
-
-	var alive: Bool { self != .none }
 }
 
 extension TacticalState {

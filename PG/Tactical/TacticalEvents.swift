@@ -78,16 +78,16 @@ private extension TacticalScene {
 		else { return }
 
 		let xy = state.cursor
-		show(MenuState(
-			items: state.shopUnits(at: xy).map { template in
-				MenuItem(
-					icon: template.imageName,
-					status: template.status,
-					action: "\(template.cost) / \(state.player.prestige) ><",
-					update: { state in state.buy(template, at: xy) }
-				)
-			}
-		))
+		let items = state.shopUnits(at: xy).map { template in
+			MenuItem<TacticalState>(
+				icon: template.imageName,
+				status: template.status,
+				action: "\(template.cost) / \(state.player.prestige) ><",
+				update: { state in state.buy(template, at: xy) }
+			)
+		}
+
+		if !items.isEmpty { show(MenuState(items: items)) }
 	}
 
 	func processMenu() {

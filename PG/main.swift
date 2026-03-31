@@ -1,7 +1,7 @@
 import SpriteKit
 
 let core = Core()
-core.load(reset: false)
+core.load(reset: true)
 
 private let window: NSWindow = .make { window in
 	let view = SKView(frame: window.contentLayoutRect)

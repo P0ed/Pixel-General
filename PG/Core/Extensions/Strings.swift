@@ -5,8 +5,8 @@ extension XY: CustomStringConvertible {
 extension Unit {
 
 	var status: String {
-		.makeStatus(pad: 12) { add in
-			add("\(typeDescription)")
+		.makeStatus(pad: 14) { add in
+			add("\(traits.contains(.aux) ? "aux ": "")\(typeDescription)")
 		} + .makeStatus(pad: 10) { add in
 			add("\(mpString)\(apString)  \(starsString)")
 		} + .makeStatus(pad: 9) { add in

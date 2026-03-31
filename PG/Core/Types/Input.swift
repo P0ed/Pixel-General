@@ -8,6 +8,6 @@ enum Input {
 	case action(Action?)
 	case menu
 	case tile(XY)
-	case scale(Double)
+	case scale(Int)
 	case pan(XY)
 }

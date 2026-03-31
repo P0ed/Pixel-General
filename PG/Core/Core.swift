@@ -51,7 +51,7 @@ final class Core {
 		guard let c = state.hq?.player.country else { return }
 
 		let units: [Unit] = \.grid4x4 § tactical.units.compactMap { _, u in
-			u.country != c ? nil : modifying(u, { u in
+			u.country != c || u[.aux] ? nil : modifying(u, { u in
 				u.hp = 0xF
 				u.ap = 0b11
 				u.ammo = u.maxAmmo

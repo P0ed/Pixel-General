@@ -21,15 +21,16 @@ extension TacticalState {
 
 		let r = unit.mov + (hasTransport(unit: unit) ? 1 : 0)
 		mov.moves[unit.position] = r * 2 + 1
-		var front: [XY] = [unit.position]
+		var front = CArray<1024, XY>(head: unit.position, tail: .zero)
+		var next = CArray<1024, XY>(tail: .zero)
+
 		for _ in 0 ..< r where !front.isEmpty {
-			front = front.flatMap { from in
+			front.forEach { _, from in
 				let mp = mov.moves[from]
 				let n4 = from.n4
 				let enemies = n4.reduce(into: 0 as UInt8) { r, xy in
 					if enemy(at: xy) { r += 1 }
 				}
-				var next = [] as [XY]
 
 				for i in n4.indices {
 					let xy = n4[i]
@@ -39,7 +40,7 @@ extension TacticalState {
 					let moveCost = map[xy].moveCost(unit) * 2 + enemies
 					if moveCost + 1 <= mp {
 						mov.moves[xy] = mp - moveCost
-						if mp - moveCost != 1 { next.append(xy) }
+						if mp - moveCost != 1 { next.add(xy) }
 					}
 				}
 				if enemies < 2 {
@@ -52,12 +53,14 @@ extension TacticalState {
 						let moveCost = map[xy].moveCost(unit) * 3 + enemies
 						if moveCost + 1 <= mp {
 							mov.moves[xy] = mp - moveCost
-							if mp - moveCost != 1 { next.append(xy) }
+							if mp - moveCost != 1 { next.add(xy) }
 						}
 					}
 				}
-				return next
 			}
+			front.erase()
+			front.add(next)
+			next.erase()
 		}
 		if target == nil {
 			units.forEach { i, u in

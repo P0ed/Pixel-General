@@ -26,8 +26,8 @@ extension TacticalState {
 		}
 	}
 
-	private var tooFarX: Bool { abs(camera.pt.x - cursor.pt.x) > 4.0 * scale }
-	private var tooFarY: Bool { abs(camera.pt.y - cursor.pt.y) > 4.0 * scale }
+	private var tooFarX: Bool { abs(camera.pt.x - cursor.pt.x) > 4.0 * CGFloat(scale) }
+	private var tooFarY: Bool { abs(camera.pt.y - cursor.pt.y) > 4.0 * CGFloat(scale) }
 
 	var isCursorTooFar: Bool { tooFarX || tooFarY }
 

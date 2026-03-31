@@ -32,7 +32,6 @@ extension Scene where State: ~Copyable {
 		menu.strokeColor = .gray
 		menu.zPosition = 68.0
 		menu.isHidden = true
-		menu.setScale(0.5)
 		camera?.addChild(menu)
 		return menu
 	}
@@ -57,12 +56,12 @@ extension Scene where State: ~Copyable {
 
 extension BaseNodes {
 
-	static let inset = 8.0 as CGFloat
-	static let spacing = 8.0 as CGFloat
-	static let outerR = 12.0 as CGFloat
-	static let innerR = outerR - inset / 2.0 as CGFloat
+	static let inset = 2.0 as CGFloat
+	static let spacing = 2.0 as CGFloat
+	static let outerR = 8.0 as CGFloat
+	static let innerR = 6.0 as CGFloat
 
-	static let itemSize = CGSize(width: 64.0, height: 48.0)
+	static let itemSize = CGSize(width: 48.0, height: 36.0)
 	static let menuSize = CGSize(
 		width: itemSize.width * 4 + spacing * 3 + inset * 2,
 		height: itemSize.height * 3 + spacing * 2 + inset * 2
@@ -126,7 +125,7 @@ extension BaseNodes {
 		menu.children.enumerated().forEach { idx, item in
 			if let frame = item as? SKShapeNode, frame.name == nil {
 				frame.fillColor = menuState.cursor == idx ? .gray : .darkGray
-				frame.strokeColor = menuState.cursor == idx ? .darkGray : .black
+				frame.strokeColor = menuState.cursor == idx ? .gray : .darkGray
 				frame.isHidden = idx / 12 != menuState.cursor / 12
 			}
 		}

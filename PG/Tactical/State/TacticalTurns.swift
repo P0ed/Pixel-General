@@ -9,7 +9,7 @@ extension TacticalState {
 	mutating func endTurn() {
 		captureCities()
 
-		guard nextTurn() else { return _ = events.add(.gameOver) }
+		guard nextTurn() else { return events.add(.gameOver) }
 
 		resetUI()
 	}

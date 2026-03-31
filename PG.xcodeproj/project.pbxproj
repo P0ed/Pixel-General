@@ -19,6 +19,7 @@
 		5F5560FF2EF5B2B900C08E14 /* HQState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5560FE2EF5B2B900C08E14 /* HQState.swift */; };
 		5F5561052EF5B89B00C08E14 /* HQEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5561042EF5B89B00C08E14 /* HQEvents.swift */; };
 		5F5A716D2F24FB830059B314 /* Terrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5A716C2F24FB790059B314 /* Terrain.swift */; };
+		5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87CF592F7BD46900BC87CA /* CArray.swift */; };
 		5F8E87312EB3BEEC0023B28F /* Speicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87302EB3BEEC0023B28F /* Speicher.swift */; };
 		5F8E87332EB3E1DD0023B28F /* Integers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87322EB3E1DA0023B28F /* Integers.swift */; };
 		5F919D532EA9595D0037A208 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33C42EA93AC3008A0A95 /* Scene.swift */; };
@@ -101,6 +102,7 @@
 		5F5560FE2EF5B2B900C08E14 /* HQState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQState.swift; sourceTree = "<group>"; };
 		5F5561042EF5B89B00C08E14 /* HQEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQEvents.swift; sourceTree = "<group>"; };
 		5F5A716C2F24FB790059B314 /* Terrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Terrain.swift; sourceTree = "<group>"; };
+		5F87CF592F7BD46900BC87CA /* CArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CArray.swift; sourceTree = "<group>"; };
 		5F8E87302EB3BEEC0023B28F /* Speicher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Speicher.swift; sourceTree = "<group>"; };
 		5F8E87322EB3E1DA0023B28F /* Integers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integers.swift; sourceTree = "<group>"; };
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -269,6 +271,7 @@
 				5F2A33B32EA93AC3008A0A95 /* Monoid.swift */,
 				5F2A33A82EA93AC3008A0A95 /* Arrays.swift */,
 				5F2D145E2F7AC24600D2DF7E /* Either.swift */,
+				5F87CF592F7BD46900BC87CA /* CArray.swift */,
 				5F8E87302EB3BEEC0023B28F /* Speicher.swift */,
 				5F41DDD42EE32744008FBF17 /* Map.swift */,
 				5FA0F0962EF21C3A0022EC68 /* SetXY.swift */,
@@ -398,6 +401,7 @@
 				5F8E87332EB3E1DD0023B28F /* Integers.swift in Sources */,
 				5FCABBCA2EAA787D008EE894 /* Strings.swift in Sources */,
 				5F919D642EA9596E0037A208 /* MenuState.swift in Sources */,
+				5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */,
 				5F5560FA2EF5B05D00C08E14 /* HQMode.swift in Sources */,
 				5F2D145F2F7AC24600D2DF7E /* Either.swift in Sources */,
 				5F919D652EA9596E0037A208 /* TacticalStateFactory.swift in Sources */,

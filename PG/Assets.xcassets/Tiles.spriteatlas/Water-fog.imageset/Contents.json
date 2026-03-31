@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "Water-fog.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

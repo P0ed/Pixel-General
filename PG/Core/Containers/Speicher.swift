@@ -2,97 +2,88 @@ protocol DeadOrAlive: ~Copyable {
 	var alive: Bool { get }
 }
 
-extension DeadOrAlive {
-	var alive: Bool { true }
-}
-
 struct Speicher<let capacity: Int, Element: DeadOrAlive>: ~Copyable {
-	private var elements: InlineArray<capacity, Element>
-	private(set) var count: Int
+	private var array: CArray<capacity, Element>
 }
 
 extension Speicher {
 
+	var count: Int { array.count }
+
+	var indices: CountableRange<Int> { 0 ..< count }
+
+	var hasAlive: Bool { !array.isEmpty && firstMap(ø) != nil }
+
 	init(head: [Element], tail: Element) {
-		elements = .init(head: head, tail: tail)
-		count = head.count
-	}
-
-	var indices: CountableRange<Int> {
-		0..<count
-	}
-
-	var isEmpty: Bool {
-		count == 0 || firstMap(ø) == nil
+		array = .init(head: head, tail: tail)
 	}
 
 	subscript(_ index: Int) -> Element {
-		get { elements[index] }
-		set { elements[index] = newValue }
+		get { array[index] }
+		set { array[index] = newValue }
 	}
 
 	@discardableResult
 	mutating func add(_ element: Element) -> Int {
-		for i in indices where !elements[i].alive {
-			elements[i] = element
+		for i in indices where !array[i].alive {
+			array[i] = element
 			return i
 		}
-		defer { count += 1 }
-		elements[count] = element
+		defer { array.add(element) }
 		return count
 	}
 
 	mutating func erase() {
-		count = 0
+		array.erase()
 	}
 
 	func forEach(_ body: (Int, Element) -> Void) {
-		for i in indices where elements[i].alive { body(i, elements[i]) }
+		for i in indices where array[i].alive { body(i, array[i]) }
 	}
 
 	mutating func modifyEach(_ transform: (Int, inout Element) -> Void) {
-		for i in indices where elements[i].alive {
-			transform(i, &elements[i])
+		for i in indices where array[i].alive {
+			transform(i, &array[i])
 		}
 	}
 
 	func map<A>(_ transform: (Int, Element) -> A) -> [A] {
-		var array = [] as [A]
-		for i in indices where elements[i].alive {
-			array.append(transform(i, elements[i]))
+		var result = [] as [A]
+		for i in indices where array[i].alive {
+			result.append(transform(i, array[i]))
 		}
-		return array
+		return result
 	}
 
 	func flatMap<A>(_ transform: (Int, Element) -> [A]) -> [A] {
 		var arr = [] as [A]
-		for i in indices where elements[i].alive {
+		for i in indices where array[i].alive {
 			arr.append(contentsOf: transform(i, self[i]))
 		}
 		return arr
 	}
 
 	func compactMap<A>(_ transform: (Int, Element) -> A?) -> [A] {
-		var array = [] as [A]
-		for i in indices where elements[i].alive {
-			if let value = transform(i, elements[i]) {
-				array.append(value)
+		var result = [] as [A]
+		for i in indices where array[i].alive {
+			if let value = transform(i, array[i]) {
+				result.append(value)
 			}
 		}
-		return array
+		return result
 	}
 
 	func reduce<R>(into result: R, _ fold: (inout R, Int, Element) -> Void) -> R {
 		var result = result
-		for i in indices where elements[i].alive {
-			fold(&result, i, elements[i])
+		for i in indices where array[i].alive {
+			fold(&result, i, array[i])
 		}
 		return result
 	}
 
 	func firstMap<A>(_ transform: (Int, Element) -> A?) -> A? {
-		for i in indices where elements[i].alive {
-			if let some = transform(i, elements[i]) { return some }
+		for i in indices where array[i].alive {
+			if let some = transform(i, array[i]) { return some }
 		}
 		return nil
 	}

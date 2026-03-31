@@ -11,7 +11,7 @@ extension TacticalState {
 		}
 	}
 
-	func support(trait: Trait, defender: UID, attacker: UID) -> UID? {
+	func support(trait: Traits, defender: UID, attacker: UID) -> UID? {
 		units[defender].position.n8.firstMap { hx in
 			units[hx].flatMap { i, u in
 				u.country.team == units[defender].country.team
