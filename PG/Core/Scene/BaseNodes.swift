@@ -100,6 +100,12 @@ extension BaseNodes {
 		menu.removeAllChildren()
 	}
 
+	func redrawMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
+		menu.removeAllChildren()
+		addMenuItems(menuState)
+		updateMenu(menuState)
+	}
+
 	private func addMenuItems<State: ~Copyable>(_ menuState: MenuState<State>) {
 		menuState.items.enumerated().map { idx, item in
 			let frame = SKShapeNode(rectOf: Self.itemSize, cornerRadius: Self.innerR)

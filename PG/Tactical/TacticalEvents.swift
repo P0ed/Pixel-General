@@ -16,7 +16,7 @@ private extension TacticalScene {
 	func process(_ event: TacticalEvent) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid: uid)
-		case let .move(uid, distance): await processMove(uid: uid, distance: distance)
+		case let .move(uid, a, b): await processMove(uid: uid, from: a, to: b)
 		case let .attack(src, dst, dmg, hp): await processAttack(src: src, dst: dst, dmg: dmg, hp: hp)
 		case .nextDay: nodes?.updateUnits(state)
 		case .shop: processShop()
@@ -37,19 +37,19 @@ private extension TacticalScene {
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(uid: UID, distance: Int) async {
+	func processMove(uid: UID, from a: XY, to b: XY) async {
 		guard let nodes, let unit = nodes.units[uid] else { return }
 
-		let xy = state.units[uid].position
-		let z = nodes.map.zPosition(at: xy)
+		let z = nodes.map.zPosition(at: b)
 		unit.zPosition = max(unit.zPosition, z)
 		nodes.sounds.mov.play()
 		await unit.run(.move(
-			to: state.map.point(at: xy),
-			duration: CGFloat(distance) * 0.047
+			to: state.map.point(at: b),
+			duration: CGFloat(a.distance(to: b)) * 0.047
 		))
 		unit.zPosition = z
-		unit.isHidden = !state.player.visible[xy]
+		unit.isHidden = !state.player.visible[b]
+		if !state.units[uid].alive { removeUnit(uid) }
 	}
 
 	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
@@ -79,7 +79,7 @@ private extension TacticalScene {
 
 		let xy = state.cursor
 		let items = state.shopUnits(at: xy).map { template in
-			MenuItem<TacticalState>(
+			MenuItem<TacticalState>.close(
 				icon: template.imageName,
 				status: template.status,
 				action: "\(template.cost) / \(state.player.prestige) ><",
@@ -95,20 +95,20 @@ private extension TacticalScene {
 
 		show(MenuState(
 			items: [
-				.init(icon: "End", status: "End turn") { state in
+				.close(icon: "End", status: "End turn") { state in
 					state.endTurn()
 				},
-				.init(icon: "Restart", status: "Restart") { [weak self] state in
+				.close(icon: "Restart", status: "Restart") { [weak self] state in
 					self?.restartGame(state: state)
 				},
-				.init(icon: "Save", status: "Save") { state in
+				.close(icon: "Save", status: "Save") { state in
 					core.store(tactical: state, auto: false)
 				},
-				.init(icon: "Load", status: "Load") { [weak self] state in
+				.close(icon: "Load", status: "Load") { [weak self] state in
 					core.load(auto: false)
-					self?.view?.present(core.state)
+					_ = self?.view?.present(core.state)
 				},
-				.init(icon: "HQ", status: "HQ") { [weak self] state in
+				.close(icon: "HQ", status: "HQ") { [weak self] state in
 					self?.restartGame(state: state)
 				},
 			]

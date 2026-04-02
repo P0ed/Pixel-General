@@ -35,6 +35,9 @@ extension TacticalState {
 		for i in units.indices where units[i].alive {
 			endTurn(unit: i)
 		}
+		for i in cargo.indices where cargo[i].alive {
+			cargo[i].ap = 0b11
+		}
 		events.add(.nextDay)
 	}
 

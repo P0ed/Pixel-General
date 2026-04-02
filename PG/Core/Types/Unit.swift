@@ -3,7 +3,7 @@ typealias UID = Int
 struct Unit: Hashable {
 	var country: Country
 	var position: XY = .zero
-	var hp: UInt8 = 0xF
+	var hp: UInt8 = 0
 	var bits: UInt8 = 0
 	var ammo: UInt8 = 0
 	var exp: UInt8 = 0

@@ -8,7 +8,7 @@ extension TacticalState {
 		case .menu: events.add(.menu)
 		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): break
+		case .action(.c): squareAction()
 		case .action(.d): endTurn()
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
@@ -41,6 +41,8 @@ private extension TacticalState {
 			if let dst = unitAt(cursor), player.visible[cursor] {
 				if dst.country.team != unit.country.team {
 					attack(src: selectedUnit, dst: unitsMap[cursor])
+				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]) {
+					embark(unit: selectedUnit, transport: unitsMap[cursor])
 				} else {
 					selectUnit(dst == unit ? .none : unitsMap[cursor])
 				}
@@ -62,6 +64,16 @@ private extension TacticalState {
 
 	mutating func secondaryAction() {
 		selectUnit(.none)
+	}
+
+	mutating func squareAction() {
+		guard let selectedUnit, units[selectedUnit].country == country,
+			  units[selectedUnit][.transport], cargo[selectedUnit].alive,
+			  units[selectedUnit].position.manhattanDistance(to: cursor) == 1,
+			  unitsMap[cursor] == -1
+		else { return }
+
+		disembark(unit: selectedUnit, to: cursor)
 	}
 
 	mutating func prevUnit() {

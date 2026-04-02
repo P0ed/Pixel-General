@@ -101,11 +101,15 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	}
 
 	private func didSetMenu() {
-		if let action = menuState?.action {
-			if let menuState, case let .apply(idx) = action {
-				menuState.items[idx].update(&state)
+		if let menuState, let action = menuState.action {
+			if case let .apply(idx) = action {
+				self.menuState = menuState.items[idx].update(&state)
+			} else {
+				self.menuState = menuState.close(&state)
 			}
-			return menuState = .none
+			if let next = self.menuState {
+				baseNodes?.redrawMenu(next)
+			}
 		} else if (menuState == nil) != (baseNodes?.menu.isHidden == true) {
 			if let menuState { baseNodes?.showMenu(menuState) }
 			else { baseNodes?.hideMenu() }
@@ -157,9 +161,10 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 extension MenuState where State: ~Copyable {
 
 	var status: Status {
-		Status(
-			text: items[cursor].status,
-			action: .init(items[cursor].action)
+		let item = cursor < items.count ? items[cursor] : nil
+		return Status(
+			text: item?.status ?? "",
+			action: .init(item?.action ?? "")
 		)
 	}
 }

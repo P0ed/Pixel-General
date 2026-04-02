@@ -6,15 +6,22 @@ struct State: ~Copyable {
 	var tactical: TacticalState?
 }
 
+struct Settings {
+	var soundLevel: UInt8 = 2
+}
+
 final class Core {
 	private(set) var state = State()
+	var settings = Settings()
 
 	func new(country: Country = .default) {
-		let units: [Unit] = [Unit].base(country)
 		state = State(
 			hq: HQState(
 				player: Player(country: country),
-				units: .init(head: units, tail: .empty)
+				units: .init(
+					head: .base(country).mapInPlace { u in u.hp = 0xF },
+					tail: .empty
+				)
 			)
 		)
 		save()
@@ -50,7 +57,9 @@ final class Core {
 	func complete(tactical: borrowing TacticalState) {
 		guard let c = state.hq?.player.country else { return }
 
-		let units: [Unit] = \.grid4x4 § tactical.units.compactMap { _, u in
+		let units: [Unit] = \.grid4x4 § (
+			tactical.units.map { $1 } + tactical.cargo.compactMap { $0.alive ? $0 : nil }
+		).compactMap { u in
 			u.country != c || u[.aux] ? nil : modifying(u, { u in
 				u.hp = 0xF
 				u.ap = 0b11

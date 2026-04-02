@@ -4,6 +4,7 @@ struct TacticalState: ~Copyable {
 	var buildings: CArray<32, Building>
 	var units: Speicher<128, Unit>
 	var unitsMap: Map<UID>
+	var cargo: [128 of Unit]
 	var auxilia: [4 of CArray<16, Unit>]
 	var events: CArray<4, TacticalEvent> = .init(tail: .none)
 	var seed: Crystals = .empty
@@ -26,6 +27,7 @@ extension TacticalState {
 		)
 		self.units = .init(head: units, tail: .empty)
 		unitsMap = .init(size: self.map.size, zero: -1)
+		cargo = .init(repeating: .empty)
 		auxilia = .init { i in
 			CArray(
 				head: .aux(country: players[i].country),
@@ -110,7 +112,7 @@ extension CArray where Element == Building {
 
 enum TacticalEvent: Hashable {
 	case spawn(UID)
-	case move(UID, Int)
+	case move(UID, XY, XY)
 	case attack(UID, UID, UInt8, UInt8)
 	case nextDay
 	case shop

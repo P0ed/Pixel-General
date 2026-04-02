@@ -72,7 +72,8 @@ extension Unit {
 
 	static func heli(_ country: Country) -> Self {
 		switch country.team {
-		default: .mh6
+		case .allies, .axis: .mh6
+		case .soviet: .mi8
 		}
 	}
 
@@ -241,6 +242,18 @@ extension Unit {
 		}
 	}
 
+	static var mh6: Self {
+		.make { stats in
+			stats.type = .heli
+			stats.ini = 9
+			stats.softAtk = 8
+			stats.hardAtk = 9
+			stats.airAtk = 9
+			stats.groundDef = 7
+			stats.airDef = 7
+		}
+	}
+
 	static var gripen: Self {
 		.make { stats in
 			stats.type = .jet
@@ -385,15 +398,16 @@ extension Unit {
 		}
 	}
 
-	static var mh6: Self {
+	static var mi8: Self {
 		.make { stats in
 			stats.type = .heli
-			stats.ini = 9
-			stats.softAtk = 8
-			stats.hardAtk = 9
-			stats.airAtk = 9
-			stats.groundDef = 7
-			stats.airDef = 7
+			stats[.transport] = true
+			stats.ini = 7
+			stats.softAtk = 6
+			stats.hardAtk = 3
+			stats.airAtk = 2
+			stats.groundDef = 6
+			stats.airDef = 6
 		}
 	}
 

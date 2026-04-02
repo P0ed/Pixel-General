@@ -19,7 +19,7 @@ extension TacticalState {
 			} ?? false
 		}
 
-		let r = unit.mov + (hasTransport(unit: unit) ? 1 : 0)
+		let r = unit.mov
 		mov.moves[unit.position] = r * 2 + 1
 		var front = CArray<1024, XY>(head: unit.position, tail: .zero)
 		var next = CArray<1024, XY>(tail: .zero)
@@ -71,16 +71,6 @@ extension TacticalState {
 		return mov
 	}
 
-	func hasTransport(unit: Unit) -> Bool {
-		guard unit.type == .soft else { return false }
-
-		return unit.position.n8.firstMap { xy in
-			unitAt(xy).flatMap { u in
-				u.country == unit.country && u[.transport] ? true : nil
-			}
-		} ?? false
-	}
-
 	mutating func move(unit uid: UID, to position: XY) {
 		guard units[uid].country == country, units[uid].canMove else { return }
 
@@ -107,7 +97,6 @@ extension TacticalState {
 			if xy == pos { break }
 		}
 
-		let distance = units[uid].position.distance(to: pos)
 		unitsMap[units[uid].position] = -1
 		unitsMap[pos] = uid
 		units[uid].position = pos
@@ -118,7 +107,7 @@ extension TacticalState {
 		}
 
 		selectUnit(units[uid].hasActions ? uid : .none)
-		events.add(.move(uid, distance))
+		events.add(.move(uid, moves.start, pos))
 
 		if let interruptor, units[interruptor].country.team != units[uid].country.team {
 			attack(src: uid, dst: interruptor, surprise: true)

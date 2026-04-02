@@ -1,6 +1,7 @@
 struct MenuState<State: ~Copyable> {
 	var items: [MenuItem<State>]
 	var cursor: Int = 0
+	var close: (inout State) -> MenuState<State>? = { _ in nil }
 	var action: MenuAction?
 }
 
@@ -12,7 +13,19 @@ struct MenuItem<State: ~Copyable> {
 	var icon: String
 	var status: String
 	var action: String = ""
-	var update: (inout State) -> Void
+	var update: (inout State) -> MenuState<State>?
+}
+
+extension MenuItem where State: ~Copyable {
+
+	static func close(icon: String, status: String, action: String = "", update: @escaping (inout State) -> Void) -> Self {
+		MenuItem(
+			icon: icon,
+			status: status,
+			action: action,
+			update: { state in update(&state); return .none }
+		)
+	}
 }
 
 extension MenuState where State: ~Copyable {

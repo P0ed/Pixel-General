@@ -2,11 +2,15 @@ extension TacticalState {
 
 	func shopUnits(at xy: XY) -> [Unit] {
 		let country = country
-		let slots = units.reduce(into: [0, 0] as [2 of Int]) { c, i, u in
+		let unitSlots = units.reduce(into: [0, 0] as [2 of Int]) { c, i, u in
 			if u.country == country { c[u[.aux] ? 1 : 0] += 1 }
 		}
-		let core = slots[0] < 16
-		let aux = slots[1] < 16
+		let cargoSlots = cargo.reduce(into: [0, 0] as [2 of Int]) { c, u in
+			if u.alive, u.country == country { c[u[.aux] ? 1 : 0] += 1 }
+		}
+
+		let core = unitSlots[0] + cargoSlots[0] < 16
+		let aux = unitSlots[1] + cargoSlots[1]  < 16
 
 		return buildings[xy].map { b in
 			.make { units in
@@ -26,6 +30,7 @@ extension TacticalState {
 		guard player.prestige >= template.cost, unitsMap[position] < 0 else { return }
 
 		let unit = modifying(template) { u in
+			u.hp = 0xF
 			u.position = position
 			u.ap = 0b00
 			u.ammo = u.maxAmmo

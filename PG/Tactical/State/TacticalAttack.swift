@@ -50,13 +50,21 @@ extension TacticalState {
 		///# ¯¯Logs¯¯
 
 		units[src].ammo.decrement()
-		units[dst].hp.decrement(by: dmg)
-		let alive = units[dst].alive
+		let alive = damage(unit: dst, dmg: dmg)
 		units[src].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
-		if !alive { unitsMap[targetPos] = -1 }
 
 		camera = targetPos
 		events.add(.attack(src, dst, dmg, units[dst].hp))
+	}
+
+	mutating func damage(unit: UID, dmg: UInt8) -> Bool {
+		units[unit].hp.decrement(by: dmg)
+		if !units[unit].alive {
+			unitsMap[units[unit].position] = -1
+			cargo[unit].hp = 0x0
+			return false
+		}
+		return true
 	}
 
 	private func encirclement(uid: UID) -> Int {
@@ -136,11 +144,10 @@ extension TacticalState {
 		let pos = moves(for: units[uid]).set.min(by: (p + p + p - xy - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
-		let distance = units[uid].position.distance(to: pos)
 		unitsMap[units[uid].position] = -1
 		unitsMap[pos] = uid
 		units[uid].position = pos
 		units[uid].ent = 0
-		events.add(.move(uid, distance))
+		events.add(.move(uid, p, pos))
 	}
 }
