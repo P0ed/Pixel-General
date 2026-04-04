@@ -32,7 +32,7 @@ extension TacticalState {
 	var isCursorTooFar: Bool { tooFarX || tooFarY }
 
 	var reducible: Bool {
-		isCursorTooFar || !events.isEmpty || player.ai
+		isCursorTooFar || !events.isEmpty || player.type == .ai
 	}
 
 	mutating func alignCamera() {
@@ -54,7 +54,7 @@ extension TacticalState {
 			events.erase()
 			return es
 		}
-		if player.ai {
+		if player.type == .ai {
 			runAI()
 			return []
 		}

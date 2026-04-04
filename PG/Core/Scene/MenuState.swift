@@ -13,7 +13,7 @@ struct MenuItem<State: ~Copyable> {
 	var icon: String
 	var status: String
 	var action: String = ""
-	var update: (inout State) -> MenuState<State>?
+	var update: (inout State, MenuState<State>) -> MenuState<State>?
 }
 
 extension MenuItem where State: ~Copyable {
@@ -23,7 +23,7 @@ extension MenuItem where State: ~Copyable {
 			icon: icon,
 			status: status,
 			action: action,
-			update: { state in update(&state); return .none }
+			update: { state, menu in update(&state); return .none }
 		)
 	}
 }

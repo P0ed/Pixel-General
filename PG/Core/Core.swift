@@ -55,7 +55,11 @@ final class Core {
 	}
 
 	func complete(tactical: borrowing TacticalState) {
-		guard let c = state.hq?.player.country else { return }
+		guard let c = state.hq?.player.country, tactical.map.size == 32 else {
+			state.tactical = nil
+			save()
+			return
+		}
 
 		let units: [Unit] = \.grid4x4 § (
 			tactical.units.map { $1 } + tactical.cargo.compactMap { $0.alive ? $0 : nil }

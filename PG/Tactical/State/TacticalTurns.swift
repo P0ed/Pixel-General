@@ -19,7 +19,7 @@ extension TacticalState {
 			turn += 1
 			if playerIndex == 0 { startNextDay() }
 			if player.alive {
-				return players.firstMap { _, p in !p.ai ? () : nil } != nil
+				return players.firstMap { _, p in p.type != .ai ? () : nil } != nil
 			}
 		}
 		return false

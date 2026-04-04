@@ -128,22 +128,3 @@ extension Terrain: CustomStringConvertible {
 		}
 	}
 }
-
-extension Crystals: CustomStringConvertible {
-
-	var description: String {
-		(0 ..< 4).map { i in self[i].symbol }.joined()
-	}
-}
-
-extension Crystal {
-
-	var symbol: String {
-		switch self {
-		case .red: "♟"
-		case .amber: "♞"
-		case .turquoise: "♝"
-		case .blue: "♜"
-		}
-	}
-}

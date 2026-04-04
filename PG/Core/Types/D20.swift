@@ -1,5 +1,5 @@
 struct D20: Hashable {
-	var seed: UInt64
+	var seed: UInt64 = 0
 }
 
 extension D20: RandomNumberGenerator {

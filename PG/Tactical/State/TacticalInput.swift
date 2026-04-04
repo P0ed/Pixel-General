@@ -1,6 +1,6 @@
 extension TacticalState {
 
-	var inputable: Bool { !player.ai }
+	var inputable: Bool { player.type == .human }
 
 	mutating func apply(_ input: Input) {
 		switch input {

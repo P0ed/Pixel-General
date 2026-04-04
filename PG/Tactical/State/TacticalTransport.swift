@@ -21,7 +21,7 @@ extension TacticalState {
 	mutating func disembark(unit: UID, to xy: XY) {
 		let id = units.add(cargo[unit])
 		units[id].position = xy
-		units[id].ap &= 0b10
+		units[id].ap &= units[id][.art] ? 0b00 : 0b10
 		unitsMap[xy] = id
 		cargo[unit].hp = 0x0
 		events.add(.spawn(id))

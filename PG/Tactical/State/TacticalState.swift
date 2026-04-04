@@ -7,7 +7,7 @@ struct TacticalState: ~Copyable {
 	var cargo: [128 of Unit]
 	var auxilia: [4 of CArray<16, Unit>]
 	var events: CArray<4, TacticalEvent> = .init(tail: .none)
-	var seed: Crystals = .empty
+	var d20: D20 = D20()
 	var turn: UInt32 = 0
 	var cursor: XY = .zero
 	var camera: XY = .zero
@@ -21,10 +21,7 @@ extension TacticalState {
 	init(map: consuming Map<Terrain>, players: [Player], buildings: [Building], units: [Unit]) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
-		self.buildings = .init(
-			head: buildings,
-			tail: .init(country: .default, position: .zero, type: .city)
-		)
+		self.buildings = .init(head: buildings, tail: .empty)
 		self.units = .init(head: units, tail: .empty)
 		unitsMap = .init(size: self.map.size, zero: -1)
 		cargo = .init(repeating: .empty)
@@ -62,15 +59,6 @@ extension TacticalState {
 			if idx >= 0 { units[idx] = newValue ?? .empty }
 		}
 	}
-
-	var d20: D20 {
-		get {
-			D20(seed: UInt64(seed.rawValue) | UInt64(player.crystals.rawValue) << 8)
-		}
-		set {
-			seed = Crystals(rawValue: UInt8(newValue.seed & 0xFF))
-		}
-	}
 }
 
 extension [Unit] {
@@ -101,6 +89,13 @@ struct Building: Hashable {
 
 enum BuildingType: UInt8, Hashable {
 	case city, airfield
+}
+
+extension Building {
+
+	static var empty: Building {
+		Building(country: .default, position: .zero, type: .city)
+	}
 }
 
 extension CArray where Element == Building {

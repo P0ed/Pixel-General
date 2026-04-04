@@ -59,10 +59,13 @@
 		5FBA4D832EF7016F00D7C1B0 /* Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D822EF7016D00D7C1B0 /* Input.swift */; };
 		5FCABBC82EAA701D008EE894 /* mov.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5FCABBC72EAA701D008EE894 /* mov.wav */; };
 		5FCABBCA2EAA787D008EE894 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCABBC92EAA787B008EE894 /* Strings.swift */; };
+		5FE1218B2F7FCFA1001C16A5 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE1218A2F7FCFA1001C16A5 /* Connection.swift */; };
+		5FE1218D2F7FD6CD001C16A5 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE1218C2F7FD6CA001C16A5 /* Messages.swift */; };
+		5FE1218F2F7FE42F001C16A5 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE1218E2F7FE42F001C16A5 /* Server.swift */; };
+		5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE121902F7FF0B6001C16A5 /* Client.swift */; };
 		5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */; };
 		5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF200762EF44FC500B659E7 /* SceneMode.swift */; };
 		5FF679772F06FB1300586323 /* TacticalMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF679762F06FB0D00586323 /* TacticalMove.swift */; };
-		5FF679792F08694A00586323 /* Crystal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF679782F08694A00586323 /* Crystal.swift */; };
 		5FF7EB3D2EB6428F00E287FF /* MapGeneration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF7EB3C2EB6428B00E287FF /* MapGeneration.swift */; };
 /* End PBXBuildFile section */
 
@@ -122,10 +125,13 @@
 		5FBA4D822EF7016D00D7C1B0 /* Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Input.swift; sourceTree = "<group>"; };
 		5FCABBC72EAA701D008EE894 /* mov.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = mov.wav; sourceTree = "<group>"; };
 		5FCABBC92EAA787B008EE894 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
+		5FE1218A2F7FCFA1001C16A5 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		5FE1218C2F7FD6CA001C16A5 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
+		5FE1218E2F7FE42F001C16A5 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
+		5FE121902F7FF0B6001C16A5 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
 		5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNodes.swift; sourceTree = "<group>"; };
 		5FF200762EF44FC500B659E7 /* SceneMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneMode.swift; sourceTree = "<group>"; };
 		5FF679762F06FB0D00586323 /* TacticalMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMove.swift; sourceTree = "<group>"; };
-		5FF679782F08694A00586323 /* Crystal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crystal.swift; sourceTree = "<group>"; };
 		5FF7EB3C2EB6428B00E287FF /* MapGeneration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapGeneration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -221,6 +227,7 @@
 			children = (
 				5FBA4D862EF704A400D7C1B0 /* Types */,
 				5FBA4D852EF7048E00D7C1B0 /* Containers */,
+				5FE121892F7FCF99001C16A5 /* Networking */,
 				5FBA4D842EF7047600D7C1B0 /* Extensions */,
 				5F5A71582F24F9590059B314 /* Scene */,
 				5FBA4D7F2EF6FD8800D7C1B0 /* Core.swift */,
@@ -293,7 +300,6 @@
 				5FA0F0982EF2255B0022EC68 /* D20.swift */,
 				5F5A716C2F24FB790059B314 /* Terrain.swift */,
 				5F43D4A42EF051A80046AD2A /* Player.swift */,
-				5FF679782F08694A00586323 /* Crystal.swift */,
 				5F2A33B42EA93AC3008A0A95 /* Unit.swift */,
 				5F2A33B52EA93AC3008A0A95 /* Units.swift */,
 				5F2E296C2F10125D0010E6E9 /* Templates.swift */,
@@ -316,6 +322,17 @@
 				5F919D2C2EA9564A0037A208 /* PG.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5FE121892F7FCF99001C16A5 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				5FE1218E2F7FE42F001C16A5 /* Server.swift */,
+				5FE121902F7FF0B6001C16A5 /* Client.swift */,
+				5FE1218A2F7FCFA1001C16A5 /* Connection.swift */,
+				5FE1218C2F7FD6CA001C16A5 /* Messages.swift */,
+			);
+			path = Networking;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -394,6 +411,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5FE1218B2F7FCFA1001C16A5 /* Connection.swift in Sources */,
 				5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */,
 				5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
@@ -421,6 +439,7 @@
 				5F43D4A52EF051A80046AD2A /* Player.swift in Sources */,
 				5F24DC332EA95FE60085FDDC /* main.swift in Sources */,
 				5F919D682EA9596E0037A208 /* TacticalState.swift in Sources */,
+				5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */,
 				5F919D692EA9596E0037A208 /* XY.swift in Sources */,
 				5FA0F0992EF2255B0022EC68 /* D20.swift in Sources */,
 				5F5560FC2EF5B0CF00C08E14 /* HQNodes.swift in Sources */,
@@ -428,8 +447,9 @@
 				5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */,
 				5F919D6A2EA9596E0037A208 /* TacticalActions.swift in Sources */,
 				5FB4D1262EAFABCB0010E702 /* TacticalTurns.swift in Sources */,
-				5FF679792F08694A00586323 /* Crystal.swift in Sources */,
+				5FE1218F2F7FE42F001C16A5 /* Server.swift in Sources */,
 				5F919D6B2EA9596E0037A208 /* TacticalInput.swift in Sources */,
+				5FE1218D2F7FD6CD001C16A5 /* Messages.swift in Sources */,
 				5F5560F72EF5AE0F00C08E14 /* TacticalMode.swift in Sources */,
 				5F919D562EA959670037A208 /* UnitSprites.swift in Sources */,
 				5FBA4D7B2EF6DB7900D7C1B0 /* AppKit.swift in Sources */,
@@ -461,9 +481,20 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				INFOPLIST_FILE = PG/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
@@ -485,9 +516,20 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				INFOPLIST_FILE = PG/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;

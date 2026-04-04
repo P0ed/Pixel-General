@@ -5,70 +5,85 @@ extension HQScene {
 	func processScenario() {
 		var players: [4 of Player] = [
 			state.player,
-			Player(country: .isr, ai: true, prestige: 0xF00),
-			Player(country: .usa, ai: true, prestige: 0xF00),
-			Player(country: .irn, ai: true, prestige: 0xF00)
+			Player(country: .isr, type: .ai, prestige: 0xF00),
+			Player(country: .usa, type: .ai, prestige: 0xF00),
+			Player(country: .irn, type: .ai, prestige: 0xF00)
 		]
 		var countriesLeft: [Country] {
 			Country.allCases.filter { c in
 				players.firstMap { $0.country == c ? $0.country : nil } == nil
 			}
 		}
-		var menu: MenuState<State>? = .none
+//		var menu: MenuState<State>? = .none
 
-		menu = MenuState<State>(
+		show(MenuState<State>(
 			items: (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].country)", status: "Player \(idx)", update: { _ in
+				MenuItem(icon: "\(players[idx].country)", status: "Player \(idx)", update: { _, menu in
 					MenuState(
 						items: countriesLeft.map { c in
-							MenuItem(icon: "\(c)", status: "\(c)", update: { state in
+							MenuItem(icon: "\(c)", status: "\(c)", update: { state, _ in
 								players[idx].country = c
 								if idx == 0 {
 									state.player.country = c
 									state.units.modifyEach { $1.country = c }
 									core.store(hq: state)
 								}
-								menu?.items[idx].icon = "\(c)"
-								menu?.cursor = idx
-								return menu
+								return modifying(menu) { menu in
+									menu.items[idx].icon = "\(c)"
+									menu.cursor = idx
+								}
 							})
 						},
 						close: { _ in
-							menu?.cursor = idx
-							return menu
+							modifying(menu) { $0.cursor = idx }
 						}
 					)
 				})
 			}
 			+ (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].ai ? "AI" : "Human")", status: "Player \(idx)", update: { state in
-					players[idx].ai.toggle()
-					menu?.items[4 + idx].icon = players[idx].ai ? "AI" : "Human"
-					menu?.cursor = 4 + idx
-					return menu
+				MenuItem(icon: players[idx].type.icon, status: "Player \(idx)", update: { state, menu in
+					modifying(menu) { menu in
+						players[idx].type.toggle()
+						menu.items[4 + idx].icon = players[idx].type.icon
+						menu.cursor = 4 + idx
+					}
 				})
 			}
 			+ (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].prestige <= 0xA00 ? "s" : "ss")", status: "Player \(idx)", update: { state in
-					players[idx].prestige = players[idx].prestige <= 0xA00 ? 0xF00 : 0xA00
-					menu?.items[8 + idx].icon = players[idx].prestige <= 0xA00 ? "s" : "ss"
-					menu?.cursor = 8 + idx
-					return menu
+				MenuItem(icon: "\(players[idx].prestige <= 0xA00 ? "s" : "ss")", status: "Player \(idx)", update: { state, menu in
+					modifying(menu) { menu in
+						players[idx].prestige = players[idx].prestige <= 0xA00 ? 0xF00 : 0xA00
+						menu.items[8 + idx].icon = players[idx].prestige <= 0xA00 ? "s" : "ss"
+						menu.cursor = 8 + idx
+					}
 				})
 			}
 			+ [MenuItem.close(icon: "Start", status: "Start", update: { [weak self] state in
-				menu = nil
 				core.store(tactical: .make(
 					players: players,
 					units: state.units.map { $1 }
 				))
 				self?.view?.present(core.state)
-			})],
-			close: { _ in
-				menu = nil
-				return nil
-			}
-		)
-		show(menu)
+			})]
+		))
+	}
+}
+
+private extension PlayerType {
+
+	mutating func toggle() {
+		self = switch self {
+		case .human: .ai
+		case .ai: .remote
+		case .remote: .human
+		}
+	}
+
+	var icon: String {
+		switch self {
+		case .human: "Human"
+		case .ai: "AI"
+		case .remote: "Remote"
+		}
 	}
 }

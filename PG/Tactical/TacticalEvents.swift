@@ -1,4 +1,5 @@
 import SpriteKit
+import AVFoundation
 
 extension TacticalScene {
 
@@ -93,6 +94,18 @@ private extension TacticalScene {
 	func processMenu() {
 		guard case .none = menuState else { return show(.none) }
 
+		var vol: Int {
+			let v = audioEngine.mainMixerNode.outputVolume
+			return v < 0.1 ? 0 : v < 0.7 ? 1 : 2
+		}
+		let toggleVol = { [audioEngine] in
+			switch vol {
+			case 0: audioEngine.mainMixerNode.outputVolume = 0.5
+			case 1: audioEngine.mainMixerNode.outputVolume = 1.0
+			default: audioEngine.mainMixerNode.outputVolume = 0.0
+			}
+		}
+
 		show(MenuState(
 			items: [
 				.close(icon: "End", status: "End turn") { state in
@@ -111,6 +124,12 @@ private extension TacticalScene {
 				.close(icon: "HQ", status: "HQ") { [weak self] state in
 					self?.restartGame(state: state)
 				},
+				MenuItem(icon: "Sound\(vol)", status: "Volume", update: { _, menu in
+					modifying(menu) { menu in
+						toggleVol()
+						menu.items[5].icon = "Sound\(vol)"
+					}
+				})
 			]
 		))
 	}

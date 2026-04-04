@@ -73,6 +73,10 @@ extension HQScene {
 				core.load(auto: false)
 				self?.view?.present(core.state)
 			},
+			.close(icon: "Chess", status: "Chess", update: { [weak self] _ in
+				core.store(tactical: .chess())
+				self?.view?.present(core.state)
+			})
 		]))
 	}
 }

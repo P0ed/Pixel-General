@@ -1,6 +1,6 @@
 struct CArray<let capacity: Int, Element>: ~Copyable {
-	private var mem: InlineArray<capacity, Element>
 	private(set) var count: Int
+	private var mem: InlineArray<capacity, Element>
 }
 
 extension CArray {

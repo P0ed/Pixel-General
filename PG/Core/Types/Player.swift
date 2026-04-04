@@ -1,10 +1,13 @@
 struct Player: DeadOrAlive {
 	var country: Country
-	var ai: Bool = false
+	var type: PlayerType = .human
 	var alive: Bool = true
 	var prestige: UInt16 = 0xF00
-	var crystals: Crystals = .empty
 	var visible: SetXY = .empty
+}
+
+enum PlayerType: UInt8 {
+	case human, remote, ai
 }
 
 enum Country: UInt8, Hashable, CaseIterable {
