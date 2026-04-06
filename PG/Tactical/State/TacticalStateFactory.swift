@@ -86,27 +86,28 @@ extension TacticalState {
 		+ (0..<8).map { i in Unit(country: .swe, position: XY(i, 1), hp: 0xF) >< .regular }
 		+ (0..<8).map { i in Unit(country: .isr, position: XY(i, 6), hp: 0xF) >< .regular }
 		+ [
-			Unit(country: .swe, position: XY(0, 0), hp: 0xF) >< .strv122,
-			Unit(country: .swe, position: XY(7, 0), hp: 0xF) >< .strv122,
-			Unit(country: .swe, position: XY(1, 0), hp: 0xF) >< .boxer,
-			Unit(country: .swe, position: XY(6, 0), hp: 0xF) >< .boxer,
-			Unit(country: .swe, position: XY(2, 0), hp: 0xF) >< .strf90,
-			Unit(country: .swe, position: XY(5, 0), hp: 0xF) >< .strf90,
-			Unit(country: .swe, position: XY(3, 0), hp: 0xF) >< .pzh,
-			Unit(country: .swe, position: XY(4, 0), hp: 0xF) >< .truck,
+			Unit(country: .swe, position: XY(0, 0)) >< .strv122,
+			Unit(country: .swe, position: XY(7, 0)) >< .strv122,
+			Unit(country: .swe, position: XY(1, 0)) >< .boxer,
+			Unit(country: .swe, position: XY(6, 0)) >< .boxer,
+			Unit(country: .swe, position: XY(2, 0)) >< .strf90,
+			Unit(country: .swe, position: XY(5, 0)) >< .strf90,
+			Unit(country: .swe, position: XY(3, 0)) >< .pzh,
+			Unit(country: .swe, position: XY(4, 0)) >< .truck,
 
-			Unit(country: .isr, position: XY(0, 7), hp: 0xF) >< .strv122,
-			Unit(country: .isr, position: XY(7, 7), hp: 0xF) >< .strv122,
-			Unit(country: .isr, position: XY(1, 7), hp: 0xF) >< .boxer,
-			Unit(country: .isr, position: XY(6, 7), hp: 0xF) >< .boxer,
-			Unit(country: .isr, position: XY(2, 7), hp: 0xF) >< .strf90,
-			Unit(country: .isr, position: XY(5, 7), hp: 0xF) >< .strf90,
-			Unit(country: .isr, position: XY(4, 7), hp: 0xF) >< .pzh,
-			Unit(country: .isr, position: XY(3, 7), hp: 0xF) >< .truck,
+			Unit(country: .isr, position: XY(0, 7)) >< .strv122,
+			Unit(country: .isr, position: XY(7, 7)) >< .strv122,
+			Unit(country: .isr, position: XY(1, 7)) >< .boxer,
+			Unit(country: .isr, position: XY(6, 7)) >< .boxer,
+			Unit(country: .isr, position: XY(2, 7)) >< .strf90,
+			Unit(country: .isr, position: XY(5, 7)) >< .strf90,
+			Unit(country: .isr, position: XY(4, 7)) >< .pzh,
+			Unit(country: .isr, position: XY(3, 7)) >< .truck,
 		]
 		var unitsMap = Map<UID>(size: 8, zero: -1)
 		units.enumerated().forEach { i, u in unitsMap[u.position] = i }
 		units.modifyEach { u in
+			u.hp = 0xF
 			u.ap = 0b11
 			u.ammo = u.maxAmmo
 		}
