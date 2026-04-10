@@ -6,11 +6,11 @@ struct XY: Hashable, Codable {
 
 	var x: Int {
 		get { Int(_x) }
-		set { _x = Int8(clamping: newValue) }
+		set { _x = Int8(newValue) }
 	}
 	var y: Int {
 		get { Int(_y) }
-		set { _y = Int8(clamping: newValue) }
+		set { _y = Int8(newValue) }
 	}
 
 	init(_ x: Int, _ y: Int) {

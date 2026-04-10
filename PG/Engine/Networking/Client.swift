@@ -1,24 +1,30 @@
 import Network
 import Foundation
 
-final class Client {
-	private var connection: Connection?
+final class Client<Message: MessageProtocol> {
+	private var connection: Connection<Message>?
+	private let handleMessage: (Message) -> Void
+
+	init(handleMessage: @escaping (Message) -> Void) {
+		self.handleMessage = handleMessage
+	}
 
 	func connect(host: String, port: UInt16) {
 		guard connection == nil else { return print("Already connected") }
 
-		let con = Connection(
+		let con = Connection<Message>(
 			connection: NWConnection(
 				host: .init(host),
 				port: .init(integerLiteral: port),
 				using: .tcp
 			),
-			message: { [weak self] c, m in self?.handle(m) },
+			message: { [weak self] c, m in
+				print("Client received message: \(m)")
+				self?.handleMessage(m)
+			},
 			disconnect: { c in }
 		)
 		connection = con
-
-		con.send(.joinRequest)
 	}
 
 	func disconnect() {
@@ -27,15 +33,5 @@ final class Client {
 
 	func send(_ message: Message) {
 		connection?.send(message)
-	}
-
-	private func handle(_ message: Message) {
-		print("Client received message: \(message)")
-
-		switch message {
-		case .joinAccept: break
-		case .endTurn: break
-		default: break
-		}
 	}
 }

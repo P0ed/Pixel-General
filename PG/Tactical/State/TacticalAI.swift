@@ -47,7 +47,7 @@ extension TacticalState {
 			}.min { a, b in
 				a.position.distance(to: u.position) < b.position.distance(to: u.position)
 			}.flatMap { b in
-				move(id: i, to: b.position)
+				move(id: i.uid, to: b.position)
 			}
 		}
 	}
@@ -70,18 +70,18 @@ extension TacticalState {
 						+ (u[.aa] && b.1.isAir ? 10 : 0)
 					)
 				})
-				.map { t in (i, t.0) }
+				.map { t in (i.uid, t.0) }
 		}
 	}
 
 	private func nextMove(target: XY) -> (UID, XY)? {
 		units.firstMap { [country] i, u in
-			u.country != country ? nil : move(id: i, to: target)
+			u.country != country ? nil : move(id: i.uid, to: target)
 		}
 	}
 
 	private func move(id: UID, to target: XY) -> (UID, XY)? {
-		moves(for: units[id])
+		moves(for: units[id.index])
 			.set
 			.max(by: { a, b in
 				(

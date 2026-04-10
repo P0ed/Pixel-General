@@ -1,7 +1,16 @@
 import Network
 import Foundation
 
-final class Connection {
+protocol MessageProtocol {
+	associatedtype MessageType: RawRepresentable<UInt8>
+
+	var type: MessageType { get }
+	var payload: Data { get }
+
+	init?(type: MessageType, payload: Data)
+}
+
+final class Connection<Message: MessageProtocol> {
 	private let connection: NWConnection
 	private let queue = DispatchQueue(label: "game.connection")
 	private let onMessage: (Connection, Message) -> Void
@@ -79,7 +88,7 @@ final class Connection {
 			let messageData = buffer.subdata(in: 4 ..< 4 + Int(length))
 			buffer.removeSubrange(0 ..< 4 + Int(length))
 
-			guard let type = MessageType(rawValue: messageData.first!) else {
+			guard let type = Message.MessageType(rawValue: messageData.first!) else {
 				continue
 			}
 

@@ -1,9 +1,14 @@
 import Network
 import Foundation
 
-final class Server {
+final class Server<Message: MessageProtocol> {
 	private var listener: NWListener?
-	private var connections: [Connection] = []
+	private var connections: [Connection<Message>] = []
+	private let handleMessage: (Connection<Message>, Message) -> Void
+
+	init(handleMessage: @escaping (Connection<Message>, Message) -> Void) {
+		self.handleMessage = handleMessage
+	}
 
 	func start(port: UInt16) {
 		listener = try? NWListener(using: .tcp, on: .init(integerLiteral: port))
@@ -14,7 +19,8 @@ final class Server {
 			self?.connections.append(Connection(
 				connection: connection,
 				message: { con, message in
-					self?.handleMessage(from: con, message: message)
+					print("Server received message: \(message)")
+					self?.handleMessage(con, message)
 				},
 				disconnect: { con in
 					self?.connections.removeAll { $0 === con }
@@ -23,16 +29,6 @@ final class Server {
 		}
 		listener.start(queue: .main)
 		print("Server started on port \(port)")
-	}
-
-	private func handleMessage(from sender: Connection, message: Message) {
-		print("Server received message: \(message)")
-
-		switch message {
-		case .joinRequest: sender.send(.joinAccept(Data([0xFF])))
-		case .endTurn: broadcast(.endTurn)
-		default: break
-		}
 	}
 
 	private func broadcast(_ message: Message) {

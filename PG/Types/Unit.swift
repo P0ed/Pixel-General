@@ -1,12 +1,9 @@
-typealias UID = Int
+typealias UID = Int8
 
 struct Unit: Hashable {
 	var country: Country
 	var position: XY = .zero
-	var hp: UInt8 = 0
-	var bits: UInt8 = 0
-	var ammo: UInt8 = 0
-	var exp: UInt8 = 0
+	var bits: UInt32 = 0
 	var type: UnitType = .soft
 	var ini: UInt8 = 0
 	var softAtk: UInt8 = 0
@@ -131,18 +128,31 @@ extension Unit: DeadOrAlive {
 }
 
 extension Unit {
+
+	var hp: UInt8 {
+		get { UInt8((bits >> 0) & 0xF) }
+		set { bits = UInt32(newValue & 0xF) << 0 | bits & ~(0xF << 0) }
+	}
+	var ammo: UInt8 {
+		get { UInt8((bits >> 4) & 0xF) }
+		set { bits = UInt32(newValue & 0xF) << 4 | bits & ~(0xF << 4) }
+	}
 	var ap: UInt8 {
-		get { bits & 0b1111 }
-		set { bits = (bits & 0b1111 << 4) | newValue & 0b1111 }
+		get { UInt8((bits >> 8) & 0xF) }
+		set { bits = UInt32(newValue & 0xF) << 8 | bits & ~(0xF << 8) }
 	}
 	var ent: UInt8 {
-		get { bits >> 4 }
-		set { bits = (newValue & 0b1111) << 4 | bits & 0b1111 }
+		get { UInt8((bits >> 12) & 0xF) }
+		set { bits = UInt32(newValue & 0xF) << 12 | bits & ~(0xF << 12) }
 	}
-	var untouched: Bool { ap == 0b11 }
+	var exp: UInt8 {
+		get { UInt8((bits >> 16) & 0xFF) }
+		set { bits = UInt32(newValue & 0xFF) << 16 | bits & ~(0xFF << 16) }
+	}
+	var untouched: Bool { ap & 0b11 == 0b11 }
 	var hasActions: Bool { canMove || canAttack }
-	var canMove: Bool { ap & 0b01 > 0 }
-	var canAttack: Bool { ap & 0b10 > 0 && ammo > 0 }
+	var canMove: Bool { ap & 0b01 == 0b01 }
+	var canAttack: Bool { ap & 0b10 == 0b10 && ammo > 0 }
 	var noRetaliation: Bool { self[.art] }
 
 	func canHit(unit: Unit) -> Bool {
@@ -191,6 +201,9 @@ extension Unit {
 extension Speicher where Element == Unit {
 
 	subscript(_ xy: XY) -> (UID, Unit)? {
-		firstMap { i, u in u.position == xy ? (i, u) : nil }
+		firstMap { i, u in u.position == xy ? (i.uid, u) : nil }
 	}
 }
+
+extension UID { var index: Int { Int(self) } }
+extension Int { var uid: UID { UID(self) } }

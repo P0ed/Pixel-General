@@ -50,8 +50,8 @@ extension TacticalState {
 	var status: Status {
 		if let selectedUnit {
 			Status(
-				text: units[selectedUnit].status,
-				action: .init(units[selectedUnit].country.flag)
+				text: units[selectedUnit.index].status,
+				action: .init(units[selectedUnit.index].country.flag)
 			)
 		} else if let building = buildings[cursor] {
 			Status(
@@ -92,18 +92,64 @@ extension Unit {
 
 	var typeDescription: String {
 		switch type {
-		case .soft: traitDescription ?? "inf"
-		case .softWheel: traitDescription ?? "ifv"
-		case .lightWheel: traitDescription ?? "ifv"
-		case .lightTrack: traitDescription ?? "ifv"
-		case .heavyTrack: "tank"
-		case .heli: "heli"
-		case .jet: "jet"
+		case .soft:
+			if self[.art] {
+				switch country.team {
+				case .allies: "M777"
+				default: hardAtk > 6 ? "155mm" : "105mm"
+				}
+			} else if self[.elite] {
+				switch country.team {
+				case .axis: "KSK"
+				case .allies: "Delta Force"
+				case .soviet: "Speznas"
+				}
+			} else {
+				"Infantry"
+			}
+		case .softWheel:
+			if self[.aa] {
+				"Neva"
+			} else if self[.art] {
+				"Bohdana"
+			} else if self[.supply] {
+				"Truck"
+			} else {
+				""
+			}
+		case .lightWheel:
+			"Boxer"
+		case .lightTrack:
+			if self[.aa] {
+				"Lvkv 90"
+			} else if self[.art] {
+				"PzH 2000"
+			} else {
+				switch country.team {
+				case .axis: "Strf 90"
+				case .allies: hardAtk > 5 ? "M2A2" : "M113"
+				case .soviet: "BMP"
+				}
+			}
+		case .heavyTrack:
+			switch country.team {
+			case .axis: hardAtk > 12 ? "Strv 122" : "Leopard 1"
+			case .allies: hardAtk > 12 ? "M1A2" : "M48"
+			case .soviet: hardAtk > 12 ? "T-90M" : hardAtk > 10 ? "T-72B" : "T-55BVM"
+			}
+		case .heli: 
+			switch country.team {
+			case .axis: "H135M"
+			case .allies: "MH6"
+			case .soviet: self[.transport] ? "Mi-8" : "Mi-24"
+			}
+		case .jet:
+			switch country.team {
+			case .axis: "Gripen"
+			case .allies: "F16"
+			case .soviet: "Mig-29"
+			}
 		}
-	}
-
-	private var traitDescription: String? {
-		self[.art] ? "art" : self[.aa] ? "anti-air" : self[.supply] ? "supply" : .none
 	}
 
 	var shortDescription: String {

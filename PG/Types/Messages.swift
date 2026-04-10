@@ -1,18 +1,18 @@
 import Foundation
 
-enum MessageType: UInt8 {
-	case joinRequest
-	case joinAccept
-	case endTurn
-}
-
 enum Message {
 	case joinRequest
 	case joinAccept(Data)
 	case endTurn
 }
 
-extension Message {
+extension Message: MessageProtocol {
+
+	enum MessageType: UInt8 {
+		case joinRequest
+		case joinAccept
+		case endTurn
+	}
 
 	var type: MessageType {
 		switch self {

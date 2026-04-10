@@ -1,7 +1,7 @@
 extension TacticalState {
 
 	func unitAt(_ xy: XY) -> Unit? {
-		let id = unitsMap[xy]
+		let id = unitsMap[xy].index
 		return id < 0 ? nil : units[id]
 	}
 
@@ -72,9 +72,9 @@ extension TacticalState {
 	}
 
 	mutating func move(unit uid: UID, to position: XY) {
-		guard units[uid].country == country, units[uid].canMove else { return }
+		guard units[uid.index].country == country, units[uid.index].canMove else { return }
 
-		let moves = moves(for: units[uid], target: position)
+		let moves = moves(for: units[uid.index], target: position)
 		let route = moves.route(to: position)
 		guard !route.isEmpty else { return }
 
@@ -82,7 +82,7 @@ extension TacticalState {
 		var interruptor: UID?
 		for xy in route.reversed() {
 			if let u = unitAt(xy) {
-				if u.country.team != units[uid].country.team, !player.visible[u.position] {
+				if u.country.team != units[uid.index].country.team, !player.visible[u.position] {
 					interruptor = unitsMap[xy]
 					break
 				}
@@ -91,25 +91,25 @@ extension TacticalState {
 			}
 		}
 		for xy in route.reversed() {
-			xy.circle(2 * Int(units[uid].spot)).forEach { xy in
+			xy.circle(2 * Int(units[uid.index].spot)).forEach { xy in
 				player.visible[xy] = true
 			}
 			if xy == pos { break }
 		}
 
-		unitsMap[units[uid].position] = -1
+		unitsMap[units[uid.index].position] = -1
 		unitsMap[pos] = uid
-		units[uid].position = pos
-		units[uid].ap &= 0b10
-		units[uid].ent = 0
-		if units[uid].type == .soft, units[uid][.art] {
-			units[uid].ap &= 0b01
+		units[uid.index].position = pos
+		units[uid.index].ap &= 0b10
+		units[uid.index].ent = 0
+		if units[uid.index].type == .soft, units[uid.index][.art] {
+			units[uid.index].ap &= 0b01
 		}
 
-		selectUnit(units[uid].hasActions ? uid : .none)
+		selectUnit(units[uid.index].hasActions ? uid : .none)
 		events.add(.move(uid, moves.start, pos))
 
-		if let interruptor, units[interruptor].country.team != units[uid].country.team {
+		if let interruptor, units[interruptor.index].country.team != units[uid.index].country.team {
 			attack(src: uid, dst: interruptor, surprise: true)
 		}
 	}

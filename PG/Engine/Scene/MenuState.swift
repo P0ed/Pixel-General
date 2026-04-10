@@ -5,9 +5,7 @@ struct MenuState<State: ~Copyable> {
 	var action: MenuAction?
 }
 
-enum MenuAction {
-	case close, apply(Int)
-}
+enum MenuAction { case close, apply(Int) }
 
 struct MenuItem<State: ~Copyable> {
 	var icon: String
@@ -30,7 +28,7 @@ extension MenuItem where State: ~Copyable {
 
 extension MenuState where State: ~Copyable {
 
-	var rows: Int { 3 }
+	var rows: Int { 4 }
 	var cols: Int { 4 }
 
 	mutating func apply(_ input: Input) {

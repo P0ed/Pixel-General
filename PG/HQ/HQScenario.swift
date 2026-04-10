@@ -14,7 +14,6 @@ extension HQScene {
 				players.firstMap { $0.country == c ? $0.country : nil } == nil
 			}
 		}
-//		var menu: MenuState<State>? = .none
 
 		show(MenuState<State>(
 			items: (0..<4).map { idx in

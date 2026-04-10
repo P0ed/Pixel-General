@@ -16,9 +16,9 @@ extension HQNodes {
 			map: Self.addMap(parent: parent, state: state)
 		)
 		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
-			let node = unitSprite(uid: i, unit: u)
+			let node = unitSprite(uid: i.uid, unit: u)
 			parent.addChild(node)
-			return (i, node)
+			return (i.uid, node)
 		})
 	}
 
@@ -77,7 +77,7 @@ extension HQNodes {
 		map.update(
 			map: Self.map,
 			cursor: state.cursor,
-			selected: state.selected.map { i in state.units[i].position }
+			selected: state.selected.map { i in state.units[i.index].position }
 		)
 	}
 

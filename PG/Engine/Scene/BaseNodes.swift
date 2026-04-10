@@ -24,12 +24,9 @@ extension Scene where State: ~Copyable {
 	}
 
 	func addMenu() -> SKNode {
-		let menu = SKShapeNode(
-			rectOf: BaseNodes.menuSize,
-			cornerRadius: BaseNodes.outerR
-		)
-		menu.fillColor = .lightGray
-		menu.strokeColor = .gray
+		let menu = SKShapeNode(rectOf: BaseNodes.menuSize)
+		menu.fillColor = .darkGray
+		menu.strokeColor = .clear
 		menu.zPosition = 68.0
 		menu.isHidden = true
 		camera?.addChild(menu)
@@ -56,25 +53,18 @@ extension Scene where State: ~Copyable {
 
 extension BaseNodes {
 
-	static let inset = 2.0 as CGFloat
-	static let spacing = 2.0 as CGFloat
-	static let outerR = 8.0 as CGFloat
-	static let innerR = 6.0 as CGFloat
-
-	static let itemSize = CGSize(width: 48.0, height: 36.0)
-	static let menuSize = CGSize(
-		width: itemSize.width * 4 + spacing * 3 + inset * 2,
-		height: itemSize.height * 3 + spacing * 2 + inset * 2
-	)
+	static let itemSize = CGSize(width: 64.0, height: 64.0)
+	static let menuSize = CGSize(width: itemSize.width * 4, height: itemSize.height * 4)
 
 	func layout(size: CGSize) {
+		let inset = 4.0 as CGFloat
 		status.position = CGPoint(
-			x: Self.inset - size.width / 2.0,
-			y: Self.inset - size.height / 2.0
+			x: inset - size.width / 2.0,
+			y: inset - size.height / 2.0
 		)
 		action.position = CGPoint(
-			x: size.width / 2.0 - Self.inset,
-			y: Self.inset - size.height / 2.0
+			x: size.width / 2.0 - inset,
+			y: inset - size.height / 2.0
 		)
 		icon.position = CGPoint(
 			x: size.width / 2.0 - 18.0,
@@ -108,14 +98,15 @@ extension BaseNodes {
 
 	private func addMenuItems<State: ~Copyable>(_ menuState: MenuState<State>) {
 		menuState.items.enumerated().map { idx, item in
-			let frame = SKShapeNode(rectOf: Self.itemSize, cornerRadius: Self.innerR)
+			let frame = SKShapeNode(rectOf: Self.itemSize)
+			frame.strokeColor = .clear
 
-			let x = CGFloat(idx % menuState.cols) * (Self.itemSize.width + Self.spacing)
-			let y = CGFloat(idx % 12 / menuState.cols) * (Self.itemSize.height + Self.spacing)
+			let x = CGFloat(idx % menuState.cols) * Self.itemSize.width
+			let y = CGFloat(idx % 16 / menuState.cols) * Self.itemSize.height
 
 			frame.position = CGPoint(
-				x: Self.inset + Self.itemSize.width / 2.0 - Self.menuSize.width / 2.0 + x,
-				y: Self.menuSize.height / 2.0 - Self.inset - Self.itemSize.height / 2.0 - y
+				x: Self.itemSize.width / 2.0 - Self.menuSize.width / 2.0 + x,
+				y: Self.menuSize.height / 2.0 - Self.itemSize.height / 2.0 - y
 			)
 
 			let sprite = SKSpriteNode(imageNamed: item.icon)
@@ -130,9 +121,8 @@ extension BaseNodes {
 	func updateMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
 		menu.children.enumerated().forEach { idx, item in
 			if let frame = item as? SKShapeNode, frame.name == nil {
-				frame.fillColor = menuState.cursor == idx ? .gray : .darkGray
-				frame.strokeColor = menuState.cursor == idx ? .gray : .darkGray
-				frame.isHidden = idx / 12 != menuState.cursor / 12
+				frame.fillColor = menuState.cursor == idx ? .lightGray : .darkGray
+				frame.isHidden = idx / 16 != menuState.cursor / 16
 			}
 		}
 	}

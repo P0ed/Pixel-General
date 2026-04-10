@@ -27,13 +27,10 @@ final class Core {
 		save()
 	}
 
-	func load(auto: Bool = true, reset: Bool = false) {
-		if reset {
-			return new()
-		}
-		if let data = UserDefaults.standard.data(forKey: auto ? "auto" : "main") {
-			let decoded: State? = decode(data)
-			if decoded != nil { state = decoded! }
+	func load(auto: Bool = true) {
+		if let data = UserDefaults.standard.data(forKey: auto ? "auto" : "main"),
+		   let decoded = decode(data) as State? {
+			state = decoded
 		} else {
 			new()
 		}
@@ -79,5 +76,10 @@ final class Core {
 
 		state.tactical = nil
 		save()
+	}
+
+	func connect(to host: String = "locaclhost") {
+		let client = Client<Message>(handleMessage: ø)
+		client.connect(host: host, port: 9899)
 	}
 }

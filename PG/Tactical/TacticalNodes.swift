@@ -30,7 +30,7 @@ extension TacticalNodes {
 			sprite.zPosition = map.zPosition(at: xy)
 			sprite.isHidden = !state.player.visible[xy]
 			parent.addChild(sprite)
-			return (i, sprite)
+			return (i.uid, sprite)
 		})
 	}
 
@@ -85,7 +85,7 @@ extension TacticalNodes {
 
 	func updateUnits(_ state: borrowing TacticalState) {
 		state.units.forEach { i, u in
-			units[i]?.update(hp: u.hp)
+			units[i.uid]?.update(hp: u.hp)
 		}
 	}
 
@@ -97,7 +97,7 @@ extension TacticalNodes {
 		map.update(
 			map: state.map,
 			cursor: state.cursor,
-			selected: state.selectedUnit.map { i in state.units[i].position }
+			selected: state.selectedUnit.map { i in state.units[i.index].position }
 		)
 		let cameraScale = CGFloat(state.scale)
 		if camera.xScale != cameraScale {
@@ -117,7 +117,7 @@ extension TacticalNodes {
 			map.setTileGroup(state.map[xy].tileGroup(fog: fog[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
-			units[i]?.isHidden = !visible[u.position]
+			units[i.uid]?.isHidden = !visible[u.position]
 		}
 		self.fog = fog
 	}

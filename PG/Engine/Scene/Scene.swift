@@ -13,16 +13,10 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	private var willCloseWindow: Any?
 	private var eventsMonitor: Any?
 
-//	private let server = Server()
-//	private let client = Client()
-
 	init(mode: SceneMode<State, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
 		self.state = state
 		self.mode = mode
 		super.init(size: size)
-
-//		server.start(port: 9899)
-//		client.connect(host: "127.0.0.1", port: 9899)
 	}
 
 	required init?(coder aDecoder: NSCoder) { fatalError() }

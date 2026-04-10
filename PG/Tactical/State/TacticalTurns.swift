@@ -33,7 +33,7 @@ extension TacticalState {
 			p = ps[i] ?? p
 		}
 		for i in units.indices where units[i].alive {
-			endTurn(unit: i)
+			endTurn(unit: i.uid)
 		}
 		for i in cargo.indices where cargo[i].alive {
 			cargo[i].ap = 0b11
@@ -67,15 +67,15 @@ extension TacticalState {
 	}
 
 	private mutating func endTurn(unit id: UID) {
-		var unit = units[id]
+		var unit = units[id.index]
 		let neighbors = neighbors(at: unit.position)
 
 		let noEnemy = !neighbors.contains { n in
-			units[n].country.team != unit.country.team
+			units[n.index].country.team != unit.country.team
 		}
 		let hasSupply = neighbors.contains { n in
-			units[n].country.team == unit.country.team
-			&& units[n][.supply]
+			units[n.index].country.team == unit.country.team
+			&& units[n.index][.supply]
 		}
 		let hasBuildings = buildings.firstMap { _, b in
 			b.country == unit.country
@@ -101,7 +101,7 @@ extension TacticalState {
 			)
 		}
 		unit.ap = 0b11
-		units[id] = unit
+		units[id.index] = unit
 	}
 
 	func neighbors(at position: XY) -> [UID] {

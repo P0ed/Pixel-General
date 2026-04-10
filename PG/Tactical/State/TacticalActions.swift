@@ -18,8 +18,8 @@ extension TacticalState {
 	mutating func selectUnit(_ uid: UID?) {
 		if let uid {
 			selectedUnit = uid
-			cursor = units[uid].position
-			selectable = units[uid].canMove ? moves(for: units[uid]).setXY : .none
+			cursor = units[uid.index].position
+			selectable = units[uid.index].canMove ? moves(for: units[uid.index]).setXY : .none
 		} else {
 			selectedUnit = .none
 			selectable = .none

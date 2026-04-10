@@ -35,7 +35,7 @@ extension TacticalState {
 			u.ap = 0b00
 			u.ammo = u.maxAmmo
 		}
-		let id = units.add(unit)
+		let id = units.add(unit).uid
 		unitsMap[position] = id
 		player.prestige.decrement(by: unit.cost)
 		if unit[.aux] {

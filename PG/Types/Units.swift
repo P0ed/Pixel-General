@@ -85,6 +85,14 @@ extension Unit {
 		}
 	}
 
+	static func air(_ country: Country) -> Self {
+		switch country.team {
+		case .axis: .gripen
+		case .allies: .f16
+		case .soviet: .mi24
+		}
+	}
+
 	static func aa(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .lvkv90
@@ -210,7 +218,7 @@ extension Unit {
 			stats.softAtk = 10
 			stats.hardAtk = 9
 			stats.airAtk = 4
-			stats.groundDef = 10
+			stats.groundDef = 9
 			stats.airDef = 7
 		}
 	}
@@ -393,8 +401,8 @@ extension Unit {
 			stats.softAtk = 7
 			stats.hardAtk = 3
 			stats.airAtk = 2
-			stats.groundDef = 9
-			stats.airDef = 7
+			stats.groundDef = 8
+			stats.airDef = 6
 		}
 	}
 
@@ -408,6 +416,18 @@ extension Unit {
 			stats.airAtk = 2
 			stats.groundDef = 6
 			stats.airDef = 6
+		}
+	}
+
+	static var mi24: Self {
+		.make { stats in
+			stats.type = .heli
+			stats.ini = 9
+			stats.softAtk = 9
+			stats.hardAtk = 9
+			stats.airAtk = 7
+			stats.groundDef = 8
+			stats.airDef = 7
 		}
 	}
 

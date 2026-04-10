@@ -8,7 +8,7 @@ extension TacticalScene {
 	}
 
 	func respawn() {
-		state.units.forEach { i, u in processSpawn(uid: i) }
+		state.units.forEach { i, u in processSpawn(uid: i.uid) }
 	}
 }
 
@@ -30,8 +30,8 @@ private extension TacticalScene {
 	func processSpawn(uid: UID) {
 		guard let nodes else { return }
 
-		let sprite = state.units[uid].sprite
-		let xy = state.units[uid].position
+		let sprite = state.units[uid.index].sprite
+		let xy = state.units[uid.index].position
 		sprite.position = state.map.point(at: xy)
 		sprite.zPosition = nodes.map.zPosition(at: xy)
 		sprite.isHidden = !state.player.visible[xy]
@@ -50,7 +50,7 @@ private extension TacticalScene {
 		))
 		unit.zPosition = z
 		unit.isHidden = !state.player.visible[b]
-		if !state.units[uid].alive { removeUnit(uid) }
+		if !state.units[uid.index].alive { removeUnit(uid) }
 	}
 
 	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
@@ -108,11 +108,8 @@ private extension TacticalScene {
 
 		show(MenuState(
 			items: [
-				.close(icon: "End", status: "End turn") { state in
+				.close(icon: "Start", status: "End turn") { state in
 					state.endTurn()
-				},
-				.close(icon: "Restart", status: "Restart") { [weak self] state in
-					self?.restartGame(state: state)
 				},
 				.close(icon: "Save", status: "Save") { state in
 					core.store(tactical: state, auto: false)
@@ -127,7 +124,7 @@ private extension TacticalScene {
 				MenuItem(icon: "Sound\(vol)", status: "Volume", update: { _, menu in
 					modifying(menu) { menu in
 						toggleVol()
-						menu.items[5].icon = "Sound\(vol)"
+						menu.items[4].icon = "Sound\(vol)"
 					}
 				})
 			]

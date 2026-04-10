@@ -18,18 +18,13 @@ extension D20: RandomNumberGenerator {
 
 	mutating func callAsFunction(_ `throw`: Throw) -> Int {
 		switch `throw` {
-		case .min(let int):
-			(0 ..< int)
-				.map { _ in self() }
-				.min() ?? 0
-		case .max(let int):
-			(0 ..< int)
-				.map { _ in self() }
-				.max() ?? 0
+		case .min(let cnt): (0 ..< cnt).map { _ in self() }.min() ?? 0
+		case .max(let cnt): (0 ..< cnt).map { _ in self() }.max() ?? 0
+		case .sum(let cnt): (0 ..< cnt).reduce(into: 0, { r, i in r += self() })
 		}
 	}
 }
 
 extension D20 {
-	enum Throw { case min(Int), max(Int) }
+	enum Throw { case min(Int), max(Int), sum(Int) }
 }

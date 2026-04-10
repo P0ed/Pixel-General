@@ -17,7 +17,7 @@ extension HQScene {
 	}
 
 	func respawn() {
-		state.units.forEach { i, u in processSpawn(uid: i) }		
+		state.units.forEach { i, u in processSpawn(uid: i.uid) }
 	}
 
 	private func process(_ event: Event) async {
@@ -40,8 +40,8 @@ extension HQScene {
 	private func processSpawn(uid: UID) {
 		guard let nodes else { return }
 
-		let sprite = state.units[uid].hqSprite
-		let xy = state.units[uid].position
+		let sprite = state.units[uid.index].hqSprite
+		let xy = state.units[uid.index].position
 		sprite.position = HQNodes.map.point(at: xy)
 		sprite.zPosition = nodes.map.zPosition(at: xy)
 		addUnit(uid, node: sprite)

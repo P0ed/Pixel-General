@@ -33,7 +33,7 @@ extension TacticalState {
 		}
 		self.units.map { i, u in (i, u.position) }.forEach { i, xy in
 			guard unitsMap[xy] < 0 else { fatalError() }
-			unitsMap[xy] = i
+			unitsMap[xy] = i.uid
 		}
 
 		buildings.forEach { b in
@@ -51,33 +51,13 @@ extension TacticalState {
 
 	subscript(_ xy: XY) -> Unit? {
 		get {
-			let idx = unitsMap[xy]
+			let idx = unitsMap[xy].index
 			return if idx < 0 { nil } else { units[idx] }
 		}
 		set {
-			let idx = unitsMap[xy]
+			let idx = unitsMap[xy].index
 			if idx >= 0 { units[idx] = newValue ?? .empty }
 		}
-	}
-}
-
-extension [Unit] {
-
-	static func aux(country: Country) -> [Unit] {
-		[
-			Unit(country: country) >< .aux >< .truck,
-			Unit(country: country) >< .aux >< .truck,
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .ifv(country),
-			Unit(country: country) >< .aux >< .tank(country),
-			Unit(country: country) >< .aux >< .tank(country),
-			Unit(country: country) >< .aux >< .art(country),
-			Unit(country: country) >< .aux >< .art(country),
-			Unit(country: country) >< .aux >< .aa(country),
-			Unit(country: country) >< .aux >< .heli(country),
-		]
 	}
 }
 

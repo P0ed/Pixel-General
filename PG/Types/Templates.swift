@@ -16,6 +16,7 @@ extension [Unit] {
 		let air: [Unit] = [
 			Unit(country: country) >< .heli(country),
 			Unit(country: country) >< .fighter(country),
+			Unit(country: country) >< .air(country),
 		]
 		return filterAir.map { $0 ? air : ground } ?? ground + air
 	}
@@ -50,5 +51,22 @@ extension [Unit] {
 		enumerated().map { i, u in
 			modifying(u) { u in u.position = XY(i % 4, i / 4) }
 		}
+	}
+
+	static func aux(country: Country) -> [Unit] {
+		[
+			Unit(country: country) >< .aux >< .truck,
+			Unit(country: country) >< .aux >< .truck,
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .inf(country),
+			Unit(country: country) >< .aux >< .ifv(country),
+			Unit(country: country) >< .aux >< .tank(country),
+			Unit(country: country) >< .aux >< .tank(country),
+			Unit(country: country) >< .aux >< .art(country),
+			Unit(country: country) >< .aux >< .art(country),
+			Unit(country: country) >< .aux >< .aa(country),
+			Unit(country: country) >< .aux >< .heli(country),
+		]
 	}
 }
