@@ -108,17 +108,17 @@ extension Terrain {
 		case .forest, .hill, .airfield: 2
 		case .forestHill, .city: 3
 		case .mountain: 4
-		case _ where isRoad: -1
 		case _ where isRiver: -3
+		case _ where isBridge: -2
+		case _ where isRoad: -1
 		default: 0
 		}
 	}
 
 	func closeCombatPenalty(_ type: UnitType) -> Int {
-		let def = max(0, def)
 		return switch type {
-		case .lightWheel, .lightTrack: -Int(def)
-		case .heavyTrack: -Int(def * 2)
+		case .lightWheel, .lightTrack: -Int(abs(def))
+		case .heavyTrack: -Int(abs(def) * 2)
 		default: 0
 		}
 	}

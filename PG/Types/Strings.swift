@@ -6,7 +6,7 @@ extension Unit {
 
 	var status: String {
 		.makeStatus(pad: 14) { add in
-			add("\(traits.contains(.aux) ? "aux ": "")\(typeDescription)")
+			add("\(typeDescription)\(traits.contains(.aux) ? "*": "")")
 		} + .makeStatus(pad: 10) { add in
 			add("\(mpString)\(apString)  \(starsString)")
 		} + .makeStatus(pad: 9) { add in
@@ -139,7 +139,7 @@ extension Unit {
 			}
 		case .heli: 
 			switch country.team {
-			case .axis: "H135M"
+			case .axis: "H135"
 			case .allies: "MH6"
 			case .soviet: self[.transport] ? "Mi-8" : "Mi-24"
 			}

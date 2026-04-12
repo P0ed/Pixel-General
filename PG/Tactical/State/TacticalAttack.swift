@@ -90,8 +90,9 @@ extension TacticalState {
 		let dstStats = units[di]
 		let srcTerrain = map[units[si].position]
 		let dstTerrain = map[units[di].position]
-		let srcRiver = -min(0, srcTerrain.def)
+		let srcRiver = srcTerrain.isRiver && !dstTerrain.isRiver ? 3 : 0
 		let dstDef = Int(dstStats.ent) + dstTerrain.def - encirclement + srcRiver
+		+ dstTerrain.closeCombatPenalty(dstStats.type) / 2
 
 		let ruggedDefence: Bool = !surprise && srcStats.noRetaliation ? false : (
 			d20() + Int(srcStats.ini + srcStats.stars) * 2
@@ -116,7 +117,7 @@ extension TacticalState {
 		   units[di].canHit(unit: units[si]),
 		   !srcStats.noRetaliation || surprise {
 
-			let srcDef = (dstStats.isAir ? 0 : dstTerrain.closeCombatPenalty(srcStats.type))
+			let srcDef = dstTerrain.closeCombatPenalty(srcStats.type)
 			+ (ruggedDefence ? -3 : 0)
 			+ (dstStats.ammo == 0 ? 5 : 0)
 			fire(src: dst, dst: src, defMod: srcDef)
