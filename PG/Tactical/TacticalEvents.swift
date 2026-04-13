@@ -121,10 +121,13 @@ private extension TacticalScene {
 				.close(icon: "HQ", status: "HQ") { [weak self] state in
 					self?.restartGame(state: state)
 				},
+				MenuItem(icon: "s", status: "Prestige: \(state.player.prestige)", update: { _, m in
+					m
+				}),
 				MenuItem(icon: "Sound\(vol)", status: "Volume", update: { _, menu in
 					modifying(menu) { menu in
 						toggleVol()
-						menu.items[4].icon = "Sound\(vol)"
+						menu.items[5].icon = "Sound\(vol)"
 					}
 				})
 			]

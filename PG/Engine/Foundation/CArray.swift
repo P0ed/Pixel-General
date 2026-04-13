@@ -1,4 +1,4 @@
-struct CArray<let capacity: Int, Element>: ~Copyable {
+struct CArray<let capacity: Int, Element> {
 	private(set) var count: Int
 	private var mem: InlineArray<capacity, Element>
 }

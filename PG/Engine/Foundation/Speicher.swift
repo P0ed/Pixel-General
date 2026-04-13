@@ -1,8 +1,8 @@
-protocol DeadOrAlive: ~Copyable {
+protocol DeadOrAlive {
 	var alive: Bool { get }
 }
 
-struct Speicher<let capacity: Int, Element: DeadOrAlive>: ~Copyable {
+struct Speicher<let capacity: Int, Element: DeadOrAlive> {
 	private var array: CArray<capacity, Element>
 }
 
