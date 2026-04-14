@@ -49,7 +49,7 @@ extension Unit {
 		case .ned, .den, .swe, .ukr: .strv122
 		case .usa, .isr: .m1A2
 		case .pak: .m48 >< .veteran
-		case .rus: .t90m_proryv
+		case .rus: .t90m
 		case .irn, .ind: .t72
 		}
 	}
@@ -72,7 +72,8 @@ extension Unit {
 
 	static func heli(_ country: Country) -> Self {
 		switch country.team {
-		case .allies, .axis: .mh6
+		case .allies: .mh6
+		case .axis: .h135
 		case .soviet: .mi8
 		}
 	}
@@ -87,8 +88,8 @@ extension Unit {
 
 	static func air(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .gripen
-		case .allies: .f16
+		case .axis: .gripen >< .veteran
+		case .allies: country == .usa || country == .isr ? .f35 : .f16 >< .veteran
 		case .soviet: .mi24
 		}
 	}
@@ -176,7 +177,7 @@ extension Unit {
 		}
 	}
 
-	static var t90m_proryv: Self {
+	static var t90m: Self {
 		.make { stats in
 			stats.type = .heavyTrack
 			stats.ini = 8
@@ -250,7 +251,7 @@ extension Unit {
 		}
 	}
 
-	static var mh6: Self {
+	static var h135: Self {
 		.make { stats in
 			stats.type = .heli
 			stats.ini = 9
@@ -329,33 +330,6 @@ extension Unit {
 		}
 	}
 
-	static var neva: Self {
-		.make { stats in
-			stats.type = .softWheel
-			stats[.aa] = true
-			stats[.range] = true
-			stats.ini = 10
-			stats.softAtk = 0
-			stats.hardAtk = 0
-			stats.airAtk = 13
-			stats.groundDef = 4
-			stats.airDef = 8
-		}
-	}
-
-	static var bmp: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.transport] = true
-			stats.ini = 8
-			stats.softAtk = 8
-			stats.hardAtk = 7
-			stats.airAtk = 3
-			stats.groundDef = 7
-			stats.airDef = 6
-		}
-	}
-
 	static var m48: Self {
 		.make { stats in
 			stats.type = .heavyTrack
@@ -406,6 +380,75 @@ extension Unit {
 		}
 	}
 
+	static var mh6: Self {
+		.make { stats in
+			stats.type = .heli
+			stats.ini = 9
+			stats.softAtk = 8
+			stats.hardAtk = 9
+			stats.airAtk = 9
+			stats.groundDef = 7
+			stats.airDef = 7
+		}
+	}
+
+	static var f16: Self {
+		.make { stats in
+			stats.type = .jet
+			stats[.aa] = true
+			stats[.radar] = true
+			stats[.range] = true
+			stats.ini = 11
+			stats.softAtk = 9
+			stats.hardAtk = 11
+			stats.airAtk = 13
+			stats.groundDef = 10
+			stats.airDef = 10
+		}
+	}
+
+	static var f35: Self {
+		.make { stats in
+			stats.type = .jet
+			stats[.aa] = true
+			stats[.radar] = true
+			stats[.range] = true
+			stats.ini = 13
+			stats.softAtk = 10
+			stats.hardAtk = 13
+			stats.airAtk = 15
+			stats.groundDef = 11
+			stats.airDef = 13
+		}
+	}
+
+	static var neva: Self {
+		.make { stats in
+			stats.type = .softWheel
+			stats[.aa] = true
+			stats[.range] = true
+			stats.ini = 10
+			stats.softAtk = 0
+			stats.hardAtk = 0
+			stats.airAtk = 13
+			stats.groundDef = 4
+			stats.airDef = 8
+		}
+	}
+
+	static var bmp: Self {
+		.make { stats in
+			stats.type = .lightTrack
+			stats[.transport] = true
+			stats.ini = 8
+			stats.softAtk = 8
+			stats.hardAtk = 7
+			stats.airAtk = 3
+			stats.groundDef = 7
+			stats.airDef = 6
+		}
+	}
+
 	static var mi8: Self {
 		.make { stats in
 			stats.type = .heli
@@ -428,21 +471,6 @@ extension Unit {
 			stats.airAtk = 7
 			stats.groundDef = 8
 			stats.airDef = 7
-		}
-	}
-
-	static var f16: Self {
-		.make { stats in
-			stats.type = .jet
-			stats[.aa] = true
-			stats[.radar] = true
-			stats[.range] = true
-			stats.ini = 11
-			stats.softAtk = 9
-			stats.hardAtk = 11
-			stats.airAtk = 13
-			stats.groundDef = 10
-			stats.airDef = 10
 		}
 	}
 

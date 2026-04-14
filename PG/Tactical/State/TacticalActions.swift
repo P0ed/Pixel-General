@@ -26,6 +26,42 @@ extension TacticalState {
 		}
 	}
 
+	mutating func resupply(unit id: UID) {
+		let country = country
+		var unit = units[id.index]
+
+		guard unit.country == country, unit.untouched else { return }
+
+		let neighbors = neighbors(at: unit.position)
+
+		let noEnemy = !neighbors.contains { n in
+			units[n.index].country.team != country.team
+		}
+		let hasSupply = neighbors.contains { n in
+			units[n.index].country.team == country.team
+			&& units[n.index][.supply]
+		}
+		let hasBuildings = buildings.firstMap { _, b in
+			b.country == country
+			&& (b.type == .airfield) == unit.isAir
+			&& b.position.manhattanDistance(to: unit.position) <= 1
+			? b : nil
+		} != nil
+		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
+			unit.ammo.increment(
+				by: (unit.untouched ? (noEnemy ? 2 : 1) : 0) + (hasSupply ? (noEnemy ? 2 : 0) : 0),
+				cap: unit.maxAmmo
+			)
+		}
+		if !unit.isAir || hasBuildings {
+			unit.healLoosingXP(
+				(unit.untouched ? (noEnemy ? 4 : 2) : 0) + (hasSupply ? (noEnemy ? 3 : 1) : 0)
+			)
+		}
+		unit.ap = 0b00
+		units[id.index] = unit
+	}
+
 	private var tooFarX: Bool { abs(camera.pt.x - cursor.pt.x) > 4.0 * CGFloat(scale) }
 	private var tooFarY: Bool { abs(camera.pt.y - cursor.pt.y) > 4.0 * CGFloat(scale) }
 

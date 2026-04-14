@@ -19,11 +19,12 @@ extension TacticalState {
 	}
 
 	mutating func disembark(unit: UID, to xy: XY) {
-		let id = units.add(cargo[unit.index])
-		units[id].position = xy
-		units[id].ap &= units[id][.art] ? 0b00 : 0b10
-		unitsMap[xy] = id.uid
+		let idx = units.add(cargo[unit.index])
+		units[idx].position = xy
+		units[idx].ap &= units[idx][.art] ? 0b00 : 0b10
+		unitsMap[xy] = idx.uid
 		cargo[unit.index].hp = 0x0
-		events.add(.spawn(id.uid))
+		player.visible.formUnion(vision(for: units[idx]))
+		events.add(.spawn(idx.uid))
 	}
 }

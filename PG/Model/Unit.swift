@@ -46,6 +46,13 @@ struct Traits: OptionSet, Hashable {
 	static var fast: Self { .init(rawValue: 1 << 6) }
 	static var range: Self { .init(rawValue: 1 << 7) }
 	static var aux: Self { .init(rawValue: 1 << 8) }
+	static var reserved0: Self { .init(rawValue: 1 << 9) }
+	static var reserved1: Self { .init(rawValue: 1 << 10) }
+	static var reserved2: Self { .init(rawValue: 1 << 11) }
+	static var mountaineer: Self { .init(rawValue: 1 << 12) }
+	static var bigGuns: Self { .init(rawValue: 1 << 13) }
+	static var crit: Self { .init(rawValue: 1 << 14) }
+	static var evasion: Self { .init(rawValue: 1 << 15) }
 }
 
 extension Unit {
@@ -117,6 +124,18 @@ extension Unit {
 	func def(_ src: Unit) -> UInt8 {
 		src.isAir ? airDef : groundDef
 	}
+
+	func defMod(vs enemy: Unit, in terrain: Terrain) -> Int {
+		let closeCombat = !enemy.isAir && !enemy.noRetaliation && enemy.rng == 1
+		? terrain.closeCombatPenalty(type) / 2 : 0
+
+		let mountaineer = terrain.isHighground
+		? (self[.mountaineer] ? 2 : 0) - (enemy[.mountaineer] ? 1 : 0) : 0
+
+		let bigGuns = enemy[.bigGuns] ? -1 : 0
+
+		return Int(ent) + terrain.def + closeCombat + mountaineer + bigGuns
+	}
 }
 
 enum UnitType: UInt8, Hashable {
@@ -166,11 +185,15 @@ extension Unit {
 	}
 
 	mutating func healLoosingXP(_ amount: UInt8) {
-		let dhp = hp.increment(
+		exp.decrement(by: heal(amount) * 1 << (stars > 0 ? stars - 1 : stars))
+	}
+
+	@discardableResult
+	mutating func heal(_ amount: UInt8) -> UInt8 {
+		hp.increment(
 			by: amount,
 			cap: 0xF
 		)
-		exp.decrement(by: dhp * 1 << (stars > 0 ? stars - 1 : stars))
 	}
 
 	private var expCost: UInt16 {

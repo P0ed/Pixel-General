@@ -85,17 +85,6 @@ extension CArray where Element == Building {
 	}
 }
 
-enum TacticalEvent: Hashable {
-	case spawn(UID)
-	case move(UID, XY, XY)
-	case attack(UID, UID, UInt8, UInt8)
-	case nextDay
-	case shop
-	case menu
-	case gameOver
-	case none
-}
-
 extension TacticalState {
 
 	var playerIndex: Int { Int(turn) % players.count }

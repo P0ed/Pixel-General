@@ -9,7 +9,7 @@ extension TacticalState {
 		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
 		case .action(.c): squareAction()
-		case .action(.d): endTurn()
+		case .action(.d): triangleAction()
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)
@@ -74,6 +74,16 @@ private extension TacticalState {
 		else { return }
 
 		disembark(unit: selectedUnit, to: cursor)
+	}
+
+	mutating func triangleAction() {
+		guard let selectedUnit, units[selectedUnit.index].country == country,
+			  units[selectedUnit.index].untouched
+		else { return }
+
+		resupply(unit: selectedUnit)
+		events.add(.resupply(selectedUnit))
+		selectUnit(.none)
 	}
 
 	mutating func prevUnit() {

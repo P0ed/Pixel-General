@@ -56,6 +56,13 @@ extension Terrain {
 		default: false
 		}
 	}
+
+	var isHighground: Bool {
+		switch self {
+		case .hill, .forestHill, .mountain: true
+		default: false
+		}
+	}
 }
 
 extension Map<Terrain> {

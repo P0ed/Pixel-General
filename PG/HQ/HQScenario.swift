@@ -5,9 +5,9 @@ extension HQScene {
 	func processScenario() {
 		var players: [4 of Player] = [
 			state.player,
-			Player(country: .isr, type: .ai, prestige: 0xF00),
-			Player(country: .usa, type: .ai, prestige: 0xF00),
-			Player(country: .irn, type: .ai, prestige: 0xF00)
+			Player(country: .isr, type: .ai, prestige: 0x1400),
+			Player(country: .usa, type: .ai, prestige: 0x1400),
+			Player(country: .irn, type: .ai, prestige: 0x1400)
 		]
 		var countriesLeft: [Country] {
 			Country.allCases.filter { c in
@@ -49,10 +49,10 @@ extension HQScene {
 				})
 			}
 			+ (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].prestige <= 0xA00 ? "s" : "ss")", status: "Player \(idx)", update: { state, menu in
+				MenuItem(icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")", status: "Player \(idx)", update: { state, menu in
 					modifying(menu) { menu in
-						players[idx].prestige = players[idx].prestige <= 0xA00 ? 0xF00 : 0xA00
-						menu.items[8 + idx].icon = players[idx].prestige <= 0xA00 ? "s" : "ss"
+						players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
+						menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
 						menu.cursor = 8 + idx
 					}
 				})

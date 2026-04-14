@@ -101,4 +101,11 @@ extension CArray {
 		}
 		return nil
 	}
+
+	func contains(_ predicate: (Element) -> Bool) -> Bool {
+		for i in indices where predicate(mem[i]) {
+			return true
+		}
+		return false
+	}
 }

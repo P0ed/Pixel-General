@@ -70,42 +70,29 @@ extension TacticalState {
 		var unit = units[id.index]
 		let neighbors = neighbors(at: unit.position)
 
-		let noEnemy = !neighbors.contains { n in
-			units[n.index].country.team != unit.country.team
-		}
 		let hasSupply = neighbors.contains { n in
 			units[n.index].country.team == unit.country.team
 			&& units[n.index][.supply]
 		}
-		let hasBuildings = buildings.firstMap { _, b in
-			b.country == unit.country
-			&& (b.type == .airfield) == unit.isAir
-			&& b.position.distance(to: unit.position) <= 2
-			? b : nil
-		} != nil
 		if !unit.isAir {
 			unit.ent.increment(
-				by: (unit.untouched ? 1 : 0) + (hasSupply ? 1 : 0),
+				by: (unit.canMove ? 1 : 0) + (hasSupply ? 1 : 0),
 				cap: 7
 			)
 		}
-		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
-			unit.ammo.increment(
-				by: (unit.untouched ? (noEnemy ? 2 : 1) : 0) + (hasSupply ? (noEnemy ? 2 : 0) : 0),
-				cap: unit.maxAmmo
-			)
-		}
-		if !unit.isAir || hasBuildings {
-			unit.healLoosingXP(
-				(unit.untouched ? (noEnemy ? 4 : 2) : 0) + (hasSupply ? (noEnemy ? 3 : 1) : 0)
-			)
-		}
+		if unit.untouched { resupply(unit: id) }
 		unit.ap = 0b11
 		units[id.index] = unit
 	}
 
-	func neighbors(at position: XY) -> [UID] {
-		position.n8.compactMap { xy in units[xy]?.0 }
+	func neighbors(at position: XY) -> CArray<8, UID> {
+		let n8 = position.n8
+		var result = CArray<8, UID>(tail: -1)
+		for i in n8.indices {
+			let uid = unitsMap[n8[i]]
+			if uid != -1 { result.add(uid) }
+		}
+		return result
 	}
 
 	private mutating func captureCities() {

@@ -1,6 +1,18 @@
 import SpriteKit
 import AVFoundation
 
+enum TacticalEvent: Hashable {
+	case spawn(UID)
+	case move(UID, XY, XY)
+	case attack(UID, UID, UInt8, UInt8)
+	case resupply(UID)
+	case nextDay
+	case shop
+	case menu
+	case gameOver
+	case none
+}
+
 extension TacticalScene {
 
 	func process(events: [TacticalEvent]) async {
@@ -19,6 +31,7 @@ private extension TacticalScene {
 		case let .spawn(uid): processSpawn(uid: uid)
 		case let .move(uid, a, b): await processMove(uid: uid, from: a, to: b)
 		case let .attack(src, dst, dmg, hp): await processAttack(src: src, dst: dst, dmg: dmg, hp: hp)
+		case let .resupply(id): processResupply(id: id)
 		case .nextDay: nodes?.updateUnits(state)
 		case .shop: processShop()
 		case .menu: processMenu()
@@ -72,10 +85,14 @@ private extension TacticalScene {
 		}
 	}
 
+	func processResupply(id: UID) {
+		nodes?.units[id]?.update(hp: state.units[id.index].hp)
+	}
+
 	func processShop() {
 		guard let building = state.buildings[state.cursor],
 			  building.country == state.country,
-			  state.units[state.cursor] == nil
+			  state.unitAt(state.cursor) == nil
 		else { return }
 
 		let xy = state.cursor
@@ -121,7 +138,7 @@ private extension TacticalScene {
 				.close(icon: "HQ", status: "HQ") { [weak self] state in
 					self?.restartGame(state: state)
 				},
-				MenuItem(icon: "s", status: "Prestige: \(state.player.prestige)", update: { _, m in
+				MenuItem(icon: "S", status: "Prestige: \(state.player.prestige)", update: { _, m in
 					m
 				}),
 				MenuItem(icon: "Sound\(vol)", status: "Volume", update: { _, menu in
