@@ -35,9 +35,6 @@ extension TacticalState {
 		for i in units.indices where units[i].alive {
 			endTurn(unit: i.uid)
 		}
-		for i in cargo.indices where cargo[i].alive {
-			cargo[i].ap = 0b11
-		}
 		events.add(.nextDay)
 	}
 
@@ -50,8 +47,8 @@ extension TacticalState {
 	private mutating func resetUI() {
 		selectUnit(.none)
 
-		cursor = units.firstMap { [country] _, u in
-			u.country == country ? u.position : nil
+		cursor = units.firstMap { [country] i, u in
+			u.country == country ? position[i] : nil
 		}
 		?? buildings.firstMap { [country] _, b in
 			b.country == country ? b.position : nil
@@ -68,7 +65,7 @@ extension TacticalState {
 
 	private mutating func endTurn(unit id: UID) {
 		var unit = units[id.index]
-		let neighbors = neighbors(at: unit.position)
+		let neighbors = neighbors(at: position[id.index])
 
 		let hasSupply = neighbors.contains { n in
 			units[n.index].country.team == unit.country.team
@@ -80,8 +77,9 @@ extension TacticalState {
 				cap: 7
 			)
 		}
-		if unit.untouched { resupply(unit: id) }
-		unit.ap = 0b11
+		if !unit[.cargo], unit.untouched { resupply(unit: id) }
+		unit.ap = unit.maxAP
+		unit.mp = unit.maxMP
 		units[id.index] = unit
 	}
 
@@ -96,10 +94,10 @@ extension TacticalState {
 	}
 
 	private mutating func captureCities() {
-		let reflag = units.reduce(into: false) { reflag, _, u in
+		let reflag = units.reduce(into: false) { reflag, i, u in
 
-			let idx = buildings.firstMap { i, b in
-				b.position == u.position ? i : nil
+			let idx = buildings.firstMap { j, b in
+				b.position == position[i] ? j : nil
 			}
 
 			if let idx, buildings[idx].country.team != u.country.team, !u.isAir {

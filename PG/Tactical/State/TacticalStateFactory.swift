@@ -12,26 +12,27 @@ extension TacticalState {
 			players: .init { i in players[i].country },
 			map: map
 		)
-		let playerCity = buildings[0].position
-		let firstCity = buildings.filter { $0.country == players[1].country }.sorted(by: { b1, b2 in
-			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
-		}).first?.position ?? .zero
-		let secondCity = buildings.filter { $0.country == players[2].country }.sorted(by: { b1, b2 in
-			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
-		}).first?.position ?? .zero
-		let thirdCity = buildings.filter { $0.country == players[3].country }.first?.position ?? .zero
+//		let playerCity = buildings[0].position
+//		let firstCity = buildings.filter { $0.country == players[1].country }.sorted(by: { b1, b2 in
+//			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
+//		}).first?.position ?? .zero
+//		let secondCity = buildings.filter { $0.country == players[2].country }.sorted(by: { b1, b2 in
+//			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
+//		}).first?.position ?? .zero
+//		let thirdCity = buildings.filter { $0.country == players[3].country }.first?.position ?? .zero
 
 		let units: [Unit] = (
-			units.mapInPlace { $0.position = $0.position + playerCity }
-			+ .base(players[1].country).mapInPlace { $0.position = $0.position + firstCity - .one }
-			+ .base(players[2].country).mapInPlace { $0.position = $0.position + secondCity - .one }
-			+ .base(players[3].country).mapInPlace { $0.position = $0.position + thirdCity - .one }
+			units//.mapInPlace { $0.position = $0.position + playerCity }
+			+ .base(players[1].country)//.mapInPlace { $0.position = $0.position + firstCity - .one }
+			+ .base(players[2].country)//.mapInPlace { $0.position = $0.position + secondCity - .one }
+			+ .base(players[3].country)//.mapInPlace { $0.position = $0.position + thirdCity - .one }
 		)
 		.mapInPlace { u in
-			u.hp = 0xF
-			u.ap = 0b11
-			u.ent = UInt8(max(0, map[u.position].def))
+			u.hp = u.maxHP
+			u.ap = u.maxAP
+			u.mp = u.maxMP
 			u.ammo = u.maxAmmo
+			u.ent = 0
 		}
 
 		print("Map gen done. Seed: \(seed)")

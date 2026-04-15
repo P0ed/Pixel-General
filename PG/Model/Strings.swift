@@ -21,10 +21,10 @@ extension Unit {
 			add("MOV: \(mov)")
 			add("ENT: \(ent)")
 		} + .makeStatus(pad: 5) { add in
-			add("\(self[.mountaineer] ? "[MNT]" : "")")
-			add("\(self[.bigGuns] ? "[BIG]" : "")")
-			add("\(self[.crit] ? "[CRT]" : "")")
-			add("\(self[.evasion] ? "[EVA]" : "")")
+			add(self[.mountaineer] ? "[MNT]" : "")
+			add(self[.bigGuns] ? "[BIG]" : "")
+			add(self[.crit] ? "[CRT]" : "")
+			add(self[.evasion] ? "[EVA]" : "")
 		}
 	}
 

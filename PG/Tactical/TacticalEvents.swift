@@ -44,7 +44,7 @@ private extension TacticalScene {
 		guard let nodes else { return }
 
 		let sprite = state.units[uid.index].sprite
-		let xy = state.units[uid.index].position
+		let xy = state.position[uid.index]
 		sprite.position = state.map.point(at: xy)
 		sprite.zPosition = nodes.map.zPosition(at: xy)
 		sprite.isHidden = !state.player.visible[xy]
@@ -63,6 +63,7 @@ private extension TacticalScene {
 		))
 		unit.zPosition = z
 		unit.isHidden = !state.player.visible[b]
+
 		if !state.units[uid.index].alive { removeUnit(uid) }
 	}
 

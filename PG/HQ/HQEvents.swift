@@ -33,15 +33,15 @@ extension HQScene {
 	}
 
 	private func processMove(uid: UID, xy: XY) {
-		nodes?.units[uid]?.position = xy.point
-		nodes?.units[uid]?.zPosition = nodes?.map.zPosition(at: xy) ?? 0.0
+		nodes?.units[uid.index]?.position = xy.point
+		nodes?.units[uid.index]?.zPosition = nodes?.map.zPosition(at: xy) ?? 0.0
 	}
 
 	private func processSpawn(uid: UID) {
 		guard let nodes else { return }
 
 		let sprite = state.units[uid.index].hqSprite
-		let xy = state.units[uid.index].position
+		let xy = XY(uid.index % 4, uid.index / 4)
 		sprite.position = HQNodes.map.point(at: xy)
 		sprite.zPosition = nodes.map.zPosition(at: xy)
 		addUnit(uid, node: sprite)

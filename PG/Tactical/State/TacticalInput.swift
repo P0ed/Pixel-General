@@ -67,12 +67,7 @@ private extension TacticalState {
 	}
 
 	mutating func squareAction() {
-		guard let selectedUnit, units[selectedUnit.index].country == country,
-			  units[selectedUnit.index][.transport], cargo[selectedUnit.index].alive,
-			  units[selectedUnit.index].position.manhattanDistance(to: cursor) == 1,
-			  unitsMap[cursor] == -1
-		else { return }
-
+		guard let selectedUnit, canDisembark(unit: selectedUnit, to: cursor) else { return }
 		disembark(unit: selectedUnit, to: cursor)
 	}
 

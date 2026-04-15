@@ -2,13 +2,13 @@ import CoreGraphics
 
 extension TacticalState {
 
-	func vision(for unit: Unit) -> SetXY {
-		SetXY(unit.position.circle(2 * Int(unit.spot)))
+	func vision(for uid: UID) -> SetXY {
+		SetXY(position[uid.index].circle(2 * Int(units[uid.index].spot)))
 	}
 
 	func vision(for country: Country) -> SetXY {
 		units.reduce(into: SetXY.empty) { v, i, u in
-			if u.country.team == country.team { v.formUnion(vision(for: u)) }
+			if u.country.team == country.team { v.formUnion(vision(for: i.uid)) }
 		}
 		.union(buildings.flatMap { _, building in
 			building.country.team == country.team ? building.position.circle(3) : []
@@ -18,8 +18,8 @@ extension TacticalState {
 	mutating func selectUnit(_ uid: UID?) {
 		if let uid {
 			selectedUnit = uid
-			cursor = units[uid.index].position
-			selectable = units[uid.index].canMove ? moves(for: units[uid.index]).setXY : .none
+			cursor = position[uid.index]
+			selectable = units[uid.index].canMove ? moves(for: uid).setXY : .none
 		} else {
 			selectedUnit = .none
 			selectable = .none
@@ -29,10 +29,11 @@ extension TacticalState {
 	mutating func resupply(unit id: UID) {
 		let country = country
 		var unit = units[id.index]
+		let position = position[id.index]
 
 		guard unit.country == country, unit.untouched else { return }
 
-		let neighbors = neighbors(at: unit.position)
+		let neighbors = neighbors(at: position)
 
 		let noEnemy = !neighbors.contains { n in
 			units[n.index].country.team != country.team
@@ -44,7 +45,7 @@ extension TacticalState {
 		let hasBuildings = buildings.firstMap { _, b in
 			b.country == country
 			&& (b.type == .airfield) == unit.isAir
-			&& b.position.manhattanDistance(to: unit.position) <= 1
+			&& b.position.manhattanDistance(to: position) <= 1
 			? b : nil
 		} != nil
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {

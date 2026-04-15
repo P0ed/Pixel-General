@@ -57,7 +57,11 @@ extension Unit {
 			default: "leo1"
 			}
 		case .heli: "MH6"
-		case .jet: "F64"
+		case .jet:
+			switch country.team {
+			case .allies: "F16"
+			default: "F64"
+			}
 		}
 	}
 }

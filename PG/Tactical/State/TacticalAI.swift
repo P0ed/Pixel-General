@@ -45,7 +45,7 @@ extension TacticalState {
 			: buildings.compactMap {
 				$1.country == country && ($1.type == .airfield) == u.isAir ? $1 : nil
 			}.min { a, b in
-				a.position.distance(to: u.position) < b.position.distance(to: u.position)
+				a.position.distance(to: position[i]) < b.position.distance(to: position[i])
 			}.flatMap { b in
 				move(id: i.uid, to: b.position)
 			}
@@ -56,7 +56,7 @@ extension TacticalState {
 		units.firstMap { [country] i, u in
 			u.country != country
 			? nil
-			: targets(unit: u)
+			: targets(uid: i.uid)
 				.max(by: { a, b in
 					(
 						(a.1[.art] ? 5 : 0)
@@ -81,7 +81,7 @@ extension TacticalState {
 	}
 
 	private func move(id: UID, to target: XY) -> (UID, XY)? {
-		moves(for: units[id.index])
+		moves(for: id)
 			.set
 			.max(by: { a, b in
 				(

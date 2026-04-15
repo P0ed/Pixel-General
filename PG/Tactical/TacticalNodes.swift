@@ -25,7 +25,7 @@ extension TacticalNodes {
 		)
 		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
 			let sprite = state.units[i].sprite
-			let xy = state.units[i].position
+			let xy = state.position[i]
 			sprite.position = state.map.point(at: xy)
 			sprite.zPosition = map.zPosition(at: xy)
 			sprite.isHidden = !state.player.visible[xy]
@@ -97,7 +97,7 @@ extension TacticalNodes {
 		map.update(
 			map: state.map,
 			cursor: state.cursor,
-			selected: state.selectedUnit.map { i in state.units[i.index].position }
+			selected: state.selectedUnit.map { i in state.position[i.index] }
 		)
 		let cameraScale = CGFloat(state.scale)
 		if camera.xScale != cameraScale {
@@ -117,7 +117,7 @@ extension TacticalNodes {
 			map.setTileGroup(state.map[xy].tileGroup(fog: fog[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
-			units[i.uid]?.isHidden = !visible[u.position]
+			units[i.uid]?.isHidden = !visible[state.position[i]]
 		}
 		self.fog = fog
 	}

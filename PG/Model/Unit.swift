@@ -2,8 +2,12 @@ typealias UID = Int8
 
 struct Unit: Hashable {
 	var country: Country
-	var position: XY = .zero
-	var bits: UInt32 = 0
+	var hp: UInt8 = 0
+	var mp: UInt8 = 0
+	var ap: UInt8 = 0
+	var ammo: UInt8 = 0
+	var ent: UInt8 = 0
+	var exp: UInt8 = 0
 	var type: UnitType = .soft
 	var ini: UInt8 = 0
 	var softAtk: UInt8 = 0
@@ -20,8 +24,10 @@ extension Unit: Monoid {
 
 	mutating func combine(_ other: Self) {
 		hp |= other.hp
-		bits |= other.bits
+		mp |= other.mp
+		ap |= other.ap
 		ammo = max(ammo, other.ammo)
+		ent |= other.ent
 		exp |= other.exp
 		type = type == .soft ? other.type : type
 		ini |= other.ini
@@ -46,7 +52,7 @@ struct Traits: OptionSet, Hashable {
 	static var fast: Self { .init(rawValue: 1 << 6) }
 	static var range: Self { .init(rawValue: 1 << 7) }
 	static var aux: Self { .init(rawValue: 1 << 8) }
-	static var reserved0: Self { .init(rawValue: 1 << 9) }
+	static var cargo: Self { .init(rawValue: 1 << 9) }
 	static var reserved1: Self { .init(rawValue: 1 << 10) }
 	static var reserved2: Self { .init(rawValue: 1 << 11) }
 	static var mountaineer: Self { .init(rawValue: 1 << 12) }
@@ -67,6 +73,10 @@ extension Unit {
 	var spot: UInt8 {
 		self[.radar] ? 3 : 2
 	}
+
+	var maxHP: UInt8 { 0xF }
+	var maxAP: UInt8 { 1 }
+	var maxMP: UInt8 { isAir ? 2 : 1 }
 
 	var maxAmmo: UInt8 {
 		guard softAtk > 0 || hardAtk > 0 || airAtk > 0 else { return 0 }
@@ -148,37 +158,11 @@ extension Unit: DeadOrAlive {
 
 extension Unit {
 
-	var hp: UInt8 {
-		get { UInt8((bits >> 0) & 0xF) }
-		set { bits = UInt32(newValue & 0xF) << 0 | bits & ~(0xF << 0) }
-	}
-	var ammo: UInt8 {
-		get { UInt8((bits >> 4) & 0xF) }
-		set { bits = UInt32(newValue & 0xF) << 4 | bits & ~(0xF << 4) }
-	}
-	var ap: UInt8 {
-		get { UInt8((bits >> 8) & 0xF) }
-		set { bits = UInt32(newValue & 0xF) << 8 | bits & ~(0xF << 8) }
-	}
-	var ent: UInt8 {
-		get { UInt8((bits >> 12) & 0xF) }
-		set { bits = UInt32(newValue & 0xF) << 12 | bits & ~(0xF << 12) }
-	}
-	var exp: UInt8 {
-		get { UInt8((bits >> 16) & 0xFF) }
-		set { bits = UInt32(newValue & 0xFF) << 16 | bits & ~(0xFF << 16) }
-	}
 	var untouched: Bool { ap & 0b11 == 0b11 }
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { ap & 0b01 == 0b01 }
 	var canAttack: Bool { ap & 0b10 == 0b10 && ammo > 0 }
 	var noRetaliation: Bool { self[.art] }
-
-	func canHit(unit: Unit) -> Bool {
-		position.distance(to: unit.position) <= rng * 2 + 1
-		&& atk(unit) > 0
-		&& (isAir ? ammo > 0 : true)
-	}
 
 	var cost: UInt16 {
 		(expCost + typeCost + traitCost + sum * 2) / (self[.aux] ? 2 : 1)
@@ -224,7 +208,9 @@ extension Unit {
 extension Speicher where Element == Unit {
 
 	subscript(_ xy: XY) -> (UID, Unit)? {
-		firstMap { i, u in u.position == xy ? (i.uid, u) : nil }
+		let i = xy.x + xy.y * 4
+		let u = self[i]
+		return u.alive ? (i.uid, u) : nil
 	}
 }
 

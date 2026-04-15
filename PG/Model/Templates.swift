@@ -22,7 +22,7 @@ extension [Unit] {
 	}
 
 	static func base(_ country: Country) -> [Unit] {
-		\.grid4x4 § [
+		[
 			Unit(country: country) >< .truck,
 			Unit(country: country) >< .regular >< .veteran,
 			Unit(country: country) >< .regular >< .veteran,
@@ -36,7 +36,7 @@ extension [Unit] {
 	}
 
 	static func small(_ country: Country) -> [Unit] {
-		\.grid4x4 § [
+		[
 			Unit(country: country) >< .truck,
 			Unit(country: country) >< .regular >< .veteran,
 			Unit(country: country) >< .regular >< .veteran,
@@ -47,9 +47,9 @@ extension [Unit] {
 		]
 	}
 
-	var grid4x4: [Unit] {
+	var grid4x4: [XY] {
 		enumerated().map { i, u in
-			modifying(u) { u in u.position = XY(i % 4, i / 4) }
+			XY(i % 4, i / 4)
 		}
 	}
 

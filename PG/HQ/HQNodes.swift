@@ -3,7 +3,7 @@ import SpriteKit
 struct HQNodes {
 	var camera: SKCameraNode
 	var map: MapNodes
-	var units: [UID: SKNode] = [:]
+	var units: [16 of SKNode?]
 }
 
 extension HQNodes {
@@ -13,13 +13,16 @@ extension HQNodes {
 	init(parent: SKNode, state: borrowing HQState) {
 		self = HQNodes(
 			camera: Self.addCamera(parent: parent),
-			map: Self.addMap(parent: parent, state: state)
+			map: Self.addMap(parent: parent, state: state),
+			units: .init(repeating: nil)
 		)
-		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
+		units = .init { i in
+			let u = state.units[i]
 			let node = unitSprite(uid: i.uid, unit: u)
+			node.isHidden = !u.alive
 			parent.addChild(node)
-			return (i.uid, node)
-		})
+			return node
+		}
 	}
 
 	private static func addMap(parent: SKNode, state: borrowing HQState) -> MapNodes {
@@ -77,7 +80,7 @@ extension HQNodes {
 		map.update(
 			map: Self.map,
 			cursor: state.cursor,
-			selected: state.selected.map { i in state.units[i.index].position }
+			selected: state.selected.map { i in XY(i.index % 4, i.index / 4) }
 		)
 	}
 
@@ -93,7 +96,7 @@ extension HQNodes {
 
 	func unitSprite(uid: UID, unit: Unit) -> SKNode {
 		let sprite = unit.hqSprite
-		let xy = unit.position
+		let xy = XY(uid.index % 4, uid.index / 4)
 		sprite.position = HQNodes.map.point(at: xy)
 		sprite.zPosition = map.zPosition(at: xy)
 		return sprite
@@ -104,11 +107,12 @@ extension HQScene {
 
 	func addUnit(_ uid: UID, node: SKNode) {
 		addChild(node)
-		nodes?.units[uid] = node
+		nodes?.units[uid.index]?.removeFromParent()
+		nodes?.units[uid.index] = node
 	}
 
 	func removeUnit(_ uid: UID) {
-		nodes?.units[uid]?.removeFromParent()
-		nodes?.units[uid] = nil
+		nodes?.units[uid.index]?.removeFromParent()
+		nodes?.units[uid.index] = nil
 	}
 }

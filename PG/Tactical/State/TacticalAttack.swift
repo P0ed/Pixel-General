@@ -1,18 +1,26 @@
 extension TacticalState {
 
-	func targets(unit: Unit) -> [(UID, Unit)] {
-		!unit.canAttack ? [] : units.reduce(into: []) { r, i, u in
-			if u.country.team != unit.country.team,
-			   player.visible[u.position],
-			   unit.canHit(unit: u)
-			{
-				r.append((i.uid, u))
+	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
+		let su = units[src.index]
+		let du = units[dst.index]
+		let sp = position[src.index]
+		let dp = position[dst.index]
+		return sp.distance(to: dp) <= su.rng * 2 + 1
+			&& su.atk(du) > 0
+			&& (su.isAir ? su.ammo > 0 : true)
+	}
+
+	func targets(uid: UID) -> [(UID, Unit)] {
+		let su = units[uid.index]
+		return !su.canAttack ? [] : units.reduce(into: []) { r, i, du in
+			if du.country.team != su.country.team, player.visible[position[uid.index]], unitCanHit(uid, i.uid) {
+				r.append((i.uid, du))
 			}
 		}
 	}
 
 	func support(trait: Traits, defender: UID, attacker: UID) -> UID? {
-		units[defender.index].position.n8.firstMap { hx in
+		position[defender.index].n8.firstMap { hx in
 			return unitAt(hx).flatMap { u in
 				u.country.team == units[defender.index].country.team && u[trait]
 				? unitsMap[hx] : nil
@@ -30,7 +38,8 @@ extension TacticalState {
 		let t1 = max(1, 6 - dif)
 		let t2 = max(3, 15 - dif)
 		let t3 = max(7, 22 - dif)
-		let rounds = (units[si].hp + 3) / 3
+		let iniRound = units[si].ini > d20(.max(2)) ? 1 : 0 as UInt8
+		let rounds = (units[si].hp + 3) / 3 + iniRound
 		let crit = units[si][.crit]
 		let evasion = units[di][.evasion]
 
@@ -38,9 +47,9 @@ extension TacticalState {
 		let dmgs = ds
 			.map { d in d > t3 ? 3 : d > t2 ? 2 : d > t1 ? 1 : 0 as UInt8 }
 			.map { d in crit ? (d20() > 16 ? d * 2 : d) : d }
-			.map { d in evasion ? (d20() > 15 ? 0 : d) : d }
+			.map { d in evasion ? (d20() > 16 ? 0 : d) : d }
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
-		let targetPos = units[di].position
+		let targetPos = position[di]
 
 		///# ˘˘Logs˘˘
 		let srcStr = units[si].shortDescription
@@ -59,18 +68,22 @@ extension TacticalState {
 
 	private mutating func damage(unit: UID, dmg: UInt8) -> Bool {
 		units[unit.index].hp.decrement(by: dmg)
-		cargo[unit.index].hp.decrement(by: dmg)
+		if cargo[unit.index] != -1 {
+			units[cargo[unit.index].index].hp.decrement(by: dmg)
+		}
 		let alive = units[unit.index].alive
 		if !alive {
-			unitsMap[units[unit.index].position] = -1
-			cargo[unit.index].hp = 0x0
+			unitsMap[position[unit.index]] = -1
+			if cargo[unit.index] != -1 {
+				units[cargo[unit.index].index].hp = 0x0
+			}
 		}
 		return alive
 	}
 
 	private func encirclement(uid: UID) -> Int {
 		let team = units[uid.index].country.team
-		let enemies = units[uid.index].position.n4.reduce(into: 0) { r, xy in
+		let enemies = position[uid.index].n4.reduce(into: 0) { r, xy in
 			r += (unitAt(xy).map { u in u.country.team != team ? 1 : 0 } ?? 0)
 		}
 		return max(0, enemies - 1)
@@ -80,11 +93,11 @@ extension TacticalState {
 		let (si, di) = (src.index, dst.index)
 		guard units[si].country == country,
 			  units[si].country.team != units[di].country.team,
-			  units[si].canAttack, units[si].canHit(unit: units[di])
+			  units[si].canAttack, unitCanHit(src, dst)
 		else { return }
 
 		let (su, du) = (units[si], units[di])
-		let dt = map[units[di].position]
+		let dt = map[position[di]]
 		let dstDef = du.defMod(vs: su, in: dt) - encirclement(uid: dst)
 
 		let ruggedDefence: Bool = !surprise && su.noRetaliation ? false : (
@@ -93,7 +106,7 @@ extension TacticalState {
 			Int(du.ent + du.ini + du.stars) * 2 + (surprise ? 10 : 0)
 		)
 		if ruggedDefence { print("Rugged Defence!") }
-		units[si].ap &= 0b01
+		units[si].ap.decrement()
 
 		if !su.isAir, !du.isAir, !su.noRetaliation,
 			let art = support(trait: .art, defender: dst, attacker: src) {
@@ -106,10 +119,7 @@ extension TacticalState {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[di].ent.decrement()
 		}
-		if units[di].alive, units[si].alive,
-		   units[di].canHit(unit: units[si]),
-		   !su.noRetaliation || surprise {
-
+		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.noRetaliation || surprise {
 			let srcDef = dt.closeCombatPenalty(su.type)
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 5 : 0)
@@ -125,24 +135,24 @@ extension TacticalState {
 		}
 		var airRetreat: Bool {
 			!units[si].isAir && units[di].isAir
-			&& buildings[units[di].position].map {
+			&& buildings[position[di]].map {
 				$0.country.team != units[di].country.team
 			} ?? false
 		}
 		if units[di].alive, hpRetreat || airRetreat {
-			retreat(uid: dst, from: units[si].position)
+			retreat(uid: dst, from: position[si])
 		}
 		selectUnit(units[si].alive && units[si].hasActions ? src : .none)
 	}
 
 	private mutating func retreat(uid: UID, from xy: XY) {
-		let p = units[uid.index].position
-		let pos = moves(for: units[uid.index]).set.min(by: (p + p + p - xy - xy).manhattanComparator)
+		let p = position[uid.index]
+		let pos = moves(for: uid).set.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
-		unitsMap[units[uid.index].position] = -1
+		unitsMap[position[uid.index]] = -1
 		unitsMap[pos] = uid
-		units[uid.index].position = pos
+		position[uid.index] = pos
 		units[uid.index].ent = 0
 		events.add(.move(uid, p, pos))
 	}

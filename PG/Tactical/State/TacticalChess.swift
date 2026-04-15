@@ -16,32 +16,38 @@ extension TacticalState {
 		buildings.indices.forEach { i in map[buildings[i].position] = .city }
 
 		var units: [Unit] = []
-		+ (0..<8).map { i in Unit(country: .swe, position: XY(i, 1)) >< .regular }
-		+ (0..<8).map { i in Unit(country: .isr, position: XY(i, 6)) >< .regular }
 		+ [
-			Unit(country: .swe, position: XY(0, 0)) >< .strv122,
-			Unit(country: .swe, position: XY(7, 0)) >< .strv122,
-			Unit(country: .swe, position: XY(1, 0)) >< .boxer,
-			Unit(country: .swe, position: XY(6, 0)) >< .boxer,
-			Unit(country: .swe, position: XY(2, 0)) >< .strf90,
-			Unit(country: .swe, position: XY(5, 0)) >< .strf90,
-			Unit(country: .swe, position: XY(3, 0)) >< .pzh,
-			Unit(country: .swe, position: XY(4, 0)) >< .truck,
-
-			Unit(country: .isr, position: XY(0, 7)) >< .strv122,
-			Unit(country: .isr, position: XY(7, 7)) >< .strv122,
-			Unit(country: .isr, position: XY(1, 7)) >< .boxer,
-			Unit(country: .isr, position: XY(6, 7)) >< .boxer,
-			Unit(country: .isr, position: XY(2, 7)) >< .strf90,
-			Unit(country: .isr, position: XY(5, 7)) >< .strf90,
-			Unit(country: .isr, position: XY(4, 7)) >< .pzh,
-			Unit(country: .isr, position: XY(3, 7)) >< .truck,
+			Unit(country: .swe) >< .strv122,
+			Unit(country: .swe) >< .boxer,
+			Unit(country: .swe) >< .strf90,
+			Unit(country: .swe) >< .pzh,
+			Unit(country: .swe) >< .truck,
+			Unit(country: .swe) >< .strf90,
+			Unit(country: .swe) >< .boxer,
+			Unit(country: .swe) >< .strv122,
 		]
+		+ (0..<8).map { i in Unit(country: .swe) >< .regular }
+		+ [
+			Unit(country: .isr) >< .strv122,
+			Unit(country: .isr) >< .boxer,
+			Unit(country: .isr) >< .strf90,
+			Unit(country: .isr) >< .truck,
+			Unit(country: .isr) >< .pzh,
+			Unit(country: .isr) >< .strf90,
+			Unit(country: .isr) >< .boxer,
+			Unit(country: .isr) >< .strv122,
+		]
+		+ (0..<8).map { i in Unit(country: .isr) >< .regular }
+		let position: [128 of XY] = .init { i in
+			XY(i % 8, i < 16 ? i / 8 : 4 + i / 8)
+		}
+
 		var unitsMap = Map<UID>(size: 8, zero: -1)
-		units.enumerated().forEach { i, u in unitsMap[u.position] = i.uid }
+		units.enumerated().forEach { i, u in unitsMap[position[i]] = i.uid }
 		units.modifyEach { u in
-			u.hp = 0xF
-			u.ap = 0b11
+			u.hp = u.maxHP
+			u.ap = u.maxAP
+			u.mp = u.maxMP
 			u.ammo = u.maxAmmo
 		}
 
@@ -54,7 +60,8 @@ extension TacticalState {
 			),
 			units: .init(head: units, tail: .empty),
 			unitsMap: unitsMap,
-			cargo: .init(repeating: .empty),
+			position: position,
+			cargo: .init(repeating: -1),
 			auxilia: .init { i in .init(tail: .empty) }
 		)
 		state.players[0].visible = state.vision(for: state.players[0].country)

@@ -1,12 +1,17 @@
 extension TacticalState {
 
-	func unitAt(_ xy: XY) -> Unit? {
-		let id = unitsMap[xy].index
-		return id < 0 ? nil : units[id]
+	func uidAt(_ xy: XY) -> UID? {
+		let id = unitsMap[xy]
+		return id < 0 ? nil : id
 	}
 
-	func moves(for unit: Unit, target: XY? = nil) -> Moves {
-		var mov = Moves(start: unit.position, size: map.size)
+	func unitAt(_ xy: XY) -> Unit? {
+		uidAt(xy).map { uid in units[uid.index] }
+	}
+
+	func moves(for uid: UID, target: XY? = nil) -> Moves {
+		let unit = units[uid.index]
+		var mov = Moves(start: position[uid.index], size: map.size)
 		if !unit.canMove { return mov }
 
 		let team = unit.country.team
@@ -20,8 +25,8 @@ extension TacticalState {
 		}
 
 		let r = unit.mov
-		mov.moves[unit.position] = r * 2 + 1
-		var front = CArray<1024, XY>(head: unit.position, tail: .zero)
+		mov.moves[position[uid.index]] = r * 2 + 1
+		var front = CArray<1024, XY>(head: position[uid.index], tail: .zero)
 		var next = CArray<1024, XY>(tail: .zero)
 
 		for _ in 0 ..< r where !front.isEmpty {
@@ -64,7 +69,7 @@ extension TacticalState {
 		}
 		if target == nil {
 			units.forEach { i, u in
-				if visible[u.position] { mov.moves[u.position] = 0 }
+				if visible[position[i]] { mov.moves[position[i]] = 0 }
 			}
 		}
 
@@ -74,15 +79,16 @@ extension TacticalState {
 	mutating func move(unit uid: UID, to position: XY) {
 		guard units[uid.index].country == country, units[uid.index].canMove else { return }
 
-		let moves = moves(for: units[uid.index], target: position)
+		let moves = moves(for: uid, target: position)
 		let route = moves.route(to: position)
 		guard !route.isEmpty else { return }
 
 		var pos = moves.start
 		var interruptor: UID?
 		for xy in route.reversed() {
-			if let u = unitAt(xy) {
-				if u.country.team != units[uid.index].country.team, !player.visible[u.position] {
+			if let tid = uidAt(xy) {
+				let u = units[tid.index]
+				if u.country.team != units[uid.index].country.team, !player.visible[self.position[tid.index]] {
 					interruptor = unitsMap[xy]
 					break
 				}
@@ -97,9 +103,9 @@ extension TacticalState {
 			if xy == pos { break }
 		}
 
-		unitsMap[units[uid.index].position] = -1
+		unitsMap[self.position[uid.index]] = -1
 		unitsMap[pos] = uid
-		units[uid.index].position = pos
+		self.position[uid.index] = pos
 		units[uid.index].ap &= 0b10
 		units[uid.index].ent = 0
 		if units[uid.index].type == .soft, units[uid.index][.art] {

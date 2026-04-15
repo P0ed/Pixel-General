@@ -58,14 +58,16 @@ final class Core {
 			return
 		}
 
-		let units: [Unit] = \.grid4x4 § (
-			tactical.units.map { $1 } + tactical.cargo.compactMap { $0.alive ? $0 : nil }
+		let units: [Unit] = (
+			tactical.units.map { $1 }
 		).compactMap { u in
 			u.country != c || u[.aux] ? nil : modifying(u, { u in
-				u.hp = 0xF
-				u.ap = 0b11
+				u.hp = u.maxHP
+				u.ap = u.maxAP
+				u.mp = u.maxMP
 				u.ammo = u.maxAmmo
 				u.ent = 0
+				u[.cargo] = false
 			})
 		}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)

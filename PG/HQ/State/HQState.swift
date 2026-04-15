@@ -58,12 +58,12 @@ extension HQState {
 			if selected == units[cursor]?.0 {
 				self.selected = .none
 			} else {
-				if let (i, _) = units[cursor] {
-					units[i.index].position = units[selected.index].position
-					events.add(.move(i, units[i.index].position))
-				}
-				units[selected.index].position = cursor
-				events.add(.move(selected, cursor))
+//				if let (i, _) = units[cursor] {
+//					units[i.index].position = units[selected.index].position
+//					events.add(.move(i, units[i.index].position))
+//				}
+//				units[selected.index].position = cursor
+//				events.add(.move(selected, cursor))
 				self.selected = .none
 			}
 		} else if let (i, _) = units[cursor] {
@@ -105,7 +105,6 @@ extension HQState {
 
 		let unit = modifying(template) { u in
 			u.hp = 0xF
-			u.position = position
 		}
 		player.prestige.decrement(by: unit.cost)
 		events.add(.spawn(units.add(unit).uid))

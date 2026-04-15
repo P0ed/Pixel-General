@@ -5,12 +5,9 @@ extension TacticalState {
 		let unitSlots = units.reduce(into: [0, 0] as [2 of Int]) { c, i, u in
 			if u.country == country { c[u[.aux] ? 1 : 0] += 1 }
 		}
-		let cargoSlots = cargo.reduce(into: [0, 0] as [2 of Int]) { c, u in
-			if u.alive, u.country == country { c[u[.aux] ? 1 : 0] += 1 }
-		}
 
-		let core = unitSlots[0] + cargoSlots[0] < 16
-		let aux = unitSlots[1] + cargoSlots[1]  < 16
+		let core = unitSlots[0] < 16
+		let aux = unitSlots[1] < 16
 
 		return buildings[xy].map { b in
 			.make { units in
@@ -26,17 +23,19 @@ extension TacticalState {
 		} ?? []
 	}
 
-	mutating func buy(_ template: Unit, at position: XY) {
-		guard player.prestige >= template.cost, unitsMap[position] < 0 else { return }
+	mutating func buy(_ template: Unit, at pos: XY) {
+		guard player.prestige >= template.cost, unitsMap[pos] < 0 else { return }
 
 		let unit = modifying(template) { u in
-			u.hp = 0xF
-			u.position = position
-			u.ap = 0b00
+			u.hp = u.maxHP
+			u.mp = 0
+			u.ap = 0
 			u.ammo = u.maxAmmo
 		}
-		let id = units.add(unit).uid
-		unitsMap[position] = id
+		let idx = units.add(unit)
+		let id = idx.uid
+		unitsMap[pos] = id
+		position[idx] = pos
 		player.prestige.decrement(by: unit.cost)
 		if unit[.aux] {
 			let idx = auxilia[playerIndex].firstMap { i, u in u == template ? i : nil }

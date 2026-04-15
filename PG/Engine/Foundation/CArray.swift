@@ -102,10 +102,14 @@ extension CArray {
 		return nil
 	}
 
+	func count(where predicate: (Element) -> Bool) -> Int {
+		var cnt = 0
+		for i in indices where predicate(mem[i]) { cnt += 1 }
+		return cnt
+	}
+
 	func contains(_ predicate: (Element) -> Bool) -> Bool {
-		for i in indices where predicate(mem[i]) {
-			return true
-		}
+		for i in indices where predicate(mem[i]) { return true }
 		return false
 	}
 }
