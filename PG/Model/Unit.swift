@@ -1,7 +1,7 @@
 typealias UID = Int8
 
 struct Unit: Hashable {
-	var country: Country
+	var country: Country = .default
 	var hp: UInt8 = 0
 	var mp: UInt8 = 0
 	var ap: UInt8 = 0
@@ -52,7 +52,7 @@ struct Traits: OptionSet, Hashable {
 	static var fast: Self { .init(rawValue: 1 << 6) }
 	static var range: Self { .init(rawValue: 1 << 7) }
 	static var aux: Self { .init(rawValue: 1 << 8) }
-	static var cargo: Self { .init(rawValue: 1 << 9) }
+	static var reserved0: Self { .init(rawValue: 1 << 9) }
 	static var reserved1: Self { .init(rawValue: 1 << 10) }
 	static var reserved2: Self { .init(rawValue: 1 << 11) }
 	static var mountaineer: Self { .init(rawValue: 1 << 12) }
@@ -63,17 +63,13 @@ struct Traits: OptionSet, Hashable {
 
 extension Unit {
 
-	var isAir: Bool {
-		switch type {
-		case .heli, .jet: true
-		default: false
-		}
-	}
-
-	var spot: UInt8 {
-		self[.radar] ? 3 : 2
-	}
-
+	var isAir: Bool { type == .heli || type == .jet }
+	var untouched: Bool { ap == maxAP && mp == maxMP }
+	var hasActions: Bool { canMove || canAttack }
+	var canMove: Bool { mp > 0 }
+	var canAttack: Bool { ap > 0 && ammo > 0 }
+	var noRetaliation: Bool { self[.art] }
+	var spot: UInt8 { self[.radar] ? 3 : 2 }
 	var maxHP: UInt8 { 0xF }
 	var maxAP: UInt8 { 1 }
 	var maxMP: UInt8 { isAir ? 2 : 1 }
@@ -104,19 +100,21 @@ extension Unit {
 	}
 
 	var mov: UInt8 {
-		switch type {
-		case .soft: (self[.art] || self[.aa] ? 1 : 3) + (self[.fast] ? 1 : 0)
-		case .softWheel, .lightWheel: 8 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
-		case .lightTrack: 7 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
-		case .heavyTrack: 6 + (self[.fast] ? 1 : 0) - (self[.art] ? 1 : 0)
-		case .heli: 11 + (self[.fast] ? 2 : 0)
-		case .jet: 13 + (self[.fast] ? 2 : 0)
-		}
+		(self[.fast] ? 1 : 0) + {
+			switch type {
+			case .soft: self[.art] || self[.aa] ? 1 : 3
+			case .softWheel, .lightWheel: 8 - (self[.art] ? 1 : 0)
+			case .lightTrack: 7 - (self[.art] ? 1 : 0)
+			case .heavyTrack: 6 - (self[.art] ? 1 : 0)
+			case .heli: 9
+			case .jet: 12
+			}
+		}()
 	}
 
 	subscript(_ ts: Traits) -> Bool {
 		get { !traits.intersection(ts).isEmpty }
-		set { traits.formUnion(ts) }
+		set { newValue ? traits.formUnion(ts) : traits.subtract(ts) }
 	}
 
 	var stars: UInt8 {
@@ -146,23 +144,6 @@ extension Unit {
 
 		return Int(ent) + terrain.def + closeCombat + mountaineer + bigGuns
 	}
-}
-
-enum UnitType: UInt8, Hashable {
-	case soft, softWheel, lightWheel, lightTrack, heavyTrack, heli, jet
-}
-
-extension Unit: DeadOrAlive {
-	var alive: Bool { hp > 0 }
-}
-
-extension Unit {
-
-	var untouched: Bool { ap & 0b11 == 0b11 }
-	var hasActions: Bool { canMove || canAttack }
-	var canMove: Bool { ap & 0b01 == 0b01 }
-	var canAttack: Bool { ap & 0b10 == 0b10 && ammo > 0 }
-	var noRetaliation: Bool { self[.art] }
 
 	var cost: UInt16 {
 		(expCost + typeCost + traitCost + sum * 2) / (self[.aux] ? 2 : 1)
@@ -178,6 +159,17 @@ extension Unit {
 			by: amount,
 			cap: 0xF
 		)
+	}
+
+	mutating func promote(using d20: inout D20) {
+		let skills = [.evasion, isAir ? .fast : .mountaineer, .bigGuns, .crit] as [4 of Traits]
+		let left = .init { i in self[skills[i]] ? nil : skills[i] } as [4 of Traits?]
+		let cnt = left.reduce(into: 0, { r, t in r += t != nil ? 1 : 0 })
+
+		if cnt > 0, d20(.min(6 - cnt)) > 6 + cnt,
+		   let rnd = left.compactMap(id).randomElement(using: &d20) {
+			traits.insert(rnd)
+		}
 	}
 
 	private var expCost: UInt16 {
@@ -203,6 +195,14 @@ extension Unit {
 	private var sum: UInt16 {
 		UInt16(softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng)
 	}
+}
+
+enum UnitType: UInt8, Hashable {
+	case soft, softWheel, lightWheel, lightTrack, heavyTrack, heli, jet
+}
+
+extension Unit: DeadOrAlive {
+	var alive: Bool { hp > 0 }
 }
 
 extension Speicher where Element == Unit {

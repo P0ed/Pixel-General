@@ -4,7 +4,7 @@ struct TacticalNodes {
 	var camera: SKCameraNode
 	var map: MapNodes
 	var sounds: SoundNodes
-	var units: [UID: SKNode] = [:]
+	var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var fog: SetXY = .empty
 }
 
@@ -23,15 +23,18 @@ extension TacticalNodes {
 			map: Self.addMap(parent: parent, state: state),
 			sounds: Self.addSounds(parent: parent)
 		)
-		units = Dictionary(uniqueKeysWithValues: state.units.map { i, u in
-			let sprite = state.units[i].sprite
-			let xy = state.position[i]
-			sprite.position = state.map.point(at: xy)
-			sprite.zPosition = map.zPosition(at: xy)
-			sprite.isHidden = !state.player.visible[xy]
-			parent.addChild(sprite)
-			return (i.uid, sprite)
-		})
+		units = .init(
+			head: state.units.map { i, u in
+				let sprite = state.units[i].sprite
+				let xy = state.position[i]
+				sprite.position = state.map.point(at: xy)
+				sprite.zPosition = map.zPosition(at: xy)
+				sprite.isHidden = !state.player.visible[xy]
+				parent.addChild(sprite)
+				return sprite
+			},
+			tail: nil
+		)
 	}
 
 	private static func addSounds(parent: SKNode) -> SoundNodes {
@@ -85,7 +88,7 @@ extension TacticalNodes {
 
 	func updateUnits(_ state: borrowing TacticalState) {
 		state.units.forEach { i, u in
-			units[i.uid]?.update(hp: u.hp)
+			units[i]?.update(hp: u.hp)
 		}
 	}
 
@@ -117,7 +120,7 @@ extension TacticalNodes {
 			map.setTileGroup(state.map[xy].tileGroup(fog: fog[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
-			units[i.uid]?.isHidden = !visible[state.position[i]]
+			units[i]?.isHidden = !state.isVisible(i.uid)
 		}
 		self.fog = fog
 	}
@@ -137,11 +140,11 @@ extension TacticalScene {
 
 	func addUnit(_ uid: UID, node: SKNode) {
 		addChild(node)
-		nodes?.units[uid] = node
+		nodes?.units[uid.index] = node
 	}
 
 	func removeUnit(_ uid: UID) {
-		nodes?.units[uid]?.removeFromParent()
-		nodes?.units[uid] = .none
+		nodes?.units[uid.index]?.removeFromParent()
+		nodes?.units[uid.index] = .none
 	}
 }

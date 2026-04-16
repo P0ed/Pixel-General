@@ -59,7 +59,8 @@ extension TacticalState {
 				(unit.untouched ? (noEnemy ? 4 : 2) : 0) + (hasSupply ? (noEnemy ? 3 : 1) : 0)
 			)
 		}
-		unit.ap = 0b00
+		unit.ap = 0
+		unit.mp = 0
 		units[id.index] = unit
 	}
 

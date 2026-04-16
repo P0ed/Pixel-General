@@ -47,30 +47,33 @@ private extension TacticalScene {
 		let xy = state.position[uid.index]
 		sprite.position = state.map.point(at: xy)
 		sprite.zPosition = nodes.map.zPosition(at: xy)
-		sprite.isHidden = !state.player.visible[xy]
+		sprite.isHidden = !state.isVisible(uid)
 		addUnit(uid, node: sprite)
 	}
 
 	func processMove(uid: UID, from a: XY, to b: XY) async {
-		guard let nodes, let unit = nodes.units[uid] else { return }
+		guard let nodes, let unit = nodes.units[uid.index] else { return }
 
-		let z = nodes.map.zPosition(at: b)
-		unit.zPosition = max(unit.zPosition, z)
+		let za = nodes.map.zPosition(at: a)
+		let zb = nodes.map.zPosition(at: b)
+//		unit.isHidden = !state.player.visible[a]
+//			|| (state.cargo[uid.index] != -1 && !state.units[uid.index][.transport])
+		unit.position = state.map.point(at: a)
+		unit.zPosition = max(za, zb)
+
 		nodes.sounds.mov.play()
 		await unit.run(.move(
 			to: state.map.point(at: b),
-			duration: CGFloat(a.distance(to: b)) * 0.047
+			duration: CGFloat(a.distance(to: b)) * 0.033
 		))
-		unit.zPosition = z
-		unit.isHidden = !state.player.visible[b]
-
-		if !state.units[uid.index].alive { removeUnit(uid) }
+		unit.zPosition = zb
+		unit.isHidden = !state.isVisible(uid)
 	}
 
 	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
-		nodes?.units[src]?.showSight(for: 0.47)
+		nodes?.units[src.index]?.showSight(for: 0.47)
 		await run(.wait(forDuration: 0.22))
-		nodes?.units[dst]?.showSight(for: 0.47 - 0.22)
+		nodes?.units[dst.index]?.showSight(for: 0.47 - 0.22)
 		await run(.wait(forDuration: 0.22))
 
 		if hp > 0 {
@@ -79,7 +82,7 @@ private extension TacticalScene {
 			} else {
 				nodes?.sounds.boomS.play()
 			}
-			nodes?.units[dst]?.update(hp: hp)
+			nodes?.units[dst.index]?.update(hp: hp)
 		} else {
 			nodes?.sounds.boomL.play()
 			removeUnit(dst)
@@ -87,7 +90,7 @@ private extension TacticalScene {
 	}
 
 	func processResupply(id: UID) {
-		nodes?.units[id]?.update(hp: state.units[id.index].hp)
+		nodes?.units[id.index]?.update(hp: state.units[id.index].hp)
 	}
 
 	func processShop() {

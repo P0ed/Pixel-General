@@ -77,7 +77,7 @@ extension TacticalState {
 				cap: 7
 			)
 		}
-		if !unit[.cargo], unit.untouched { resupply(unit: id) }
+		if cargo[id.index] == -1 || unit[.transport], unit.untouched { resupply(unit: id) }
 		unit.ap = unit.maxAP
 		unit.mp = unit.maxMP
 		units[id.index] = unit

@@ -8,13 +8,10 @@ extension Unit {
 	}
 
 	static func inf2(_ country: Country) -> Self {
-		switch country {
-		case .pak: .regular >< .veteran
-		default:
-			switch country.team {
-			case .axis, .allies: .special >< .veteran
-			case .soviet: .regular >< .veteran
-			}
+		switch country.team {
+		case .axis: .ksk >< .veteran
+		case .allies: country == .pak ? .regular >< .veteran : .delta >< .veteran
+		case .soviet: .speznas
 		}
 	}
 
@@ -101,13 +98,7 @@ extension Unit {
 		}
 	}
 
-	static var veteran: Self {
-		.make { u in u.exp = 0x10 }
-	}
-
-	static var aux: Self {
-		.make { u in u[.aux] = true }
-	}
+	static var veteran: Self { Unit(exp: 0x10) }
 
 	static var truck: Self {
 		.make { u in
@@ -134,24 +125,51 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats.ini = 4
-			stats.softAtk = 6
+			stats.softAtk = 7
 			stats.hardAtk = 2
 			stats.groundDef = 6
 			stats.airDef = 4
 		}
 	}
 
-	static var special: Self {
+	static var delta: Self {
 		.make { stats in
 			stats.type = .soft
 			stats[.elite] = true
 			stats[.fast] = true
-			stats.ini = 7
-			stats.softAtk = 8
+			stats.ini = 8
+			stats.softAtk = 11
 			stats.hardAtk = 5
 			stats.airAtk = 2
 			stats.groundDef = 9
 			stats.airDef = 8
+		}
+	}
+
+	static var ksk: Self {
+		.make { stats in
+			stats.type = .soft
+			stats[.elite] = true
+			stats[.fast] = true
+			stats.ini = 9
+			stats.softAtk = 10
+			stats.hardAtk = 5
+			stats.airAtk = 3
+			stats.groundDef = 9
+			stats.airDef = 8
+		}
+	}
+
+	static var speznas: Self {
+		.make { stats in
+			stats.type = .soft
+			stats[.elite] = true
+			stats.ini = 8
+			stats.softAtk = 9
+			stats.hardAtk = 4
+			stats.airAtk = 2
+			stats.groundDef = 8
+			stats.airDef = 7
 		}
 	}
 

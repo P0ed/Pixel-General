@@ -108,6 +108,12 @@ extension TacticalState {
 	}
 
 	var country: Country { player.country }
+
+	func isVisible(_ id: UID) -> Bool {
+		player.visible[position[id.index]] && (
+			cargo[id.index] == -1 || units[id.index][.transport]
+		)
+	}
 }
 
 extension Building {

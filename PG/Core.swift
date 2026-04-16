@@ -67,7 +67,6 @@ final class Core {
 				u.mp = u.maxMP
 				u.ammo = u.maxAmmo
 				u.ent = 0
-				u[.cargo] = false
 			})
 		}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)

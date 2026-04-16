@@ -5,6 +5,8 @@ extension TacticalState {
 
 		if let nextPurchase {
 			buy(nextPurchase.0, at: nextPurchase.1)
+		} else if let nextReinforce {
+			resupply(unit: nextReinforce)
 		} else if let nextRetreat {
 			move(unit: nextRetreat.0, to: nextRetreat.1)
 		} else if let nextAttack {
@@ -38,17 +40,42 @@ extension TacticalState {
 		}
 	}
 
+	private func needsReinforcements(_ idx: Int, _ unit: Unit) -> Bool {
+		(cargo[idx] == -1 || unit[.transport]) && (
+			unit.hp < 6 || (
+				!unit[.supply] && unit.ammo < unit.maxAmmo / 2
+			)
+		)
+	}
+
+	private var nextReinforce: UID? {
+		units.firstMap { [country] i, u in
+			(
+				u.country == country && needsReinforcements(i, u)
+				&& u.untouched && (!u.isAir || hasAirfield(position[i]))
+			)
+			? i.uid
+			: nil
+		}
+	}
+
+	private func hasAirfield(_ xy: XY) -> Bool {
+		xy.n4.firstMap { xy in map[xy] == .airfield ? xy : nil } != nil
+	}
+
 	private var nextRetreat: (UID, XY)? {
 		units.firstMap { [country] i, u in
-			u.country != country || (u.hp > 5 && (u.ammo >= u.maxAmmo / 2 || u[.supply]))
-			? nil
-			: buildings.compactMap {
+			(
+				u.country == country && needsReinforcements(i, u)
+			)
+			? buildings.compactMap {
 				$1.country == country && ($1.type == .airfield) == u.isAir ? $1 : nil
 			}.min { a, b in
 				a.position.distance(to: position[i]) < b.position.distance(to: position[i])
 			}.flatMap { b in
 				move(id: i.uid, to: b.position)
 			}
+			: nil
 		}
 	}
 

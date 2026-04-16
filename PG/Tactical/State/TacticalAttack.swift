@@ -61,6 +61,7 @@ extension TacticalState {
 		units[si].ammo.decrement()
 		let alive = damage(unit: dst, dmg: dmg)
 		units[si].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
+		if !alive { units[si].promote(using: &d20) }
 
 		camera = targetPos
 		events.add(.attack(src, dst, dmg, units[di].hp))
@@ -153,6 +154,9 @@ extension TacticalState {
 		unitsMap[position[uid.index]] = -1
 		unitsMap[pos] = uid
 		position[uid.index] = pos
+		if cargo[uid.index] != -1 {
+			position[cargo[uid.index].index] = pos
+		}
 		units[uid.index].ent = 0
 		events.add(.move(uid, p, pos))
 	}

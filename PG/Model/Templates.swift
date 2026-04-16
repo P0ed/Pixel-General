@@ -55,18 +55,25 @@ extension [Unit] {
 
 	static func aux(country: Country) -> [Unit] {
 		[
-			Unit(country: country) >< .aux >< .truck,
-			Unit(country: country) >< .aux >< .truck,
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .inf(country),
-			Unit(country: country) >< .aux >< .ifv(country),
-			Unit(country: country) >< .aux >< .tank(country),
-			Unit(country: country) >< .aux >< .tank(country),
-			Unit(country: country) >< .aux >< .art(country),
-			Unit(country: country) >< .aux >< .art(country),
-			Unit(country: country) >< .aux >< .aa(country),
-			Unit(country: country) >< .aux >< .heli(country),
+			Unit(country: country, traits: .aux) >< .truck,
+			Unit(country: country, traits: .aux) >< .truck,
+			Unit(country: country, traits: .aux) >< .inf(country),
+			Unit(country: country, traits: .aux) >< .inf(country),
+
+			Unit(country: country, traits: .aux) >< .inf2(country),
+			Unit(country: country, traits: .aux) >< .ifv(country),
+			Unit(country: country, traits: .aux) >< .tank(country),
+			Unit(country: country, traits: .aux) >< .tank(country),
+
+			Unit(country: country, traits: .aux) >< .inf2(country),
+			Unit(country: country, traits: .aux) >< .ifv2(country),
+			Unit(country: country, traits: .aux) >< .heli(country),
+			Unit(country: country, traits: .aux) >< .heli(country),
+
+			Unit(country: country, traits: .aux) >< .art(country),
+			Unit(country: country, traits: .aux) >< .art(country),
+			Unit(country: country, traits: .aux) >< .aa(country),
+			Unit(country: country, traits: .aux) >< .aa(country),
 		]
 	}
 }
