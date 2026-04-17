@@ -23,7 +23,10 @@ extension TacticalState {
 		} ?? []
 	}
 
-	mutating func buy(_ template: Unit, at pos: XY) {
+	mutating func buy(_ idx: Int, at pos: XY) {
+		let shop = shopUnits(at: pos)
+		guard idx < shop.count else { return }
+		let template = shop[idx]
 		guard player.prestige >= template.cost, unitsMap[pos] < 0 else { return }
 
 		let unit = modifying(template) { u in

@@ -1,20 +1,20 @@
 extension TacticalState {
 
 	mutating func runAI() {
-		guard let target else { return endTurn() }
+		guard let target else { return action = .end }
 
 		if let nextPurchase {
-			buy(nextPurchase.0, at: nextPurchase.1)
+			action = nextPurchase
 		} else if let nextReinforce {
-			resupply(unit: nextReinforce)
+			action = nextReinforce
 		} else if let nextRetreat {
-			move(unit: nextRetreat.0, to: nextRetreat.1)
+			action = nextRetreat
 		} else if let nextAttack {
-			attack(src: nextAttack.0, dst: nextAttack.1)
+			action = nextAttack
 		} else if let nextMove = nextMove(target: target) {
-			move(unit: nextMove.0, to: nextMove.1)
+			action = nextMove
 		} else {
-			endTurn()
+			action = .end
 		}
 	}
 
@@ -31,11 +31,11 @@ extension TacticalState {
 		.first
 	}
 
-	private var nextPurchase: (Unit, XY)? {
+	private var nextPurchase: TacticalAction? {
 		player.prestige < 0x200 ? .none : buildings.firstMap { [country] _, b in
 			b.country == country && unitsMap[b.position] < 0
-			? shopUnits(at: b.position).randomElement()
-				.flatMap { t in t.cost * 2 <= player.prestige ? (t, b.position) : nil }
+			? shopUnits(at: b.position).enumerated().randomElement()
+				.flatMap { i, t in t.cost * 2 <= player.prestige ? .purchase(i, b.position) : nil }
 			: nil
 		}
 	}
@@ -48,13 +48,13 @@ extension TacticalState {
 		)
 	}
 
-	private var nextReinforce: UID? {
+	private var nextReinforce: TacticalAction? {
 		units.firstMap { [country] i, u in
 			(
 				u.country == country && needsReinforcements(i, u)
 				&& u.untouched && (!u.isAir || hasAirfield(position[i]))
 			)
-			? i.uid
+			? .resuply(i.uid)
 			: nil
 		}
 	}
@@ -63,7 +63,7 @@ extension TacticalState {
 		xy.n4.firstMap { xy in map[xy] == .airfield ? xy : nil } != nil
 	}
 
-	private var nextRetreat: (UID, XY)? {
+	private var nextRetreat: TacticalAction? {
 		units.firstMap { [country] i, u in
 			(
 				u.country == country && needsReinforcements(i, u)
@@ -79,7 +79,7 @@ extension TacticalState {
 		}
 	}
 
-	private var nextAttack: (UID, UID)? {
+	private var nextAttack: TacticalAction? {
 		units.firstMap { [country] i, u in
 			u.country != country
 			? nil
@@ -97,17 +97,17 @@ extension TacticalState {
 						+ (u[.aa] && b.1.isAir ? 10 : 0)
 					)
 				})
-				.map { t in (i.uid, t.0) }
+				.map { t in .attack(i.uid, t.0) }
 		}
 	}
 
-	private func nextMove(target: XY) -> (UID, XY)? {
+	private func nextMove(target: XY) -> TacticalAction? {
 		units.firstMap { [country] i, u in
 			u.country != country ? nil : move(id: i.uid, to: target)
 		}
 	}
 
-	private func move(id: UID, to target: XY) -> (UID, XY)? {
+	private func move(id: UID, to target: XY) -> TacticalAction? {
 		moves(for: id)
 			.set
 			.max(by: { a, b in
@@ -117,6 +117,6 @@ extension TacticalState {
 					max(0, map[b].def) - target.distance(to: b)
 				)
 			})
-			.map { x in (id, x) }
+			.map { x in .move(id, x) }
 	}
 }

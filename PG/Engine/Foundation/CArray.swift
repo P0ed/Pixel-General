@@ -63,6 +63,7 @@ extension CArray {
 
 	func map<A>(_ transform: (Int, Element) -> A) -> [A] {
 		var result = [] as [A]
+		result.reserveCapacity(count)
 		for i in indices {
 			result.append(transform(i, mem[i]))
 		}

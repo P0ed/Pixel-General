@@ -116,7 +116,10 @@ extension TacticalState {
 		}
 
 		selectUnit(units[uid.index].hasActions ? uid : .none)
-		events.add(.move(uid, moves.start, pos))
+		events.add(.move(uid, pos))
+		if cargo[uid.index] != -1 {
+			events.add(.move(cargo[uid.index], pos))
+		}
 
 		if let interruptor, units[interruptor.index].country.team != units[uid.index].country.team {
 			attack(src: uid, dst: interruptor, surprise: true)

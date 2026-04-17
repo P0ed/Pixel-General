@@ -21,7 +21,7 @@ extension TacticalState {
 		let tp = position[transport.index]
 		position[unit.index] = tp
 		unitsMap[p] = -1
-		events.add(.move(unit, p, tp))
+		events.add(.move(unit, tp))
 		selectUnit(transport)
 	}
 
@@ -44,6 +44,6 @@ extension TacticalState {
 		if units[idx][.art] { units[idx].ap = 0 }
 		unitsMap[xy] = idx.uid
 		player.visible.formUnion(vision(for: idx.uid))
-		events.add(.move(idx.uid, position[unit.index], xy))
+		events.add(.move(idx.uid, xy))
 	}
 }

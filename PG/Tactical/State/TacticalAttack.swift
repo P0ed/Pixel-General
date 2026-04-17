@@ -64,7 +64,7 @@ extension TacticalState {
 		if !alive { units[si].promote(using: &d20) }
 
 		camera = targetPos
-		events.add(.attack(src, dst, dmg, units[di].hp))
+		events.add(.fire(src, dst, dmg, units[di].hp))
 	}
 
 	private mutating func damage(unit: UID, dmg: UInt8) -> Bool {
@@ -158,6 +158,6 @@ extension TacticalState {
 			position[cargo[uid.index].index] = pos
 		}
 		units[uid.index].ent = 0
-		events.add(.move(uid, p, pos))
+		events.add(.move(uid, pos))
 	}
 }

@@ -1,15 +1,17 @@
 struct TacticalState: ~Copyable {
 	var map: Map<Terrain>
 	var players: Speicher<4, Player>
+	var auxilia: [4 of CArray<16, Unit>]
 	var buildings: CArray<32, Building>
 	var units: Speicher<128, Unit>
-	var unitsMap: Map<UID>
 	var position: [128 of XY]
 	var cargo: [128 of UID]
-	var auxilia: [4 of CArray<16, Unit>]
-	var events: CArray<4, TacticalEvent> = .init(tail: .none)
-	var d20: D20 = D20()
+	var unitsMap: Map<UID>
 	var turn: UInt32 = 0
+	var d20: D20 = D20()
+	var events: CArray<128, TacticalEvent> = .init(tail: .end)
+	var action: TacticalAction?
+
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var selectedUnit: UID?
@@ -110,9 +112,7 @@ extension TacticalState {
 	var country: Country { player.country }
 
 	func isVisible(_ id: UID) -> Bool {
-		player.visible[position[id.index]] && (
-			cargo[id.index] == -1 || units[id.index][.transport]
-		)
+		player.visible[position[id.index]] && unitsMap[position[id.index]] == id
 	}
 }
 

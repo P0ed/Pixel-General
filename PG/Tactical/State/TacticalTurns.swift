@@ -9,7 +9,7 @@ extension TacticalState {
 	mutating func endTurn() {
 		captureCities()
 
-		guard nextTurn() else { return events.add(.gameOver) }
+		guard nextTurn() else { return events.add(.end) }
 
 		resetUI()
 	}
@@ -19,7 +19,7 @@ extension TacticalState {
 			turn += 1
 			if playerIndex == 0 { startNextDay() }
 			if player.alive {
-				return players.firstMap { _, p in p.type != .ai ? () : nil } != nil
+				return aliveTeams.count > 1
 			}
 		}
 		return false
@@ -35,7 +35,6 @@ extension TacticalState {
 		for i in units.indices where units[i].alive {
 			endTurn(unit: i.uid)
 		}
-		events.add(.nextDay)
 	}
 
 	private func income(for player: Player) -> UInt16 {

@@ -1,14 +1,13 @@
 struct HQState: ~Copyable {
 	var player: Player
 	var units: Speicher<16, Unit>
-	var events: CArray<4, HQEvent> = .init(tail: .none)
+	var events: CArray<16, HQEvent> = .init(tail: .menu)
 	var cursor: XY = .zero
 	var selected: UID?
 }
 
 extension HQState {
 
-	var inputable: Bool { true }
 	var reducible: Bool { !events.isEmpty }
 
 	var status: Status {
@@ -42,7 +41,7 @@ extension HQState {
 	}
 
 	mutating func select(_ xy: XY) {
-		guard inputable, HQNodes.map.contains(xy) else { return }
+		guard HQNodes.map.contains(xy) else { return }
 
 		cursor = xy
 		mainAction()

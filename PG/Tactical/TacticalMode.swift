@@ -6,7 +6,6 @@ extension TacticalMode {
 	static var tactical: Self {
 		.init(
 			make: TacticalNodes.init,
-			inputable: { state in state.inputable },
 			input: { state, input in state.apply(input) },
 			update: { state, nodes in nodes.update(state: state) },
 			reducible: { state in state.reducible },

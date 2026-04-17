@@ -2,7 +2,6 @@ import SpriteKit
 
 struct SceneMode<State: ~Copyable, Event, Nodes> {
 	var make: (SKNode, borrowing State) -> Nodes
-	var inputable: (borrowing State) -> Bool
 	var input: (inout State, Input) -> Void
 	var update: (borrowing State, Nodes) -> Void
 	var reducible: (borrowing State) -> Bool

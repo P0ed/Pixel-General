@@ -3,14 +3,12 @@ import AVFoundation
 
 enum TacticalEvent: Hashable {
 	case spawn(UID)
-	case move(UID, XY, XY)
-	case attack(UID, UID, UInt8, UInt8)
-	case resupply(UID)
-	case nextDay
+	case move(UID, XY)
+	case fire(UID, UID, UInt8, UInt8)
+	case update(UID)
 	case shop
 	case menu
-	case gameOver
-	case none
+	case end
 }
 
 extension TacticalScene {
@@ -29,14 +27,12 @@ private extension TacticalScene {
 	func process(_ event: TacticalEvent) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid: uid)
-		case let .move(uid, a, b): await processMove(uid: uid, from: a, to: b)
-		case let .attack(src, dst, dmg, hp): await processAttack(src: src, dst: dst, dmg: dmg, hp: hp)
-		case let .resupply(id): processResupply(id: id)
-		case .nextDay: nodes?.updateUnits(state)
+		case let .move(uid, xy): await processMove(uid, xy)
+		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp)
+		case let .update(id): update(id: id)
 		case .shop: processShop()
 		case .menu: processMenu()
-		case .gameOver: restartGame(state: state)
-		case .none: break
+		case .end: restartGame(state: state)
 		}
 	}
 
@@ -51,26 +47,25 @@ private extension TacticalScene {
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(uid: UID, from a: XY, to b: XY) async {
+	func processMove(_ uid: UID, _ xy: XY) async {
 		guard let nodes, let unit = nodes.units[uid.index] else { return }
 
-		let za = nodes.map.zPosition(at: a)
-		let zb = nodes.map.zPosition(at: b)
-//		unit.isHidden = !state.player.visible[a]
-//			|| (state.cargo[uid.index] != -1 && !state.units[uid.index][.transport])
-		unit.position = state.map.point(at: a)
-		unit.zPosition = max(za, zb)
+		let p = state.map.point(at: xy)
+		let z = nodes.map.zPosition(at: xy)
+		unit.zPosition = max(unit.zPosition, z)
 
-		nodes.sounds.mov.play()
-		await unit.run(.move(
-			to: state.map.point(at: b),
-			duration: CGFloat(a.distance(to: b)) * 0.033
-		))
-		unit.zPosition = zb
+		if !unit.isHidden {
+			nodes.sounds.mov.play()
+			let d = (unit.position - p).length / 640.0
+			await unit.run(.move(to: p, duration: d))
+		} else {
+			unit.position = p
+		}
+		unit.zPosition = nodes.map.zPosition(at: xy)
 		unit.isHidden = !state.isVisible(uid)
 	}
 
-	func processAttack(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
+	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
 		nodes?.units[src.index]?.showSight(for: 0.47)
 		await run(.wait(forDuration: 0.22))
 		nodes?.units[dst.index]?.showSight(for: 0.47 - 0.22)
@@ -89,7 +84,7 @@ private extension TacticalScene {
 		}
 	}
 
-	func processResupply(id: UID) {
+	func update(id: UID) {
 		nodes?.units[id.index]?.update(hp: state.units[id.index].hp)
 	}
 
@@ -100,12 +95,12 @@ private extension TacticalScene {
 		else { return }
 
 		let xy = state.cursor
-		let items = state.shopUnits(at: xy).map { template in
+		let items = state.shopUnits(at: xy).enumerated().map { i, template in
 			MenuItem<TacticalState>.close(
 				icon: template.imageName,
 				status: template.status,
 				action: "\(template.cost) / \(state.player.prestige) ><",
-				update: { state in state.buy(template, at: xy) }
+				update: { state in state.buy(i, at: xy) }
 			)
 		}
 

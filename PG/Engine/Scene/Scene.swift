@@ -69,7 +69,7 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	func apply(_ input: Input) {
 		if case .some = menuState {
 			menuState?.apply(input)
-		} else if mode.inputable(state), !processing {
+		} else if !processing {
 			mode.input(&state, input)
 		}
 	}

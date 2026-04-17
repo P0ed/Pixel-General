@@ -7,7 +7,6 @@ enum HQEvent {
 	case shop
 	case scenario
 	case menu
-	case none
 }
 
 extension HQScene {
@@ -28,7 +27,6 @@ extension HQScene {
 		case .shop: processShop()
 		case .scenario: processScenario()
 		case .menu: processMenu()
-		case .none: break
 		}
 	}
 

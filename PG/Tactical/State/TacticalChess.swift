@@ -54,15 +54,15 @@ extension TacticalState {
 		var state = TacticalState(
 			map: map,
 			players: .init(head: [players[0], players[1]], tail: .none),
+			auxilia: .init { i in .init(tail: .empty) },
 			buildings: .init(
 				head: [buildings[0], buildings[1]],
 				tail: .empty
 			),
 			units: .init(head: units, tail: .empty),
-			unitsMap: unitsMap,
 			position: position,
 			cargo: .init(repeating: -1),
-			auxilia: .init { i in .init(tail: .empty) }
+			unitsMap: unitsMap
 		)
 		state.players[0].visible = state.vision(for: state.players[0].country)
 		state.players[1].visible = state.vision(for: state.players[1].country)

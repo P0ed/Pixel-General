@@ -1,8 +1,7 @@
 extension TacticalState {
 
-	var inputable: Bool { player.type == .human }
-
 	mutating func apply(_ input: Input) {
+		guard player.type == .human else { return }
 		switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .menu: events.add(.menu)
@@ -23,10 +22,10 @@ extension TacticalState {
 private extension TacticalState {
 
 	mutating func select(_ xy: XY) {
-		guard inputable, map.contains(xy) else { return }
+		guard map.contains(xy) else { return }
 
 		cursor = xy
-		primaryAction()
+		if player.type == .human { primaryAction() }
 	}
 
 	mutating func moveCursor(_ direction: Direction) {
@@ -40,14 +39,14 @@ private extension TacticalState {
 
 			if let dst = unitAt(cursor), player.visible[cursor] {
 				if dst.country.team != unit.country.team {
-					attack(src: selectedUnit, dst: unitsMap[cursor])
+					action = .attack(selectedUnit, unitsMap[cursor])
 				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]) {
-					embark(unit: selectedUnit, transport: unitsMap[cursor])
+					action = .embark(selectedUnit, unitsMap[cursor])
 				} else {
 					selectUnit(dst == unit ? .none : unitsMap[cursor])
 				}
 			} else if unit.country == country, unit.canMove {
-				move(unit: selectedUnit, to: cursor)
+				action = .move(selectedUnit, cursor)
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
 			} else {
@@ -68,7 +67,7 @@ private extension TacticalState {
 
 	mutating func squareAction() {
 		guard let selectedUnit, canDisembark(unit: selectedUnit, to: cursor) else { return }
-		disembark(unit: selectedUnit, to: cursor)
+		action = .disembark(selectedUnit, cursor)
 	}
 
 	mutating func triangleAction() {
@@ -76,8 +75,7 @@ private extension TacticalState {
 			  units[selectedUnit.index].untouched
 		else { return }
 
-		resupply(unit: selectedUnit)
-		events.add(.resupply(selectedUnit))
+		action = .resuply(selectedUnit)
 		selectUnit(.none)
 	}
 
