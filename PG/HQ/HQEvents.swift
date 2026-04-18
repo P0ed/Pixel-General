@@ -11,11 +11,7 @@ enum HQEvent {
 
 extension HQNodes {
 
-	func process(_ events: [HQEvent], _ state: borrowing HQState) async {
-		for event in events { await process(event, state) }
-	}
-
-	private func process(_ event: HQEvent, _ state: borrowing HQState) async {
+	func process(_ event: HQEvent, _ state: borrowing HQState) async {
 		switch event {
 		case .move(let uid, let xy): processMove(uid, xy)
 		case .spawn(let uid): processSpawn(uid, state)

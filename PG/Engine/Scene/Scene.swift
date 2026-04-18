@@ -84,7 +84,9 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			if let action = await mode.send(action) {
 				let events = mode.reduce(&state, action)
 				if !events.isEmpty, let nodes {
-					await mode.process(state, events, nodes)
+					for event in events {
+						await mode.process(state, event, nodes)
+					}
 				}
 			}
 			processing = false

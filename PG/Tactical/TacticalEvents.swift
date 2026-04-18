@@ -13,13 +13,6 @@ enum TacticalEvent: Hashable {
 
 extension TacticalNodes {
 
-	func process(_ events: [TacticalEvent], _ state: borrowing TacticalState) async {
-		for event in events { await process(event, state) }
-	}
-}
-
-private extension TacticalNodes {
-
 	func process(_ event: TacticalEvent, _ state: borrowing TacticalState) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
@@ -31,6 +24,9 @@ private extension TacticalNodes {
 		case .end: restartGame(state)
 		}
 	}
+}
+
+private extension TacticalNodes {
 
 	func processSpawn(_ uid: UID, _ state: borrowing TacticalState) {
 		let sprite = state.units[uid.index].sprite
