@@ -11,84 +11,78 @@ enum TacticalEvent: Hashable {
 	case end
 }
 
-extension TacticalScene {
+extension TacticalNodes {
 
-	func process(events: [TacticalEvent]) async {
-		for e in events { await process(e) }
-	}
-
-	func respawn() {
-		state.units.forEach { i, u in processSpawn(uid: i.uid) }
+	func process(_ events: [TacticalEvent], _ state: borrowing TacticalState) async {
+		for event in events { await process(event, state) }
 	}
 }
 
-private extension TacticalScene {
+private extension TacticalNodes {
 
-	func process(_ event: TacticalEvent) async {
+	func process(_ event: TacticalEvent, _ state: borrowing TacticalState) async {
 		switch event {
-		case let .spawn(uid): processSpawn(uid: uid)
-		case let .move(uid, xy): await processMove(uid, xy)
+		case let .spawn(uid): processSpawn(uid, state)
+		case let .move(uid, xy): await processMove(uid, xy, state)
 		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp)
-		case let .update(id): update(id: id)
-		case .shop: processShop()
-		case .menu: processMenu()
-		case .end: restartGame(state: state)
+		case let .update(id): update(id, state)
+		case .shop: processShop(state)
+		case .menu: processMenu(state)
+		case .end: restartGame(state)
 		}
 	}
 
-	func processSpawn(uid: UID) {
-		guard let nodes else { return }
-
+	func processSpawn(_ uid: UID, _ state: borrowing TacticalState) {
 		let sprite = state.units[uid.index].sprite
 		let xy = state.position[uid.index]
 		sprite.position = state.map.point(at: xy)
-		sprite.zPosition = nodes.map.zPosition(at: xy)
+		sprite.zPosition = map.zPosition(at: xy)
 		sprite.isHidden = !state.isVisible(uid)
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(_ uid: UID, _ xy: XY) async {
-		guard let nodes, let unit = nodes.units[uid.index] else { return }
+	func processMove(_ uid: UID, _ xy: XY, _ state: borrowing TacticalState) async {
+		guard let unit = units[uid.index] else { return }
 
 		let p = state.map.point(at: xy)
-		let z = nodes.map.zPosition(at: xy)
+		let z = map.zPosition(at: xy)
 		unit.zPosition = max(unit.zPosition, z)
 
 		if !unit.isHidden {
-			nodes.sounds.mov.play()
+			sounds.mov.play()
 			let d = (unit.position - p).length / 640.0
 			await unit.run(.move(to: p, duration: d))
 		} else {
 			unit.position = p
 		}
-		unit.zPosition = nodes.map.zPosition(at: xy)
+		unit.zPosition = map.zPosition(at: xy)
 		unit.isHidden = !state.isVisible(uid)
 	}
 
 	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
-		nodes?.units[src.index]?.showSight(for: 0.47)
-		await run(.wait(forDuration: 0.22))
-		nodes?.units[dst.index]?.showSight(for: 0.47 - 0.22)
-		await run(.wait(forDuration: 0.22))
+		units[src.index]?.showSight(for: 0.47)
+		await root?.run(.wait(forDuration: 0.22))
+		units[dst.index]?.showSight(for: 0.47 - 0.22)
+		await root?.run(.wait(forDuration: 0.22))
 
 		if hp > 0 {
 			if dmg > 0 {
-				nodes?.sounds.boomM.play()
+				sounds.boomM.play()
 			} else {
-				nodes?.sounds.boomS.play()
+				sounds.boomS.play()
 			}
-			nodes?.units[dst.index]?.update(hp: hp)
+			units[dst.index]?.update(hp: hp)
 		} else {
-			nodes?.sounds.boomL.play()
+			sounds.boomL.play()
 			removeUnit(dst)
 		}
 	}
 
-	func update(id: UID) {
-		nodes?.units[id.index]?.update(hp: state.units[id.index].hp)
+	func update(_ id: UID, _ state: borrowing TacticalState) {
+		units[id.index]?.update(hp: state.units[id.index].hp)
 	}
 
-	func processShop() {
+	func processShop(_ state: borrowing TacticalState) {
 		guard let building = state.buildings[state.cursor],
 			  building.country == state.country,
 			  state.unitAt(state.cursor) == nil
@@ -104,17 +98,21 @@ private extension TacticalScene {
 			)
 		}
 
-		if !items.isEmpty { show(MenuState(items: items)) }
+		if !items.isEmpty { (root as? TacticalScene)?.show(MenuState(items: items)) }
 	}
 
-	func processMenu() {
-		guard case .none = menuState else { return show(.none) }
+	private var scene: TacticalScene? { root as? TacticalScene }
+
+	func processMenu(_ state: borrowing TacticalState) {
+		guard let scene, case .none = scene.menuState else {
+			return _ = scene?.show(.none)
+		}
 
 		var vol: Int {
-			let v = audioEngine.mainMixerNode.outputVolume
+			let v = scene.audioEngine.mainMixerNode.outputVolume
 			return v < 0.1 ? 0 : v < 0.7 ? 1 : 2
 		}
-		let toggleVol = { [audioEngine] in
+		let toggleVol = { [audioEngine = scene.audioEngine] in
 			switch vol {
 			case 0: audioEngine.mainMixerNode.outputVolume = 0.5
 			case 1: audioEngine.mainMixerNode.outputVolume = 1.0
@@ -122,20 +120,20 @@ private extension TacticalScene {
 			}
 		}
 
-		show(MenuState(
+		scene.show(MenuState(
 			items: [
 				.close(icon: "Start", status: "End turn") { state in
 					state.endTurn()
 				},
 				.close(icon: "Save", status: "Save") { state in
-					core.store(tactical: state, auto: false)
+					core.store(state, auto: false)
 				},
-				.close(icon: "Load", status: "Load") { [weak self] state in
+				.close(icon: "Load", status: "Load") { [weak scene] state in
 					core.load(auto: false)
-					_ = self?.view?.present(core.state)
+					_ = scene?.view?.present(core.state)
 				},
-				.close(icon: "HQ", status: "HQ") { [weak self] state in
-					self?.restartGame(state: state)
+				.close(icon: "HQ", status: "HQ") { state in
+					restartGame(state)
 				},
 				MenuItem(icon: "S", status: "Prestige: \(state.player.prestige)", update: { _, m in
 					m
@@ -150,8 +148,8 @@ private extension TacticalScene {
 		))
 	}
 
-	private func restartGame(state: borrowing TacticalState) {
-		core.complete(tactical: state)
-		view?.present(core.state)
+	private func restartGame(_ state: borrowing TacticalState) {
+		core.complete(state)
+		scene?.view?.present(core.state)
 	}
 }

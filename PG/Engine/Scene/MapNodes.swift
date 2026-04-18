@@ -36,7 +36,7 @@ extension MapNodes {
 		}
 	}
 
-	static func addCursor(parent: SKNode, z: CGFloat = 0.0, color: SKColor? = nil) -> SKNode {
+	static func addCursor(root: SKNode, z: CGFloat = 0.0, color: SKColor? = nil) -> SKNode {
 		let node = SKNode()
 		node.position = .init(x: -1.0, y: -1.0)
 
@@ -48,7 +48,7 @@ extension MapNodes {
 		cursor.zPosition = 0.1 + z
 
 		node.addChild(cursor)
-		parent.addChild(node)
+		root.addChild(node)
 
 		return node
 	}

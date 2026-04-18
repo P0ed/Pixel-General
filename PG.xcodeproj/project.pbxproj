@@ -44,7 +44,7 @@
 		5F919D662EA9596E0037A208 /* TacticalShop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AD2EA93AC3008A0A95 /* TacticalShop.swift */; };
 		5F919D682EA9596E0037A208 /* TacticalState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33A92EA93AC3008A0A95 /* TacticalState.swift */; };
 		5F919D692EA9596E0037A208 /* XY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AF2EA93AC3008A0A95 /* XY.swift */; };
-		5F919D6A2EA9596E0037A208 /* TacticalActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AA2EA93AC3008A0A95 /* TacticalActions.swift */; };
+		5F919D6A2EA9596E0037A208 /* TacticalAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AA2EA93AC3008A0A95 /* TacticalAction.swift */; };
 		5F919D6B2EA9596E0037A208 /* TacticalInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33AC2EA93AC3008A0A95 /* TacticalInput.swift */; };
 		5F919D6C2EA959FA0037A208 /* boom-l.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A42EA93AC3008A0A95 /* boom-l.wav */; };
 		5F919D6D2EA959FA0037A208 /* boom-s.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A62EA93AC3008A0A95 /* boom-s.wav */; };
@@ -79,7 +79,7 @@
 		5F2A33A62EA93AC3008A0A95 /* boom-s.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "boom-s.wav"; sourceTree = "<group>"; };
 		5F2A33A82EA93AC3008A0A95 /* Arrays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arrays.swift; sourceTree = "<group>"; };
 		5F2A33A92EA93AC3008A0A95 /* TacticalState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalState.swift; sourceTree = "<group>"; };
-		5F2A33AA2EA93AC3008A0A95 /* TacticalActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalActions.swift; sourceTree = "<group>"; };
+		5F2A33AA2EA93AC3008A0A95 /* TacticalAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalAction.swift; sourceTree = "<group>"; };
 		5F2A33AB2EA93AC3008A0A95 /* TacticalAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalAI.swift; sourceTree = "<group>"; };
 		5F2A33AC2EA93AC3008A0A95 /* TacticalInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalInput.swift; sourceTree = "<group>"; };
 		5F2A33AD2EA93AC3008A0A95 /* TacticalShop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalShop.swift; sourceTree = "<group>"; };
@@ -187,13 +187,13 @@
 			isa = PBXGroup;
 			children = (
 				5F2A33A92EA93AC3008A0A95 /* TacticalState.swift */,
-				5F2A33AA2EA93AC3008A0A95 /* TacticalActions.swift */,
+				5F2A33AC2EA93AC3008A0A95 /* TacticalInput.swift */,
+				5F2A33AA2EA93AC3008A0A95 /* TacticalAction.swift */,
 				5FF679762F06FB0D00586323 /* TacticalMove.swift */,
 				5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */,
 				5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */,
 				5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */,
 				5F2A33AB2EA93AC3008A0A95 /* TacticalAI.swift */,
-				5F2A33AC2EA93AC3008A0A95 /* TacticalInput.swift */,
 				5F2A33AD2EA93AC3008A0A95 /* TacticalShop.swift */,
 				5F2A33AE2EA93AC3008A0A95 /* TacticalStateFactory.swift */,
 				5F2F5E5D2F8516FB006D4D7A /* TacticalChess.swift */,
@@ -448,7 +448,7 @@
 				5F5560FC2EF5B0CF00C08E14 /* HQNodes.swift in Sources */,
 				5FF7EB3D2EB6428F00E287FF /* MapGeneration.swift in Sources */,
 				5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */,
-				5F919D6A2EA9596E0037A208 /* TacticalActions.swift in Sources */,
+				5F919D6A2EA9596E0037A208 /* TacticalAction.swift in Sources */,
 				5FB4D1262EAFABCB0010E702 /* TacticalTurns.swift in Sources */,
 				5FE1218F2F7FE42F001C16A5 /* Server.swift in Sources */,
 				5F919D6B2EA9596E0037A208 /* TacticalInput.swift in Sources */,

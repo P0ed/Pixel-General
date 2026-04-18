@@ -8,40 +8,35 @@ enum TacticalAction: Hashable {
 	case resuply(UID)
 	case purchase(Int, XY)
 	case end
+	case nop
 }
 
 extension TacticalState {
 
-	mutating func reduce() -> [TacticalEvent] {
-		if isCursorTooFar {
-			alignCamera()
-			return []
+	mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
+
+		switch action {
+		case .attack(let src, let dst): attack(src: src, dst: dst)
+		case .move(let unit, let xy): move(unit: unit, to: xy)
+		case .embark(let u, let t): embark(unit: u, transport: t)
+		case .disembark(let t, let xy): disembark(unit: t, to: xy)
+		case .resuply(let u): resupply(unit: u)
+		case .purchase(let idx, let xy): buy(idx, at: xy)
+		case .end: endTurn()
+		case .nop: break
 		}
 		let es = events.map { _, e in e }
 		events.erase()
-		let aes = es + (action.map { action in
-			switch action {
-			case .attack(let src, let dst): attack(src: src, dst: dst)
-			case .move(let unit, let xy): move(unit: unit, to: xy)
-			case .embark(let u, let t): embark(unit: u, transport: t)
-			case .disembark(let t, let xy): disembark(unit: t, to: xy)
-			case .resuply(let u): resupply(unit: u)
-			case .purchase(let idx, let xy): buy(idx, at: xy)
-			case .end: endTurn()
-			}
-			let es = events.map { _, e in e }
-			events.erase()
-			return es
-		} ?? [])
-		action = .none
-		if !aes.isEmpty {
-			return aes
-		}
-		if player.type == .ai {
-			runAI()
-			return []
-		}
-		return []
+		return es
+
+//		if isCursorTooFar {
+//			alignCamera()
+//			return []
+//		}
+//		if player.type == .ai {
+//			runAI()
+//			return []
+//		}
 	}
 
 	mutating func resupply(unit id: UID) {
@@ -113,7 +108,7 @@ extension TacticalState {
 	var isCursorTooFar: Bool { tooFarX || tooFarY }
 
 	var reducible: Bool {
-		isCursorTooFar || !events.isEmpty || action != .none || player.type == .ai
+		isCursorTooFar || !events.isEmpty || player.type == .ai
 	}
 
 	mutating func alignCamera() {

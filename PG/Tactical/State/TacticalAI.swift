@@ -1,20 +1,20 @@
 extension TacticalState {
 
-	mutating func runAI() {
-		guard let target else { return action = .end }
+	mutating func runAI() -> TacticalAction {
+		guard let target else { return .end }
 
 		if let nextPurchase {
-			action = nextPurchase
+			return nextPurchase
 		} else if let nextReinforce {
-			action = nextReinforce
+			return nextReinforce
 		} else if let nextRetreat {
-			action = nextRetreat
+			return nextRetreat
 		} else if let nextAttack {
-			action = nextAttack
+			return nextAttack
 		} else if let nextMove = nextMove(target: target) {
-			action = nextMove
+			return nextMove
 		} else {
-			action = .end
+			return .end
 		}
 	}
 

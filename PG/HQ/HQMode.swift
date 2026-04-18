@@ -1,5 +1,5 @@
-typealias HQMode = SceneMode<HQState, HQEvent, HQNodes>
-typealias HQScene = Scene<HQState, HQEvent, HQNodes>
+typealias HQMode = SceneMode<HQState, Void, HQEvent, HQNodes>
+typealias HQScene = Scene<HQState, Void, HQEvent, HQNodes>
 
 extension HQMode {
 
@@ -8,12 +8,11 @@ extension HQMode {
 			make: HQNodes.init,
 			input: { state, input in state.apply(input) },
 			update: { state, nodes in nodes.update(state: state) },
-			reducible: { state in state.reducible },
-			reduce: { state in state.reduce() },
-			process: { scene, events in await scene.process(events: events) },
+			reduce: { state, _ in state.reduce() },
+			process: { state, events, nodes in await nodes.process(events, state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nodes.mouse(event: event) },
-			save: { state in core.store(hq: state) }
+			save: { state in core.store(state) }
 		)
 	}
 }

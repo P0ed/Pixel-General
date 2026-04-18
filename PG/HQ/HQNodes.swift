@@ -1,31 +1,35 @@
 import SpriteKit
 
 struct HQNodes {
+	weak var root: SKNode?
 	var camera: SKCameraNode
 	var map: MapNodes
-	var units: [16 of SKNode?]
+	@IO var units: [16 of SKNode?]
 }
 
 extension HQNodes {
 
 	static let map = Map<Terrain>(size: 4, zero: .field)
 
-	init(parent: SKNode, state: borrowing HQState) {
+	init(root: SKNode, state: borrowing HQState) {
 		self = HQNodes(
-			camera: Self.addCamera(parent: parent),
-			map: Self.addMap(parent: parent, state: state),
+			root: root,
+			camera: Self.addCamera(root: root),
+			map: Self.addMap(root: root, state: state),
 			units: .init(repeating: nil)
 		)
 		units = .init { i in
 			let u = state.units[i]
 			let node = unitSprite(uid: i.uid, unit: u)
 			node.isHidden = !u.alive
-			parent.addChild(node)
+			root.addChild(node)
 			return node
 		}
 	}
 
-	private static func addMap(parent: SKNode, state: borrowing HQState) -> MapNodes {
+	var scene: HQScene? { root as? HQScene }
+
+	private static func addMap(root: SKNode, state: borrowing HQState) -> MapNodes {
 
 		let layers = (0 ..< map.size * 2 - 1).map { idx in
 			SKTileMapNode(tiles: .terrain, size: map.size)
@@ -34,14 +38,14 @@ extension HQNodes {
 			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
 			layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
 			layer.zPosition = CGFloat(idx)
-			parent.addChild(layer)
+			root.addChild(layer)
 		}
 
 		let nodes = MapNodes(
 			layers: layers,
 			size: map.size,
-			cursor: MapNodes.addCursor(parent: parent),
-			selection: MapNodes.addCursor(parent: parent, z: -0.05, color: .selectedCursor)
+			cursor: MapNodes.addCursor(root: root),
+			selection: MapNodes.addCursor(root: root, z: -0.05, color: .selectedCursor)
 		)
 
 		map.indices.forEach { xy in
@@ -51,11 +55,11 @@ extension HQNodes {
 		return nodes
 	}
 
-	private static func addCamera(parent: SKNode) -> SKCameraNode {
+	private static func addCamera(root: SKNode) -> SKCameraNode {
 		let camera = SKCameraNode()
 		camera.position = XY(map.size - 1, map.size - 1).point * 0.5
-		parent.addChild(camera)
-		(parent as? SKScene)?.camera = camera
+		root.addChild(camera)
+		(root as? SKScene)?.camera = camera
 		return camera
 	}
 
@@ -103,16 +107,16 @@ extension HQNodes {
 	}
 }
 
-extension HQScene {
+extension HQNodes {
 
 	func addUnit(_ uid: UID, node: SKNode) {
-		addChild(node)
-		nodes?.units[uid.index]?.removeFromParent()
-		nodes?.units[uid.index] = node
+		root?.addChild(node)
+		units[uid.index]?.removeFromParent()
+		units[uid.index] = node
 	}
 
 	func removeUnit(_ uid: UID) {
-		nodes?.units[uid.index]?.removeFromParent()
-		nodes?.units[uid.index] = nil
+		units[uid.index]?.removeFromParent()
+		units[uid.index] = nil
 	}
 }

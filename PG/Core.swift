@@ -40,18 +40,18 @@ final class Core {
 		UserDefaults.standard.set(encode(state), forKey: auto ? "auto" : "main")
 	}
 
-	func store(hq: borrowing HQState, auto: Bool = true) {
+	func store(_ hq: borrowing HQState, auto: Bool = true) {
 		state.hq = clone(hq)
 		save(auto: auto)
 	}
 
-	func store(tactical: borrowing TacticalState, auto: Bool = true) {
+	func store(_ tactical: borrowing TacticalState, auto: Bool = true) {
 		guard state.hq != nil else { return }
 		state.tactical = clone(tactical)
 		save(auto: auto)
 	}
 
-	func complete(tactical: borrowing TacticalState) {
+	func complete(_ tactical: borrowing TacticalState) {
 		guard let c = state.hq?.player.country, tactical.map.size == 32 else {
 			state.tactical = nil
 			save()

@@ -1,7 +1,7 @@
 import SpriteKit
 
-final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
-	let mode: SceneMode<State, Event, Nodes>
+final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
+	let mode: SceneMode<State, Action, Event, Nodes>
 	private let hid = HIDController()
 
 	private var processing = false
@@ -9,11 +9,11 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 	private(set) var menuState: MenuState<State>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
-	var nodes: Nodes?
+	private(set) var nodes: Nodes?
 	private var willCloseWindow: Any?
 	private var eventsMonitor: Any?
 
-	init(mode: SceneMode<State, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
+	init(mode: SceneMode<State, Action, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
 		self.state = state
 		self.mode = mode
 		super.init(size: size)
@@ -70,7 +70,24 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 		if case .some = menuState {
 			menuState?.apply(input)
 		} else if !processing {
-			mode.input(&state, input)
+			if let action = mode.input(&state, input) {
+				send(action)
+			}
+		}
+	}
+
+	func send(_ action: Action) {
+		guard !processing else { return }
+		processing = true
+
+		Task {
+			if let action = await mode.send(action) {
+				let events = mode.reduce(&state, action)
+				if !events.isEmpty, let nodes {
+					await mode.process(state, events, nodes)
+				}
+			}
+			processing = false
 		}
 	}
 
@@ -80,24 +97,8 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 
 	private func didSetState() {
 		guard let nodes else { return }
-
 		updateStatus()
 		mode.update(state, nodes)
-
-		guard !processing, mode.reducible(state) else { return }
-
-		processing = true
-		let events = mode.reduce(&state)
-		if !events.isEmpty {
-			Task {
-				await mode.process(self, events)
-				processing = false
-				if mode.reducible(state) { didSetState() }
-			}
-		} else {
-			processing = false
-			if mode.reducible(state) { didSetState() }
-		}
 	}
 
 	private func didSetMenu() {
@@ -142,16 +143,16 @@ final class Scene<State: ~Copyable, Event, Nodes>: SKScene {
 
 			if panAccumulator.x > 64 {
 				panAccumulator.x -= 64
-				mode.input(&state, .pan(.zero.neighbor(.left).neighbor(.down)))
+				apply(.pan(.zero.neighbor(.left).neighbor(.down)))
 			} else if panAccumulator.x < -64 {
 				panAccumulator.x += 64
-				mode.input(&state, .pan(.zero.neighbor(.right).neighbor(.up)))
+				apply(.pan(.zero.neighbor(.right).neighbor(.up)))
 			} else if panAccumulator.y > 32 {
 				panAccumulator.y -= 32
-				mode.input(&state, .pan(.zero.neighbor(.up).neighbor(.left)))
+				apply(.pan(.zero.neighbor(.up).neighbor(.left)))
 			} else if panAccumulator.y < -32 {
 				panAccumulator.y += 32
-				mode.input(&state, .pan(.zero.neighbor(.down).neighbor(.right)))
+				apply(.pan(.zero.neighbor(.down).neighbor(.right)))
 			}
 			if abs(x) < 0.1, abs(y) < 0.1 { panAccumulator = .zero }
 

@@ -9,44 +9,38 @@ enum HQEvent {
 	case menu
 }
 
-extension HQScene {
+extension HQNodes {
 
-	func process(events: [Event]) async {
-		for event in events { await process(event) }
+	func process(_ events: [HQEvent], _ state: borrowing HQState) async {
+		for event in events { await process(event, state) }
 	}
 
-	func respawn() {
-		state.units.forEach { i, u in processSpawn(uid: i.uid) }
-	}
-
-	private func process(_ event: Event) async {
+	private func process(_ event: HQEvent, _ state: borrowing HQState) async {
 		switch event {
-		case .move(let uid, let xy): processMove(uid: uid, xy: xy)
-		case .spawn(let uid): processSpawn(uid: uid)
+		case .move(let uid, let xy): processMove(uid, xy)
+		case .spawn(let uid): processSpawn(uid, state)
 		case .remove(let uid): removeUnit(uid)
-		case .shop: processShop()
-		case .scenario: processScenario()
+		case .shop: processShop(state)
+		case .scenario: processScenario(state)
 		case .menu: processMenu()
 		}
 	}
 
-	private func processMove(uid: UID, xy: XY) {
-		nodes?.units[uid.index]?.position = xy.point
-		nodes?.units[uid.index]?.zPosition = nodes?.map.zPosition(at: xy) ?? 0.0
+	private func processMove(_ uid: UID, _ xy: XY) {
+		units[uid.index]?.position = xy.point
+		units[uid.index]?.zPosition = map.zPosition(at: xy)
 	}
 
-	private func processSpawn(uid: UID) {
-		guard let nodes else { return }
-
+	private func processSpawn(_ uid: UID, _ state: borrowing HQState) {
 		let sprite = state.units[uid.index].hqSprite
 		let xy = XY(uid.index % 4, uid.index / 4)
 		sprite.position = HQNodes.map.point(at: xy)
-		sprite.zPosition = nodes.map.zPosition(at: xy)
+		sprite.zPosition = map.zPosition(at: xy)
 		addUnit(uid, node: sprite)
 	}
 
-	private func processShop() {
-		show(.init(
+	private func processShop(_ state: borrowing HQState) {
+		(root as? HQScene)?.show(.init(
 			items: [Unit].shop(country: state.country).map { [xy = state.cursor] u in
 				.close(
 					icon: u.imageName,
@@ -59,21 +53,21 @@ extension HQScene {
 	}
 
 	private func processMenu() {
-		show(MenuState(items: [
-			.close(icon: "New", status: "New") { [weak self] _ in
+		(root as? HQScene)?.show(MenuState(items: [
+			.close(icon: "New", status: "New") { [weak root] _ in
 				core.new()
-				self?.view?.present(core.state)
+				(root as? HQScene)?.view?.present(core.state)
 			},
 			.close(icon: "Save", status: "Save") { state in
-				core.store(hq: state, auto: false)
+				core.store(state, auto: false)
 			},
-			.close(icon: "Load", status: "Load") { [weak self] _ in
+			.close(icon: "Load", status: "Load") { [weak root] _ in
 				core.load(auto: false)
-				self?.view?.present(core.state)
+				(root as? HQScene)?.view?.present(core.state)
 			},
-			.close(icon: "Chess", status: "Chess", update: { [weak self] _ in
-				core.store(tactical: .chess())
-				self?.view?.present(core.state)
+			.close(icon: "Chess", status: "Chess", update: { [weak root] _ in
+				core.store(TacticalState.chess())
+				(root as? HQScene)?.view?.present(core.state)
 			})
 		]))
 	}

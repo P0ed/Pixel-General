@@ -91,7 +91,7 @@ extension HQState {
 
 	mutating func reduce() -> [HQEvent] {
 		defer { events.erase() }
-		return events.map { $1 }
+		return events.map { _, e in e }
 	}
 }
 

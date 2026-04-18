@@ -1,8 +1,8 @@
 import SpriteKit
 
-extension HQScene {
+extension HQNodes {
 
-	func processScenario() {
+	func processScenario(_ state: borrowing HQState) {
 		var players: [4 of Player] = [
 			state.player,
 			Player(country: .isr, type: .ai, prestige: 0x1400),
@@ -15,55 +15,57 @@ extension HQScene {
 			}
 		}
 
-		show(MenuState<State>(
-			items: (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].country)", status: "Player \(idx)", update: { _, menu in
-					MenuState(
-						items: countriesLeft.map { c in
-							MenuItem(icon: "\(c)", status: "\(c)", update: { state, _ in
-								players[idx].country = c
-								if idx == 0 {
-									state.player.country = c
-									state.units.modifyEach { $1.country = c }
-									core.store(hq: state)
-								}
-								return modifying(menu) { menu in
-									menu.items[idx].icon = "\(c)"
-									menu.cursor = idx
-								}
-							})
-						},
-						close: { _ in
-							modifying(menu) { $0.cursor = idx }
-						}
-					)
-				})
-			}
-			+ (0..<4).map { idx in
-				MenuItem(icon: players[idx].type.icon, status: "Player \(idx)", update: { state, menu in
-					modifying(menu) { menu in
-						players[idx].type.toggle()
-						menu.items[4 + idx].icon = players[idx].type.icon
-						menu.cursor = 4 + idx
+		let countries = (0..<4).map { idx in
+			MenuItem<HQState>(icon: "\(players[idx].country)", status: "Player \(idx)", update: { _, menu in
+				MenuState<HQState>(
+					items: countriesLeft.map { c in
+						MenuItem<HQState>(icon: "\(c)", status: "\(c)", update: { state, _ in
+							players[idx].country = c
+							if idx == 0 {
+								state.player.country = c
+								state.units.modifyEach { $1.country = c }
+								core.store(state)
+							}
+							return modifying(menu) { menu in
+								menu.items[idx].icon = "\(c)"
+								menu.cursor = idx
+							}
+						})
+					},
+					close: { _ in
+						modifying(menu) { $0.cursor = idx }
 					}
-				})
-			}
-			+ (0..<4).map { idx in
-				MenuItem(icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")", status: "Player \(idx)", update: { state, menu in
-					modifying(menu) { menu in
-						players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
-						menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
-						menu.cursor = 8 + idx
-					}
-				})
-			}
-			+ [MenuItem.close(icon: "Start", status: "Start", update: { [weak self] state in
-				core.store(tactical: .make(
-					players: players,
-					units: state.units.map { $1 }
-				))
-				self?.view?.present(core.state)
-			})]
+				)
+			})
+		}
+		let types = (0..<4).map { idx in
+			MenuItem<HQState>(icon: players[idx].type.icon, status: "Player \(idx)", update: { state, menu in
+				modifying(menu) { menu in
+					players[idx].type.toggle()
+					menu.items[4 + idx].icon = players[idx].type.icon
+					menu.cursor = 4 + idx
+				}
+			})
+		}
+		let prestige = (0..<4).map { idx in
+			MenuItem<HQState>(icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")", status: "Player \(idx)", update: { state, menu in
+				modifying(menu) { menu in
+					players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
+					menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
+					menu.cursor = 8 + idx
+				}
+			})
+		}
+		let start = [MenuItem<HQState>.close(icon: "Start", status: "Start", update: { state in
+			core.store(TacticalState.make(
+				players: players,
+				units: state.units.map { $1 }
+			))
+			scene?.view?.present(core.state)
+		})]
+
+		scene?.show(MenuState(
+			items: countries + types + prestige + start
 		))
 	}
 }

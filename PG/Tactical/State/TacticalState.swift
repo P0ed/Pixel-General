@@ -10,7 +10,6 @@ struct TacticalState: ~Copyable {
 	var turn: UInt32 = 0
 	var d20: D20 = D20()
 	var events: CArray<128, TacticalEvent> = .init(tail: .end)
-	var action: TacticalAction?
 
 	var cursor: XY = .zero
 	var camera: XY = .zero
