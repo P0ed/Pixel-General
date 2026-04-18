@@ -51,6 +51,7 @@ private extension TacticalState {
 				return .move(selectedUnit, cursor)
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
+				return .nop
 			} else {
 				selectUnit(.none)
 			}
@@ -59,6 +60,7 @@ private extension TacticalState {
 				selectUnit(unitsMap[cursor])
 			} else if buildings[cursor]?.country == country {
 				events.add(.shop)
+				return .nop
 			}
 		}
 		return nil

@@ -8,8 +8,8 @@ struct BaseNodes {
 }
 
 struct Status {
-	var text: String
-	var action: Either<String, NSImage>
+	var text: String = ""
+	var action: Either<String, NSImage> = .init("")
 }
 
 extension Scene where State: ~Copyable {
@@ -79,7 +79,7 @@ extension BaseNodes {
 		icon.texture?.filteringMode = .nearest
 	}
 
-	func showMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
+	func showMenu<Action>(_ menuState: MenuState<Action>) {
 		menu.isHidden = false
 		addMenuItems(menuState)
 		updateMenu(menuState)
@@ -90,13 +90,13 @@ extension BaseNodes {
 		menu.removeAllChildren()
 	}
 
-	func redrawMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
+	func redrawMenu<Action>(_ menuState: MenuState<Action>) {
 		menu.removeAllChildren()
 		addMenuItems(menuState)
 		updateMenu(menuState)
 	}
 
-	private func addMenuItems<State: ~Copyable>(_ menuState: MenuState<State>) {
+	private func addMenuItems<Action>(_ menuState: MenuState<Action>) {
 		menuState.items.enumerated().map { idx, item in
 			let frame = SKShapeNode(rectOf: Self.itemSize)
 			frame.strokeColor = .clear
@@ -118,7 +118,7 @@ extension BaseNodes {
 		.forEach(menu.addChild)
 	}
 
-	func updateMenu<State: ~Copyable>(_ menuState: MenuState<State>) {
+	func updateMenu<Action>(_ menuState: MenuState<Action>) {
 		menu.children.enumerated().forEach { idx, item in
 			if let frame = item as? SKShapeNode, frame.name == nil {
 				frame.fillColor = menuState.cursor == idx ? .lightGray : .darkGray

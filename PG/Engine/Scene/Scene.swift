@@ -6,7 +6,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	private var processing = false
 	private var panAccumulator: CGPoint = .zero
-	private(set) var menuState: MenuState<State>? { didSet { didSetMenu() } }
+	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
@@ -91,7 +91,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		}
 	}
 
-	func show(_ menu: MenuState<State>?) {
+	func show(_ menu: MenuState<Action>?) {
 		menuState = menu.flatMap { m in m.items.isEmpty ? .none : m }
 	}
 
@@ -103,12 +103,15 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	private func didSetMenu() {
 		if let menuState, let action = menuState.action {
-			if case let .apply(idx) = action {
-				self.menuState = menuState.items[idx].update(&state, modifying(menuState) {
-					$0.action = nil
-				})
+			if case let .action(idx) = action {
+				if let action = menuState.items[idx].action {
+					send(action)
+				}
+				self.menuState = menuState.items[idx].update(
+					modifying(menuState) { m in m.action = nil }
+				)
 			} else {
-				self.menuState = menuState.close(&state)
+				self.menuState = menuState.close(modifying(menuState) { m in m.action = nil })
 			}
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
@@ -161,14 +164,11 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 }
 
-extension MenuState where State: ~Copyable {
+extension MenuState {
 
 	var status: Status {
 		let item = cursor < items.count ? items[cursor] : nil
-		return Status(
-			text: item?.status ?? "",
-			action: .init(item?.action ?? "")
-		)
+		return item?.status ?? Status()
 	}
 }
 

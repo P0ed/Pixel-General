@@ -16,52 +16,69 @@ extension HQNodes {
 		}
 
 		let countries = (0..<4).map { idx in
-			MenuItem<HQState>(icon: "\(players[idx].country)", status: "Player \(idx)", update: { _, menu in
-				MenuState<HQState>(
-					items: countriesLeft.map { c in
-						MenuItem<HQState>(icon: "\(c)", status: "\(c)", update: { state, _ in
-							players[idx].country = c
-							if idx == 0 {
-								state.player.country = c
-								state.units.modifyEach { $1.country = c }
-								core.store(state)
-							}
-							return modifying(menu) { menu in
-								menu.items[idx].icon = "\(c)"
-								menu.cursor = idx
-							}
-						})
-					},
-					close: { _ in
-						modifying(menu) { $0.cursor = idx }
-					}
-				)
-			})
+			MenuItem<HQAction>(
+				icon: "\(players[idx].country)",
+				status: .init(text: "Player \(idx)"),
+				update: { menu in
+					MenuState<HQAction>(
+						items: countriesLeft.map { c in
+							MenuItem<HQAction>(
+								icon: "\(c)",
+								status: .init(text: "\(c)"),
+								update: { _ in
+									players[idx].country = c
+									//if idx == 0 {
+									//	scene.state.player.country = c
+									//	scene.state.units.modifyEach { $1.country = c }
+									//	core.store(scene.state)
+									//}
+									return modifying(menu) { menu in
+										menu.items[idx].icon = "\(c)"
+										menu.cursor = idx
+									}
+								}
+							)
+						},
+						close: { _ in
+							modifying(menu) { $0.cursor = idx }
+						}
+					)
+				}
+			)
 		}
 		let types = (0..<4).map { idx in
-			MenuItem<HQState>(icon: players[idx].type.icon, status: "Player \(idx)", update: { state, menu in
-				modifying(menu) { menu in
-					players[idx].type.toggle()
-					menu.items[4 + idx].icon = players[idx].type.icon
-					menu.cursor = 4 + idx
+			MenuItem<HQAction>(
+				icon: players[idx].type.icon,
+				status: .init(text: "Player \(idx)"),
+				update: { menu in
+					modifying(menu) { menu in
+						players[idx].type.toggle()
+						menu.items[4 + idx].icon = players[idx].type.icon
+						menu.cursor = 4 + idx
+					}
 				}
-			})
+			)
 		}
 		let prestige = (0..<4).map { idx in
-			MenuItem<HQState>(icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")", status: "Player \(idx)", update: { state, menu in
-				modifying(menu) { menu in
-					players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
-					menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
-					menu.cursor = 8 + idx
+			MenuItem<HQAction>(
+				icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")",
+				status: .init(text: "Player \(idx)"),
+				update: { menu in
+					modifying(menu) { menu in
+						players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
+						menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
+						menu.cursor = 8 + idx
+					}
 				}
-			})
+			)
 		}
-		let start = [MenuItem<HQState>.close(icon: "Start", status: "Start", update: { state in
+		let start = [MenuItem<HQAction>.close(icon: "Start", status: "Start", update: { _ in
+			guard let scene else { return }
 			core.store(TacticalState.make(
 				players: players,
-				units: state.units.map { $1 }
+				units: scene.state.units.map { $1 }
 			))
-			scene?.view?.present(core.state)
+			scene.view?.present(core.state)
 		})]
 
 		scene?.show(MenuState(

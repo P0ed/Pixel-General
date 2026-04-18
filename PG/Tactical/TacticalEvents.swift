@@ -90,11 +90,13 @@ private extension TacticalNodes {
 
 		let xy = state.cursor
 		let items = state.shopUnits(at: xy).enumerated().map { i, template in
-			MenuItem<TacticalState>.close(
+			MenuItem<TacticalAction>.close(
 				icon: template.imageName,
-				status: template.status,
-				action: "\(template.cost) / \(state.player.prestige) ><",
-				update: { state in state.buy(i, at: xy) }
+				status: .init(
+					text: template.status,
+					action: .init("\(template.cost) / \(state.player.prestige) ><")
+				),
+				action: .purchase(i, xy)
 			)
 		}
 
@@ -122,23 +124,25 @@ private extension TacticalNodes {
 
 		scene.show(MenuState(
 			items: [
-				.close(icon: "Start", status: "End turn") { state in
-					state.endTurn()
+				.close(icon: "Start", status: "End turn", action: .end),
+				.close(icon: "Save", status: "Save") { [weak scene] _ in
+					if let scene {
+						core.store(scene.state, auto: false)
+					}
 				},
-				.close(icon: "Save", status: "Save") { state in
-					core.store(state, auto: false)
-				},
-				.close(icon: "Load", status: "Load") { [weak scene] state in
+				.close(icon: "Load", status: "Load") { [weak scene] _ in
 					core.load(auto: false)
-					_ = scene?.view?.present(core.state)
+					if let scene { scene.view?.present(core.state) }
 				},
-				.close(icon: "HQ", status: "HQ") { state in
-					restartGame(state)
+				.close(icon: "HQ", status: "HQ") { [weak scene] _ in
+					if let scene { restartGame(scene.state) }
 				},
-				MenuItem(icon: "S", status: "Prestige: \(state.player.prestige)", update: { _, m in
-					m
-				}),
-				MenuItem(icon: "Sound\(vol)", status: "Volume", update: { _, menu in
+				MenuItem(
+					icon: "S",
+					status: .init(text: "Prestige: \(state.player.prestige)"),
+					update: id
+				),
+				MenuItem(icon: "Sound\(vol)", status: .init(text: "Volume"), update: { menu in
 					modifying(menu) { menu in
 						toggleVol()
 						menu.items[5].icon = "Sound\(vol)"

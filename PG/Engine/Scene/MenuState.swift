@@ -1,32 +1,36 @@
-struct MenuState<State: ~Copyable> {
-	var items: [MenuItem<State>]
+struct MenuState<Action> {
+	var items: [MenuItem<Action>]
 	var cursor: Int = 0
-	var close: (inout State) -> MenuState<State>? = { _ in nil }
+	var close: (MenuState<Action>) -> MenuState<Action>? = { _ in nil }
 	var action: MenuAction?
 }
 
-enum MenuAction { case close, apply(Int) }
+enum MenuAction { case close, action(Int) }
 
-struct MenuItem<State: ~Copyable> {
+struct MenuItem<Action> {
 	var icon: String
-	var status: String
-	var action: String = ""
-	var update: (inout State, MenuState<State>) -> MenuState<State>?
+	var status: Status
+	var action: Action?
+	var update: (MenuState<Action>) -> MenuState<Action>?
 }
 
-extension MenuItem where State: ~Copyable {
+extension MenuItem {
 
-	static func close(icon: String, status: String, action: String = "", update: @escaping (inout State) -> Void) -> Self {
+	static func close(icon: String, status: String, action: Action? = nil, update: @escaping (MenuState<Action>) -> Void = ø) -> Self {
+		.close(icon: icon, status: .init(text: status), action: action, update: update)
+	}
+
+	static func close(icon: String, status: Status, action: Action? = nil, update: @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		MenuItem(
 			icon: icon,
 			status: status,
 			action: action,
-			update: { state, menu in update(&state); return .none }
+			update: { menu in update(menu); return .none }
 		)
 	}
 }
 
-extension MenuState where State: ~Copyable {
+extension MenuState {
 
 	var rows: Int { 4 }
 	var cols: Int { 4 }
@@ -35,7 +39,7 @@ extension MenuState where State: ~Copyable {
 		switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .tile(let xy): cursor = xy.x
-		case .action(.a): action = .apply(cursor)
+		case .action(.a): action = .action(cursor)
 		case .menu, .action(.b): action = .close
 		default: break
 		}

@@ -41,12 +41,11 @@ extension HQNodes {
 
 	private func processShop(_ state: borrowing HQState) {
 		(root as? HQScene)?.show(.init(
-			items: [Unit].shop(country: state.country).map { [xy = state.cursor] u in
+			items: [Unit].shop(country: state.country).enumerated().map { [xy = state.cursor] i, u in
 				.close(
 					icon: u.imageName,
-					status: u.status,
-					action: "\(u.cost) / \(state.player.prestige) ><",
-					update: { state in state.buy(u, at: xy) }
+					status: .init(text: u.status, action: .init("\(u.cost) / \(state.player.prestige) ><")),
+					action: .purchase(i, xy.x + xy.y * 4)
 				)
 			}
 		))
@@ -54,20 +53,22 @@ extension HQNodes {
 
 	private func processMenu() {
 		(root as? HQScene)?.show(MenuState(items: [
-			.close(icon: "New", status: "New") { [weak root] _ in
+			.close(icon: "New", status: .init(text: "New")) { [weak root] _ in
 				core.new()
 				(root as? HQScene)?.view?.present(core.state)
 			},
-			.close(icon: "Save", status: "Save") { state in
-				core.store(state, auto: false)
+			.close(icon: "Save", status: .init(text: "Save")) { _ in
+				if let scene {
+					core.store(scene.state, auto: false)
+				}
 			},
-			.close(icon: "Load", status: "Load") { [weak root] _ in
+			.close(icon: "Load", status: .init(text: "Load")) { _ in
 				core.load(auto: false)
-				(root as? HQScene)?.view?.present(core.state)
+				scene?.view?.present(core.state)
 			},
-			.close(icon: "Chess", status: "Chess", update: { [weak root] _ in
+			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
 				core.store(TacticalState.chess())
-				(root as? HQScene)?.view?.present(core.state)
+				scene?.view?.present(core.state)
 			})
 		]))
 	}

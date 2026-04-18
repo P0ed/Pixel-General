@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5F04CAF92F93C72900E7ADBB /* HQAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F04CAF82F93C72500E7ADBB /* HQAction.swift */; };
 		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
 		5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9502F7EA89B002BBF38 /* HQScenario.swift */; };
 		5F26B9532F7EE56E002BBF38 /* TacticalTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */; };
@@ -71,6 +72,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5F04CAF82F93C72500E7ADBB /* HQAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQAction.swift; sourceTree = "<group>"; };
 		5F24DC322EA95FE50085FDDC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5F26B9502F7EA89B002BBF38 /* HQScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQScenario.swift; sourceTree = "<group>"; };
 		5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTransport.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 			isa = PBXGroup;
 			children = (
 				5F5560FE2EF5B2B900C08E14 /* HQState.swift */,
+				5F04CAF82F93C72500E7ADBB /* HQAction.swift */,
 			);
 			path = State;
 			sourceTree = "<group>";
@@ -452,6 +455,7 @@
 				5FB4D1262EAFABCB0010E702 /* TacticalTurns.swift in Sources */,
 				5FE1218F2F7FE42F001C16A5 /* Server.swift in Sources */,
 				5F919D6B2EA9596E0037A208 /* TacticalInput.swift in Sources */,
+				5F04CAF92F93C72900E7ADBB /* HQAction.swift in Sources */,
 				5FE1218D2F7FD6CD001C16A5 /* Messages.swift in Sources */,
 				5F5560F72EF5AE0F00C08E14 /* TacticalMode.swift in Sources */,
 				5F919D562EA959670037A208 /* UnitSprites.swift in Sources */,

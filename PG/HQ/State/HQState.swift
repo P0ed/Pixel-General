@@ -27,32 +27,33 @@ extension HQState {
 		)
 	}
 
-	mutating func apply(_ input: Input) {
+	mutating func apply(_ input: Input) -> HQAction? {
 		switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
 		case .action(.c): shopAction()
 		case .action(.d): processScenario()
-		case .menu: events.add(.menu)
+		case .menu: { events.add(.menu); return .nop }()
 		case .tile(let xy): select(xy)
-		default: break
+		default: nil
 		}
 	}
 
-	mutating func select(_ xy: XY) {
-		guard HQNodes.map.contains(xy) else { return }
+	mutating func select(_ xy: XY) -> HQAction? {
+		guard HQNodes.map.contains(xy) else { return nil }
 
 		cursor = xy
-		mainAction()
+		return mainAction()
 	}
 
-	mutating func moveCursor(_ direction: Direction) {
+	mutating func moveCursor(_ direction: Direction) -> HQAction? {
 		let xy = cursor.neighbor(direction)
 		if HQNodes.map.contains(xy) { cursor = xy }
+		return nil
 	}
 
-	mutating func mainAction() {
+	mutating func mainAction() -> HQAction? {
 		if let selected {
 			if selected == units[cursor]?.0 {
 				self.selected = .none
@@ -64,34 +65,36 @@ extension HQState {
 //				units[selected.index].position = cursor
 //				events.add(.move(selected, cursor))
 				self.selected = .none
+				return .swap(selected.index, cursor.x + cursor.y * 4)
 			}
 		} else if let (i, _) = units[cursor] {
 			selected = i
 		}
+		return nil
 	}
 
-	mutating func secondaryAction() {
+	mutating func secondaryAction() -> HQAction? {
 		selected = .none
+		return nil
 	}
 
-	mutating func shopAction() {
+	mutating func shopAction() -> HQAction? {
 		if let selected {
 			units[selected.index].hp = 0x0
 			player.prestige.increment(by: units[selected.index].cost / 2)
 			events.add(.remove(selected))
 			self.selected = .none
+			return .sell(selected.index)
 		} else if units[cursor] == nil {
 			events.add(.shop)
+			return .nop
 		}
+		return nil
 	}
 
-	mutating func processScenario() {
+	mutating func processScenario() -> HQAction? {
 		events.add(.scenario)
-	}
-
-	mutating func reduce() -> [HQEvent] {
-		defer { events.erase() }
-		return events.map { _, e in e }
+		return .nop
 	}
 }
 
