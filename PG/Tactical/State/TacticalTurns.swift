@@ -26,12 +26,11 @@ extension TacticalState {
 	}
 
 	private mutating func startNextDay() {
-		let ps = Dictionary(uniqueKeysWithValues: players.map { i, p in
-			(i, modifying(p) { p in endTurn(player: &p) })
-		})
-		players.modifyEach { i, p in
-			p = ps[i] ?? p
+		let ps = players.map { _, p in
+			modifying(p) { p in endTurn(player: &p) }
 		}
+		players.modifyEach { i, p in p = ps[i] }
+
 		for i in units.indices where units[i].alive {
 			endTurn(unit: i.uid)
 		}
@@ -110,12 +109,8 @@ extension TacticalState {
 	}
 
 	private mutating func eliminatePlayers() {
-		let alive = Dictionary(uniqueKeysWithValues: players.map { i, p in
-			(i, countryHasCities(p.country))
-		})
-		players.modifyEach { i, player in
-			player.alive = alive[i] ?? false
-		}
+		let alive = players.map { i, p in countryHasCities(p.country) }
+		players.modifyEach { i, player in player.alive = alive[i] }
 	}
 
 	private func countryHasCities(_ country: Country) -> Bool {

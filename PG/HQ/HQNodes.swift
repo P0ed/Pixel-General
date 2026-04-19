@@ -11,6 +11,8 @@ extension HQNodes {
 
 	static let map = Map<Terrain>(size: 4, zero: .field)
 
+	var scene: HQScene? { root as? HQScene }
+
 	init(root: SKNode, state: borrowing HQState) {
 		self = HQNodes(
 			root: root,
@@ -26,8 +28,6 @@ extension HQNodes {
 			return node
 		}
 	}
-
-	var scene: HQScene? { root as? HQScene }
 
 	private static func addMap(root: SKNode, state: borrowing HQState) -> MapNodes {
 
@@ -105,9 +105,6 @@ extension HQNodes {
 		sprite.zPosition = map.zPosition(at: xy)
 		return sprite
 	}
-}
-
-extension HQNodes {
 
 	func addUnit(_ uid: UID, node: SKNode) {
 		root?.addChild(node)

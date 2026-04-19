@@ -1,5 +1,5 @@
 struct Player: DeadOrAlive {
-	var country: Country
+	var country: Country = .default
 	var type: PlayerType = .human
 	var alive: Bool = true
 	var prestige: UInt16 = 0xF00

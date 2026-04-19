@@ -48,7 +48,7 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
-		(root as? HQScene)?.show(MenuState(items: [
+		scene?.show(MenuState(items: [
 			.close(icon: "New", status: .init(text: "New")) { [weak root] _ in
 				core.new()
 				(root as? HQScene)?.view?.present(core.state)

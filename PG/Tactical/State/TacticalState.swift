@@ -1,6 +1,6 @@
 struct TacticalState: ~Copyable {
 	var map: Map<Terrain>
-	var players: Speicher<4, Player>
+	var players: CArray<4, Player>
 	var auxilia: [4 of CArray<16, Unit>]
 	var buildings: CArray<32, Building>
 	var units: Speicher<128, Unit>
@@ -35,7 +35,7 @@ extension TacticalState {
 			)
 		}
 		let capitals = players.indices.map { i in
-			buildings.filter { $0.country == players[i].country }.first?.position ?? .zero
+			buildings.filter { $0.country == players[i].country && $0.type == .city }.first?.position ?? .zero
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
 		self.units.forEach { i, u in
@@ -57,10 +57,8 @@ extension TacticalState {
 			}
 		}
 
-		let v = Dictionary(uniqueKeysWithValues: self.players.map { i, p in
-			(i, vision(for: p.country))
-		})
-		self.players.modifyEach { i, p in p.visible = v[i] ?? .empty }
+		let v = self.players.map { i, p in vision(for: p.country) }
+		self.players.modifyEach { i, p in p.visible = v[i] }
 	}
 
 	subscript(_ xy: XY) -> Unit? {
@@ -71,6 +69,17 @@ extension TacticalState {
 		set {
 			let idx = unitsMap[xy].index
 			if idx >= 0 { units[idx] = newValue ?? .empty }
+		}
+	}
+
+	subscript(_ country: Country) -> Player {
+		get {
+			players.firstMap { _, p in p.country == country ? p : nil } ?? Player()
+		}
+		set {
+			if let idx = players.firstMap({ i, p in p.country == country ? i : nil }) {
+				players[idx] = newValue
+			}
 		}
 	}
 }
