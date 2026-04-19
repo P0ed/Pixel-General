@@ -5,7 +5,6 @@ enum HQEvent {
 	case spawn(UID)
 	case remove(UID)
 	case shop
-	case scenario
 	case menu
 }
 
@@ -17,7 +16,6 @@ extension HQNodes {
 		case .spawn(let uid): processSpawn(uid, state)
 		case .remove(let uid): removeUnit(uid)
 		case .shop: processShop(state)
-		case .scenario: processScenario(state)
 		case .menu: processMenu()
 		}
 	}
@@ -36,7 +34,7 @@ extension HQNodes {
 	}
 
 	private func processShop(_ state: borrowing HQState) {
-		(root as? HQScene)?.show(.init(
+		scene?.show(.init(
 			items: [Unit].shop(country: state.country).enumerated().map { i, u in
 				.close(
 					icon: u.imageName,
@@ -49,9 +47,16 @@ extension HQNodes {
 
 	private func processMenu() {
 		scene?.show(MenuState(items: [
-			.close(icon: "New", status: .init(text: "New")) { [weak root] _ in
-				core.new()
-				(root as? HQScene)?.view?.present(core.state)
+			.init(icon: "Start", status: .init(text: "Scenario"), update: { _ in
+				guard let scene else { return nil }
+				return scenarioMenu(scene.state)
+			}),
+			.space, .space, .space,
+			.space, .space, .space, .space,
+			.space, .space, .space, .space,
+			.init(icon: "New", status: .init(text: "New")) { _ in
+				guard let scene else { return nil }
+				return newGameMenu(scene.state)
 			},
 			.close(icon: "Save", status: .init(text: "Save")) { _ in
 				if let scene {
@@ -60,11 +65,11 @@ extension HQNodes {
 			},
 			.close(icon: "Load", status: .init(text: "Load")) { _ in
 				core.load(auto: false)
-				scene?.view?.present(core.state)
+				present(.make(core.state))
 			},
 			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
 				core.store(TacticalState.chess())
-				scene?.view?.present(core.state)
+				present(.make(core.state))
 			})
 		]))
 	}

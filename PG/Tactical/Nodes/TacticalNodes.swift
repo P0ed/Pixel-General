@@ -1,7 +1,7 @@
 import SpriteKit
 
 struct TacticalNodes {
-	weak var root: SKNode?
+	weak var scene: TacticalScene?
 	var camera: SKCameraNode
 	var map: MapNodes
 	var sounds: SoundNodes
@@ -18,21 +18,21 @@ struct SoundNodes {
 
 extension TacticalNodes {
 
-	init(root: SKNode, state: borrowing TacticalState) {
+	init(scene: TacticalScene) {
 		self = TacticalNodes(
-			root: root,
-			camera: Self.addCamera(root: root),
-			map: Self.addMap(root: root, state: state),
-			sounds: Self.addSounds(root: root)
+			scene: scene,
+			camera: Self.addCamera(root: scene),
+			map: Self.addMap(root: scene, state: scene.state),
+			sounds: Self.addSounds(root: scene)
 		)
 		units = .init(
-			head: state.units.map { i, u in
-				let sprite = state.units[i].sprite
-				let xy = state.position[i]
-				sprite.position = state.map.point(at: xy)
+			head: scene.state.units.map { i, u in
+				let sprite = scene.state.units[i].sprite
+				let xy = scene.state.position[i]
+				sprite.position = scene.state.map.point(at: xy)
 				sprite.zPosition = map.zPosition(at: xy)
-				sprite.isHidden = !state.player.visible[xy]
-				root.addChild(sprite)
+				sprite.isHidden = !scene.state.player.visible[xy]
+				scene.addChild(sprite)
 				return sprite
 			},
 			tail: nil
@@ -110,6 +110,10 @@ extension TacticalNodes {
 		}
 
 		updateFogIfNeeded(state: state)
+
+		if state.player.type == .ai {
+			scene?.send(state.runAI())
+		}
 	}
 
 	func updateFogIfNeeded(state: borrowing TacticalState) {
@@ -141,7 +145,7 @@ extension TacticalNodes {
 extension TacticalNodes {
 
 	func addUnit(_ uid: UID, node: SKNode) {
-		root?.addChild(node)
+		scene?.addChild(node)
 		units[uid.index] = node
 	}
 

@@ -62,23 +62,12 @@ extension TacticalState {
 	}
 
 	private mutating func endTurn(unit id: UID) {
-		var unit = units[id.index]
-		let neighbors = neighbors(at: position[id.index])
-
-		let hasSupply = neighbors.contains { n in
-			units[n.index].country.team == unit.country.team
-			&& units[n.index][.supply]
+		entrench(unit: id)
+		resupply(unit: id)
+		units[id.index] = modifying(units[id.index]) { u in
+			u.ap = u.maxAP
+			u.mp = u.maxMP
 		}
-		if !unit.isAir {
-			unit.ent.increment(
-				by: (unit.canMove ? 1 : 0) + (hasSupply ? 1 : 0),
-				cap: 7
-			)
-		}
-		if cargo[id.index] == -1 || unit[.transport], unit.untouched { resupply(unit: id) }
-		unit.ap = unit.maxAP
-		unit.mp = unit.maxMP
-		units[id.index] = unit
 	}
 
 	func neighbors(at position: XY) -> CArray<8, UID> {

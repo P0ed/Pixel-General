@@ -35,7 +35,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			self?.saveAndExit()
 		}
 
-		let nodes = mode.make(self, state)
+		let nodes = mode.make(self)
 		mode.layout(size, nodes)
 		self.nodes = nodes
 
@@ -70,26 +70,18 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		if case .some = menuState {
 			menuState?.apply(input)
 		} else if !processing {
-			if let action = mode.input(&state, input) {
-				send(action)
-			}
+			send(mode.input(&state, input))
 		}
 	}
 
-	func send(_ action: Action) {
-		guard !processing else { return }
+	func send(_ action: Action?) {
+		guard !processing, let nodes else { return }
 		processing = true
-
 		Task {
-			if let action = await mode.send(action) {
-				let events = mode.reduce(&state, action)
-				if !events.isEmpty, let nodes {
-					for event in events {
-						await mode.process(event, nodes, state)
-					}
-				}
-			}
+			let events = mode.reduce(&state, action)
+			for event in events { await mode.process(event, nodes, state) }
 			processing = false
+			didSetState()
 		}
 	}
 
@@ -97,8 +89,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		menuState = menu.flatMap { m in m.items.isEmpty ? .none : m }
 	}
 
+	func saveAndExit() {
+		mode.save(state)
+		exit(0)
+	}
+
 	private func didSetState() {
-		guard let nodes else { return }
+		guard let nodes, !processing else { return }
 		updateStatus()
 		mode.update(nodes, state)
 	}
@@ -131,11 +128,6 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		baseNodes?.updateStatus(
 			menuState.map { $0.status } ?? mode.status(state)
 		)
-	}
-
-	func saveAndExit() {
-		mode.save(state)
-		exit(0)
 	}
 
 	private var panHandler: Any? {
@@ -171,28 +163,5 @@ extension MenuState {
 	var status: Status {
 		let item = cursor < items.count ? items[cursor] : nil
 		return item?.status ?? Status()
-	}
-}
-
-private extension SKScene {
-
-	static func make(_ state: borrowing State) -> SKScene {
-		if state.tactical != nil {
-			Scene(mode: .tactical, state: clone(state.tactical!))
-		} else if state.strategic != nil {
-			fatalError()
-		} else {
-			Scene(mode: .hq, state: clone(state.hq!))
-		}
-	}
-}
-
-extension SKView {
-
-	func present(_ state: borrowing State) {
-		presentScene(
-			.make(state),
-			transition: .moveIn(with: .up, duration: 0.47)
-		)
 	}
 }

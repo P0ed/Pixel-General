@@ -84,3 +84,18 @@ final class Core {
 		client.connect(host: host, port: 9899)
 	}
 }
+
+import SpriteKit
+
+extension SKScene {
+
+	static func make(_ state: borrowing State) -> SKScene {
+		if state.tactical != nil {
+			Scene(mode: .tactical, state: clone(state.tactical!))
+		} else if state.strategic != nil {
+			fatalError()
+		} else {
+			Scene(mode: .hq, state: clone(state.hq!))
+		}
+	}
+}

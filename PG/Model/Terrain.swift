@@ -122,6 +122,14 @@ extension Terrain {
 		}
 	}
 
+	var baseEntrenchment: Int {
+		switch self {
+		case .forest, .hill, .forestHill, .mountain, .airfield: 2
+		case .city: 3
+		default: 0
+		}
+	}
+
 	func closeCombatPenalty(_ type: UnitType) -> Int {
 		return switch type {
 		case .lightWheel, .lightTrack: -Int(abs(def))

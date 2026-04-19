@@ -41,6 +41,7 @@ extension TacticalState {
 		cargo[idx] = -1
 		position[idx] = xy
 		units[idx].mp = 0
+		units[idx].ent = 0
 		if units[idx][.art] { units[idx].ap = 0 }
 		unitsMap[xy] = idx.uid
 		player.visible.formUnion(vision(for: idx.uid))
