@@ -7,9 +7,9 @@ extension HQMode {
 		.init(
 			make: HQNodes.init,
 			input: { state, input in state.apply(input) },
-			update: { state, nodes in nodes.update(state: state) },
+			update: { nodes, state in nodes.update(state) },
 			reduce: { state, action in state.reduce(action) },
-			process: { state, events, nodes in await nodes.process(events, state) },
+			process: { event, nodes, state in await nodes.process(event, state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nodes.mouse(event: event) },
 			save: { state in core.store(state) }

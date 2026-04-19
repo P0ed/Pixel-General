@@ -80,7 +80,7 @@ extension HQNodes {
 		return node
 	}
 
-	func update(state: borrowing HQState) {
+	func update(_ state: borrowing HQState) {
 		map.update(
 			map: Self.map,
 			cursor: state.cursor,

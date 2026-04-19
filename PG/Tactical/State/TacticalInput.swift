@@ -74,7 +74,6 @@ private extension TacticalState {
 	mutating func squareAction() -> TacticalAction? {
 		guard let selectedUnit, canDisembark(unit: selectedUnit, to: cursor) else { return nil }
 		return .disembark(selectedUnit, cursor)
-
 	}
 
 	mutating func triangleAction() -> TacticalAction? {

@@ -85,7 +85,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 				let events = mode.reduce(&state, action)
 				if !events.isEmpty, let nodes {
 					for event in events {
-						await mode.process(state, event, nodes)
+						await mode.process(event, nodes, state)
 					}
 				}
 			}
@@ -100,7 +100,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private func didSetState() {
 		guard let nodes else { return }
 		updateStatus()
-		mode.update(state, nodes)
+		mode.update(nodes, state)
 	}
 
 	private func didSetMenu() {

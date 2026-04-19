@@ -37,11 +37,11 @@ extension HQNodes {
 
 	private func processShop(_ state: borrowing HQState) {
 		(root as? HQScene)?.show(.init(
-			items: [Unit].shop(country: state.country).enumerated().map { [xy = state.cursor] i, u in
+			items: [Unit].shop(country: state.country).enumerated().map { i, u in
 				.close(
 					icon: u.imageName,
 					status: .init(text: u.status, action: .init("\(u.cost) / \(state.player.prestige) ><")),
-					action: .purchase(i, xy.x + xy.y * 4)
+					action: .purchase(i, state.cursor.x + state.cursor.y * 4)
 				)
 			}
 		))

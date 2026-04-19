@@ -7,9 +7,9 @@ extension TacticalMode {
 		.init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			update: { state, nodes in nodes.update(state) },
+			update: { nodes, state in nodes.update(state) },
 			reduce: { state, action in state.reduce(action) },
-			process: { state, event, nodes in await nodes.process(event, state) },
+			process: { event, nodes, state in await nodes.process(event, state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nodes.mouse(event) },
 			save: { state in core.store(state) }

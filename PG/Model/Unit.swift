@@ -205,7 +205,7 @@ extension Unit: DeadOrAlive {
 	var alive: Bool { hp > 0 }
 }
 
-extension Speicher where Element == Unit {
+extension InlineArray where Element == Unit, count == 16 {
 
 	subscript(_ xy: XY) -> (UID, Unit)? {
 		let i = xy.x + xy.y * 4

@@ -76,7 +76,7 @@ extension HQNodes {
 			guard let scene else { return }
 			core.store(TacticalState.make(
 				players: players,
-				units: scene.state.units.map { $1 }
+				units: scene.state.units.compactMap { u in u.alive ? u : nil }
 			))
 			scene.view?.present(core.state)
 		})]

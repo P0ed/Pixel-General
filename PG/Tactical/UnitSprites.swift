@@ -48,7 +48,7 @@ extension Unit {
 		case .lightWheel: "boxer"
 		case .lightTrack:
 			if self[.aa] { "SPAA" }
-			else if self[.art] { "PZH" }
+			else if self[.art] { country.team == .axis ? "PZH" : "2S3" }
 			else { "Recon" }
 		case .heavyTrack:
 			switch country.team {
