@@ -57,9 +57,9 @@ private extension TacticalNodes {
 
 	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
 		units[src.index]?.showSight(for: 0.47)
-		await root?.run(.wait(forDuration: 0.22))
+		await scene?.run(.wait(forDuration: 0.22))
 		units[dst.index]?.showSight(for: 0.47 - 0.22)
-		await root?.run(.wait(forDuration: 0.22))
+		await scene?.run(.wait(forDuration: 0.22))
 
 		if hp > 0 {
 			if dmg > 0 {
@@ -96,10 +96,8 @@ private extension TacticalNodes {
 			)
 		}
 
-		if !items.isEmpty { (root as? TacticalScene)?.show(MenuState(items: items)) }
+		if !items.isEmpty { scene?.show(MenuState(items: items)) }
 	}
-
-	private var scene: TacticalScene? { root as? TacticalScene }
 
 	func processMenu(_ state: borrowing TacticalState) {
 		guard let scene, case .none = scene.menuState else {
@@ -126,9 +124,9 @@ private extension TacticalNodes {
 						core.store(scene.state, auto: false)
 					}
 				},
-				.close(icon: "Load", status: "Load") { [weak scene] _ in
+				.close(icon: "Load", status: "Load") { _ in
 					core.load(auto: false)
-					if let scene { scene.view?.present(core.state) }
+					present(.make(core.state))
 				},
 				.close(icon: "HQ", status: "HQ") { [weak scene] _ in
 					if let scene { restartGame(scene.state) }
@@ -150,6 +148,6 @@ private extension TacticalNodes {
 
 	private func restartGame(_ state: borrowing TacticalState) {
 		core.complete(state)
-		scene?.view?.present(core.state)
+		present(.make(core.state))
 	}
 }

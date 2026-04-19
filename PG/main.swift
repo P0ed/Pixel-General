@@ -1,14 +1,28 @@
 import SpriteKit
 
-let core = Core()
-core.load()
+private let window = NSWindow(
+	contentRect: NSRect(origin: .zero, size: .window),
+	styleMask: [.titled, .fullSizeContentView, .closable, .resizable, .miniaturizable],
+	backing: .buffered,
+	defer: false
+)
 
-private let window: NSWindow = .make { window in
-	let view = SKView(frame: window.contentLayoutRect)
-	view.autoresizingMask = [.width, .height]
-	view.ignoresSiblingOrder = true
-	view.present(core.state)
-	return view
+private let view = SKView(frame: window.contentLayoutRect)
+view.autoresizingMask = [.width, .height]
+view.ignoresSiblingOrder = true
+
+window.contentView = view
+window.titlebarAppearsTransparent = true
+window.center()
+window.makeKeyAndOrderFront(nil)
+window.makeFirstResponder(view)
+
+func present(_ scene: SKScene) {
+	view.presentScene(scene, transition: .moveIn(with: .up, duration: 0.47))
 }
 
-app.run()
+let core = Core()
+core.load()
+present(.make(core.state))
+
+NSApplication.shared.run()

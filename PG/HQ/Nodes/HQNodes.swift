@@ -1,7 +1,7 @@
 import SpriteKit
 
 struct HQNodes {
-	weak var root: SKNode?
+	weak var scene: HQScene?
 	var camera: SKCameraNode
 	var map: MapNodes
 	@IO var units: [16 of SKNode?]
@@ -11,20 +11,18 @@ extension HQNodes {
 
 	static let map = Map<Terrain>(size: 4, zero: .field)
 
-	var scene: HQScene? { root as? HQScene }
-
-	init(root: SKNode, state: borrowing HQState) {
+	init(scene: HQScene) {
 		self = HQNodes(
-			root: root,
-			camera: Self.addCamera(root: root),
-			map: Self.addMap(root: root, state: state),
+			scene: scene,
+			camera: Self.addCamera(root: scene),
+			map: Self.addMap(root: scene, state: scene.state),
 			units: .init(repeating: nil)
 		)
 		units = .init { i in
-			let u = state.units[i]
+			let u = scene.state.units[i]
 			let node = unitSprite(uid: i.uid, unit: u)
 			node.isHidden = !u.alive
-			root.addChild(node)
+			scene.addChild(node)
 			return node
 		}
 	}
@@ -88,7 +86,7 @@ extension HQNodes {
 		)
 	}
 
-	func mouse(event: NSEvent) -> Input? {
+	func mouse(_ event: NSEvent) -> Input? {
 		let location = event.location(in: map.layers[0])
 		return .tile(
 			XY(
@@ -107,7 +105,7 @@ extension HQNodes {
 	}
 
 	func addUnit(_ uid: UID, node: SKNode) {
-		root?.addChild(node)
+		scene?.addChild(node)
 		units[uid.index]?.removeFromParent()
 		units[uid.index] = node
 	}

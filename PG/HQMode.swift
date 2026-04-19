@@ -11,7 +11,7 @@ extension HQMode {
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			status: { state in state.status },
-			mouse: { nodes, event in nodes.mouse(event: event) },
+			mouse: { nodes, event in nodes.mouse(event) },
 			save: { state in core.store(state) }
 		)
 	}

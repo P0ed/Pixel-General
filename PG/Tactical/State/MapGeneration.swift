@@ -89,11 +89,11 @@ extension Map<Terrain> {
 	}
 
 	private mutating func placeCities(d20: inout D20) -> [XY] {
-		let citiesCount = min(32, size * size / 64)
+		let citiesCount = min(16, size * size / 64)
 		let div = size / 8
-		let dw = (size - 4) / (div - 1) - 1
+		let dw = (size - 8) / (div - 1) - 1
 		let div2 = citiesCount / div + (citiesCount % div == 0 ? 0 : 1)
-		let dh = (size - 2) / (div2 - 1) - 1
+		let dh = (size - 8) / (div2 - 1) - 1
 		print("citiesCount:", citiesCount, "div:", div, div2, dw, dh)
 
 		return (0 ..< citiesCount).reduce(into: []) { xys, i in

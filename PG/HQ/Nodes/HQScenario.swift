@@ -2,7 +2,7 @@ import SpriteKit
 
 extension HQNodes {
 
-	func processScenario(_ state: borrowing HQState) {
+	func scenarioMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
 		var players: [4 of Player] = [
 			state.player,
 			Player(country: .isr, type: .ai, prestige: 0x1400),
@@ -20,18 +20,13 @@ extension HQNodes {
 				icon: "\(players[idx].country)",
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
-					MenuState<HQAction>(
+					idx == 0 ? menu : MenuState<HQAction>(
 						items: countriesLeft.map { c in
 							MenuItem<HQAction>(
 								icon: "\(c)",
 								status: .init(text: "\(c)"),
 								update: { _ in
 									players[idx].country = c
-									//if idx == 0 {
-									//	scene.state.player.country = c
-									//	scene.state.units.modifyEach { $1.country = c }
-									//	core.store(scene.state)
-									//}
 									return modifying(menu) { menu in
 										menu.items[idx].icon = "\(c)"
 										menu.cursor = idx
@@ -51,7 +46,7 @@ extension HQNodes {
 				icon: players[idx].type.icon,
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
-					modifying(menu) { menu in
+					idx == 0 ? menu : modifying(menu) { menu in
 						players[idx].type.toggle()
 						menu.items[4 + idx].icon = players[idx].type.icon
 						menu.cursor = 4 + idx
@@ -72,18 +67,21 @@ extension HQNodes {
 				}
 			)
 		}
-		let start = [MenuItem<HQAction>.close(icon: "Start", status: "Start", update: { _ in
-			guard let scene else { return }
-			core.store(TacticalState.make(
-				players: players,
-				units: scene.state.units.compactMap { u in u.alive ? u : nil }
-			))
-			scene.view?.present(core.state)
-		})]
+		let start: [MenuItem<HQAction>] = [
+			.space, .space, .space,
+			.close(icon: "Start", status: "Start", update: { _ in
+				guard let scene else { return }
+				core.store(TacticalState.make(
+					players: players,
+					units: scene.state.units.compactMap { u in u.alive ? u : nil }
+				))
+				present(.make(core.state))
+			})
+		]
 
-		scene?.show(MenuState(
+		return MenuState(
 			items: countries + types + prestige + start
-		))
+		)
 	}
 }
 

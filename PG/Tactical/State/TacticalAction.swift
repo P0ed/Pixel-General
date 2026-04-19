@@ -8,13 +8,11 @@ enum TacticalAction: Hashable {
 	case resuply(UID)
 	case purchase(Int, XY)
 	case end
-	case nop
 }
 
 extension TacticalState {
 
-	mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
-
+	mutating func reduce(_ action: TacticalAction?) -> [TacticalEvent] {
 		switch action {
 		case .attack(let src, let dst): attack(src: src, dst: dst)
 		case .move(let unit, let xy): move(unit: unit, to: xy)
@@ -23,20 +21,10 @@ extension TacticalState {
 		case .resuply(let u): resupply(unit: u)
 		case .purchase(let idx, let xy): buy(idx, at: xy)
 		case .end: endTurn()
-		case .nop: break
+		case .none: break
 		}
-		let es = events.map { _, e in e }
-		events.erase()
-		return es
-
-//		if isCursorTooFar {
-//			alignCamera()
-//			return []
-//		}
-//		if player.type == .ai {
-//			runAI()
-//			return []
-//		}
+		defer { events.erase() }
+		return events.map { _, e in e }
 	}
 
 	mutating func resupply(unit id: UID) {
@@ -106,10 +94,6 @@ extension TacticalState {
 	private var tooFarY: Bool { abs(camera.pt.y - cursor.pt.y) > 4.0 * CGFloat(scale) }
 
 	var isCursorTooFar: Bool { tooFarX || tooFarY }
-
-	var reducible: Bool {
-		isCursorTooFar || !events.isEmpty || player.type == .ai
-	}
 
 	mutating func alignCamera() {
 		while tooFarX {

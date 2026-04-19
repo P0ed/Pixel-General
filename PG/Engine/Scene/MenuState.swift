@@ -16,6 +16,10 @@ struct MenuItem<Action> {
 
 extension MenuItem {
 
+	static var space: Self {
+		.init(icon: "Clear", status: .init(), update: id)
+	}
+
 	static func close(icon: String, status: String, action: Action? = nil, update: @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		.close(icon: icon, status: .init(text: status), action: action, update: update)
 	}
