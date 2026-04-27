@@ -10,15 +10,6 @@ extension TacticalState {
 			&& (su.isAir ? su.ammo > 0 : true)
 	}
 
-	func targets(uid: UID) -> [(UID, Unit)] {
-		let su = units[uid.index]
-		return !su.canAttack ? [] : units.reduce(into: []) { r, i, du in
-			if du.country.team != su.country.team, player.visible[position[uid.index]], unitCanHit(uid, i.uid) {
-				r.append((i.uid, du))
-			}
-		}
-	}
-
 	func support(trait: Traits, defender: UID, attacker: UID) -> UID? {
 		position[defender.index].n8.firstMap { hx in
 			return unitAt(hx).flatMap { u in
@@ -28,11 +19,11 @@ extension TacticalState {
 		}
 	}
 
-	mutating func fire(src: UID, dst: UID, defMod: Int) {
+	mutating func fire(src: UID, dst: UID, defMod: Int8) {
 		let (si, di) = (src.index, dst.index)
-		let atkMod = units[si].ammo == units[si].maxAmmo ? 1 : 0
-		let atk = Int(units[si].atk(units[di]) + units[si].stars) + atkMod
-		let def = Int(units[di].def(units[si]) + units[di].stars) + defMod
+		let atkMod: Int8 = units[si].ammo == units[si].maxAmmo ? 1 : 0
+		let atk = Int8(units[si].atk(units[di]) + units[si].stars) + atkMod
+		let def = Int8(units[di].def(units[si]) + units[di].stars) + defMod
 
 		let dif = atk - def
 		let t1 = max(1, 6 - dif)
@@ -51,15 +42,15 @@ extension TacticalState {
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
 		let targetPos = position[di]
 
-		///# ˘˘Logs˘˘
+		///# Logs
 		let srcStr = units[si].shortDescription
 		let dstStr = units[di].shortDescription
 		let dmgLine = "ts: \([t1, t2, t3]) ds: \(ds) dmg: \(dmg) \(dmgs)"
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
-		///# ¯¯Logs¯¯
+		///# Logs
 
 		units[si].ammo.decrement()
-		let alive = damage(unit: dst, dmg: dmg)
+		let alive = damage(id: dst, dmg: dmg)
 		units[si].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
 		if !alive { units[si].promote(using: &d20) }
 
@@ -67,24 +58,24 @@ extension TacticalState {
 		events.add(.fire(src, dst, dmg, units[di].hp))
 	}
 
-	private mutating func damage(unit: UID, dmg: UInt8) -> Bool {
-		units[unit.index].hp.decrement(by: dmg)
-		if cargo[unit.index] != -1 {
-			units[cargo[unit.index].index].hp.decrement(by: dmg)
+	private mutating func damage(id: UID, dmg: UInt8) -> Bool {
+		units[id.index].hp.decrement(by: dmg)
+		if cargo[id.index] != -1 {
+			units[cargo[id.index].index].hp.decrement(by: dmg)
 		}
-		let alive = units[unit.index].alive
+		let alive = units[id.index].alive
 		if !alive {
-			unitsMap[position[unit.index]] = -1
-			if cargo[unit.index] != -1 {
-				units[cargo[unit.index].index].hp = 0x0
+			unitsMap[position[id.index]] = -1
+			if cargo[id.index] != -1 {
+				units[cargo[id.index].index].hp = 0x0
 			}
 		}
 		return alive
 	}
 
-	private func encirclement(uid: UID) -> Int {
-		let team = units[uid.index].country.team
-		let enemies = position[uid.index].n4.reduce(into: 0) { r, xy in
+	private func encirclement(id: UID) -> Int8 {
+		let team = units[id.index].country.team
+		let enemies = position[id.index].n4.reduce(into: 0 as Int8) { r, xy in
 			r += (unitAt(xy).map { u in u.country.team != team ? 1 : 0 } ?? 0)
 		}
 		return max(0, enemies - 1)
@@ -99,7 +90,7 @@ extension TacticalState {
 
 		let (su, du) = (units[si], units[di])
 		let dt = map[position[di]]
-		let dstDef = du.defMod(vs: su, in: dt) - encirclement(uid: dst)
+		let dstDef = du.defMod(vs: su, in: dt) - encirclement(id: dst)
 
 		let ruggedDefence: Bool = !surprise && su.noRetaliation ? false : (
 			d20() + Int(su.ini + su.stars) * 2
@@ -159,5 +150,18 @@ extension TacticalState {
 		}
 		units[uid.index].ent = 0
 		events.add(.move(uid, pos))
+	}
+
+	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
+		let (a, d) = (units[attacker.index], units[defender.index])
+		let atk = Int8(a.atk(d) + a.stars)
+		let def = Int8(d.def(a) + d.stars) + map[position[defender.index]].def
+
+		let rounds = Int(a.hp + 3) / 3
+		let base = max(0, 127 + Int(atk - def) * 15)
+		let crit = a[.crit] ? 120 : 100
+		let evasion = d[.evasion] ? 80 : 100
+
+		return UInt8(clamping: rounds * base * crit * evasion / 1_00_00_00)
 	}
 }

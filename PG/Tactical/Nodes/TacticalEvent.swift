@@ -1,7 +1,7 @@
 import SpriteKit
 import AVFoundation
 
-enum TacticalEvent: Hashable {
+enum TacticalEvent {
 	case spawn(UID)
 	case move(UID, XY)
 	case fire(UID, UID, UInt8, UInt8)

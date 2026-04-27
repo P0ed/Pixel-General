@@ -133,16 +133,16 @@ extension Unit {
 		src.isAir ? airDef : groundDef
 	}
 
-	func defMod(vs enemy: Unit, in terrain: Terrain) -> Int {
-		let closeCombat = !enemy.isAir && !enemy.noRetaliation && enemy.rng == 1
+	func defMod(vs enemy: Unit, in terrain: Terrain) -> Int8 {
+		let closeCombat: Int8 = !enemy.isAir && !enemy.noRetaliation && enemy.rng == 1
 		? terrain.closeCombatPenalty(type) / 2 : 0
 
-		let mountaineer = terrain.isHighground
+		let mountaineer: Int8 = terrain.isHighground
 		? (self[.mountaineer] ? 2 : 0) - (enemy[.mountaineer] ? 1 : 0) : 0
 
-		let bigGuns = enemy[.bigGuns] ? -1 : 0
+		let bigGuns: Int8 = enemy[.bigGuns] ? -1 : 0
 
-		return Int(ent) + terrain.def + closeCombat + mountaineer + bigGuns
+		return Int8(ent) + terrain.def + closeCombat + mountaineer + bigGuns
 	}
 
 	var cost: UInt16 {
@@ -157,7 +157,7 @@ extension Unit {
 	mutating func heal(_ amount: UInt8) -> UInt8 {
 		hp.increment(
 			by: amount,
-			cap: 0xF
+			cap: maxHP
 		)
 	}
 

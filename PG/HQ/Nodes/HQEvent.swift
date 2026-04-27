@@ -52,8 +52,19 @@ extension HQNodes {
 				return scenarioMenu(scene.state)
 			}),
 			.space, .space, .space,
-			.space, .space, .space, .space,
-			.space, .space, .space, .space,
+
+			.init(icon: "Start", status: .init(text: "Campaign"), update: { _ in
+				guard let scene else { return nil }
+				return campaignMenu(scene.state)
+			}),
+			.space, .space, .space,
+
+			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
+				core.startScenario(TacticalState.chess())
+				present(.make(core.state))
+			}),
+			.space, .space, .space,
+
 			.init(icon: "New", status: .init(text: "New")) { _ in
 				guard let scene else { return nil }
 				return newGameMenu(scene.state)
@@ -67,10 +78,7 @@ extension HQNodes {
 				core.load(auto: false)
 				present(.make(core.state))
 			},
-			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
-				core.store(TacticalState.chess())
-				present(.make(core.state))
-			})
+			.space,
 		]))
 	}
 }

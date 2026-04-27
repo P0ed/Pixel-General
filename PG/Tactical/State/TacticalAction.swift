@@ -5,7 +5,7 @@ enum TacticalAction: Hashable {
 	case embark(UID, UID)
 	case disembark(UID, XY)
 	case attack(UID, UID)
-	case resuply(UID)
+	case resupply(UID)
 	case purchase(Int, XY)
 	case end
 }
@@ -18,7 +18,7 @@ extension TacticalState {
 		case .move(let unit, let xy): move(unit: unit, to: xy)
 		case .embark(let u, let t): embark(unit: u, transport: t)
 		case .disembark(let t, let xy): disembark(unit: t, to: xy)
-		case .resuply(let u): resupply(unit: u)
+		case .resupply(let u): resupply(unit: u)
 		case .purchase(let idx, let xy): buy(idx, at: xy)
 		case .end: endTurn()
 		case .none: break
@@ -71,7 +71,7 @@ extension TacticalState {
 	mutating func entrench(unit id: UID) {
 		if units[id.index].isAir { return }
 		units[id.index].ent = min(7, max(
-			UInt8(map[position[id.index]].baseEntrenchment),
+			map[position[id.index]].baseEntrenchment,
 			units[id.index].ent + 1
 		))
 	}

@@ -1,25 +1,23 @@
 import Foundation
 
-struct State: ~Copyable {
-	var hq: HQState?
-	var strategic: StrategicState?
-	var tactical: TacticalState?
-}
-
-struct Settings {
-	var soundLevel: UInt8 = 2
-}
-
 final class Core {
 	private(set) var state = State()
-	var settings = Settings()
+
+	var settings: Settings {
+		get {
+			UserDefaults.standard.data(forKey: "settings").flatMap(decode) ?? Settings()
+		}
+		set {
+			UserDefaults.standard.set(encode(newValue), forKey: "settings")
+		}
+	}
 
 	func new(country: Country = .default) {
 		state = State(
 			hq: HQState(
 				player: Player(country: country),
 				units: .init(
-					head: .base(country).mapInPlace { u in u.hp = 0xF },
+					head: .base(country).mapInPlace { u in u.hp = u.maxHP },
 					tail: .empty
 				)
 			)
@@ -51,6 +49,24 @@ final class Core {
 		save(auto: auto)
 	}
 
+	func store(_ strategic: borrowing StrategicState, auto: Bool = true) {
+		guard state.hq != nil else { return }
+		state.strategic = clone(strategic)
+		save(auto: auto)
+	}
+
+	func startScenario(_ tactical: borrowing TacticalState) {
+		state.tactical = clone(tactical)
+		state.location = .tactical
+		save()
+	}
+
+	func startCampaign(_ strategic: borrowing StrategicState) {
+		state.strategic = clone(strategic)
+		state.location = .strategic
+		save()
+	}
+
 	func complete(_ tactical: borrowing TacticalState) {
 		guard let c = state.hq?.player.country, tactical.map.size == 32 else {
 			state.tactical = nil
@@ -58,17 +74,16 @@ final class Core {
 			return
 		}
 
-		let units: [Unit] = (
-			tactical.units.map { $1 }
-		).compactMap { u in
-			u.country != c || u[.aux] ? nil : modifying(u, { u in
-				u.hp = u.maxHP
-				u.ap = u.maxAP
-				u.mp = u.maxMP
-				u.ammo = u.maxAmmo
-				u.ent = 0
-			})
-		}
+		let units: [Unit] = tactical.units
+			.compactMap { i, u in
+				u.country != c || u[.aux] ? nil : modifying(u) { u in
+					u.hp = u.maxHP
+					u.ap = u.maxAP
+					u.mp = u.maxMP
+					u.ammo = u.maxAmmo
+					u.ent = 0
+				}
+			}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)
 		state.hq?.cursor = .zero
 		state.hq?.player.prestige = tactical.players.firstMap {
@@ -76,6 +91,13 @@ final class Core {
 		} ?? 0
 
 		state.tactical = nil
+		state.location = .hq
+		save()
+	}
+
+	func goHQ() {
+		guard state.location == .strategic else { return }
+		state.location = .hq
 		save()
 	}
 
@@ -90,12 +112,10 @@ import SpriteKit
 extension SKScene {
 
 	static func make(_ state: borrowing State) -> SKScene {
-		if state.tactical != nil {
-			Scene(mode: .tactical, state: clone(state.tactical!))
-		} else if state.strategic != nil {
-			fatalError()
-		} else {
-			Scene(mode: .hq, state: clone(state.hq!))
+		switch state.location {
+		case .hq: Scene(mode: .hq, state: clone(state.hq!))
+		case .strategic: Scene(mode: .strategic, state: clone(state.strategic!))
+		case .tactical: Scene(mode: .tactical, state: clone(state.tactical!))
 		}
 	}
 }

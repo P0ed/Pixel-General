@@ -23,6 +23,7 @@ func present(_ scene: SKScene) {
 
 let core = Core()
 core.load()
+core.new()
 present(.make(core.state))
 
 NSApplication.shared.run()

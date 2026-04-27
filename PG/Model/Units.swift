@@ -62,7 +62,7 @@ extension Unit {
 	static func art2(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .pzh
-		case .allies: .m777 >< .veteran
+		case .allies: .m270
 		case .soviet: .art155
 		}
 	}
@@ -345,6 +345,19 @@ extension Unit {
 			stats.hardAtk = 7
 			stats.groundDef = 5
 			stats.airDef = 4
+		}
+	}
+
+	static var m270: Self {
+		.make { stats in
+			stats.type = .lightTrack
+			stats[.art] = true
+			stats[.range] = true
+			stats.ini = 5
+			stats.softAtk = 11
+			stats.hardAtk = 7
+			stats.groundDef = 7
+			stats.airDef = 6
 		}
 	}
 

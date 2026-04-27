@@ -5,9 +5,9 @@ extension HQNodes {
 	func scenarioMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
 		var players: [4 of Player] = [
 			state.player,
-			Player(country: .isr, type: .ai, prestige: 0x1400),
-			Player(country: .usa, type: .ai, prestige: 0x1400),
-			Player(country: .irn, type: .ai, prestige: 0x1400)
+			Player(country: .isr, type: .ai, prestige: .rich),
+			Player(country: .usa, type: .ai, prestige: .rich),
+			Player(country: .irn, type: .ai, prestige: .rich)
 		]
 		var countriesLeft: [Country] {
 			Country.allCases.filter { c in
@@ -56,12 +56,12 @@ extension HQNodes {
 		}
 		let prestige = (0..<4).map { idx in
 			MenuItem<HQAction>(
-				icon: "\(players[idx].prestige < 0x1400 ? "S" : "SS")",
+				icon: "\(players[idx].prestige < .rich ? "S" : "SS")",
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
 					modifying(menu) { menu in
-						players[idx].prestige = players[idx].prestige < 0x1400 ? 0x1400 : 0x0B00
-						menu.items[8 + idx].icon = players[idx].prestige < 0x1400 ? "S" : "SS"
+						players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
+						menu.items[8 + idx].icon = players[idx].prestige < .rich ? "S" : "SS"
 						menu.cursor = 8 + idx
 					}
 				}
@@ -71,7 +71,7 @@ extension HQNodes {
 			.space, .space, .space,
 			.close(icon: "Start", status: "Start", update: { _ in
 				guard let scene else { return }
-				core.store(TacticalState.make(
+				core.startScenario(TacticalState.make(
 					players: players,
 					units: scene.state.units.compactMap { u in u.alive ? u : nil }
 				))
@@ -102,4 +102,10 @@ private extension PlayerType {
 		case .remote: "Remote"
 		}
 	}
+}
+
+private extension UInt16 {
+
+	static var poor: Self { 0x0B00 }
+	static var rich: Self { 0x1400 }
 }

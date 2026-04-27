@@ -71,7 +71,7 @@ extension TacticalNodes {
 			layers: layers,
 			size: state.map.size,
 			cursor: MapNodes.addCursor(root: root),
-			selection: MapNodes.addCursor(root: root, z: -0.05, color: .selectedCursor)
+			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
 		)
 
 		state.map.indices.forEach { xy in

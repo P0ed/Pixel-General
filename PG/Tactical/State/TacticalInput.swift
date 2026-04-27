@@ -80,7 +80,7 @@ private extension TacticalState {
 		else { return nil }
 
 		selectUnit(.none)
-		return .resuply(selectedUnit)
+		return .resupply(selectedUnit)
 	}
 
 	mutating func prevUnit() -> TacticalAction? {

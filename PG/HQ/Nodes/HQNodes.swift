@@ -43,7 +43,7 @@ extension HQNodes {
 			layers: layers,
 			size: map.size,
 			cursor: MapNodes.addCursor(root: root),
-			selection: MapNodes.addCursor(root: root, z: -0.05, color: .selectedCursor)
+			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
 		)
 
 		map.indices.forEach { xy in

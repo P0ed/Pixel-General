@@ -109,7 +109,7 @@ extension Terrain {
 		}
 	}
 
-	var def: Int {
+	var def: Int8 {
 		switch self {
 		case .field: 0
 		case .forest, .hill, .airfield: 2
@@ -122,7 +122,7 @@ extension Terrain {
 		}
 	}
 
-	var baseEntrenchment: Int {
+	var baseEntrenchment: UInt8 {
 		switch self {
 		case .forest, .hill, .forestHill, .mountain, .airfield: 2
 		case .city: 3
@@ -130,10 +130,10 @@ extension Terrain {
 		}
 	}
 
-	func closeCombatPenalty(_ type: UnitType) -> Int {
+	func closeCombatPenalty(_ type: UnitType) -> Int8 {
 		return switch type {
-		case .lightWheel, .lightTrack: -Int(abs(def))
-		case .heavyTrack: -Int(abs(def) * 2)
+		case .lightWheel, .lightTrack: -Int8(abs(def))
+		case .heavyTrack: -Int8(abs(def) * 2)
 		default: 0
 		}
 	}

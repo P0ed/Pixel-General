@@ -47,12 +47,20 @@ extension Unit {
 			else { "Truck" }
 		case .lightWheel: "boxer"
 		case .lightTrack:
-			if self[.aa] { "SPAA" }
-			else if self[.art] { country.team == .axis ? "PZH" : "2S3" }
-			else { "Recon" }
+			if self[.aa] {
+				"SPAA"
+			} else if self[.art] {
+				switch country.team {
+				case .axis: "PZH"
+				case .allies: "M270"
+				case .soviet: "2S3"
+				}
+			} else {
+				"Recon"
+			}
 		case .heavyTrack:
 			switch country.team {
-			case .allies: "M1A1"
+			case .allies: "M1A2"
 			case .axis: "Tank"
 			default: "leo1"
 			}

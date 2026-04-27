@@ -3,19 +3,13 @@ extension TacticalState {
 	func runAI() -> TacticalAction {
 		guard let target else { return .end }
 
-		if let nextPurchase {
-			return nextPurchase
-		} else if let nextReinforce {
-			return nextReinforce
-		} else if let nextRetreat {
-			return nextRetreat
-		} else if let nextAttack {
-			return nextAttack
-		} else if let nextMove = nextMove(target: target) {
-			return nextMove
-		} else {
-			return .end
-		}
+		if let nextPurchase { return nextPurchase }
+		if let nextReinforce { return nextReinforce }
+		if let nextRetreat { return nextRetreat}
+		if let nextAttack { return nextAttack }
+		if let nextMove = nextMove(target: target) { return nextMove }
+
+		return .end
 	}
 
 	private var target: XY? {
@@ -29,6 +23,10 @@ extension TacticalState {
 		}
 		.sorted { a, b in a.distance(to: mid) < b.distance(to: mid) }
 		.first
+	}
+
+	private var unitActions: [TacticalAction] {
+		[]
 	}
 
 	private var nextPurchase: TacticalAction? {
@@ -54,7 +52,7 @@ extension TacticalState {
 				u.country == country && needsReinforcements(i, u)
 				&& u.untouched && (!u.isAir || hasAirfield(position[i]))
 			)
-			? .resuply(i.uid)
+			? .resupply(i.uid)
 			: nil
 		}
 	}
@@ -83,17 +81,17 @@ extension TacticalState {
 		units.firstMap { [country] i, u in
 			u.country != country
 			? nil
-			: targets(uid: i.uid)
+			: targets(id: i.uid)
 				.max(by: { a, b in
 					(
 						(a.1[.art] ? 5 : 0)
 						+ (a.1[.aa] ? 6 : 0)
-						+ (0xF - a.1.hp)
+						+ (a.1.maxHP - a.1.hp)
 						+ (u[.aa] && a.1.isAir ? 10 : 0)
 					) < (
 						(b.1[.art] ? 5 : 0)
 						+ (b.1[.aa] ? 6 : 0)
-						+ (0xF - b.1.hp)
+						+ (b.1.maxHP - b.1.hp)
 						+ (u[.aa] && b.1.isAir ? 10 : 0)
 					)
 				})
@@ -112,11 +110,20 @@ extension TacticalState {
 			.set
 			.max(by: { a, b in
 				(
-					max(0, map[a].def) - target.distance(to: a)
+					max(0, Int(map[a].def)) - target.distance(to: a)
 				) < (
-					max(0, map[b].def) - target.distance(to: b)
+					max(0, Int(map[b].def)) - target.distance(to: b)
 				)
 			})
 			.map { x in .move(id, x) }
+	}
+
+	private func targets(id: UID) -> [(UID, Unit)] {
+		let su = units[id.index]
+		return !su.canAttack ? [] : units.reduce(into: []) { r, i, du in
+			if du.country.team != su.country.team, isVisible(i.uid), unitCanHit(id, i.uid) {
+				r.append((i.uid, du))
+			}
+		}
 	}
 }
