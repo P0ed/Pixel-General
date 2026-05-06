@@ -120,9 +120,7 @@ private extension TacticalNodes {
 			items: [
 				.close(icon: "Start", status: "End turn", action: .end),
 				.close(icon: "Save", status: "Save") { [weak scene] _ in
-					if let scene {
-						core.store(scene.state, auto: false)
-					}
+					if let scene { core.store(scene.state, auto: false) }
 				},
 				.close(icon: "Load", status: "Load") { _ in
 					core.load(auto: false)

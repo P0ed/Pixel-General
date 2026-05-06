@@ -12,20 +12,11 @@ extension TacticalState {
 			players: .init { i in players[i].country },
 			map: map
 		)
-//		let playerCity = buildings[0].position
-//		let firstCity = buildings.filter { $0.country == players[1].country }.sorted(by: { b1, b2 in
-//			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
-//		}).first?.position ?? .zero
-//		let secondCity = buildings.filter { $0.country == players[2].country }.sorted(by: { b1, b2 in
-//			playerCity.distance(to: b1.position) < playerCity.distance(to: b2.position)
-//		}).first?.position ?? .zero
-//		let thirdCity = buildings.filter { $0.country == players[3].country }.first?.position ?? .zero
-
 		let units: [Unit] = (
-			units//.mapInPlace { $0.position = $0.position + playerCity }
-			+ .base(players[1].country)//.mapInPlace { $0.position = $0.position + firstCity - .one }
-			+ .base(players[2].country)//.mapInPlace { $0.position = $0.position + secondCity - .one }
-			+ .base(players[3].country)//.mapInPlace { $0.position = $0.position + thirdCity - .one }
+			units
+			+ .base(players[1].country)
+			+ .base(players[2].country)
+			+ .base(players[3].country)
 		)
 		.mapInPlace { u in
 			u.hp = u.maxHP

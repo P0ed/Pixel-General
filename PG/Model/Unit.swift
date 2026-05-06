@@ -52,7 +52,7 @@ struct Traits: OptionSet, Hashable {
 	static var fast: Self { .init(rawValue: 1 << 6) }
 	static var range: Self { .init(rawValue: 1 << 7) }
 	static var aux: Self { .init(rawValue: 1 << 8) }
-	static var reserved0: Self { .init(rawValue: 1 << 9) }
+	static var regen: Self { .init(rawValue: 1 << 9) }
 	static var reserved1: Self { .init(rawValue: 1 << 10) }
 	static var reserved2: Self { .init(rawValue: 1 << 11) }
 	static var mountaineer: Self { .init(rawValue: 1 << 12) }

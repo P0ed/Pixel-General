@@ -20,10 +20,8 @@ extension StrategicNodes {
 		scene.show(MenuState(
 			items: [
 				.close(icon: "HQ", status: "HQ") { /*[weak scene]*/ _ in
-//					if let scene {
-//						core.complete(state)
-//						present(.make(core.state))
-//					}
+					core.goHQ()
+					present(.make(core.state))
 				},
 				.close(icon: "Save", status: "Save") { [weak scene] _ in
 					if let scene {

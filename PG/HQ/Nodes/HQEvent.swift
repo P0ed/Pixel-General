@@ -47,15 +47,15 @@ extension HQNodes {
 
 	private func processMenu() {
 		scene?.show(MenuState(items: [
-			.init(icon: "Start", status: .init(text: "Scenario"), update: { _ in
+			.init(icon: "Start", status: .init(text: "Scenario"), update: { m in
 				guard let scene else { return nil }
-				return scenarioMenu(scene.state)
+				return scenarioMenu(m, scene.state)
 			}),
 			.space, .space, .space,
 
-			.init(icon: "Start", status: .init(text: "Campaign"), update: { _ in
+			.init(icon: "Start", status: .init(text: "Campaign"), update: { m in
 				guard let scene else { return nil }
-				return campaignMenu(scene.state)
+				return campaignMenu(m, scene.state)
 			}),
 			.space, .space, .space,
 

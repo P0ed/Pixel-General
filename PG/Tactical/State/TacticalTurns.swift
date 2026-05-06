@@ -3,7 +3,7 @@ extension TacticalState {
 	var day: Int { Int(turn) / players.count + 1 }
 
 	private var aliveTeams: Set<Team> {
-		Set(players.map { _, p in p.country.team })
+		Set(players.compactMap { _, p in p.alive ? p.country.team : nil })
 	}
 
 	mutating func endTurn() {
@@ -27,7 +27,8 @@ extension TacticalState {
 
 	private mutating func startNextDay() {
 		let ps = players.map { _, p in
-			modifying(p) { p in endTurn(player: &p) }
+			guard p.alive else { return p }
+			return modifying(p) { p in endTurn(player: &p) }
 		}
 		players.modifyEach { i, p in p = ps[i] }
 
@@ -62,12 +63,10 @@ extension TacticalState {
 	}
 
 	private mutating func endTurn(unit id: UID) {
+		regen(unit: id)
 		entrench(unit: id)
 		resupply(unit: id)
-		units[id.index] = modifying(units[id.index]) { u in
-			u.ap = u.maxAP
-			u.mp = u.maxMP
-		}
+		rest(unit: id)
 	}
 
 	func neighbors(at position: XY) -> CArray<8, UID> {
@@ -98,7 +97,7 @@ extension TacticalState {
 	}
 
 	private mutating func eliminatePlayers() {
-		let alive = players.map { i, p in countryHasCities(p.country) }
+		let alive = players.map { i, p in p.alive && countryHasCities(p.country) }
 		players.modifyEach { i, player in player.alive = alive[i] }
 	}
 

@@ -2,7 +2,7 @@ import SpriteKit
 
 extension HQNodes {
 
-	func scenarioMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
+	func scenarioMenu(_ menu: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction> {
 		var players: [4 of Player] = [
 			state.player,
 			Player(country: .isr, type: .ai, prestige: .rich),
@@ -80,7 +80,8 @@ extension HQNodes {
 		]
 
 		return MenuState(
-			items: countries + types + prestige + start
+			items: countries + types + prestige + start,
+			close: { _ in menu }
 		)
 	}
 }

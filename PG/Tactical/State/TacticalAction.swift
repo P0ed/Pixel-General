@@ -68,6 +68,18 @@ extension TacticalState {
 		events.add(.update(id))
 	}
 
+	mutating func regen(unit id: UID) {
+		guard units[id.index][.regen] else { return }
+		units[id.index].hp.increment(by: 1, cap: units[id.index].maxHP)
+	}
+
+	mutating func rest(unit id: UID) {
+		units[id.index] = modifying(units[id.index]) { u in
+			u.ap = u.maxAP
+			u.mp = u.maxMP
+		}
+	}
+
 	mutating func entrench(unit id: UID) {
 		if units[id.index].isAir { return }
 		units[id.index].ent = min(7, max(

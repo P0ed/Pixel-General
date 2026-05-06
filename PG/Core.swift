@@ -40,18 +40,21 @@ final class Core {
 
 	func store(_ hq: borrowing HQState, auto: Bool = true) {
 		state.hq = clone(hq)
+		state.location = .hq
 		save(auto: auto)
 	}
 
 	func store(_ tactical: borrowing TacticalState, auto: Bool = true) {
 		guard state.hq != nil else { return }
 		state.tactical = clone(tactical)
+		state.location = .tactical
 		save(auto: auto)
 	}
 
 	func store(_ strategic: borrowing StrategicState, auto: Bool = true) {
 		guard state.hq != nil else { return }
 		state.strategic = clone(strategic)
+		state.location = .strategic
 		save(auto: auto)
 	}
 
@@ -61,7 +64,8 @@ final class Core {
 		save()
 	}
 
-	func startCampaign(_ strategic: borrowing StrategicState) {
+	func startCampaign(_ hq: borrowing HQState, _ strategic: borrowing StrategicState) {
+		state.hq = clone(hq)
 		state.strategic = clone(strategic)
 		state.location = .strategic
 		save()
@@ -70,6 +74,7 @@ final class Core {
 	func complete(_ tactical: borrowing TacticalState) {
 		guard let c = state.hq?.player.country, tactical.map.size == 32 else {
 			state.tactical = nil
+			state.location = .hq
 			save()
 			return
 		}
@@ -86,9 +91,7 @@ final class Core {
 			}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)
 		state.hq?.cursor = .zero
-		state.hq?.player.prestige = tactical.players.firstMap {
-			$1.country == c ? $1.prestige : nil
-		} ?? 0
+		state.hq?.player.prestige = tactical[c].prestige
 
 		state.tactical = nil
 		state.location = .hq
