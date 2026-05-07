@@ -122,4 +122,8 @@ extension SKScene {
 		case .tactical: Scene(mode: .tactical, state: clone(state.tactical!))
 		}
 	}
+
+	static var editor: SKScene {
+		Scene(mode: .editor, state: EditorState())
+	}
 }

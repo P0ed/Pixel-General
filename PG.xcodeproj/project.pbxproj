@@ -58,6 +58,9 @@
 		5FB4D0D52EAE26240010E702 /* TacticalAttack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */; };
 		5FB4D1262EAFABCB0010E702 /* TacticalTurns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */; };
 		5FB524AA2FACB2C20017B672 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* Tests.swift */; };
+		5FB524AD2FAD0EE10017B672 /* MapEditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* MapEditorMode.swift */; };
+		5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AE2FAD10AA0017B672 /* EditorState.swift */; };
+		5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524B02FAD111E0017B672 /* EditorNodes.swift */; };
 		5FBA4D7B2EF6DB7900D7C1B0 /* AppKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D7A2EF6DB7700D7C1B0 /* AppKit.swift */; };
 		5FBA4D7E2EF6E26800D7C1B0 /* StrategicState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D7D2EF6E26200D7C1B0 /* StrategicState.swift */; };
 		5FBA4D802EF6FD8900D7C1B0 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D7F2EF6FD8800D7C1B0 /* Core.swift */; };
@@ -147,6 +150,9 @@
 		5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTurns.swift; sourceTree = "<group>"; };
 		5FB5249F2FACB2990017B672 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB524A82FACB2C20017B672 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
+		5FB524AC2FAD0EDE0017B672 /* MapEditorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapEditorMode.swift; sourceTree = "<group>"; };
+		5FB524AE2FAD10AA0017B672 /* EditorState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorState.swift; sourceTree = "<group>"; };
+		5FB524B02FAD111E0017B672 /* EditorNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorNodes.swift; sourceTree = "<group>"; };
 		5FBA4D7A2EF6DB7700D7C1B0 /* AppKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppKit.swift; sourceTree = "<group>"; };
 		5FBA4D7D2EF6E26200D7C1B0 /* StrategicState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicState.swift; sourceTree = "<group>"; };
 		5FBA4D7F2EF6FD8800D7C1B0 /* Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core.swift; sourceTree = "<group>"; };
@@ -304,6 +310,7 @@
 				5F5560F82EF5B04C00C08E14 /* HQ */,
 				5FBA4D7C2EF6E24F00D7C1B0 /* Strategic */,
 				5F5560F52EF5ADDB00C08E14 /* Tactical */,
+				5FB524AB2FAD0ED00017B672 /* Editor */,
 				5F2A33A72EA93AC3008A0A95 /* Sounds */,
 				5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */,
 				5FBA4D7F2EF6FD8800D7C1B0 /* Core.swift */,
@@ -319,6 +326,16 @@
 				5FB524A82FACB2C20017B672 /* Tests.swift */,
 			);
 			path = Tests;
+			sourceTree = "<group>";
+		};
+		5FB524AB2FAD0ED00017B672 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				5FB524AC2FAD0EDE0017B672 /* MapEditorMode.swift */,
+				5FB524AE2FAD10AA0017B672 /* EditorState.swift */,
+				5FB524B02FAD111E0017B672 /* EditorNodes.swift */,
+			);
+			path = Editor;
 			sourceTree = "<group>";
 		};
 		5FBA4D7C2EF6E24F00D7C1B0 /* Strategic */ = {
@@ -558,6 +575,7 @@
 				5F8E87312EB3BEEC0023B28F /* Speicher.swift in Sources */,
 				5FF679772F06FB1300586323 /* TacticalMove.swift in Sources */,
 				5F5A716D2F24FB830059B314 /* Terrain.swift in Sources */,
+				5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */,
 				5F43D4A52EF051A80046AD2A /* Player.swift in Sources */,
 				5F24DC332EA95FE60085FDDC /* main.swift in Sources */,
 				5FE94DDB2F9B990500004EC8 /* StrategicNodes.swift in Sources */,
@@ -567,6 +585,7 @@
 				5FA0F0992EF2255B0022EC68 /* D20.swift in Sources */,
 				5F5560FC2EF5B0CF00C08E14 /* HQNodes.swift in Sources */,
 				5FF7EB3D2EB6428F00E287FF /* MapGeneration.swift in Sources */,
+				5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */,
 				5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */,
 				5FE44F172F9BBA3500A589F1 /* StrategicInput.swift in Sources */,
 				5F919D6A2EA9596E0037A208 /* TacticalAction.swift in Sources */,
@@ -580,6 +599,7 @@
 				5F5560F72EF5AE0F00C08E14 /* TacticalMode.swift in Sources */,
 				5F919D562EA959670037A208 /* UnitSprites.swift in Sources */,
 				5FE44F192F9BBBD800A589F1 /* State.swift in Sources */,
+				5FB524AD2FAD0EE10017B672 /* MapEditorMode.swift in Sources */,
 				5F2F5E5E2F851700006D4D7A /* TacticalChess.swift in Sources */,
 				5FBA4D7B2EF6DB7900D7C1B0 /* AppKit.swift in Sources */,
 				5F919D572EA959670037A208 /* TacticalNodes.swift in Sources */,
