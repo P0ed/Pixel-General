@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 struct BaseNodes {
 	var menu: SKNode
 	var status: SKLabelNode

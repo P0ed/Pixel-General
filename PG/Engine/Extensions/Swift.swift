@@ -18,36 +18,38 @@ func modifying<A>(_ value: A, _ tfm: (inout A) -> Void) -> A {
 }
 
 func clone<A: ~Copyable>(_ x: borrowing A) -> A {
-	withUnsafeTemporaryAllocation(
+	unsafe withUnsafeTemporaryAllocation(
 		byteCount: MemoryLayout<A>.size,
 		alignment: MemoryLayout<A>.alignment
 	) { raw in
-		withUnsafePointer(to: x) { src in
-			raw.baseAddress!.copyMemory(
+		unsafe withUnsafePointer(to: x) { src in
+			unsafe raw.baseAddress!.copyMemory(
 				from: src,
 				byteCount: MemoryLayout<A>.size
 			)
 		}
-		return raw.baseAddress!
+		return unsafe raw.baseAddress!
 			.assumingMemoryBound(to: A.self)
 			.move()
 	}
 }
 
 func encode<A: ~Copyable>(_ x: borrowing A) -> Data {
-	withUnsafePointer(to: x) { p in Data(bytes: p, count: MemoryLayout<A>.size) }
+	unsafe withUnsafePointer(to: x) { p in
+		unsafe Data(bytes: p, count: MemoryLayout<A>.size)
+	}
 }
 
 func decode<A: ~Copyable>(_ data: Data) -> A? {
 	guard data.count == MemoryLayout<A>.size else { return nil }
-	return withUnsafeTemporaryAllocation(
+	return unsafe withUnsafeTemporaryAllocation(
 		byteCount: MemoryLayout<A>.size,
 		alignment: MemoryLayout<A>.alignment
 	) { ap in
-		data.withUnsafeBytes { (p: UnsafeRawBufferPointer) in
-			ap.baseAddress!.copyMemory(from: p.baseAddress!, byteCount: MemoryLayout<A>.size)
+		unsafe data.withUnsafeBytes { (p: UnsafeRawBufferPointer) in
+			unsafe ap.baseAddress!.copyMemory(from: p.baseAddress!, byteCount: MemoryLayout<A>.size)
 		}
-		return ap.baseAddress!
+		return unsafe ap.baseAddress!
 			.assumingMemoryBound(to: A.self)
 			.move()
 	}

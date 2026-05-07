@@ -1,4 +1,3 @@
-
 extension HQState {
 
 	mutating func apply(_ input: Input) -> HQAction? {
@@ -15,7 +14,7 @@ extension HQState {
 	}
 
 	mutating func select(_ xy: XY) -> HQAction? {
-		guard HQNodes.map.contains(xy) else { return nil }
+		guard map.contains(xy) else { return nil }
 
 		cursor = xy
 		return mainAction()
@@ -23,7 +22,7 @@ extension HQState {
 
 	mutating func moveCursor(_ direction: Direction) -> HQAction? {
 		let xy = cursor.neighbor(direction)
-		if HQNodes.map.contains(xy) { cursor = xy }
+		if map.contains(xy) { cursor = xy }
 		return nil
 	}
 

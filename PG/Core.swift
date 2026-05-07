@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 final class Core {
 	private(set) var state = State()
 

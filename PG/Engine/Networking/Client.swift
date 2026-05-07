@@ -1,6 +1,7 @@
 import Network
 import Foundation
 
+@MainActor
 final class Client<Message: MessageProtocol> {
 	private var connection: Connection<Message>?
 	private let handleMessage: (Message) -> Void

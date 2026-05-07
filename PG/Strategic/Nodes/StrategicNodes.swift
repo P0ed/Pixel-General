@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 struct StrategicNodes {
 	weak var scene: StrategicScene?
 	var camera: SKCameraNode

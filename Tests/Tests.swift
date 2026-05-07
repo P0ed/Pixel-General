@@ -14,11 +14,15 @@ struct Tests {
 			bins[d20()] += 1
 		}
 
-		let str = bins.map { "\($0)" }.joined(separator: ", ")
+		let str = bins.indices
+			.map { i in "\(bins[i])" }
+			.joined(separator: ", ")
+
+		let result = bins.indices
+			.reduce(true) { r, i in r && bins[i] > expected }
+
 		print("Bins: \(str)")
-		print("Each bin is expected to be at least: \(expected)")
-		#expect(bins.indices.reduce(true) { r, i in
-			r && bins[i] > expected
-		})
+		print("Each bin is expected to be greater than: \(expected)")
+		#expect(result)
     }
 }

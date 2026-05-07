@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 struct TacticalNodes {
 	weak var scene: TacticalScene?
 	var camera: SKCameraNode
@@ -9,6 +10,7 @@ struct TacticalNodes {
 	@IO var fog: SetXY = .empty
 }
 
+@MainActor
 struct SoundNodes {
 	var boomS: SKAudioNode
 	var boomM: SKAudioNode

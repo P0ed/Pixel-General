@@ -30,10 +30,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		backgroundColor = .black
 		scaleMode = .aspectFit
 
-		willCloseWindow = NotificationCenter.default.willCloseWindow { [weak self] window in
-			guard self?.view?.window == window else { return }
-			self?.saveAndExit()
-		}
+		willCloseWindow = NotificationCenter.default.addMainActorObserver(
+			forName: NSWindow.willCloseNotification,
+			object: window,
+			using: { [weak self] _ in
+				self?.saveAndExit()
+			}
+		)
 
 		let nodes = mode.make(self)
 		mode.layout(size, nodes)
@@ -49,7 +52,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		eventsMonitor = panHandler
 	}
 
-	deinit {
+	isolated deinit {
 		if let eventsMonitor { NSEvent.removeMonitor(eventsMonitor) }
 	}
 
@@ -79,7 +82,9 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		processing = true
 		Task {
 			let events = mode.reduce(&state, action)
-			for event in events { await mode.process(event, nodes, state) }
+			for event in events {
+				await mode.process(event, nodes, state)
+			}
 			processing = false
 			didSetState()
 		}
@@ -164,4 +169,9 @@ extension MenuState {
 		let item = cursor < items.count ? items[cursor] : nil
 		return item?.status ?? Status()
 	}
+}
+
+@MainActor
+func present(_ scene: SKScene) {
+	view.presentScene(scene, transition: .moveIn(with: .up, duration: 0.47))
 }

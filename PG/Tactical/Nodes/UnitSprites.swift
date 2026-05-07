@@ -2,6 +2,7 @@ import SpriteKit
 
 extension Unit {
 
+	@MainActor
 	var hqSprite: SKNode {
 		let node = SKNode()
 
@@ -13,6 +14,7 @@ extension Unit {
 		return node
 	}
 
+	@MainActor
 	var sprite: SKNode {
 		let node = SKNode()
 

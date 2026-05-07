@@ -20,7 +20,7 @@ extension Scene where State: ~Copyable {
 		default: break
 		}
 		switch event.characters {
-		case "f" where flags == .command: view?.window?.toggleFullScreen(nil)
+		case "f" where flags == .command: window.toggleFullScreen(nil)
 		case "q" where flags == .command: saveAndExit()
 		case "[": apply(.target(.prev))
 		case "]": apply(.target(.next))

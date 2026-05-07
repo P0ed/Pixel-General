@@ -1,3 +1,4 @@
+@MainActor
 struct MenuState<Action> {
 	var items: [MenuItem<Action>]
 	var cursor: Int = 0
@@ -7,11 +8,12 @@ struct MenuState<Action> {
 
 enum MenuAction { case close, action(Int) }
 
+@MainActor
 struct MenuItem<Action> {
 	var icon: String
 	var status: Status
 	var action: Action?
-	var update: (MenuState<Action>) -> MenuState<Action>?
+	var update: @MainActor (MenuState<Action>) -> MenuState<Action>?
 }
 
 extension MenuItem {
@@ -20,11 +22,11 @@ extension MenuItem {
 		.init(icon: "Clear", status: .init(), update: id)
 	}
 
-	static func close(icon: String, status: String, action: Action? = nil, update: @escaping (MenuState<Action>) -> Void = ø) -> Self {
+	static func close(icon: String, status: String, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		.close(icon: icon, status: .init(text: status), action: action, update: update)
 	}
 
-	static func close(icon: String, status: Status, action: Action? = nil, update: @escaping (MenuState<Action>) -> Void = ø) -> Self {
+	static func close(icon: String, status: Status, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		MenuItem(
 			icon: icon,
 			status: status,

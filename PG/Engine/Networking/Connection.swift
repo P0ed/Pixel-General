@@ -10,9 +10,9 @@ protocol MessageProtocol {
 	init?(type: MessageType, payload: Data)
 }
 
+@MainActor
 final class Connection<Message: MessageProtocol> {
 	private let connection: NWConnection
-	private let queue = DispatchQueue(label: "game.connection")
 	private let onMessage: (Connection, Message) -> Void
 	private let onDisconnect: (Connection) -> Void
 	private var buffer = Data()
@@ -25,15 +25,18 @@ final class Connection<Message: MessageProtocol> {
 		self.connection = connection
 		self.onMessage = message
 		self.onDisconnect = disconnect
+
 		connection.stateUpdateHandler = { [weak self] state in
-			guard let self else { return }
-			switch state {
-			case .ready: receiveLoop()
-			case .failed, .cancelled: onDisconnect(self)
-			default: break
+			MainActor.assumeIsolated {
+				guard let self else { return }
+				switch state {
+				case .ready: self.receiveLoop()
+				case .failed, .cancelled: self.onDisconnect(self)
+				default: break
+				}
 			}
 		}
-		connection.start(queue: queue)
+		connection.start(queue: .main)
 	}
 
 	deinit {
@@ -47,7 +50,7 @@ final class Connection<Message: MessageProtocol> {
 		let payload = message.payload
 
 		var length = UInt32(1 + payload.count).bigEndian
-		data.append(Data(bytes: &length, count: 4))
+		unsafe data.append(Data(bytes: &length, count: 4))
 
 		data.append(type.rawValue)
 		data.append(payload)
@@ -59,19 +62,21 @@ final class Connection<Message: MessageProtocol> {
 		connection.receive(minimumIncompleteLength: 1, maximumLength: 1 << 16) {
 			[weak self] data, _, isComplete, error in
 
-			guard let self else { return }
+			MainActor.assumeIsolated {
+				guard let self else { return }
 
-			if let data {
-				self.buffer.append(data)
-				self.processBuffer()
+				if let data {
+					self.buffer.append(data)
+					self.processBuffer()
+				}
+
+				if isComplete || error != nil {
+					self.onDisconnect(self)
+					return
+				}
+
+				self.receiveLoop()
 			}
-
-			if isComplete || error != nil {
-				onDisconnect(self)
-				return
-			}
-
-			self.receiveLoop()
 		}
 	}
 
@@ -79,8 +84,8 @@ final class Connection<Message: MessageProtocol> {
 		while true {
 			guard buffer.count >= 4 else { return }
 
-			let length = buffer.prefix(4).withUnsafeBytes {
-				$0.load(as: UInt32.self).bigEndian
+			let length = unsafe buffer.prefix(4).withUnsafeBytes {
+				unsafe $0.load(as: UInt32.self).bigEndian
 			}
 
 			guard buffer.count >= 4 + Int(length) else { return }

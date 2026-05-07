@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 struct MapNodes {
 	var layers: [SKTileMapNode]
 	var size: Int

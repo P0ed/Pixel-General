@@ -1,6 +1,7 @@
 import Network
 import Foundation
 
+@MainActor
 final class Server<Message: MessageProtocol> {
 	private var listener: NWListener?
 	private var connections: [Connection<Message>] = []
@@ -16,16 +17,18 @@ final class Server<Message: MessageProtocol> {
 		guard let listener else { return print("Unable to start server") }
 
 		listener.newConnectionHandler = { [weak self] connection in
-			self?.connections.append(Connection(
-				connection: connection,
-				message: { con, message in
-					print("Server received message: \(message)")
-					self?.handleMessage(con, message)
-				},
-				disconnect: { con in
-					self?.connections.removeAll { $0 === con }
-				}
-			))
+			MainActor.assumeIsolated {
+				self?.connections.append(Connection(
+					connection: connection,
+					message: { con, message in
+						print("Server received message: \(message)")
+						self?.handleMessage(con, message)
+					},
+					disconnect: { con in
+						self?.connections.removeAll { $0 === con }
+					}
+				))
+			}
 		}
 		listener.start(queue: .main)
 		print("Server started on port \(port)")

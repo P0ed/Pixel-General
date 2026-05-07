@@ -1,4 +1,5 @@
 struct HQState: ~Copyable {
+	var map = Map<Terrain>(size: 4, zero: .field)
 	var player: Player
 	var units: [16 of Unit]
 	var events: CArray<16, HQEvent> = .init(tail: .menu)
@@ -17,9 +18,9 @@ extension HQState {
 			},
 			action: .init({
 				if selected != nil {
-					"sell []"
+					"C: sell"
 				} else if units[cursor] == nil {
-					"shop []"
+					"C: shop"
 				} else {
 					""
 				}

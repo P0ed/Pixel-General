@@ -1,16 +1,17 @@
 import GameController
 
+@MainActor
 struct HIDController {
 	@IO private var lifetime: Any?
 	@IO var send: (Input) -> Void = ø
 
 	init() {
-		lifetime = NotificationCenter.default.addObserver(
+		lifetime = NotificationCenter.default.addMainActorObserver(
 			forName: .GCControllerDidBecomeCurrent,
-			object: nil,
-			queue: .main,
 			using: { [_send] notification in
-				guard let gamepad = (notification.object as? GCController)?.extendedGamepad else { return }
+				guard let gamepad = (notification.object as? GCController)?.extendedGamepad
+				else { return }
+
 				let send = { input in _send.wrappedValue(input) }
 
 				gamepad.dpad.left.pressedChangedHandler = { _, _, pressed in

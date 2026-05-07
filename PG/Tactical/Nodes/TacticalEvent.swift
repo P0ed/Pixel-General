@@ -90,7 +90,7 @@ private extension TacticalNodes {
 				icon: template.imageName,
 				status: .init(
 					text: template.status,
-					action: .init("\(template.cost) / \(state.player.prestige) ><")
+					action: .init("\(template.cost) / \(state.player.prestige)")
 				),
 				action: .purchase(i, xy)
 			)
