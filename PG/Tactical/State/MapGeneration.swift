@@ -159,7 +159,7 @@ extension Map<Terrain> {
 		}
 	}
 
-	private mutating func shapeRivers() {
+	mutating func shapeRivers() {
 		for xy in indices where self[xy] == .river00 {
 			let n4 = xy.n4
 			self[xy] = Self.river([
@@ -169,7 +169,7 @@ extension Map<Terrain> {
 		}
 	}
 
-	private mutating func shapeRoads() {
+	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
 			if self[xy] == .roadNWSE {

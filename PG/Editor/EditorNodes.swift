@@ -103,6 +103,8 @@ private extension EditorNodes {
 		}
 		items.append(.close(icon: "Clear", status: "Clear map", action: .clear))
 		items.append(.close(icon: "New", status: "Randomize", action: .randomize))
+		items.append(.close(icon: "Save", status: "Save map", action: .save))
+		items.append(.close(icon: "Load", status: "Load map", action: .load))
 
 		scene.show(MenuState(items: items))
 	}

@@ -1,3 +1,5 @@
+import Foundation
+
 struct EditorState: ~Copyable {
 	var map: Map<Terrain>
 	var brush: Terrain = .field
@@ -12,6 +14,8 @@ enum EditorAction: Hashable {
 	case setBrush(Terrain)
 	case clear
 	case randomize
+	case save
+	case load
 }
 
 enum EditorEvent {
@@ -51,6 +55,8 @@ extension EditorState {
 		case .setBrush(let terrain): brush = terrain
 		case .clear: clearMap()
 		case .randomize: randomizeMap()
+		case .save: saveMap()
+		case .load: loadMap()
 		case .none: break
 		}
 		defer { events.erase() }
@@ -95,8 +101,20 @@ private extension EditorState {
 
 	mutating func paint(_ xy: XY, _ terrain: Terrain) {
 		guard map.contains(xy), map[xy] != terrain else { return }
+		let prev = map[xy]
 		map[xy] = terrain
-		events.add(.set(xy, terrain))
+
+		let touchesWater = terrain.affectsWaterShape || prev.affectsWaterShape
+		let touchesRoad = terrain.affectsRoadShape || prev.affectsRoadShape
+
+		if touchesWater { map.shapeRivers() }
+		if touchesRoad { map.shapeRoads() }
+
+		if touchesWater || touchesRoad {
+			events.add(.redraw)
+		} else {
+			events.add(.set(xy, terrain))
+		}
 	}
 
 	mutating func clearMap() {
@@ -108,6 +126,45 @@ private extension EditorState {
 		map = Map(size: map.size, seed: Int.random(in: 0 ... .max))
 		events.add(.redraw)
 	}
+
+	mutating func saveMap() {
+		UserDefaults.standard.set(encodeMap(), forKey: "editor.map")
+	}
+
+	mutating func loadMap() {
+		guard let str = UserDefaults.standard.string(forKey: "editor.map") else { return }
+		decodeMap(str)
+		map.shapeRivers()
+		map.shapeRoads()
+		events.add(.redraw)
+	}
+
+	func encodeMap() -> String {
+		var lines = [] as [String]
+		lines.reserveCapacity(map.size)
+		for y in (0 ..< map.size).reversed() {
+			var row = ""
+			row.reserveCapacity(map.size)
+			for x in 0 ..< map.size {
+				row.append(map[XY(x, y)].code)
+			}
+			lines.append(row)
+		}
+		return lines.joined(separator: "\n")
+	}
+
+	mutating func decodeMap(_ str: String) {
+		map.indices.forEach { xy in map[xy] = .field }
+		let lines = str.split(separator: "\n", omittingEmptySubsequences: false)
+		for (lineIdx, line) in lines.enumerated() where lineIdx < map.size {
+			let y = map.size - 1 - lineIdx
+			for (x, ch) in line.enumerated() where x < map.size {
+				if let t = Terrain(code: ch) {
+					map[XY(x, y)] = t
+				}
+			}
+		}
+	}
 }
 
 extension Terrain {
@@ -116,6 +173,45 @@ extension Terrain {
 		.field, .forest, .hill, .forestHill, .mountain,
 		.water, .river00, .city, .airfield, .roadNWSE
 	]
+
+	var affectsWaterShape: Bool { isRiver || isBridge || self == .water }
+	var affectsRoadShape: Bool { isRoad || isBuilding }
+
+	var code: Character {
+		switch self {
+		case .none: "."
+		case .field: "F"
+		case .forest: "f"
+		case .hill: "H"
+		case .forestHill: "h"
+		case .mountain: "M"
+		case .water: "W"
+		case .river00, .river01, .river10, .river11: "R"
+		case .bridge01, .bridge10: "B"
+		case .city: "C"
+		case .airfield: "A"
+		case _ where isRoad: "r"
+		default: "."
+		}
+	}
+
+	init?(code: Character) {
+		switch code {
+		case ".": self = .none
+		case "F": self = .field
+		case "f": self = .forest
+		case "H": self = .hill
+		case "h": self = .forestHill
+		case "M": self = .mountain
+		case "W": self = .water
+		case "R": self = .river00
+		case "B": self = .bridge01
+		case "C": self = .city
+		case "A": self = .airfield
+		case "r": self = .roadNWSE
+		default: return nil
+		}
+	}
 
 	var imageName: String {
 		switch self {
