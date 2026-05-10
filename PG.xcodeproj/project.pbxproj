@@ -138,6 +138,7 @@
 		5F5A716C2F24FB790059B314 /* Terrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Terrain.swift; sourceTree = "<group>"; };
 		5F649EED2F94E54C00F9CE89 /* HQInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQInput.swift; sourceTree = "<group>"; };
 		5F649EF12F952C6600F9CE89 /* HQNewGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQNewGame.swift; sourceTree = "<group>"; };
+		5F7472C82FB10FF700EBC354 /* Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Roadmap.md; sourceTree = "<group>"; };
 		5F87CF592F7BD46900BC87CA /* CArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CArray.swift; sourceTree = "<group>"; };
 		5F8E87302EB3BEEC0023B28F /* Speicher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Speicher.swift; sourceTree = "<group>"; };
 		5F8E87322EB3E1DA0023B28F /* Integers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integers.swift; sourceTree = "<group>"; };
@@ -343,6 +344,7 @@
 			isa = PBXGroup;
 			children = (
 				5FB524B22FAD41220017B672 /* Architecture.md */,
+				5F7472C82FB10FF700EBC354 /* Roadmap.md */,
 			);
 			path = docs;
 			sourceTree = "<group>";
