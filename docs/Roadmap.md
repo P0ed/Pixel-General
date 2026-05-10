@@ -1,7 +1,5 @@
 # Roadmap
 
-Codebase improvement suggestions. Not implemented — capture only.
-
 ## Known bugs
 
 ### Map generation hangs for some seeds
@@ -26,13 +24,11 @@ Fix options:
 - `TacticalAI.nextPurchase` calls `shopUnits(at:).enumerated().randomElement()` — uses Swift's default RNG, not `state.d20`. Pipe `D20` through every randomization site so AI play is reproducible from a seed.
 - `TacticalStateFactory.make`'s default `seed: Int = .random(in: 0...1023)` defeats reproducibility unless callers pass a seed. Make it explicit at every call site.
 
-## Concurrency / strict-concurrency cleanups
-
-- Several `~Copyable` types (`Map`, `TacticalState`, `Moves`) need explicit `Sendable` reasoning before Strategic mode spawns more async boundaries. Document which types are MainActor-only and which are free-floating.
-- `clone(borrowing:)` in `Engine/Extensions/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
-- `print` calls in `MapGeneration.swift` and `TacticalStateFactory.swift` write to stdout from background contexts. Replace with `os.Logger` gated on a debug flag.
-
 ## Architecture
+
+### `BitwiseCopyable` constraints
+- `clone(_:)` in `Engine/Extensions/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
+- `encode(_:) / decode(_:)` is bitwise; warn that adding a non-`BitwiseCopyable` field to any persisted state silently corrupts saves.
 
 ### `MapGeneration.swift` is a 367-line monolith
 Split into:
@@ -74,12 +70,11 @@ Replace sentinel reads with `Optional<UID>` returns where call sites already pat
 
 ## Tooling
 
-- **Scheme test plan** with parallel testing **disabled by default** — current `xcodebuild test` defaults to parallel and silently drops tests when one process hangs (we hit this in this session). Set per-test timeout to 60 s.
+- **Scheme test plan** with parallel testing **disabled by default** — current `xcodebuild test` defaults to parallel and silently drops tests when one process hangs. Set per-test timeout to 60 s.
 - **`swiftlint` / `swift-format`** — sources mix tab indentation conventions in a few places; lock one in.
 - **CI workflow** — `xcodebuild -scheme PG test -parallel-testing-enabled NO` on every PR.
 
 ## Documentation
 
-- **`Architecture.md`** is good but stops at module-level. Add a sequence diagram for `Input → State.apply → Action → State.reduce → [Event] → process` so contributors understand the loop.
+- **`Architecture.md`** stops at module-level. Add a sequence diagram for `Input → State.apply → Action → State.reduce → [Event] → process` so contributors understand the loop.
 - **Document the `Monoid` / `><` combinator** with at least one worked example (Unit composition is non-obvious).
-- **Save-format note** — `encode(borrowing:) / decode(_:)` is bitwise; warn that adding a non-`BitwiseCopyable` field to any persisted state silently corrupts saves.
