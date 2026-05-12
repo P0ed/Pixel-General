@@ -25,6 +25,8 @@
 		5F5A716D2F24FB830059B314 /* Terrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5A716C2F24FB790059B314 /* Terrain.swift */; };
 		5F649EEE2F94E55000F9CE89 /* HQInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F649EED2F94E54C00F9CE89 /* HQInput.swift */; };
 		5F649EF22F952C6900F9CE89 /* HQNewGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F649EF12F952C6600F9CE89 /* HQNewGame.swift */; };
+		5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */; };
+		5F7472D22FB346F800EBC354 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472D12FB346F800EBC354 /* Tools.swift */; };
 		5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87CF592F7BD46900BC87CA /* CArray.swift */; };
 		5F8E87312EB3BEEC0023B28F /* Speicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87302EB3BEEC0023B28F /* Speicher.swift */; };
 		5F8E87332EB3E1DD0023B28F /* Integers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87322EB3E1DA0023B28F /* Integers.swift */; };
@@ -139,6 +141,13 @@
 		5F649EED2F94E54C00F9CE89 /* HQInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQInput.swift; sourceTree = "<group>"; };
 		5F649EF12F952C6600F9CE89 /* HQNewGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQNewGame.swift; sourceTree = "<group>"; };
 		5F7472C82FB10FF700EBC354 /* Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Roadmap.md; sourceTree = "<group>"; };
+		5F7472C92FB3276200EBC354 /* GameMechanics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GameMechanics.md; sourceTree = "<group>"; };
+		5F7472CB2FB327C200EBC354 /* Map.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Map.md; sourceTree = "<group>"; };
+		5F7472CD2FB3452300EBC354 /* Map.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Map.png; sourceTree = "<group>"; };
+		5F7472CE2FB3452300EBC354 /* Map@32x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Map@32x.png"; sourceTree = "<group>"; };
+		5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapGenerationTests.swift; sourceTree = "<group>"; };
+		5F7472D12FB346F800EBC354 /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
+		5F7472D32FB347A300EBC354 /* TacticalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTests.swift; sourceTree = "<group>"; };
 		5F87CF592F7BD46900BC87CA /* CArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CArray.swift; sourceTree = "<group>"; };
 		5F8E87302EB3BEEC0023B28F /* Speicher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Speicher.swift; sourceTree = "<group>"; };
 		5F8E87322EB3E1DA0023B28F /* Integers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integers.swift; sourceTree = "<group>"; };
@@ -326,6 +335,9 @@
 			isa = PBXGroup;
 			children = (
 				5FB524A82FACB2C20017B672 /* Tests.swift */,
+				5F7472D32FB347A300EBC354 /* TacticalTests.swift */,
+				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
+				5F7472D12FB346F800EBC354 /* Tools.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -344,7 +356,11 @@
 			isa = PBXGroup;
 			children = (
 				5FB524B22FAD41220017B672 /* Architecture.md */,
+				5F7472C92FB3276200EBC354 /* GameMechanics.md */,
+				5F7472CB2FB327C200EBC354 /* Map.md */,
 				5F7472C82FB10FF700EBC354 /* Roadmap.md */,
+				5F7472CD2FB3452300EBC354 /* Map.png */,
+				5F7472CE2FB3452300EBC354 /* Map@32x.png */,
 			);
 			path = docs;
 			sourceTree = "<group>";
@@ -635,6 +651,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */,
+				5F7472D22FB346F800EBC354 /* Tools.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

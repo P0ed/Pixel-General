@@ -11,3 +11,9 @@ xcodebuild -scheme PG -configuration Release build
 # Run tests
 xcodebuild -scheme PG test
 ```
+
+## Docs
+- [Architecture](./docs/Architecture.md)
+- [Mechanics](./docs/GameMechanics.md)
+- [Map](./docs/Map.md)
+- [Roadmap](./docs/Roadmap.md)
