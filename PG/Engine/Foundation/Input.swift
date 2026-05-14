@@ -2,7 +2,7 @@ enum Direction { case right, up, left, down }
 enum Target { case prev, next }
 enum Action { case a, b, c, d }
 
-enum Input {
+enum Input: Equatable {
 	case direction(Direction?)
 	case target(Target?)
 	case action(Action?)

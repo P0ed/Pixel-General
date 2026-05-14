@@ -72,13 +72,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func apply(_ input: Input) {
 		if case .some = menuState {
 			menuState?.apply(input)
-		} else if !processing {
+		} else {
 			send(mode.input(&state, input))
 		}
 	}
 
 	func send(_ action: Action?) {
-		guard !processing, let nodes else { return }
+		guard let nodes else { return }
 		processing = true
 		Task {
 			let events = mode.reduce(&state, action)

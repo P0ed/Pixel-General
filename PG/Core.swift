@@ -13,6 +13,10 @@ final class Core {
 		}
 	}
 
+	init() {
+		load()
+	}
+
 	func new(country: Country = .default) {
 		state = State(
 			hq: HQState(

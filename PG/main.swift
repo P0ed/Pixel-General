@@ -18,8 +18,7 @@ window.makeKeyAndOrderFront(nil)
 window.makeFirstResponder(view)
 
 let core = Core()
-core.load()
-core.new()
+//core.new()
 present(.make(core.state))
 
 NSApplication.shared.run()

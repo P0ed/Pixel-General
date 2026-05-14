@@ -11,7 +11,7 @@ Each game screen is wired up as a `SceneMode<State: ~Copyable, Action, Event, No
 
 1. **Input** → `State.apply(input)` → `Action?`
 2. **Reduce** → `State.reduce(action)` → `[Event]`
-3. **Process** → async `process(event, nodes, state:)` (visuals, audio)
+3. **Process** → async `Nodes.process(event, state)` (visuals, audio)
 
 The four instantiations are `HQMode`, `TacticalMode`, `StrategicMode`, and `EditorMode`. See `Engine/Scene/SceneMode.swift`.
 

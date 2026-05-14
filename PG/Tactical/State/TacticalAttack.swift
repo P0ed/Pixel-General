@@ -40,7 +40,6 @@ extension TacticalState {
 			.map { d in crit ? (d20() > 16 ? d * 2 : d) : d }
 			.map { d in evasion ? (d20() > 16 ? 0 : d) : d }
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
-		let targetPos = position[di]
 
 		///# Logs
 		let srcStr = units[si].shortDescription
@@ -52,9 +51,11 @@ extension TacticalState {
 		units[si].ammo.decrement()
 		let alive = damage(id: dst, dmg: dmg)
 		units[si].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
-		if !alive { units[si].promote(using: &d20) }
+		if !alive {
+			units[si].promote(using: &d20)
+			self[units[si].country].prestige.increment(by: units[di].cost / 16)
+		}
 
-		camera = targetPos
 		events.add(.fire(src, dst, dmg, units[di].hp))
 	}
 
@@ -92,7 +93,7 @@ extension TacticalState {
 		let dt = map[position[di]]
 		let dstDef = du.defMod(vs: su, in: dt) - encirclement(id: dst)
 
-		let ruggedDefence: Bool = !surprise && su.noRetaliation ? false : (
+		let ruggedDefence: Bool = !surprise && su[.art] ? false : (
 			d20() + Int(su.ini + su.stars) * 2
 		) < (
 			Int(du.ent + du.ini + du.stars) * 2 + (surprise ? 10 : 0)
@@ -100,7 +101,7 @@ extension TacticalState {
 		if ruggedDefence { print("Rugged Defence!") }
 		units[si].ap.decrement()
 
-		if !su.isAir, !du.isAir, !su.noRetaliation,
+		if !su.isAir, !du.isAir, !su[.art],
 			let art = support(trait: .art, defender: dst, attacker: src) {
 			fire(src: art, dst: src, defMod: su[.elite] ? 1 : 0)
 		}
@@ -111,8 +112,8 @@ extension TacticalState {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[di].ent.decrement()
 		}
-		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.noRetaliation || surprise {
-			let srcDef = dt.closeCombatPenalty(su.type)
+		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su[.art] || du[.art] || surprise {
+			let srcDef = (su[.art] || su.isAir ? 0 : dt.closeCombatPenalty(su.type))
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 5 : 0)
 			fire(src: dst, dst: src, defMod: srcDef)
@@ -122,8 +123,8 @@ extension TacticalState {
 			units[di].ent.decrement()
 		}
 		var hpRetreat: Bool {
-			units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20
-			&& !units[si].noRetaliation
+			!units[si][.art]
+			&& units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20
 		}
 		var airRetreat: Bool {
 			!units[si].isAir && units[di].isAir
@@ -132,24 +133,26 @@ extension TacticalState {
 			} ?? false
 		}
 		if units[di].alive, hpRetreat || airRetreat {
-			retreat(uid: dst, from: position[si])
+			retreat(unit: dst, from: position[si])
 		}
-		selectUnit(units[si].alive && units[si].hasActions ? src : .none)
+		if self[units[si].country].type == .human {
+			selectUnit(units[si].alive && units[si].hasActions ? src : .none)
+		}
 	}
 
-	private mutating func retreat(uid: UID, from xy: XY) {
-		let p = position[uid.index]
-		let pos = moves(for: uid).set.min(by: (p + p - xy).manhattanComparator)
+	private mutating func retreat(unit id: UID, from xy: XY) {
+		let p = position[id.index]
+		let pos = moves(for: id).set.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
-		unitsMap[position[uid.index]] = -1
-		unitsMap[pos] = uid
-		position[uid.index] = pos
-		if cargo[uid.index] != -1 {
-			position[cargo[uid.index].index] = pos
+		unitsMap[position[id.index]] = -1
+		unitsMap[pos] = id
+		position[id.index] = pos
+		if cargo[id.index] != -1 {
+			position[cargo[id.index].index] = pos
 		}
-		units[uid.index].ent = 0
-		events.add(.move(uid, pos))
+		units[id.index].ent = 0
+		events.add(.move(id, pos))
 	}
 
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {

@@ -115,7 +115,9 @@ extension TacticalState {
 			units[uid.index].ap = 0
 		}
 
-		selectUnit(units[uid.index].hasActions ? uid : .none)
+		if player.type == .human {
+			selectUnit(units[uid.index].hasActions ? uid : .none)
+		}
 		events.add(.move(uid, pos))
 		if cargo[uid.index] != -1 {
 			events.add(.move(cargo[uid.index], pos))

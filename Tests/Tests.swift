@@ -3,7 +3,7 @@ import Testing
 
 struct Tests {
 
-    @Test func randomDistribution() async throws {
+	@Test func randomDistribution() async throws {
 		var d20 = D20()
 		var bins = [20 of UInt16](repeating: 0)
 
@@ -24,5 +24,5 @@ struct Tests {
 		print("Bins: \(str)")
 		print("Each bin is expected to be greater than: \(expected)")
 		#expect(result)
-    }
+	}
 }

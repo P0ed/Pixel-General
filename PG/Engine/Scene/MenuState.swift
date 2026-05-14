@@ -13,7 +13,7 @@ struct MenuItem<Action> {
 	var icon: String
 	var status: Status
 	var action: Action?
-	var update: @MainActor (MenuState<Action>) -> MenuState<Action>?
+	var update: (MenuState<Action>) -> MenuState<Action>?
 }
 
 extension MenuItem {
@@ -55,8 +55,8 @@ extension MenuState {
 		cursor = switch direction {
 		case .down: (cursor + min(cols, items.count)) % items.count
 		case .up: (cursor - min(cols, items.count) + items.count) % items.count
-		case .right: (cursor + 1) % items.count
-		case .left: (cursor - 1 + items.count) % items.count
+		case .left: (cursor / 4 * 4 + (4 + cursor - 1) % 4) % items.count
+		case .right: (cursor / 4 * 4 + (cursor + 1) % 4) % items.count
 		}
 	}
 }

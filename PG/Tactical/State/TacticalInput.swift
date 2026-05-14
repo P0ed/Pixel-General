@@ -1,7 +1,6 @@
 extension TacticalState {
 
 	mutating func apply(_ input: Input) -> TacticalAction? {
-		guard player.type == .human else { return nil }
 		return switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .menu: { events.add(.menu); return nil }()
@@ -40,16 +39,16 @@ private extension TacticalState {
 			let unit = units[selectedUnit.index]
 
 			if let dst = unitAt(cursor), player.visible[cursor] {
-				if dst.country.team != unit.country.team {
+				if dst.country.team != unit.country.team, self[country].type == .human {
 					return .attack(selectedUnit, unitsMap[cursor])
-				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]) {
+				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]), self[country].type == .human {
 					return .embark(selectedUnit, unitsMap[cursor])
 				} else {
 					selectUnit(dst == unit ? .none : unitsMap[cursor])
 				}
-			} else if unit.country == country, unit.canMove {
+			} else if unit.country == country, unit.canMove, self[country].type == .human {
 				return .move(selectedUnit, cursor)
-			} else if buildings[cursor]?.country == country {
+			} else if buildings[cursor]?.country == country, self[country].type == .human {
 				events.add(.shop)
 			} else {
 				selectUnit(.none)
@@ -57,7 +56,7 @@ private extension TacticalState {
 		} else {
 			if player.visible[cursor], unitAt(cursor) != nil {
 				selectUnit(unitsMap[cursor])
-			} else if buildings[cursor]?.country == country {
+			} else if buildings[cursor]?.country == country, self[country].type == .human {
 				events.add(.shop)
 			}
 		}
@@ -70,13 +69,18 @@ private extension TacticalState {
 	}
 
 	mutating func squareAction() -> TacticalAction? {
-		guard let selectedUnit, canDisembark(unit: selectedUnit, to: cursor) else { return nil }
+		guard let selectedUnit,
+			  canDisembark(unit: selectedUnit, to: cursor),
+			  self[country].type == .human
+		else { return nil }
 		return .disembark(selectedUnit, cursor)
 	}
 
 	mutating func triangleAction() -> TacticalAction? {
-		guard let selectedUnit, units[selectedUnit.index].country == country,
-			  units[selectedUnit.index].untouched
+		guard let selectedUnit,
+			  units[selectedUnit.index].country == country,
+			  units[selectedUnit.index].untouched,
+			  self[country].type == .human
 		else { return nil }
 
 		selectUnit(.none)
