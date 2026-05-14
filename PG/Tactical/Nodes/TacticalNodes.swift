@@ -7,7 +7,7 @@ struct TacticalNodes {
 	var map: MapNodes
 	var sounds: SoundNodes
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
-	@IO var fog: SetXY = .empty
+	@IO var lit: SetXY = .empty
 }
 
 @MainActor
@@ -77,7 +77,7 @@ extension TacticalNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+			map.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
 		}
 
 		return map
@@ -119,26 +119,25 @@ extension TacticalNodes {
 	}
 
 	func updateFogIfNeeded(state: borrowing TacticalState) {
-		let visible = state.player.visible
-		let fog = state.selectable ?? visible
+		let lit = state.selectable ?? state.visibleToHuman
 
-		guard self.fog != fog else { return }
+		guard self.lit != lit else { return }
+		defer { self.lit = lit }
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: fog[xy]), at: xy)
+			map.setTileGroup(state.map[xy].tileGroup(lit: lit[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
-			units[i]?.isHidden = !state.isVisible(i.uid)
+			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)
 		}
-		self.fog = fog
 	}
 
 	func mouse(_ event: NSEvent) -> Input? {
-		let location = event.location(in: map.layers[0])
+		let pos = event.location(in: map.layers[0])
 		return .tile(
 			XY(
-				map.layers[0].tileColumnIndex(fromPosition: location),
-				map.layers[0].tileRowIndex(fromPosition: location)
+				map.layers[0].tileColumnIndex(fromPosition: pos),
+				map.layers[0].tileRowIndex(fromPosition: pos)
 			)
 		)
 	}

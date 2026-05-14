@@ -9,27 +9,26 @@ extension Unit {
 			add("\(typeDescription)\(traits.contains(.aux) ? "*": "")")
 		} + .makeStatus(pad: 10) { add in
 			add("\(mpString)\(apString)  \(starsString)")
-		} + .makeStatus(pad: 9) { add in
-			add(ammoString)
-		} + .makeStatus(pad: 9) { add in
-			add("INI: \(ini)")
+		} + .makeStatus(pad: 7) { add in
+			add("AM: \(ammo)")
+			add("MV: \(mov)")
+			add("IN: \(ini)")
 			add("SA: \(softAtk)")
 			add("HA: \(hardAtk)")
 			add("AA: \(airAtk)")
 			add("GD: \(groundDef)")
 			add("AD: \(airDef)")
-			add("MOV: \(mov)")
-			add("ENT: \(ent)")
-		} + .makeStatus(pad: 5) { add in
-			if isAir {
-				add(self[.fast] ? "[FST]" : "")
-			} else {
-				add(self[.mountaineer] ? "[MNT]" : "")
-			}
-			add(self[.bigGuns] ? "[BIG]" : "")
-			add(self[.crit] ? "[CRT]" : "")
-			add(self[.evasion] ? "[EVA]" : "")
-		}
+			add("EN: \(ent)")
+		} + (
+			(self[.leadership] ? "[LR]" : "")
+			+ (self[.recon] ? "[RC]" : "")
+			+ (self[.crit] ? "[CR]" : "")
+			+ (self[.evasion] ? "[EV]" : "")
+			+ (self[.regen] ? "[RG]" : "")
+			+ (self[.mountaineer] ? "[MT]" : "")
+			+ (self[.mhtn] ? "[MH]" : "")
+			+ (self[.diag] ? "[DI]" : "")
+		)
 	}
 
 	private var mpString: String { canMove ? "⇧" : " " }
@@ -46,11 +45,6 @@ extension Unit {
 		case 1: "★☆☆☆"
 		default: "☆☆☆☆"
 		}
-	}
-
-	var ammoString: String {
-		String(repeating: "•", count: Int(ammo))
-		+ String(repeating: "_", count: max(0, Int(maxAmmo) - Int(ammo)))
 	}
 }
 

@@ -47,12 +47,6 @@ extension [Unit] {
 		]
 	}
 
-	var grid4x4: [XY] {
-		enumerated().map { i, u in
-			XY(i % 4, i / 4)
-		}
-	}
-
 	static func aux(country: Country) -> [Unit] {
 		[
 			Unit(country: country, traits: .aux) >< .truck,

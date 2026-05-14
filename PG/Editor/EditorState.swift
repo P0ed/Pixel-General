@@ -9,27 +9,27 @@ struct EditorState: ~Copyable {
 	var events: CArray<32, EditorEvent> = .init(tail: .menu)
 }
 
-enum EditorAction: Hashable {
+enum EditorAction {
 	case paint(XY, Terrain)
 	case setBrush(Terrain)
 	case clear
 	case randomize
 	case save
 	case load
+	case hq
 }
 
 enum EditorEvent {
 	case set(XY, Terrain)
 	case redraw
 	case menu
+	case hq
 }
 
 extension EditorState {
 
 	init() {
 		map = Map(size: 32, zero: .field)
-		cursor = XY(map.size / 2, map.size / 2)
-		camera = cursor
 	}
 
 	mutating func apply(_ input: Input) -> EditorAction? {
@@ -57,6 +57,7 @@ extension EditorState {
 		case .randomize: randomizeMap()
 		case .save: saveMap()
 		case .load: loadMap()
+		case .hq: events.add(.hq)
 		case .none: break
 		}
 		defer { events.erase() }

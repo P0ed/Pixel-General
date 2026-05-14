@@ -48,9 +48,6 @@ Replace sentinel reads with `Optional<UID>` returns where call sites already pat
 ### `fatalError` in `TacticalState.init`
 `TacticalState.swift:49` aborts when two units land on the same starting tile. Spawn-placement is data-driven (`capitals`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
 
-### `Speicher.add` is O(n)
-`Engine/Foundation/Speicher.swift:27` linearly scans for a dead slot every insert. Maintain a free-list head index; `add` becomes O(1).
-
 ### `Map.indices` allocates an `AnySequence`
 `Engine/Foundation/Map.swift:15` returns a type-erased iterator on every access. Hot loops in `placeRivers`/`shapeRoads` iterate it repeatedly. Provide a custom `IndexingIterator`-style struct or a `for x, y` two-loop accessor.
 

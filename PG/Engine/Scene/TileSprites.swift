@@ -79,8 +79,8 @@ extension SKTileGroup {
 @MainActor
 extension Terrain {
 
-	func tileGroup(fog: Bool) -> SKTileGroup? {
-		if fog {
+	func tileGroup(lit: Bool) -> SKTileGroup? {
+		if lit {
 			switch self {
 			case .field: .field
 			case .forest: .forest

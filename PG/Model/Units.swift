@@ -105,6 +105,7 @@ extension Unit {
 			u.type = .softWheel
 			u[.supply] = true
 			u[.transport] = true
+			u.mov = 8
 			u.groundDef = 3
 			u.airDef = 1
 		}
@@ -113,6 +114,8 @@ extension Unit {
 	static var militia: Self {
 		.make { stats in
 			stats.type = .soft
+			stats.mov = 3
+			stats.rng = 1
 			stats.ini = 3
 			stats.softAtk = 5
 			stats.hardAtk = 1
@@ -124,6 +127,8 @@ extension Unit {
 	static var regular: Self {
 		.make { stats in
 			stats.type = .soft
+			stats.mov = 3
+			stats.rng = 1
 			stats.ini = 4
 			stats.softAtk = 7
 			stats.hardAtk = 2
@@ -136,7 +141,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.elite] = true
-			stats[.fast] = true
+			stats.mov = 4
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 11
 			stats.hardAtk = 5
@@ -150,7 +156,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.elite] = true
-			stats[.fast] = true
+			stats.mov = 4
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 5
@@ -164,6 +171,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.elite] = true
+			stats.mov = 4
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 9
 			stats.hardAtk = 4
@@ -176,6 +185,8 @@ extension Unit {
 	static var t55: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats.mov = 5
+			stats.rng = 1
 			stats.ini = 6
 			stats.softAtk = 7
 			stats.hardAtk = 10
@@ -187,6 +198,8 @@ extension Unit {
 	static var t72: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 7
 			stats.softAtk = 9
 			stats.hardAtk = 12
@@ -198,6 +211,8 @@ extension Unit {
 	static var t90m: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 9
 			stats.hardAtk = 13
@@ -209,6 +224,8 @@ extension Unit {
 	static var leo1: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 8
 			stats.hardAtk = 11
@@ -221,6 +238,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .heavyTrack
 			stats[.elite] = true
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 14
@@ -233,6 +252,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightWheel
 			stats[.transport] = true
+			stats.mov = 8
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 10
 			stats.hardAtk = 9
@@ -246,6 +267,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.transport] = true
+			stats.mov = 7
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 9
@@ -260,6 +283,8 @@ extension Unit {
 			stats.type = .lightTrack
 			stats[.aa] = true
 			stats[.radar] = true
+			stats.mov = 7
+			stats.rng = 1
 			stats.ini = 10
 			stats.softAtk = 9
 			stats.hardAtk = 8
@@ -272,6 +297,8 @@ extension Unit {
 	static var h135: Self {
 		.make { stats in
 			stats.type = .heli
+			stats.mov = 9
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 8
 			stats.hardAtk = 9
@@ -286,7 +313,8 @@ extension Unit {
 			stats.type = .jet
 			stats[.aa] = true
 			stats[.radar] = true
-			stats[.range] = true
+			stats.mov = 12
+			stats.rng = 2
 			stats.ini = 12
 			stats.softAtk = 9
 			stats.hardAtk = 11
@@ -300,7 +328,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.art] = true
-			stats[.range] = true
+			stats.mov = 5
+			stats.rng = 3
 			stats.ini = 5
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -313,7 +342,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
-			stats[.range] = true
+			stats.mov = 1
+			stats.rng = 3
 			stats.ini = 2
 			stats.softAtk = 9
 			stats.hardAtk = 5
@@ -326,7 +356,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
-			stats[.range] = true
+			stats.mov = 1
+			stats.rng = 3
 			stats.ini = 2
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -339,7 +370,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .soft
 			stats[.art] = true
-			stats[.range] = true
+			stats.mov = 1
+			stats.rng = 3
 			stats.ini = 2
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -352,7 +384,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.art] = true
-			stats[.range] = true
+			stats.mov = 5
+			stats.rng = 3
 			stats.ini = 5
 			stats.softAtk = 11
 			stats.hardAtk = 7
@@ -364,6 +397,8 @@ extension Unit {
 	static var m48: Self {
 		.make { stats in
 			stats.type = .heavyTrack
+			stats.mov = 5
+			stats.rng = 1
 			stats.ini = 7
 			stats.softAtk = 8
 			stats.hardAtk = 10
@@ -376,7 +411,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .heavyTrack
 			stats[.elite] = true
-			stats[.fast] = true
+			stats.mov = 7
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 14
@@ -389,6 +425,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.transport] = true
+			stats.mov = 7
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 9
@@ -402,6 +440,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.transport] = true
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 7
 			stats.softAtk = 7
 			stats.hardAtk = 3
@@ -414,6 +454,8 @@ extension Unit {
 	static var mh6: Self {
 		.make { stats in
 			stats.type = .heli
+			stats.mov = 9
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 8
 			stats.hardAtk = 9
@@ -428,7 +470,8 @@ extension Unit {
 			stats.type = .jet
 			stats[.aa] = true
 			stats[.radar] = true
-			stats[.range] = true
+			stats.mov = 12
+			stats.rng = 2
 			stats.ini = 11
 			stats.softAtk = 9
 			stats.hardAtk = 11
@@ -443,7 +486,8 @@ extension Unit {
 			stats.type = .jet
 			stats[.aa] = true
 			stats[.radar] = true
-			stats[.range] = true
+			stats.mov = 12
+			stats.rng = 2
 			stats.ini = 13
 			stats.softAtk = 10
 			stats.hardAtk = 13
@@ -457,7 +501,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .softWheel
 			stats[.aa] = true
-			stats[.range] = true
+			stats.mov = 7
+			stats.rng = 3
 			stats.ini = 10
 			stats.softAtk = 0
 			stats.hardAtk = 0
@@ -471,6 +516,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .lightTrack
 			stats[.transport] = true
+			stats.mov = 6
+			stats.rng = 1
 			stats.ini = 8
 			stats.softAtk = 8
 			stats.hardAtk = 7
@@ -484,6 +531,8 @@ extension Unit {
 		.make { stats in
 			stats.type = .heli
 			stats[.transport] = true
+			stats.mov = 8
+			stats.rng = 1
 			stats.ini = 7
 			stats.softAtk = 6
 			stats.hardAtk = 3
@@ -496,6 +545,8 @@ extension Unit {
 	static var mi24: Self {
 		.make { stats in
 			stats.type = .heli
+			stats.mov = 9
+			stats.rng = 1
 			stats.ini = 9
 			stats.softAtk = 9
 			stats.hardAtk = 9
@@ -510,7 +561,8 @@ extension Unit {
 			stats.type = .jet
 			stats[.aa] = true
 			stats[.radar] = true
-			stats[.range] = true
+			stats.mov = 12
+			stats.rng = 2
 			stats.ini = 10
 			stats.softAtk = 8
 			stats.hardAtk = 10

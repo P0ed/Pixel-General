@@ -131,7 +131,7 @@ extension Terrain {
 	}
 
 	func closeCombatPenalty(_ type: UnitType) -> Int8 {
-		return switch type {
+		switch type {
 		case .lightWheel, .lightTrack: -Int8(abs(def))
 		case .heavyTrack: -Int8(abs(def) * 2)
 		default: 0

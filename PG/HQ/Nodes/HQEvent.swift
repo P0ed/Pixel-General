@@ -78,7 +78,11 @@ extension HQNodes {
 				core.load(auto: false)
 				present(.make(core.state))
 			},
-			.space,
+			.close(icon: "Chess", status: .init(text: "Editor")) { _ in
+				guard let scene else { return }
+				core.store(scene.state)
+				present(.editor)
+			},
 		]))
 	}
 }

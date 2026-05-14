@@ -43,7 +43,7 @@ extension EditorNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+			map.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
 		}
 
 		return map
@@ -65,13 +65,15 @@ extension EditorNodes {
 	func process(_ event: EditorEvent, _ state: borrowing EditorState) async {
 		switch event {
 		case let .set(xy, terrain):
-			map.setTileGroup(terrain.tileGroup(fog: false), at: xy)
+			map.setTileGroup(terrain.tileGroup(lit: true), at: xy)
 		case .redraw:
 			state.map.indices.forEach { xy in
-				map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+				map.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
 			}
 		case .menu:
 			processMenu(state)
+		case .hq:
+			present(.make(core.state))
 		}
 	}
 
@@ -94,18 +96,22 @@ private extension EditorNodes {
 			return
 		}
 
-		var items: [MenuItem<EditorAction>] = Terrain.palette.map { terrain in
-			.close(
-				icon: terrain.imageName,
-				status: .init(text: "Brush: \(terrain)"),
-				action: .setBrush(terrain)
-			)
-		}
-		items.append(.close(icon: "Clear", status: "Clear map", action: .clear))
-		items.append(.close(icon: "New", status: "Randomize", action: .randomize))
-		items.append(.close(icon: "Save", status: "Save map", action: .save))
-		items.append(.close(icon: "Load", status: "Load map", action: .load))
-
-		scene.show(MenuState(items: items))
+		scene.show(MenuState(
+			items: Terrain.palette.map { terrain in
+				.close(
+					icon: terrain.imageName,
+					status: .init(text: "Brush: \(terrain)"),
+					action: .setBrush(terrain)
+				)
+			}
+			+ [
+				.space,
+				.close(icon: "New", status: "Randomize", action: .randomize),
+				.close(icon: "Empty", status: "Clear map", action: .clear),
+				.close(icon: "Save", status: "Save map", action: .save),
+				.close(icon: "Load", status: "Load map", action: .load),
+				.close(icon: "HQ", status: "HQ", action: .hq),
+			]
+		))
 	}
 }

@@ -17,7 +17,7 @@ extension TacticalNodes {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
 		case let .move(uid, xy): await processMove(uid, xy, state)
-		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp)
+		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp, state: state)
 		case let .update(id): update(id, state)
 		case .shop: processShop(state)
 		case .menu: processMenu(state)
@@ -33,7 +33,7 @@ private extension TacticalNodes {
 		let xy = state.position[uid.index]
 		sprite.position = state.map.point(at: xy)
 		sprite.zPosition = map.zPosition(at: xy)
-		sprite.isHidden = !state.isVisible(uid)
+		sprite.isHidden = !state.isVisibleToHuman(uid)
 		addUnit(uid, node: sprite)
 	}
 
@@ -52,10 +52,20 @@ private extension TacticalNodes {
 			unit.position = p
 		}
 		unit.zPosition = map.zPosition(at: xy)
-		unit.isHidden = !state.isVisible(uid)
+		unit.isHidden = !state.isVisibleToHuman(uid)
 	}
 
-	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8) async {
+	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8, state: borrowing TacticalState) async {
+		defer {
+			if hp > 0 {
+				units[dst.index]?.update(hp: hp)
+			} else {
+				removeUnit(dst)
+			}
+		}
+
+		guard state.isVisibleToHuman(src) || state.isVisibleToHuman(dst) else { return }
+
 		units[src.index]?.showSight(for: 0.47)
 		await scene?.run(.wait(forDuration: 0.22))
 		units[dst.index]?.showSight(for: 0.47 - 0.22)
@@ -70,7 +80,6 @@ private extension TacticalNodes {
 			units[dst.index]?.update(hp: hp)
 		} else {
 			sounds.boomL.play()
-			removeUnit(dst)
 		}
 	}
 

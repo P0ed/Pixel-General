@@ -39,12 +39,12 @@ extension TacticalState {
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
 		self.units.forEach { i, u in
-			guard let px = players.firstIndex(where: { $0.country == u.country })
+			guard let player = players.firstIndex(where: { $0.country == u.country })
 			else { return }
 
-			let idx = allocatedUnits[px]
-			position[i] = XY(idx % 4, idx % 16 / 4) + capitals[px] - .one
-			allocatedUnits[px] += 1
+			let idx = allocatedUnits[player]
+			position[i] = XY(idx % 4, idx % 16 / 4) + capitals[player] - .one
+			allocatedUnits[player] += 1
 
 			guard unitsMap[position[i]] < 0 else { fatalError() }
 			unitsMap[position[i]] = i.uid
@@ -80,6 +80,12 @@ extension TacticalState {
 			if let idx = players.firstMap({ i, p in p.country == country ? i : nil }) {
 				players[idx] = newValue
 			}
+		}
+	}
+
+	var visibleToHuman: SetXY {
+		players.reduce(into: .empty) { r, _, p in
+			p.type == .human ? r.combine(p.visible) : ()
 		}
 	}
 }
@@ -121,6 +127,15 @@ extension TacticalState {
 
 	func isVisible(_ id: UID) -> Bool {
 		player.visible[position[id.index]] && unitsMap[position[id.index]] == id
+	}
+
+	func isVisibleToHuman(_ id: UID) -> Bool {
+		players.firstMap { _, p in
+			p.type == .human
+			&& p.visible[position[id.index]]
+			&& unitsMap[position[id.index]] == id
+			? true : nil
+		} ?? false
 	}
 }
 

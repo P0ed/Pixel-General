@@ -49,7 +49,7 @@ extension HQNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			nodes.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+			nodes.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
 		}
 
 		return nodes

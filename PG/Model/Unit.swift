@@ -1,6 +1,6 @@
 typealias UID = Int8
 
-struct Unit: Hashable {
+struct Unit: Equatable {
 	var country: Country = .default
 	var hp: UInt8 = 0
 	var mp: UInt8 = 0
@@ -9,6 +9,8 @@ struct Unit: Hashable {
 	var ent: UInt8 = 0
 	var exp: UInt8 = 0
 	var type: UnitType = .soft
+	var mov: UInt8 = 0
+	var rng: UInt8 = 0
 	var ini: UInt8 = 0
 	var softAtk: UInt8 = 0
 	var hardAtk: UInt8 = 0
@@ -20,7 +22,7 @@ struct Unit: Hashable {
 
 extension Unit: Monoid {
 
-	static var empty: Self { .init(country: .default) }
+	static var empty: Self { .init() }
 
 	mutating func combine(_ other: Self) {
 		hp |= other.hp
@@ -30,6 +32,8 @@ extension Unit: Monoid {
 		ent |= other.ent
 		exp |= other.exp
 		type = type == .soft ? other.type : type
+		mov |= other.mov
+		rng |= other.rng
 		ini |= other.ini
 		softAtk |= other.softAtk
 		hardAtk |= other.hardAtk
@@ -40,25 +44,25 @@ extension Unit: Monoid {
 	}
 }
 
-struct Traits: OptionSet, Hashable {
+struct Traits: OptionSet, Equatable {
 	var rawValue: UInt16
 
-	static var art: Self { .init(rawValue: 1 << 0) }
-	static var aa: Self { .init(rawValue: 1 << 1) }
-	static var supply: Self { .init(rawValue: 1 << 2) }
-	static var elite: Self { .init(rawValue: 1 << 3) }
-	static var transport: Self { .init(rawValue: 1 << 4) }
-	static var radar: Self { .init(rawValue: 1 << 5) }
-	static var fast: Self { .init(rawValue: 1 << 6) }
-	static var range: Self { .init(rawValue: 1 << 7) }
-	static var aux: Self { .init(rawValue: 1 << 8) }
-	static var regen: Self { .init(rawValue: 1 << 9) }
-	static var reserved1: Self { .init(rawValue: 1 << 10) }
-	static var reserved2: Self { .init(rawValue: 1 << 11) }
-	static var mountaineer: Self { .init(rawValue: 1 << 12) }
-	static var bigGuns: Self { .init(rawValue: 1 << 13) }
-	static var crit: Self { .init(rawValue: 1 << 14) }
-	static var evasion: Self { .init(rawValue: 1 << 15) }
+	static var aux: Self { .init(rawValue: 1 << 0) }
+	static var art: Self { .init(rawValue: 1 << 1) }
+	static var aa: Self { .init(rawValue: 1 << 2) }
+	static var x_x: Self { .init(rawValue: 1 << 3) }
+	static var supply: Self { .init(rawValue: 1 << 4) }
+	static var elite: Self { .init(rawValue: 1 << 5) }
+	static var transport: Self { .init(rawValue: 1 << 6) }
+	static var radar: Self { .init(rawValue: 1 << 7) }
+	static var leadership: Self { .init(rawValue: 1 << 8) }
+	static var recon: Self { .init(rawValue: 1 << 9) }
+	static var crit: Self { .init(rawValue: 1 << 10) }
+	static var evasion: Self { .init(rawValue: 1 << 11) }
+	static var regen: Self { .init(rawValue: 1 << 12) }
+	static var mountaineer: Self { .init(rawValue: 1 << 13) }
+	static var mhtn: Self { .init(rawValue: 1 << 14) }
+	static var diag: Self { .init(rawValue: 1 << 15) }
 }
 
 extension Unit {
@@ -68,48 +72,27 @@ extension Unit {
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { mp > 0 }
 	var canAttack: Bool { ap > 0 && ammo > 0 }
-	var noRetaliation: Bool { self[.art] }
 	var spot: UInt8 { self[.radar] ? 3 : 2 }
+
 	var maxHP: UInt8 { 0xF }
 	var maxAP: UInt8 { 1 }
 	var maxMP: UInt8 { isAir ? 2 : 1 }
 
 	var maxAmmo: UInt8 {
 		guard softAtk > 0 || hardAtk > 0 || airAtk > 0 else { return 0 }
+
 		return switch type {
-		case .jet: self[.range] ? 2 : 3
+		case .jet where rng > 1: 2
+		case .jet: 3
 		case .heli: 3
-		case .soft where self[.art]: self[.range] ? 6 : 7
-		case .soft where self[.aa]: self[.range] ? 5 : 7
-		case _ where self[.art]: self[.range] ? 5 : 6
-		case _ where self[.aa]: self[.range] ? 4 : 6
+		case .soft where self[.art]: 6
+		case .soft where self[.aa] && rng > 1: 5
+		case .soft where self[.aa]: 7
+		case _ where self[.art]: 5
+		case _ where self[.aa] && rng > 1: 4
+		case _ where self[.aa]: 6
 		default: 7
 		}
-	}
-
-	var rng: UInt8 {
-		if self[.supply] {
-			0
-		} else if self[.art] {
-			self[.range] ? 3 : 2
-		} else if self[.aa] {
-			self[.range] ? (isAir ? 2 : 3) : 1
-		} else {
-			1
-		}
-	}
-
-	var mov: UInt8 {
-		(self[.fast] ? 1 : 0) + {
-			switch type {
-			case .soft: self[.art] || self[.aa] ? 1 : 3
-			case .softWheel, .lightWheel: 8 - (self[.art] ? 1 : 0)
-			case .lightTrack: 7 - (self[.art] ? 1 : 0)
-			case .heavyTrack: 6 - (self[.art] ? 1 : 0)
-			case .heli: 9
-			case .jet: 12
-			}
-		}()
 	}
 
 	subscript(_ ts: Traits) -> Bool {
@@ -134,15 +117,13 @@ extension Unit {
 	}
 
 	func defMod(vs enemy: Unit, in terrain: Terrain) -> Int8 {
-		let closeCombat: Int8 = !enemy.isAir && !enemy.noRetaliation && enemy.rng == 1
+		let closeCombat: Int8 = !enemy.isAir && !enemy[.art] && enemy.rng == 1
 		? terrain.closeCombatPenalty(type) / 2 : 0
 
 		let mountaineer: Int8 = terrain.isHighground
 		? (self[.mountaineer] ? 2 : 0) - (enemy[.mountaineer] ? 1 : 0) : 0
 
-		let bigGuns: Int8 = enemy[.bigGuns] ? -1 : 0
-
-		return Int8(ent) + terrain.def + closeCombat + mountaineer + bigGuns
+		return Int8(ent) + terrain.def + closeCombat + mountaineer
 	}
 
 	var cost: UInt16 {
@@ -162,12 +143,14 @@ extension Unit {
 	}
 
 	mutating func promote(using d20: inout D20) {
-		let skills = [.evasion, isAir ? .fast : .mountaineer, .bigGuns, .crit] as [4 of Traits]
-		let left = .init { i in self[skills[i]] ? nil : skills[i] } as [4 of Traits?]
-		let cnt = left.reduce(into: 0, { r, t in r += t != nil ? 1 : 0 })
+		let skills = [8 of Traits].init { i in Traits(rawValue: 1 << (i + 8)) }
+		let left = .init { i in self[skills[i]] ? nil : skills[i] } as [8 of Traits?]
+		let cnt = left.reduce(into: 0, { r, t in r += t == nil ? 1 : 0 })
 
-		if cnt > 0, d20(.min(6 - cnt)) > 6 + cnt,
-		   let rnd = left.compactMap(id).randomElement(using: &d20) {
+		if stars * 2 > UInt8(cnt),
+		   d20(.min(3)) > 6 + cnt,
+		   let rnd = left.compactMap(id).randomElement(using: &d20)
+		{
 			traits.insert(rnd)
 		}
 	}
@@ -187,13 +170,13 @@ extension Unit {
 		case .lightWheel: 100
 		case .lightTrack: 120
 		case .heavyTrack: 150
-		case .heli: 220
-		case .jet: 330
+		case .heli: 180
+		case .jet: 220
 		}
 	}
 
 	private var sum: UInt16 {
-		UInt16(softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng)
+		UInt16(softAtk + hardAtk + airAtk * 2 + groundDef + airDef + ini + mov + rng * 3)
 	}
 }
 

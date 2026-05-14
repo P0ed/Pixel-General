@@ -10,8 +10,6 @@ extension TacticalState {
 		captureCities()
 
 		guard nextTurn() else { return events.add(.end) }
-
-		resetUI()
 	}
 
 	private mutating func nextTurn() -> Bool {
@@ -41,20 +39,6 @@ extension TacticalState {
 		buildings.reduce(into: 0) { r, _, b in
 			r += b.country == player.country ? b.income : 0
 		}
-	}
-
-	private mutating func resetUI() {
-		selectUnit(.none)
-
-		cursor = units.firstMap { [country] i, u in
-			u.country == country ? position[i] : nil
-		}
-		?? buildings.firstMap { [country] _, b in
-			b.country == country ? b.position : nil
-		}
-		?? .zero
-
-		camera = cursor
 	}
 
 	private func endTurn(player: inout Player) {

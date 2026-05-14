@@ -1,6 +1,6 @@
 import CoreGraphics
 
-enum TacticalAction: Hashable {
+enum TacticalAction {
 	case move(UID, XY)
 	case embark(UID, UID)
 	case disembark(UID, XY)
@@ -27,6 +27,17 @@ extension TacticalState {
 		return events.map { _, e in e }
 	}
 
+	func hasBuildings(near id: UID) -> Bool {
+		let u = units[id.index]
+		let p = position[id.index]
+		return buildings.firstMap { _, b in
+			b.country == u.country
+			&& (b.type == .airfield) == u.isAir
+			&& b.position.manhattanDistance(to: p) <= 1
+			? b : nil
+		} != nil
+	}
+
 	mutating func resupply(unit id: UID) {
 		guard cargo[id.index] == -1 || units[id.index][.transport], units[id.index].untouched else { return }
 
@@ -45,12 +56,7 @@ extension TacticalState {
 			units[n.index].country.team == country.team
 			&& units[n.index][.supply]
 		}
-		let hasBuildings = buildings.firstMap { _, b in
-			b.country == country
-			&& (b.type == .airfield) == unit.isAir
-			&& b.position.manhattanDistance(to: position) <= 1
-			? b : nil
-		} != nil
+		let hasBuildings = hasBuildings(near: id)
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
 			unit.ammo.increment(
 				by: (unit.untouched ? (noEnemy ? 2 : 1) : 0) + (hasSupply ? (noEnemy ? 2 : 0) : 0),
@@ -69,7 +75,7 @@ extension TacticalState {
 	}
 
 	mutating func regen(unit id: UID) {
-		guard units[id.index][.regen] else { return }
+		guard units[id.index][.regen], !units[id.index].isAir || hasBuildings(near: id) else { return }
 		units[id.index].hp.increment(by: 1, cap: units[id.index].maxHP)
 	}
 
@@ -109,20 +115,6 @@ extension TacticalState {
 		} else {
 			selectedUnit = .none
 			selectable = .none
-		}
-	}
-
-	private var tooFarX: Bool { abs(camera.pt.x - cursor.pt.x) > 4.0 * CGFloat(scale) }
-	private var tooFarY: Bool { abs(camera.pt.y - cursor.pt.y) > 4.0 * CGFloat(scale) }
-
-	var isCursorTooFar: Bool { tooFarX || tooFarY }
-
-	mutating func alignCamera() {
-		while tooFarX {
-			camera = camera.n8[(camera.pt.x - cursor.pt.x) > 0.0 ? 5 : 1]
-		}
-		while tooFarY {
-			camera = camera.n8[(camera.pt.y - cursor.pt.y) > 0.0 ? 7 : 3]
 		}
 	}
 }
