@@ -32,7 +32,7 @@ extension HQNodes {
 	private static func addMap(root: SKNode, state: borrowing HQState) -> MapNodes {
 
 		let layers = (0 ..< state.map.size * 2 - 1).map { idx in
-			SKTileMapNode(tiles: .terrain, size: state.map.size)
+			SKTileMapNode(tiles: .hq, size: state.map.size)
 		}
 		layers.enumerated().forEach { idx, layer in
 			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
@@ -49,7 +49,7 @@ extension HQNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			nodes.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
+			nodes.setTileGroup(.snow, at: xy)
 		}
 
 		return nodes

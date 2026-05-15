@@ -1,5 +1,3 @@
-import CoreGraphics
-
 enum Terrain: UInt8, Hashable, Codable {
 	case none
 	case water, river00, river01, river10, river11
@@ -11,14 +9,6 @@ enum Terrain: UInt8, Hashable, Codable {
 }
 
 extension Terrain {
-
-	var elevation: CGFloat {
-		switch self {
-		case .hill, .forestHill: 4.0
-		case .mountain: 8.0
-		default: 0.0
-		}
-	}
 
 	var isBridgable: Bool {
 		switch self {
@@ -62,13 +52,6 @@ extension Terrain {
 		case .hill, .forestHill, .mountain: true
 		default: false
 		}
-	}
-}
-
-extension Map<Terrain> {
-
-	func point(at xy: XY) -> CGPoint {
-		xy.point + CGPoint(x: 0, y: self[xy].elevation)
 	}
 }
 

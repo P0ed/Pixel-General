@@ -19,26 +19,38 @@ extension TacticalState {
 		}
 	}
 
+	func aura(_ trait: Traits, country: Country, at xy: XY) -> Bool {
+		(unitAt(xy)?[trait] ?? false) || neighbors(at: xy).contains {
+			units[$0.index].country == country && units[$0.index][trait]
+		}
+	}
+
 	mutating func fire(src: UID, dst: UID, defMod: Int8) {
 		let (si, di) = (src.index, dst.index)
-		let atkMod: Int8 = units[si].ammo == units[si].maxAmmo ? 1 : 0
-		let atk = Int8(units[si].atk(units[di]) + units[si].stars) + atkMod
-		let def = Int8(units[di].def(units[si]) + units[di].stars) + defMod
+		let maxAM: Int8 = units[si].ammo == units[si].maxAmmo ? 1 : 0
+		let aLR: Int8 = aura(.leadership, country: units[si].country, at: position[si]) ? 1 : 0
+		let aRC: Int8 = aura(.recon, country: units[si].country, at: position[si]) ? 1 : 0
+		let dLR: Int8 = aura(.leadership, country: units[di].country, at: position[di]) ? 1 : 0
+		let dRC: Int8 = aura(.recon, country: units[di].country, at: position[di]) ? 1 : 0
+		let atk = Int8(units[si].atk(units[di]) + units[si].stars) + maxAM + aRC + aLR
+		let def = Int8(units[di].def(units[si]) + units[di].stars) + defMod + dRC + dLR
 
 		let dif = atk - def
-		let t1 = max(1, 6 - dif)
-		let t2 = max(3, 15 - dif)
-		let t3 = max(7, 22 - dif)
+		let t1 = max(0, 7 - dif)
+		let t2 = max(5, 15 - dif)
+		let t3 = max(10, 24 - dif)
 		let iniRound = units[si].ini > d20(.max(2)) ? 1 : 0 as UInt8
 		let rounds = (units[si].hp + 3) / 3 + iniRound
 		let crit = units[si][.crit]
 		let evasion = units[di][.evasion]
 
 		let ds = (0 ..< rounds).map { _ in d20() }
-		let dmgs = ds
-			.map { d in d > t3 ? 3 : d > t2 ? 2 : d > t1 ? 1 : 0 as UInt8 }
-			.map { d in crit ? (d20() > 16 ? d * 2 : d) : d }
-			.map { d in evasion ? (d20() > 16 ? 0 : d) : d }
+		let dmgs = ds.map { d in
+			var dmg: UInt8 = d > t3 ? 3 : d > t2 ? 2 : d > t1 ? 1 : 0
+			if crit, d20() > 16 { dmg *= 2 }
+			if evasion, d20() > 16 { dmg = 0 }
+			return dmg
+		}
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
 
 		///# Logs
@@ -90,8 +102,9 @@ extension TacticalState {
 		else { return }
 
 		let (su, du) = (units[si], units[di])
-		let dt = map[position[di]]
-		let dstDef = du.defMod(vs: su, in: dt) - encirclement(id: dst)
+		let (sp, dp) = (position[si], position[di])
+		let dt = map[dp]
+		let dstDef = du.defMod(vs: su, in: dt, dxy: dp - sp) - encirclement(id: dst)
 
 		let ruggedDefence: Bool = !surprise && su[.art] ? false : (
 			d20() + Int(su.ini + su.stars) * 2
@@ -103,7 +116,7 @@ extension TacticalState {
 
 		if !su.isAir, !du.isAir, !su[.art],
 			let art = support(trait: .art, defender: dst, attacker: src) {
-			fire(src: art, dst: src, defMod: su[.elite] ? 1 : 0)
+			fire(src: art, dst: src, defMod: 0)
 		}
 		if su.isAir, !du[.aa], let aa = support(trait: .aa, defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defMod: 0)
@@ -122,17 +135,10 @@ extension TacticalState {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[di].ent.decrement()
 		}
-		var hpRetreat: Bool {
-			!units[si][.art]
-			&& units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20
+		var lowHPRetreat: Bool {
+			!units[si][.art] && units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20
 		}
-		var airRetreat: Bool {
-			!units[si].isAir && units[di].isAir
-			&& buildings[position[di]].map {
-				$0.country.team != units[di].country.team
-			} ?? false
-		}
-		if units[di].alive, hpRetreat || airRetreat {
+		if units[di].alive, lowHPRetreat {
 			retreat(unit: dst, from: position[si])
 		}
 		if self[units[si].country].type == .human {

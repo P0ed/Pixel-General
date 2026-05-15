@@ -5,9 +5,12 @@ import GameplayKit
 extension SKTileGroup {
 
 	private static func make(_ image: NSImage) -> SKTileGroup {
-		SKTileGroup(
+		let texture = SKTexture(image: image)
+		texture.filteringMode = .nearest
+
+		return SKTileGroup(
 			tileDefinition: SKTileDefinition(
-				texture: .init(image: image),
+				texture: texture,
 				size: image.size
 			)
 		)
@@ -30,6 +33,7 @@ extension SKTileGroup {
 
 	static let roadNWSE = make(.roadNwse)
 
+	static let snow = make(.snow)
 	static let field = make(.field)
 	static let forest = make(.forest)
 	static let forestHill = make(.forestHill)
@@ -157,6 +161,13 @@ extension SKTileSet {
 			.cityFog, .airfieldFog, .fieldFog, .forestFog,
 			.hillFog, .forestHillFog, .mountainFog,
 			.river00Fog, .river01Fog, .river10Fog, .river11Fog, .bridge01Fog, .bridge10Fog,
+		],
+		tileSetType: .isometric
+	)
+
+	static let hq = SKTileSet(
+		tileGroups: [
+			.snow,
 		],
 		tileSetType: .isometric
 	)

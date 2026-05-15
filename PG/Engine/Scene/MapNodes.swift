@@ -54,3 +54,21 @@ extension MapNodes {
 		return node
 	}
 }
+
+extension Map<Terrain> {
+
+	func point(at xy: XY) -> CGPoint {
+		xy.point + CGPoint(x: 0, y: self[xy].elevation)
+	}
+}
+
+extension Terrain {
+
+	var elevation: CGFloat {
+		switch self {
+		case .hill, .forestHill: 4.0
+		case .mountain: 8.0
+		default: 0.0
+		}
+	}
+}

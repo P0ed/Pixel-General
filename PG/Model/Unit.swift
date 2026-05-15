@@ -116,14 +116,17 @@ extension Unit {
 		src.isAir ? airDef : groundDef
 	}
 
-	func defMod(vs enemy: Unit, in terrain: Terrain) -> Int8 {
+	func defMod(vs enemy: Unit, in terrain: Terrain, dxy: XY) -> Int8 {
 		let closeCombat: Int8 = !enemy.isAir && !enemy[.art] && enemy.rng == 1
 		? terrain.closeCombatPenalty(type) / 2 : 0
 
 		let mountaineer: Int8 = terrain.isHighground
 		? (self[.mountaineer] ? 2 : 0) - (enemy[.mountaineer] ? 1 : 0) : 0
 
-		return Int8(ent) + terrain.def + closeCombat + mountaineer
+		let mhtn: Int8 = enemy[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
+		let diag: Int8 = enemy[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
+
+		return Int8(ent) + terrain.def + closeCombat + mountaineer + mhtn + diag
 	}
 
 	var cost: UInt16 {
