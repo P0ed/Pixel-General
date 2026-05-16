@@ -3,8 +3,8 @@ extension TacticalState {
 	static func make(
 		players: [4 of Player],
 		units: [Unit],
-		size: Int = 32,
-		seed: Int = .random(in: 0...31)
+		size: Int = .random(in: 12...32),
+		seed: Int = .random(in: 0...1023)
 	) -> TacticalState {
 		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
 		let map = Map<Terrain>(size: size, seed: seed)

@@ -252,54 +252,87 @@ extension Map<Terrain> {
 		)
 	}
 
+	/// Cost of stepping onto `to` from `l`, or `nil` if impassable. Roads and
+	/// buildings are nearly free, open ground is cheap, and forest/hills cost
+	/// progressively more so a route only carves through them when there's no
+	/// gentler way around. Rivers are passable solely where a bridge fits.
+	private func stepCost(to: XY, from l: XY) -> UInt16? {
+		let t = self[to]
+		if t.isBuilding || t.isRoad { return 1 }
+		switch t {
+		case .field: return 4
+		case .forest: return 6
+		case .hill: return 10
+		case .forestHill: return 12
+		default: return bridgableRiver(at: to, from: l) ? 8 : nil
+		}
+	}
+
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
-		print("Connecting \(start) \(end)")
-		var front = [start]
-		var map = Map<UInt8>(size: size, zero: 0)
-		map[start] = 1
+		var dist = Map<UInt16>(size: size, zero: .max)
+		var prev = Map<UInt16>(size: size, zero: 0)
+		dist[start] = 0
 
-		while true {
-			let nf: [XY] = front.flatMap { xy in
-				xy.n4.compactMap { [p = map[xy]] ij in
-					if contains(ij), map[ij] == 0,
-					   self[ij].isBuilding || self[ij].isRoad
-						|| (p > 3 && self[ij] == .field)
-						|| (p > 5 && self[ij] == .forest)
-						|| (p > 7 && bridgableRiver(at: ij, from: xy))
-						|| (p > 9 && self[ij] == .hill)
-						|| (p > 11 && self[ij] == .forestHill)
-					{
-						map[ij] = 1
-						return ij
-					} else {
-						return nil
-					}
+		var heap: [(d: UInt16, xy: XY)] = [(0, start)]
+
+		func siftUp(_ from: Int) {
+			var i = from
+			while i > 0 {
+				let parent = (i - 1) / 2
+				if heap[parent].d <= heap[i].d { break }
+				heap.swapAt(parent, i)
+				i = parent
+			}
+		}
+		func siftDown(_ from: Int) {
+			var i = from
+			while true {
+				let l = 2 * i + 1, r = 2 * i + 2
+				var m = i
+				if l < heap.count, heap[l].d < heap[m].d { m = l }
+				if r < heap.count, heap[r].d < heap[m].d { m = r }
+				if m == i { break }
+				heap.swapAt(m, i)
+				i = m
+			}
+		}
+
+		while !heap.isEmpty {
+			let top = heap[0]
+			let last = heap.removeLast()
+			if !heap.isEmpty {
+				heap[0] = last
+				siftDown(0)
+			}
+			if top.d != dist[top.xy] { continue } // stale duplicate
+			if top.xy == end { break }
+
+			let n4 = top.xy.n4
+			for i in n4.indices {
+				let nb = n4[i]
+				guard contains(nb), let w = stepCost(to: nb, from: top.xy) else { continue }
+				let nd = top.d &+ w
+				if nd < dist[nb] {
+					dist[nb] = nd
+					prev[nb] = UInt16(top.xy.y * size + top.xy.x + 1)
+					heap.append((nd, nb))
+					siftUp(heap.count - 1)
 				}
 			}
-			if nf.contains(end) { break }
-			front.forEach { xy in map[xy] += 1 }
-			front += nf
-			if map[start] == .max { return false }
 		}
-		print("Found connection L: \(start.manhattanDistance(to: end))")
+
+		guard dist[end] != .max else { return false }
+
 		var head = end
-		if !self[end].isBuilding {
-			self[end] = self[end].isRiver || self[end].isBridge ? .bridge01 : .roadNWSE
-		}
-
-		while head != start {
-			let xy = head.n4
-				.compactMap { xy in contains(xy) ? xy : nil }
-				.max { a, b in map[a] < map[b] }
-
-			if let xy {
-				head = xy
-				if !self[xy].isBuilding {
-					self[xy] = self[xy].isRiver || self[xy].isBridge ? .bridge01 : .roadNWSE
-				}
-			} else {
-				return true
+		while true {
+			if !self[head].isBuilding {
+				self[head] = self[head].isRiver || self[head].isBridge ? .bridge01 : .roadNWSE
 			}
+			if head == start { break }
+			let packed = prev[head]
+			guard packed != 0 else { break }
+			let idx = Int(packed) - 1
+			head = XY(idx % size, idx / size)
 		}
 		return true
 	}

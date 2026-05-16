@@ -15,9 +15,9 @@ struct MapGenerationTests {
 	@Test func terminatesAcrossManySeeds() {
 		var hangingSeeds: [Int] = []
 
-		for seed in 0 ..< 96 {
+		for seed in 0 ..< 256 {
 			let finished = runWithDeadline(Self.perSeedDeadline) {
-				_ = Map<Terrain>(size: 32, seed: seed)
+				_ = Map<Terrain>(size: 8 + seed % 24, seed: seed)
 			}
 			if !finished { hangingSeeds.append(seed) }
 		}
