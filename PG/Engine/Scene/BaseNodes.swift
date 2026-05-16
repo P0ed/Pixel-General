@@ -26,7 +26,7 @@ extension Scene where State: ~Copyable {
 
 	func addMenu() -> SKNode {
 		let menu = SKShapeNode(rectOf: BaseNodes.menuSize)
-		menu.fillColor = .darkGray
+		menu.fillColor = .darkGray.withAlphaComponent(0.9)
 		menu.strokeColor = .clear
 		menu.zPosition = 68.0
 		menu.isHidden = true
@@ -84,11 +84,15 @@ extension BaseNodes {
 		menu.isHidden = false
 		addMenuItems(menuState)
 		updateMenu(menuState)
+		menu.setScale(0.01)
+		menu.run(.scale(to: 1.0, duration: 0.15))
 	}
 
 	func hideMenu() {
-		menu.isHidden = true
-		menu.removeAllChildren()
+		menu.run(.scale(to: 0.01, duration: 0.15)) {
+			menu.isHidden = true
+			menu.removeAllChildren()
+		}
 	}
 
 	func redrawMenu<Action>(_ menuState: MenuState<Action>) {
@@ -122,7 +126,7 @@ extension BaseNodes {
 	func updateMenu<Action>(_ menuState: MenuState<Action>) {
 		menu.children.enumerated().forEach { idx, item in
 			if let frame = item as? SKShapeNode, frame.name == nil {
-				frame.fillColor = menuState.cursor == idx ? .lightGray : .darkGray
+				frame.fillColor = menuState.cursor == idx ? .lightGray.withAlphaComponent(0.9) : .clear
 				frame.isHidden = idx / 16 != menuState.cursor / 16
 			}
 		}

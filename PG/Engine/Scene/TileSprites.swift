@@ -33,7 +33,9 @@ extension SKTileGroup {
 
 	static let roadNWSE = make(.roadNwse)
 
-	static let snow = make(.snow)
+	static let white = make(.white)
+	static let gray = make(.gray)
+
 	static let field = make(.field)
 	static let forest = make(.forest)
 	static let forestHill = make(.forestHill)
@@ -167,7 +169,7 @@ extension SKTileSet {
 
 	static let hq = SKTileSet(
 		tileGroups: [
-			.snow,
+			.gray,
 		],
 		tileSetType: .isometric
 	)

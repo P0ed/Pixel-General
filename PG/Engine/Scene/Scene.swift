@@ -1,4 +1,5 @@
 import SpriteKit
+import AVFAudio
 
 final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	let mode: SceneMode<State, Action, Event, Nodes>
@@ -29,6 +30,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	override func sceneDidLoad() {
 		backgroundColor = .black
 		scaleMode = .aspectFit
+		audioEngine.mainMixerNode.outputVolume = 0.5
 
 		willCloseWindow = NotificationCenter.default.addMainActorObserver(
 			forName: NSWindow.willCloseNotification,
@@ -72,13 +74,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func apply(_ input: Input) {
 		if case .some = menuState {
 			menuState?.apply(input)
-		} else {
+		} else if !processing {
 			send(mode.input(&state, input))
 		}
 	}
 
 	func send(_ action: Action?) {
-		guard let nodes else { return }
+		guard let nodes, !processing else { return }
 		processing = true
 		Task {
 			let events = mode.reduce(&state, action)

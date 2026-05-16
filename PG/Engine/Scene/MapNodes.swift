@@ -43,9 +43,11 @@ extension MapNodes {
 
 		let cursor = SKSpriteNode(texture: .init(image: .cursor))
 		cursor.texture?.filteringMode = .nearest
-		cursor.color = color ?? .white
-		cursor.colorBlendFactor = color == nil ? 0.0 : 0.68
-		cursor.blendMode = .alpha
+		if let color {
+			cursor.color = color
+			cursor.colorBlendFactor = 0.68
+			cursor.blendMode = .alpha
+		}
 		cursor.zPosition = 0.1 + z
 
 		node.addChild(cursor)
