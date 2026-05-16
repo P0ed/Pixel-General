@@ -172,7 +172,7 @@ extension Map<Terrain> {
 	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
-			if self[xy] == .roadNWSE {
+			if self[xy].isRoad, !self[xy].isBridge {
 				let n4 = xy.n4
 				for i in n4.indices {
 					neighbors[i] = self[n4[i]].isRoad || self[n4[i]].isBuilding

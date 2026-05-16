@@ -108,10 +108,9 @@ private extension EditorState {
 		let touchesWater = terrain.affectsWaterShape || prev.affectsWaterShape
 		let touchesRoad = terrain.affectsRoadShape || prev.affectsRoadShape
 
-		if touchesWater { map.shapeRivers() }
-		if touchesRoad { map.shapeRoads() }
-
 		if touchesWater || touchesRoad {
+			map.shapeRivers()
+			map.shapeRoads()
 			events.add(.redraw)
 		} else {
 			events.add(.set(xy, terrain))
@@ -171,12 +170,13 @@ private extension EditorState {
 extension Terrain {
 
 	static let palette: [Terrain] = [
-		.field, .forest, .hill, .forestHill, .mountain,
-		.water, .river00, .city, .airfield, .roadNWSE
+		.field, .forest, .hill, .forestHill,
+		.mountain, .water, .river00, .city,
+		.airfield, .roadWE,
 	]
 
 	var affectsWaterShape: Bool { isRiver || isBridge || self == .water }
-	var affectsRoadShape: Bool { isRoad || isBuilding }
+	var affectsRoadShape: Bool { isRoad || isBridge || isBuilding }
 
 	var code: Character {
 		switch self {
@@ -209,7 +209,7 @@ extension Terrain {
 		case "B": self = .bridge01
 		case "C": self = .city
 		case "A": self = .airfield
-		case "r": self = .roadNWSE
+		case "r": self = .roadWE
 		default: return nil
 		}
 	}
@@ -222,7 +222,10 @@ extension Terrain {
 		case .forestHill: "ForestHill"
 		case .mountain: "Mountain"
 		case .water: "Water"
-		case .river00, .river01, .river10, .river11: "River00"
+		case .river00: "River00"
+		case .river01: "River01"
+		case .river10: "River10"
+		case .river11: "River11"
 		case .bridge01: "Bridge01"
 		case .bridge10: "Bridge10"
 		case .city: "City"

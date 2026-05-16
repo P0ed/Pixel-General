@@ -95,9 +95,9 @@ extension Terrain {
 	var def: Int8 {
 		switch self {
 		case .field: 0
-		case .forest, .hill, .airfield: 2
-		case .forestHill, .city: 3
-		case .mountain: 4
+		case .roadNWE, .roadSEN, .roadSWE, .roadSWN: 1
+		case .forest, .hill, .airfield, .roadNWSE: 2
+		case .forestHill, .mountain, .city: 3
 		case _ where isRiver: -3
 		case _ where isBridge: -2
 		case _ where isRoad: -1
