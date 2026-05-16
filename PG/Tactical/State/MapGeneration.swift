@@ -89,30 +89,50 @@ extension Map<Terrain> {
 	}
 
 	private mutating func placeCities(d20: inout D20) -> [XY] {
-		let citiesCount = min(16, size * size / 64)
-		let div = size / 8
-		let dw = (size - 8) / (div - 1) - 1
-		let div2 = citiesCount / div + (citiesCount % div == 0 ? 0 : 1)
-		let dh = (size - 8) / (div2 - 1) - 1
-		print("citiesCount:", citiesCount, "div:", div, div2, dw, dh)
+		let citiesCount = min(16, max(3, count / 64))
 
-		return (0 ..< citiesCount).reduce(into: []) { xys, i in
-			let x = i % div
-			let y = (i / div)
-			let p = modifying(
-				XY(1 + dw * x + 2 * (y & 1), 1 + dh * y)
-			) { p in
-				if self[p].isRiver, let x = p.n8.firstMap({ p in !self[p].isRiver ? p : nil }) {
-					p = x
-				}
+		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
+		let rows = (citiesCount + cols - 1) / cols
+		let minSpacing = max(2, size / 8)
+
+		let margin = 1
+		let span = Double(size - 2 * margin)
+		let cellW = span / Double(cols)
+		let cellH = span / Double(rows)
+
+		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
+			contains(p)
+			&& !self[p].isRiver
+			&& !self[p].isBuilding
+			&& self[p] != .water
+			&& self[p] != .mountain
+			&& !placed.contains { $0.distance(to: p) < minSpacing }
+		}
+
+		return (0 ..< citiesCount).reduce(into: []) { placed, i in
+			let gx = i % cols
+			let gy = i / cols
+			let jx = Double.random(in: 0.15 ... 0.85, using: &d20)
+			let jy = Double.random(in: 0.15 ... 0.85, using: &d20)
+			var p = XY(
+				margin + Int((Double(gx) + jx) * cellW),
+				margin + Int((Double(gy) + jy) * cellH)
+			).clamped(size)
+
+			if !isCitySite(p, placed), let alt = p.circle(6).first(where: { isCitySite($0, placed) }) {
+				p = alt
 			}
-			let ap = i % 3 != 0 ? nil : p.n4.compactMap { p in !self[p].isRiver ? p : nil }
-				.randomElement(using: &d20)
+			guard isCitySite(p, placed) else { return }
+
 			self[p] = .city
-			xys.append(p)
-			if let ap {
+			placed.append(p)
+
+			if d20() < 7, let ap = p.n4
+				.compactMap({ p in contains(p) && self[p] == .field ? p : nil })
+				.randomElement(using: &d20)
+			{
 				self[ap] = .airfield
-				xys.append(ap)
+				placed.append(ap)
 			}
 		}
 	}

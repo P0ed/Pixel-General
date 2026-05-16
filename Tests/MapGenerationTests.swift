@@ -82,16 +82,19 @@ struct MapGenerationTests {
 	}
 
 	@Test func handlesPlayableSizes() {
-		// `placeCities` computes `dw = (size - 8) / (div - 1) - 1` with
-		// `div = size / 8`, so `div - 1 == 0` when `size < 16`, causing a
-		// divide-by-zero crash. Cover only the sizes that don't trip that.
-		// `placeRivers` branches on `riversCount == 1` (count <= 288 cells)
-		// vs the multi-river setup, so size 16 still exercises both regimes.
-		for size in [16, 20, 24, 32] {
+		// `placeCities` lays cities on a jittered grid whose columns/rows are
+		// derived from the city count, so it has no divisor that collapses to
+		// zero and works across the full 8...32 range. `placeRivers` branches
+		// on `riversCount == 1` (count <= 288 cells) vs the multi-river setup,
+		// so this range exercises both regimes.
+		for size in 8 ... 32 {
 			let finished = runWithDeadline(Self.perSeedDeadline) {
 				let map = Map<Terrain>(size: size, seed: 0)
 				#expect(map.size == size)
 				#expect(map.count == size * size)
+				var hasCity = false
+				for xy in map.indices where map[xy] == .city { hasCity = true; break }
+				#expect(hasCity, "Size \(size) produced no city")
 			}
 			#expect(finished, "Size \(size) seed 0 hung")
 		}
