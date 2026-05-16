@@ -26,7 +26,7 @@ extension TacticalState {
 			u.ent = 0
 		}
 
-		print("Map gen done. Seed: \(seed)")
+		print("Map gen done. Seed: \(seed) size: \(size)")
 		return TacticalState(
 			map: map,
 			players: players.map(id),

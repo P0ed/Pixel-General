@@ -65,6 +65,7 @@ extension Map<Terrain> {
 				if nf.contains(end) { break }
 				front.forEach { xy in pressure[xy] += 1 }
 				front += nf
+				if pressure[start] >= 1024 { return }
 			}
 			var head = end
 			self[end] = .river00
