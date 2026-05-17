@@ -67,7 +67,8 @@ extension TacticalState {
 			var k = allocatedUnits[player]
 			while k < candidates.count {
 				let xy = candidates[k]
-				if xy.x >= 0, xy.y >= 0, xy.x < size, xy.y < size, unitsMap[xy] < 0 {
+				if xy.x >= 0, xy.y >= 0, xy.x < size, xy.y < size,
+					unitsMap[xy] < 0, !self.map[xy].isRiver {
 					break
 				}
 				k += 1
