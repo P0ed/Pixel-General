@@ -44,27 +44,27 @@ extension Map<Terrain> {
 		(0 ..< riversCount).forEach { idx in
 			let (start, end) = setups[idx]
 
-			var front = [start]
+			var front = CArray<1024, XY>(head: start, tail: .zero)
+			var next = CArray<1024, XY>(tail: .zero)
 			var pressure = Map<UInt16>(size: size, zero: 0)
 			pressure[start] = 1
 
 			while true {
-				let nf: [XY] = front.flatMap { xy in
-					xy.n4.compactMap { [p = pressure[xy]] xy in
+				next.erase()
+				front.forEach { _, xy in
+					xy.n4.forEach { [p = pressure[xy]] xy in
 						let nh = UInt16(height.value(at: xy.simd) + 1.0)
 						let dh = xy != end && edge(at: xy) != nil ? 2 : 0 as UInt16
 						let h = (nh * 2 + dh) * 3
 						if contains(xy), pressure[xy] == 0, p > h, hasNoRivers(at: xy) {
 							pressure[xy] = 1
-							return xy
-						} else {
-							return nil
+							next.add(xy)
 						}
 					}
 				}
-				if nf.contains(end) { break }
-				front.forEach { xy in pressure[xy] += 1 }
-				front += nf
+				if next.contains(end) { break }
+				front.forEach { _, xy in pressure[xy] += 1 }
+				next.forEach { _, xy in front.add(xy) }
 				if pressure[start] >= 1024 { return }
 			}
 			var head = end

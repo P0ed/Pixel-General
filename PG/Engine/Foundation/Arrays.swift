@@ -7,6 +7,10 @@ extension InlineArray {
 		}
 	}
 
+	func forEach(_ body: (Element) -> Void) {
+		for i in indices { body(self[i]) }
+	}
+
 	mutating func modifyEach(_ transform: (inout Element) -> Void) {
 		for i in indices { transform(&self[i]) }
 	}

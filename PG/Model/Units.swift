@@ -1,5 +1,19 @@
 extension Unit {
 
+	static var empty: Self { .init() }
+
+	static func make(_ tfm: (inout Self) -> Void) -> Self {
+		modifying(.empty, tfm)
+	}
+
+	func country(_ country: Country) -> Self {
+		modifying(self, { u in u.country = country })
+	}
+
+	func traits(_ traits: Traits) -> Self {
+		modifying(self, { u in u.traits.formUnion(traits) })
+	}
+
 	static func inf(_ country: Country) -> Self {
 		switch country.team {
 		case .axis, .allies: .regular
@@ -9,8 +23,8 @@ extension Unit {
 
 	static func inf2(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .ksk >< .veteran
-		case .allies: country == .pak ? .regular >< .veteran : .delta >< .veteran
+		case .axis: .ksk.veteran
+		case .allies: country == .pak ? .regular.veteran : .delta.veteran
 		case .soviet: .speznas
 		}
 	}
@@ -45,7 +59,7 @@ extension Unit {
 		switch country {
 		case .ned, .den, .swe, .ukr: .strv122
 		case .usa, .isr: .m1A2
-		case .pak: .m48 >< .veteran
+		case .pak: .m48.veteran
 		case .rus: .t90m
 		case .irn, .ind: .t72
 		}
@@ -85,8 +99,8 @@ extension Unit {
 
 	static func air(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .gripen >< .veteran
-		case .allies: country == .usa || country == .isr ? .f35 : .f16 >< .veteran
+		case .axis: .gripen.veteran
+		case .allies: country == .usa || country == .isr ? .f35 : .f16.veteran
 		case .soviet: .mi24
 		}
 	}
@@ -98,7 +112,9 @@ extension Unit {
 		}
 	}
 
-	static var veteran: Self { Unit(exp: 0x10) }
+	var veteran: Self {
+		modifying(self, { u in u.exp = 0x10 })
+	}
 
 	static var truck: Self {
 		.make { u in

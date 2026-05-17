@@ -31,10 +31,6 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 | `SetXY` | `Engine/Foundation/XY.swift` | Efficient coordinate set for visibility/movement |
 | `D20` | `Engine/Foundation/D20.swift` | PRNG for combat resolution |
 
-### Monoid Protocol
-
-Many types (Units, Arrays, Sets) conform to `Monoid` via `Engine/Foundation/Monoid.swift`. Combine with the `><` operator. Unit arithmetic uses bitwise ops on attribute fields.
-
 ### Global State
 
 `Core` class (`PG/Core.swift`) manages save/load. The root `State` struct holds `.hq`, `.strategic`, `.tactical` sub-states and a `.location` enum that drives which scene is active. All state is persisted to UserDefaults on location transitions.

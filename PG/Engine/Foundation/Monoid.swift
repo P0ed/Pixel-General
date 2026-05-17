@@ -3,13 +3,6 @@ protocol Monoid {
 	mutating func combine(_ other: Self)
 }
 
-precedencegroup MonoidCompositionPrecedence {
-	associativity: left
-	higherThan: BitwiseShiftPrecedence
-}
-
-infix operator >< : MonoidCompositionPrecedence
-
 extension Monoid {
 
 	static func make(_ tfm: (inout Self) -> Void) -> Self {
@@ -18,10 +11,6 @@ extension Monoid {
 
 	func combined(_ other: Self) -> Self {
 		modifying(self, { m in m.combine(other) })
-	}
-
-	static func >< (_ lhs: Self, rhs: Self) -> Self {
-		lhs.combined(rhs)
 	}
 }
 

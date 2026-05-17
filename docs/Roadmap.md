@@ -74,4 +74,3 @@ Replace sentinel reads with `Optional<UID>` returns where call sites already pat
 ## Documentation
 
 - **`Architecture.md`** stops at module-level. Add a sequence diagram for `Input → State.apply → Action → State.reduce → [Event] → process` so contributors understand the loop.
-- **Document the `Monoid` / `><` combinator** with at least one worked example (Unit composition is non-obvious).

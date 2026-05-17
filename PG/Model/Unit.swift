@@ -20,30 +20,6 @@ struct Unit: Equatable {
 	var traits: Traits = []
 }
 
-extension Unit: Monoid {
-
-	static var empty: Self { .init() }
-
-	mutating func combine(_ other: Self) {
-		hp |= other.hp
-		mp |= other.mp
-		ap |= other.ap
-		ammo = max(ammo, other.ammo)
-		ent |= other.ent
-		exp |= other.exp
-		type = type == .soft ? other.type : type
-		mov |= other.mov
-		rng |= other.rng
-		ini |= other.ini
-		softAtk |= other.softAtk
-		hardAtk |= other.hardAtk
-		airAtk |= other.airAtk
-		groundDef |= other.groundDef
-		airDef |= other.airDef
-		traits.rawValue |= other.traits.rawValue
-	}
-}
-
 struct Traits: OptionSet, Equatable {
 	var rawValue: UInt16
 

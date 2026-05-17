@@ -17,27 +17,27 @@ extension TacticalState {
 
 		var units: [Unit] = []
 		+ [
-			Unit(country: .swe) >< .strv122,
-			Unit(country: .swe) >< .boxer,
-			Unit(country: .swe) >< .strf90,
-			Unit(country: .swe) >< .pzh,
-			Unit(country: .swe) >< .truck,
-			Unit(country: .swe) >< .strf90,
-			Unit(country: .swe) >< .boxer,
-			Unit(country: .swe) >< .strv122,
-		]
-		+ (0..<8).map { i in Unit(country: .swe) >< .regular }
+			.strv122,
+			.boxer,
+			.strf90,
+			.pzh,
+			.truck,
+			.strf90,
+			.boxer,
+			.strv122,
+		].map { (u: Unit) -> Unit in u.country(.swe) }
+		+ (0..<8).map { i in .regular.country(.swe) }
 		+ [
-			Unit(country: .isr) >< .strv122,
-			Unit(country: .isr) >< .boxer,
-			Unit(country: .isr) >< .strf90,
-			Unit(country: .isr) >< .truck,
-			Unit(country: .isr) >< .pzh,
-			Unit(country: .isr) >< .strf90,
-			Unit(country: .isr) >< .boxer,
-			Unit(country: .isr) >< .strv122,
-		]
-		+ (0..<8).map { i in Unit(country: .isr) >< .regular }
+			.strv122,
+			.boxer,
+			.strf90,
+			.truck,
+			.pzh,
+			.strf90,
+			.boxer,
+			.strv122,
+		].map { (u: Unit) -> Unit in u.country(.isr) }
+		+ (0..<8).map { i in .regular.country(.isr) }
 		let position: [128 of XY] = .init { i in
 			XY(i % 8, i < 16 ? i / 8 : 4 + i / 8)
 		}

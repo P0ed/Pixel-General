@@ -2,72 +2,81 @@ extension [Unit] {
 
 	static func shop(country: Country, filterAir: Bool? = nil) -> [Unit] {
 		let ground: [Unit] = [
-			Unit(country: country) >< .truck,
-			Unit(country: country) >< .inf(country),
-			Unit(country: country) >< .inf2(country),
-			Unit(country: country) >< .ifv(country),
-			Unit(country: country) >< .ifv2(country),
-			Unit(country: country) >< .tank(country),
-			Unit(country: country) >< .tank2(country),
-			Unit(country: country) >< .art(country),
-			Unit(country: country) >< .art2(country),
-			Unit(country: country) >< .aa(country),
+			.truck,
+			.inf(country),
+			.inf2(country),
+			.ifv(country),
+			.ifv2(country),
+			.tank(country),
+			.tank2(country),
+			.art(country),
+			.art2(country),
+			.aa(country),
 		]
 		let air: [Unit] = [
-			Unit(country: country) >< .heli(country),
-			Unit(country: country) >< .fighter(country),
-			Unit(country: country) >< .air(country),
+			.heli(country),
+			.fighter(country),
+			.air(country),
 		]
-		return filterAir.map { $0 ? air : ground } ?? ground + air
+		let units = (filterAir.map { $0 ? air : ground } ?? ground + air)
+		return units.map { (u: Unit) -> Unit in
+			u.country(country)
+		}
 	}
 
 	static func base(_ country: Country) -> [Unit] {
 		[
-			Unit(country: country) >< .truck,
-			Unit(country: country) >< .regular >< .veteran,
-			Unit(country: country) >< .regular >< .veteran,
-			Unit(country: country) >< .regular >< .veteran,
-			Unit(country: country) >< .tank(country) >< .veteran,
-			Unit(country: country) >< .tank(country) >< .veteran,
-			Unit(country: country) >< .ifv(country) >< .veteran,
-			Unit(country: country) >< .art(country) >< .veteran,
-			Unit(country: country) >< .art(country) >< .veteran,
-		]
+			.truck,
+			.regular.veteran,
+			.regular.veteran,
+			.regular.veteran,
+			.tank(country).veteran,
+			.tank(country).veteran,
+			.ifv(country).veteran,
+			.art(country).veteran,
+			.art(country).veteran,
+		].map { (u: Unit) -> Unit in
+			u.country(country)
+		}
 	}
 
 	static func small(_ country: Country) -> [Unit] {
 		[
-			Unit(country: country) >< .truck,
-			Unit(country: country) >< .regular >< .veteran,
-			Unit(country: country) >< .regular >< .veteran,
-			Unit(country: country) >< .tank(country) >< .veteran,
-			Unit(country: country) >< .ifv(country) >< .veteran,
-			Unit(country: country) >< .art(country) >< .veteran,
-			Unit(country: country) >< .aa(country) >< .veteran,
-		]
+			.truck,
+			.regular.veteran,
+			.regular.veteran,
+			.tank(country).veteran,
+			.ifv(country).veteran,
+			.art(country).veteran,
+			.aa(country).veteran,
+		].map { (u: Unit) -> Unit in
+			u.country(country)
+		}
 	}
 
 	static func aux(country: Country) -> [Unit] {
 		[
-			Unit(country: country, traits: .aux) >< .truck,
-			Unit(country: country, traits: .aux) >< .truck,
-			Unit(country: country, traits: .aux) >< .inf(country),
-			Unit(country: country, traits: .aux) >< .inf(country),
+			.truck,
+			.truck,
+			.inf(country),
+			.inf(country),
 
-			Unit(country: country, traits: .aux) >< .inf2(country),
-			Unit(country: country, traits: .aux) >< .ifv(country),
-			Unit(country: country, traits: .aux) >< .tank(country),
-			Unit(country: country, traits: .aux) >< .tank(country),
+			.inf2(country),
+			.ifv(country),
+			.tank(country),
+			.tank(country),
 
-			Unit(country: country, traits: .aux) >< .inf2(country),
-			Unit(country: country, traits: .aux) >< .ifv2(country),
-			Unit(country: country, traits: .aux) >< .heli(country),
-			Unit(country: country, traits: .aux) >< .heli(country),
+			.inf2(country),
+			.ifv2(country),
+			.heli(country),
+			.heli(country),
 
-			Unit(country: country, traits: .aux) >< .art(country),
-			Unit(country: country, traits: .aux) >< .art(country),
-			Unit(country: country, traits: .aux) >< .aa(country),
-			Unit(country: country, traits: .aux) >< .aa(country),
-		]
+			.art(country),
+			.art(country),
+			.aa(country),
+			.aa(country),
+		].map { (u: Unit) -> Unit in
+			u.country(country).traits(.aux)
+		}
 	}
 }

@@ -113,4 +113,9 @@ extension CArray {
 		for i in indices where predicate(mem[i]) { return true }
 		return false
 	}
+
+	func contains(_ element: Element) -> Bool where Element: Equatable {
+		for i in indices where element == mem[i] { return true }
+		return false
+	}
 }

@@ -172,7 +172,7 @@ extension Terrain {
 	static let palette: [Terrain] = [
 		.field, .forest, .hill, .forestHill,
 		.mountain, .water, .river00, .city,
-		.airfield, .roadWE,
+		.airfield, .roadWE, .bridge01
 	]
 
 	var affectsWaterShape: Bool { isRiver || isBridge || self == .water }
