@@ -1,7 +1,7 @@
 import Testing
 @testable import PG
 
-struct Tests {
+struct RNGTests {
 
 	@Test func randomDistribution() async throws {
 		var d20 = D20()

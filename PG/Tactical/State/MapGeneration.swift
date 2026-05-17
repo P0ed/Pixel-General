@@ -274,14 +274,16 @@ extension Map<Terrain> {
 		var prev = Map<UInt16>(size: size, zero: 0)
 		dist[start] = 0
 
-		var heap: [(d: UInt16, xy: XY)] = [(0, start)]
+		var heapD = CArray<1024, UInt16>(head: 0, tail: 0)
+		var heapL = CArray<1024, XY>(head: start, tail: .zero)
 
 		func siftUp(_ from: Int) {
 			var i = from
 			while i > 0 {
 				let parent = (i - 1) / 2
-				if heap[parent].d <= heap[i].d { break }
-				heap.swapAt(parent, i)
+				if heapD[parent] <= heapD[i] { break }
+				heapD.swapAt(parent, i)
+				heapL.swapAt(parent, i)
 				i = parent
 			}
 		}
@@ -290,34 +292,39 @@ extension Map<Terrain> {
 			while true {
 				let l = 2 * i + 1, r = 2 * i + 2
 				var m = i
-				if l < heap.count, heap[l].d < heap[m].d { m = l }
-				if r < heap.count, heap[r].d < heap[m].d { m = r }
+				if l < heapD.count, heapD[l] < heapD[m] { m = l }
+				if r < heapD.count, heapD[r] < heapD[m] { m = r }
 				if m == i { break }
-				heap.swapAt(m, i)
+				heapD.swapAt(m, i)
+				heapL.swapAt(m, i)
 				i = m
 			}
 		}
 
-		while !heap.isEmpty {
-			let top = heap[0]
-			let last = heap.removeLast()
-			if !heap.isEmpty {
-				heap[0] = last
+		while !heapD.isEmpty {
+			let topD = heapD[0]
+			let topL = heapL[0]
+			let lastD = heapD.removeLast()
+			let lastL = heapL.removeLast()
+			if !heapD.isEmpty {
+				heapD[0] = lastD
+				heapL[0] = lastL
 				siftDown(0)
 			}
-			if top.d != dist[top.xy] { continue } // stale duplicate
-			if top.xy == end { break }
+			if topD != dist[topL] { continue }
+			if topL == end { break }
 
-			let n4 = top.xy.n4
+			let n4 = topL.n4
 			for i in n4.indices {
 				let nb = n4[i]
-				guard contains(nb), let w = stepCost(to: nb, from: top.xy) else { continue }
-				let nd = top.d &+ w
+				guard contains(nb), let w = stepCost(to: nb, from: topL) else { continue }
+				let nd = topD &+ w
 				if nd < dist[nb] {
 					dist[nb] = nd
-					prev[nb] = UInt16(top.xy.y * size + top.xy.x + 1)
-					heap.append((nd, nb))
-					siftUp(heap.count - 1)
+					prev[nb] = UInt16(topL.y * size + topL.x + 1)
+					heapD.add(nd)
+					heapL.add(nb)
+					siftUp(heapD.count - 1)
 				}
 			}
 		}

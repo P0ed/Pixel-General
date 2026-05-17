@@ -53,6 +53,18 @@ extension CArray {
 		count = 0
 	}
 
+	mutating func swapAt(_ i: Int, _ j: Int) {
+		guard i != j else { return }
+		let v = self[j]
+		self[j] = self[i]
+		self[i] = v
+	}
+
+	mutating func removeLast() -> Element {
+		count -= 1
+		return self[count]
+	}
+
 	func forEach(_ body: (Int, Element) -> Void) {
 		for i in indices { body(i, mem[i]) }
 	}

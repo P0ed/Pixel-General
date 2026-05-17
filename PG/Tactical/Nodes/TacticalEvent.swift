@@ -71,15 +71,12 @@ private extension TacticalNodes {
 		units[dst.index]?.showSight(for: 0.47 - 0.22)
 		await scene?.run(.wait(forDuration: 0.22))
 
-		if hp > 0 {
-			if dmg > 0 {
-				sounds.boomM.play()
-			} else {
-				sounds.boomS.play()
-			}
-			units[dst.index]?.update(hp: hp)
-		} else {
+		if dmg > 0, hp == 0 {
 			sounds.boomL.play()
+		} else if dmg > 0 {
+			sounds.boomM.play()
+		} else {
+			sounds.boomS.play()
 		}
 	}
 
