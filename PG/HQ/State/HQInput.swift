@@ -1,40 +1,40 @@
-extension HQState {
+extension HQUI {
 
-	mutating func apply(_ input: Input) -> HQAction? {
+	mutating func apply(_ input: Input, _ s: borrowing HQState) -> HQAction? {
 		switch input {
-		case .direction(let direction?): moveCursor(direction)
-		case .action(.a): mainAction()
+		case .direction(let direction?): moveCursor(direction, s)
+		case .action(.a): mainAction(s)
 		case .action(.b): secondaryAction()
-		case .action(.c): shopAction()
+		case .action(.c): shopAction(s)
 		case .action(.d): nil
-		case .menu: { events.add(.menu); return nil }()
-		case .tile(let xy): select(xy)
+		case .menu: .menu
+		case .tile(let xy): select(xy, s)
 		default: nil
 		}
 	}
 
-	mutating func select(_ xy: XY) -> HQAction? {
-		guard map.contains(xy) else { return nil }
+	mutating func select(_ xy: XY, _ s: borrowing HQState) -> HQAction? {
+		guard s.map.contains(xy) else { return nil }
 
 		cursor = xy
-		return mainAction()
+		return mainAction(s)
 	}
 
-	mutating func moveCursor(_ direction: Direction) -> HQAction? {
+	mutating func moveCursor(_ direction: Direction, _ s: borrowing HQState) -> HQAction? {
 		let xy = cursor.neighbor(direction)
-		if map.contains(xy) { cursor = xy }
+		if s.map.contains(xy) { cursor = xy }
 		return nil
 	}
 
-	mutating func mainAction() -> HQAction? {
+	mutating func mainAction(_ s: borrowing HQState) -> HQAction? {
 		if let selected {
-			if selected == units[cursor]?.0 {
+			if selected == s.units[cursor]?.0 {
 				self.selected = .none
 			} else {
 				self.selected = .none
 				return .swap(selected.index, cursor.x + cursor.y * 4)
 			}
-		} else if let (i, _) = units[cursor] {
+		} else if let (i, _) = s.units[cursor] {
 			selected = i
 		}
 		return nil
@@ -45,12 +45,12 @@ extension HQState {
 		return nil
 	}
 
-	mutating func shopAction() -> HQAction? {
+	mutating func shopAction(_ s: borrowing HQState) -> HQAction? {
 		if let selected {
 			self.selected = .none
 			return .sell(selected.index)
-		} else if units[cursor] == nil {
-			events.add(.shop)
+		} else if s.units[cursor] == nil {
+			return .shop
 		}
 		return nil
 	}

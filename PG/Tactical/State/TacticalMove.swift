@@ -76,7 +76,7 @@ extension TacticalState {
 		return mov
 	}
 
-	mutating func move(unit uid: UID, to target: XY) {
+	mutating func move(unit uid: UID, to target: XY, ui: inout TacticalUI) {
 		guard units[uid.index].country == country, units[uid.index].canMove else { return }
 
 		let moves = moves(for: uid, target: target)
@@ -116,7 +116,7 @@ extension TacticalState {
 		}
 
 		if player.type == .human {
-			selectUnit(units[uid.index].hasActions ? uid : .none)
+			ui.selectUnit(units[uid.index].hasActions ? uid : .none, in: self)
 		}
 		events.add(.move(uid, pos))
 		if cargo[uid.index] != -1 {
@@ -124,7 +124,7 @@ extension TacticalState {
 		}
 
 		if let interruptor, units[interruptor.index].country.team != units[uid.index].country.team {
-			attack(src: uid, dst: interruptor, surprise: true)
+			attack(src: uid, dst: interruptor, surprise: true, ui: &ui)
 		}
 	}
 }

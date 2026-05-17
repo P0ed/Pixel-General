@@ -50,19 +50,19 @@ extension Unit {
 
 extension TacticalState {
 
-	var status: Status {
-		if let selectedUnit {
+	func status(_ ui: borrowing TacticalUI) -> Status {
+		if let selectedUnit = ui.selectedUnit {
 			Status(
 				text: units[selectedUnit.index].status,
 				action: .init(units[selectedUnit.index].country.flag)
 			)
-		} else if let building = buildings[cursor] {
+		} else if let building = buildings[ui.cursor] {
 			Status(
-				text: "\(cursor) \(building.type)",
+				text: "\(ui.cursor) \(building.type)",
 				action: .init(building.country.flag)
 			)
 		} else {
-			Status(text: "\(cursor) \(map[cursor])", action: .init(""))
+			Status(text: "\(ui.cursor) \(map[ui.cursor])", action: .init(""))
 		}
 	}
 }

@@ -13,7 +13,7 @@ extension TacticalState {
 		&& up.manhattanDistance(to: tp) == 1
 	}
 
-	mutating func embark(unit: UID, transport: UID) {
+	mutating func embark(unit: UID, transport: UID, ui: inout TacticalUI) {
 		guard canEmbark(unit: unit, transport: transport) else { return }
 		cargo[transport.index] = unit
 		cargo[unit.index] = transport
@@ -22,7 +22,7 @@ extension TacticalState {
 		position[unit.index] = tp
 		unitsMap[p] = -1
 		events.add(.move(unit, tp))
-		selectUnit(transport)
+		ui.selectUnit(transport, in: self)
 	}
 
 	func canDisembark(unit: UID, to xy: XY) -> Bool {

@@ -13,13 +13,13 @@ enum TacticalEvent {
 
 extension TacticalNodes {
 
-	func process(_ event: TacticalEvent, _ state: borrowing TacticalState) async {
+	func process(_ event: TacticalEvent, _ state: borrowing TacticalState, _ ui: borrowing TacticalUI) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
 		case let .move(uid, xy): await processMove(uid, xy, state)
 		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp, state: state)
 		case let .update(id): update(id, state)
-		case .shop: processShop(state)
+		case .shop: processShop(state, ui)
 		case .menu: processMenu(state)
 		case .end: restartGame(state)
 		}
@@ -84,13 +84,13 @@ private extension TacticalNodes {
 		units[id.index]?.update(hp: state.units[id.index].hp)
 	}
 
-	func processShop(_ state: borrowing TacticalState) {
-		guard let building = state.buildings[state.cursor],
+	func processShop(_ state: borrowing TacticalState, _ ui: borrowing TacticalUI) {
+		guard let building = state.buildings[ui.cursor],
 			  building.country == state.country,
-			  state.unitAt(state.cursor) == nil
+			  state.unitAt(ui.cursor) == nil
 		else { return }
 
-		let xy = state.cursor
+		let xy = ui.cursor
 		let items = state.shopUnits(at: xy).enumerated().map { i, template in
 			MenuItem<TacticalAction>.close(
 				icon: template.imageName,

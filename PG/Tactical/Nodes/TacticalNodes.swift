@@ -100,29 +100,29 @@ extension TacticalNodes {
 	/// run while the scene is processing — it touches no simulation state and
 	/// skips the fog pass (the only animation-conflicting work), so it backs
 	/// the live pan/cursor carve-out in the scene loop.
-	func updateView(_ state: borrowing TacticalState) {
-		let cameraPosition = state.camera.point
+	func updateView(_ state: borrowing TacticalState, _ ui: borrowing TacticalUI) {
+		let cameraPosition = ui.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
-		let cameraScale = CGFloat(state.scale)
+		let cameraScale = CGFloat(ui.scale)
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}
 		map.update(
 			map: state.map,
-			cursor: state.cursor,
-			selected: state.selectedUnit.map { i in state.position[i.index] }
+			cursor: ui.cursor,
+			selected: ui.selectedUnit.map { i in state.position[i.index] }
 		)
 	}
 
-	func update(_ state: borrowing TacticalState) {
-		updateView(state)
-		updateFogIfNeeded(state: state)
+	func update(_ state: borrowing TacticalState, _ ui: borrowing TacticalUI) {
+		updateView(state, ui)
+		updateFogIfNeeded(state: state, ui: ui)
 	}
 
-	func updateFogIfNeeded(state: borrowing TacticalState) {
-		let lit = state.selectable ?? state.visibleToHuman
+	func updateFogIfNeeded(state: borrowing TacticalState, ui: borrowing TacticalUI) {
+		let lit = ui.selectable ?? state.visibleToHuman
 
 		guard self.lit != lit else { return }
 		defer { self.lit = lit }

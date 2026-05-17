@@ -95,7 +95,6 @@ final class Core {
 				}
 			}
 		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)
-		state.hq?.cursor = .zero
 		state.hq?.player.prestige = tactical[c].prestige
 
 		state.tactical = nil
@@ -121,13 +120,13 @@ extension SKScene {
 
 	static func make(_ state: borrowing State) -> SKScene {
 		switch state.location {
-		case .hq: Scene(mode: .hq, state: clone(state.hq!))
-		case .strategic: Scene(mode: .strategic, state: clone(state.strategic!))
-		case .tactical: Scene(mode: .tactical, state: clone(state.tactical!))
+		case .hq: Scene(mode: .hq, state: clone(state.hq!), ui: HQUI())
+		case .strategic: Scene(mode: .strategic, state: clone(state.strategic!), ui: StrategicUI())
+		case .tactical: Scene(mode: .tactical, state: clone(state.tactical!), ui: TacticalUI())
 		}
 	}
 
 	static var editor: SKScene {
-		Scene(mode: .editor, state: EditorState())
+		Scene(mode: .editor, state: EditorState(), ui: EditorUI())
 	}
 }

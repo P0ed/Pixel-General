@@ -10,12 +10,33 @@ struct TacticalState: ~Copyable {
 	var turn: UInt32 = 0
 	var d20: D20 = D20()
 	var events: CArray<128, TacticalEvent> = .init(tail: .end)
+}
 
+/// Session/UI state for the tactical scene. Owned by `Scene`, never part of
+/// `TacticalState`, never persisted, never read by the simulation or AI.
+struct TacticalUI {
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var selectedUnit: UID?
 	var selectable: SetXY?
 	var scale: Int = 1
+}
+
+extension TacticalUI {
+
+	/// Reads simulation `State` (borrowed) to derive the move overlay, writes
+	/// only UI fields. Used from both the input stage and the reduce stage's
+	/// post-action re-selection.
+	mutating func selectUnit(_ uid: UID?, in s: borrowing TacticalState) {
+		if let uid {
+			selectedUnit = uid
+			cursor = s.position[uid.index]
+			selectable = s.units[uid.index].canMove ? s.moves(for: uid).setXY : .none
+		} else {
+			selectedUnit = .none
+			selectable = .none
+		}
+	}
 }
 
 extension TacticalState {

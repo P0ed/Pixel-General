@@ -80,11 +80,11 @@ extension HQNodes {
 		return node
 	}
 
-	func update(_ state: borrowing HQState) {
+	func update(_ state: borrowing HQState, _ ui: borrowing HQUI) {
 		map.update(
 			map: state.map,
-			cursor: state.cursor,
-			selected: state.selected.map { i in XY(i.index % 4, i.index / 4) }
+			cursor: ui.cursor,
+			selected: ui.selected.map { i in XY(i.index % 4, i.index / 4) }
 		)
 	}
 

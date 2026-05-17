@@ -1,25 +1,29 @@
 import CoreGraphics
 
-enum TacticalAction {
+enum TacticalAction: Equatable {
 	case move(UID, XY)
 	case embark(UID, UID)
 	case disembark(UID, XY)
 	case attack(UID, UID)
 	case resupply(UID)
 	case purchase(Int, XY)
+	case shop
+	case menu
 	case end
 }
 
 extension TacticalState {
 
-	mutating func reduce(_ action: TacticalAction?) -> [TacticalEvent] {
+	mutating func reduce(_ action: TacticalAction?, ui: inout TacticalUI) -> [TacticalEvent] {
 		switch action {
-		case .attack(let src, let dst): attack(src: src, dst: dst)
-		case .move(let unit, let xy): move(unit: unit, to: xy)
-		case .embark(let u, let t): embark(unit: u, transport: t)
+		case .attack(let src, let dst): attack(src: src, dst: dst, ui: &ui)
+		case .move(let unit, let xy): move(unit: unit, to: xy, ui: &ui)
+		case .embark(let u, let t): embark(unit: u, transport: t, ui: &ui)
 		case .disembark(let t, let xy): disembark(unit: t, to: xy)
 		case .resupply(let u): resupply(unit: u)
 		case .purchase(let idx, let xy): buy(idx, at: xy)
+		case .shop: events.add(.shop)
+		case .menu: events.add(.menu)
 		case .end: endTurn()
 		case .none: break
 		}
@@ -107,14 +111,4 @@ extension TacticalState {
 		})
 	}
 
-	mutating func selectUnit(_ uid: UID?) {
-		if let uid {
-			selectedUnit = uid
-			cursor = position[uid.index]
-			selectable = units[uid.index].canMove ? moves(for: uid).setXY : .none
-		} else {
-			selectedUnit = .none
-			selectable = .none
-		}
-	}
 }

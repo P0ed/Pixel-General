@@ -1,10 +1,9 @@
-extension StrategicState {
+extension StrategicUI {
 
-	mutating func apply(_ input: Input) -> StrategicAction? {
+	mutating func apply(_ input: Input, _ s: borrowing StrategicState) -> StrategicAction? {
 		switch input {
-		case .menu: events.add(.menu)
-		default: break
+		case .menu: .menu
+		default: nil
 		}
-		return nil
 	}
 }

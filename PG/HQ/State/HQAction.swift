@@ -2,6 +2,8 @@ enum HQAction {
 	case swap(Int, Int)
 	case purchase(Int, Int)
 	case sell(Int)
+	case shop
+	case menu
 }
 
 extension HQState {
@@ -11,6 +13,8 @@ extension HQState {
 		case .purchase(let t, let idx): purchase(t, idx)
 		case .sell(let idx): sell(idx)
 		case .swap(let src, let dst): swap(src, dst)
+		case .shop: events.add(.shop)
+		case .menu: events.add(.menu)
 		case .none: break
 		}
 		defer { events.erase() }

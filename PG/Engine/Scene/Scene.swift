@@ -1,8 +1,8 @@
 import SpriteKit
 import AVFAudio
 
-final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
-	let mode: SceneMode<State, Action, Event, Nodes>
+final class Scene<State: ~Copyable, UI, Action, Event, Nodes>: SKScene {
+	let mode: SceneMode<State, UI, Action, Event, Nodes>
 	private let hid = HIDController()
 
 	private var processing = false
@@ -10,13 +10,19 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private var panAccumulator: CGPoint = .zero
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
+	/// Session/UI state, owned by the scene (never persisted, never read by
+	/// the simulation or AI). Mutated at the input stage; the simulation is
+	/// only borrowed there.
+	var ui: UI
+
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
 	private var willCloseWindow: Any?
 	private var eventsMonitor: Any?
 
-	init(mode: SceneMode<State, Action, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
+	init(mode: SceneMode<State, UI, Action, Event, Nodes>, state: consuming State, ui: UI, size: CGSize = .scene) {
 		self.state = state
+		self.ui = ui
 		self.mode = mode
 		super.init(size: size)
 	}
@@ -78,13 +84,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			menuState?.apply(input)
 		} else if processing {
 			if mode.live(input) {
-				_ = mode.input(&state, input)
-				if let nodes { mode.liveUpdate(nodes, state) }
+				_ = mode.input(state, &ui, input)
+				if let nodes { mode.liveUpdate(nodes, state, ui) }
 			} else {
 				pending = input
 			}
 		} else {
-			send(mode.input(&state, input))
+			send(mode.input(state, &ui, input))
 		}
 	}
 
@@ -105,9 +111,9 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		guard let nodes, !processing else { return }
 		processing = true
 		Task {
-			let events = mode.reduce(&state, action)
+			let events = mode.reduce(&state, &ui, action)
 			for event in events {
-				await mode.process(event, nodes, state)
+				await mode.process(event, nodes, state, ui)
 			}
 			processing = false
 			didSetState()
@@ -127,7 +133,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private func didSetState() {
 		guard let nodes, !processing else { return }
 		updateStatus()
-		mode.update(nodes, state)
+		mode.update(nodes, state, ui)
 	}
 
 	private func didSetMenu() {
@@ -157,7 +163,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	private func updateStatus() {
 		baseNodes?.updateStatus(
-			menuState.map { $0.status } ?? mode.status(state)
+			menuState.map { $0.status } ?? mode.status(state, ui)
 		)
 	}
 

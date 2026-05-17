@@ -10,12 +10,12 @@ enum HQEvent {
 
 extension HQNodes {
 
-	func process(_ event: HQEvent, _ state: borrowing HQState) async {
+	func process(_ event: HQEvent, _ state: borrowing HQState, _ ui: borrowing HQUI) async {
 		switch event {
 		case .move(let uid, let xy): processMove(uid, xy)
 		case .spawn(let uid): processSpawn(uid, state)
 		case .remove(let uid): removeUnit(uid)
-		case .shop: processShop(state)
+		case .shop: processShop(state, ui)
 		case .menu: processMenu()
 		}
 	}
@@ -33,13 +33,14 @@ extension HQNodes {
 		addUnit(uid, node: sprite)
 	}
 
-	private func processShop(_ state: borrowing HQState) {
+	private func processShop(_ state: borrowing HQState, _ ui: borrowing HQUI) {
+		let slot = ui.cursor.x + ui.cursor.y * 4
 		scene?.show(.init(
 			items: [Unit].shop(country: state.country).enumerated().map { i, u in
 				.close(
 					icon: u.imageName,
 					status: .init(text: u.status, action: .init("\(u.cost) / \(state.player.prestige)")),
-					action: .purchase(i, state.cursor.x + state.cursor.y * 4)
+					action: .purchase(i, slot)
 				)
 			}
 		))

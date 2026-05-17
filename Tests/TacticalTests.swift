@@ -65,29 +65,30 @@ struct TacticalTests {
 	}
 
 	@Test func cursorMovementStaysInBounds() {
-		var state = TacticalState.make(
+		let state = TacticalState.make(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: Self.goodSeed
 		)
 
-		state.cursor = XY(0, 0)
-		_ = state.apply(.direction(.left))   // would go to -1, must clamp
-		#expect(state.cursor.x >= 0 && state.cursor.y >= 0)
+		var ui = TacticalUI()
+		ui.cursor = XY(0, 0)
+		_ = ui.apply(.direction(.left), state)   // would go to -1, must clamp
+		#expect(ui.cursor.x >= 0 && ui.cursor.y >= 0)
 
-		state.cursor = XY(state.map.size - 1, state.map.size - 1)
-		_ = state.apply(.direction(.right))  // would go past edge
-		#expect(state.cursor.x < state.map.size && state.cursor.y < state.map.size)
+		ui.cursor = XY(state.map.size - 1, state.map.size - 1)
+		_ = ui.apply(.direction(.right), state)  // would go past edge
+		#expect(ui.cursor.x < state.map.size && ui.cursor.y < state.map.size)
 
 		// A direction in-bounds should move the cursor by one.
-		state.cursor = XY(5, 5)
-		_ = state.apply(.direction(.up))
-		#expect(state.cursor == XY(5, 6))
+		ui.cursor = XY(5, 5)
+		_ = ui.apply(.direction(.up), state)
+		#expect(ui.cursor == XY(5, 6))
 	}
 
 	@Test func selectingOwnUnitSetsSelectableMoves() {
-		var state = TacticalState.make(
+		let state = TacticalState.make(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
@@ -102,9 +103,10 @@ struct TacticalTests {
 			return
 		}
 
-		_ = state.apply(.tile(ownUnitPos))
-		#expect(state.selectedUnit != nil, "Selecting own unit's tile should select it")
-		#expect(state.selectable != nil, "Selectable moves should be set for movable unit")
+		var ui = TacticalUI()
+		_ = ui.apply(.tile(ownUnitPos), state)
+		#expect(ui.selectedUnit != nil, "Selecting own unit's tile should select it")
+		#expect(ui.selectable != nil, "Selectable moves should be set for movable unit")
 	}
 
 	@Test func aiCanRunAndEndTurnWithoutCrash() {
@@ -120,13 +122,14 @@ struct TacticalTests {
 			seed: Self.goodSeed
 		)
 
+		var ui = TacticalUI()
 		let initialTurn = state.turn
 		var iterations = 0
 		let maxIterations = 4_000
 
 		outer: while iterations < maxIterations {
 			let action = state.runAI()
-			_ = state.reduce(action)
+			_ = state.reduce(action, ui: &ui)
 			iterations += 1
 			if action == .end {
 				if state.turn > initialTurn + 4 {
@@ -146,8 +149,9 @@ struct TacticalTests {
 			size: 32,
 			seed: Self.goodSeed
 		)
+		var ui = TacticalUI()
 		let before = state.turn
-		_ = state.reduce(.end)
+		_ = state.reduce(.end, ui: &ui)
 		#expect(state.turn == before + 1, "End-of-turn must advance the turn counter")
 	}
 

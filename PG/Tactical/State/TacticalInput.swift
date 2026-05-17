@@ -1,118 +1,118 @@
-extension TacticalState {
+extension TacticalUI {
 
-	mutating func apply(_ input: Input) -> TacticalAction? {
+	mutating func apply(_ input: Input, _ s: borrowing TacticalState) -> TacticalAction? {
 		return switch input {
-		case .direction(let direction?): moveCursor(direction)
-		case .menu: { events.add(.menu); return nil }()
-		case .action(.a): primaryAction()
-		case .action(.b): secondaryAction()
-		case .action(.c): squareAction()
-		case .action(.d): triangleAction()
-		case .target(.prev): prevUnit()
-		case .target(.next): nextUnit()
-		case .tile(let xy): select(xy)
+		case .direction(let direction?): moveCursor(direction, s)
+		case .menu: .menu
+		case .action(.a): primaryAction(s)
+		case .action(.b): secondaryAction(s)
+		case .action(.c): squareAction(s)
+		case .action(.d): triangleAction(s)
+		case .target(.prev): prevUnit(s)
+		case .target(.next): nextUnit(s)
+		case .tile(let xy): select(xy, s)
 		case .scale(let value): { scale = value; return nil }()
-		case .pan(let dxy): handlePan(dxy)
+		case .pan(let dxy): handlePan(dxy, s)
 		default: nil
 		}
 	}
 }
 
-private extension TacticalState {
+private extension TacticalUI {
 
-	mutating func select(_ xy: XY) -> TacticalAction? {
-		guard map.contains(xy) else { return nil }
+	mutating func select(_ xy: XY, _ s: borrowing TacticalState) -> TacticalAction? {
+		guard s.map.contains(xy) else { return nil }
 
 		cursor = xy
-		if player.type == .human { return primaryAction() }
+		if s.player.type == .human { return primaryAction(s) }
 		return nil
 	}
 
-	mutating func moveCursor(_ direction: Direction) -> TacticalAction? {
+	mutating func moveCursor(_ direction: Direction, _ s: borrowing TacticalState) -> TacticalAction? {
 		let xy = cursor.neighbor(direction)
-		if map.contains(xy) { cursor = xy }
+		if s.map.contains(xy) { cursor = xy }
 		return nil
 	}
 
-	mutating func primaryAction() -> TacticalAction? {
+	mutating func primaryAction(_ s: borrowing TacticalState) -> TacticalAction? {
 		if let selectedUnit {
-			let unit = units[selectedUnit.index]
+			let unit = s.units[selectedUnit.index]
 
-			if let dst = unitAt(cursor), player.visible[cursor] {
-				if dst.country.team != unit.country.team, self[country].type == .human {
-					return .attack(selectedUnit, unitsMap[cursor])
-				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]), self[country].type == .human {
-					return .embark(selectedUnit, unitsMap[cursor])
+			if let dst = s.unitAt(cursor), s.player.visible[cursor] {
+				if dst.country.team != unit.country.team, s[s.country].type == .human {
+					return .attack(selectedUnit, s.unitsMap[cursor])
+				} else if s.canEmbark(unit: selectedUnit, transport: s.unitsMap[cursor]), s[s.country].type == .human {
+					return .embark(selectedUnit, s.unitsMap[cursor])
 				} else {
-					selectUnit(dst == unit ? .none : unitsMap[cursor])
+					selectUnit(dst == unit ? .none : s.unitsMap[cursor], in: s)
 				}
-			} else if unit.country == country, unit.canMove, self[country].type == .human {
+			} else if unit.country == s.country, unit.canMove, s[s.country].type == .human {
 				return .move(selectedUnit, cursor)
-			} else if buildings[cursor]?.country == country, self[country].type == .human {
-				events.add(.shop)
+			} else if s.buildings[cursor]?.country == s.country, s[s.country].type == .human {
+				return .shop
 			} else {
-				selectUnit(.none)
+				selectUnit(.none, in: s)
 			}
 		} else {
-			if player.visible[cursor], unitAt(cursor) != nil {
-				selectUnit(unitsMap[cursor])
-			} else if buildings[cursor]?.country == country, self[country].type == .human {
-				events.add(.shop)
+			if s.player.visible[cursor], s.unitAt(cursor) != nil {
+				selectUnit(s.unitsMap[cursor], in: s)
+			} else if s.buildings[cursor]?.country == s.country, s[s.country].type == .human {
+				return .shop
 			}
 		}
 		return nil
 	}
 
-	mutating func secondaryAction() -> TacticalAction? {
-		selectUnit(.none)
+	mutating func secondaryAction(_ s: borrowing TacticalState) -> TacticalAction? {
+		selectUnit(.none, in: s)
 		return nil
 	}
 
-	mutating func squareAction() -> TacticalAction? {
+	mutating func squareAction(_ s: borrowing TacticalState) -> TacticalAction? {
 		guard let selectedUnit,
-			  canDisembark(unit: selectedUnit, to: cursor),
-			  self[country].type == .human
+			  s.canDisembark(unit: selectedUnit, to: cursor),
+			  s[s.country].type == .human
 		else { return nil }
 		return .disembark(selectedUnit, cursor)
 	}
 
-	mutating func triangleAction() -> TacticalAction? {
+	mutating func triangleAction(_ s: borrowing TacticalState) -> TacticalAction? {
 		guard let selectedUnit,
-			  units[selectedUnit.index].country == country,
-			  units[selectedUnit.index].untouched,
-			  self[country].type == .human
+			  s.units[selectedUnit.index].country == s.country,
+			  s.units[selectedUnit.index].untouched,
+			  s[s.country].type == .human
 		else { return nil }
 
-		selectUnit(.none)
+		selectUnit(.none, in: s)
 		return .resupply(selectedUnit)
 	}
 
-	mutating func prevUnit() -> TacticalAction? {
-		nextUnit(reversed: true)
+	mutating func prevUnit(_ s: borrowing TacticalState) -> TacticalAction? {
+		nextUnit(s, reversed: true)
 	}
 
-	mutating func nextUnit(reversed: Bool = false) -> TacticalAction? {
-		let cnt = units.count
+	mutating func nextUnit(_ s: borrowing TacticalState, reversed: Bool = false) -> TacticalAction? {
+		let cnt = s.units.count
 		var idx = selectedUnit?.index ?? (reversed ? cnt - 1 : 0)
-		let country = country
+		let country = s.country
 
-		for _ in units.indices {
+		for _ in s.units.indices {
 			idx += reversed ? -1 : 1
 			let i = (cnt + idx) % cnt
-			let u = units[i]
+			let u = s.units[i]
 
 			if u.alive, u.country == country, u.hasActions {
-				selectUnit(i.uid)
+				selectUnit(i.uid, in: s)
 				return nil
 			}
 		}
-		selectUnit(nil)
+		selectUnit(nil, in: s)
 		return nil
 	}
 
-	mutating func handlePan(_ dxy: XY) -> TacticalAction? {
-		cursor = (cursor + dxy).clamped(map.size)
-		camera = (camera + dxy).clamped(map.size)
+	mutating func handlePan(_ dxy: XY, _ s: borrowing TacticalState) -> TacticalAction? {
+		cursor = (cursor + dxy).clamped(s.map.size)
+		camera = (camera + dxy).clamped(s.map.size)
 		return nil
 	}
 }

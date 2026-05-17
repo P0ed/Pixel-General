@@ -49,14 +49,14 @@ extension EditorNodes {
 		return map
 	}
 
-	func update(_ state: borrowing EditorState) {
-		let cameraPosition = state.camera.point
+	func update(_ state: borrowing EditorState, _ ui: borrowing EditorUI) {
+		let cameraPosition = ui.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
-		map.update(map: state.map, cursor: state.cursor, selected: nil)
+		map.update(map: state.map, cursor: ui.cursor, selected: nil)
 
-		let cameraScale = CGFloat(state.scale)
+		let cameraScale = CGFloat(ui.scale)
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}

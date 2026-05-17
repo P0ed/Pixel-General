@@ -3,10 +3,14 @@ import Foundation
 struct EditorState: ~Copyable {
 	var map: Map<Terrain>
 	var brush: Terrain = .field
+	var events: CArray<32, EditorEvent> = .init(tail: .menu)
+}
+
+/// Session/UI state for the editor scene. Owned by `Scene`, never persisted.
+struct EditorUI {
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var scale: Int = 1
-	var events: CArray<32, EditorEvent> = .init(tail: .menu)
 }
 
 enum EditorAction {
@@ -16,6 +20,7 @@ enum EditorAction {
 	case randomize
 	case save
 	case load
+	case menu
 	case hq
 }
 
@@ -32,23 +37,6 @@ extension EditorState {
 		map = Map(size: 32, zero: .field)
 	}
 
-	mutating func apply(_ input: Input) -> EditorAction? {
-		switch input {
-		case .direction(let direction?): moveCursor(direction)
-		case .action(.a): .paint(cursor, brush)
-		case .action(.b): cycleBrush(reversed: false)
-		case .action(.c): nil
-		case .action(.d): nil
-		case .target(.next): cycleBrush(reversed: false)
-		case .target(.prev): cycleBrush(reversed: true)
-		case .menu: { events.add(.menu); return nil }()
-		case .tile(let xy): tileTap(xy)
-		case .scale(let value): { scale = value; return nil }()
-		case .pan(let dxy): handlePan(dxy)
-		default: nil
-		}
-	}
-
 	mutating func reduce(_ action: EditorAction?) -> [EditorEvent] {
 		switch action {
 		case .paint(let xy, let terrain): paint(xy, terrain)
@@ -57,6 +45,7 @@ extension EditorState {
 		case .randomize: randomizeMap()
 		case .save: saveMap()
 		case .load: loadMap()
+		case .menu: events.add(.menu)
 		case .hq: events.add(.hq)
 		case .none: break
 		}
@@ -64,41 +53,61 @@ extension EditorState {
 		return events.map { _, e in e }
 	}
 
-	var status: Status {
+	func status(_ ui: borrowing EditorUI) -> Status {
 		Status(
-			text: "\(cursor) \(map[cursor])  brush: \(brush)",
+			text: "\(ui.cursor) \(map[ui.cursor])  brush: \(brush)",
 			action: .init("A: paint  B: brush  ↩ menu")
 		)
 	}
 }
 
-private extension EditorState {
+extension EditorUI {
 
-	mutating func moveCursor(_ direction: Direction) -> EditorAction? {
+	mutating func apply(_ input: Input, _ s: borrowing EditorState) -> EditorAction? {
+		switch input {
+		case .direction(let direction?): moveCursor(direction, s)
+		case .action(.a): .paint(cursor, s.brush)
+		case .action(.b): cycleBrush(reversed: false, s)
+		case .action(.c): nil
+		case .action(.d): nil
+		case .target(.next): cycleBrush(reversed: false, s)
+		case .target(.prev): cycleBrush(reversed: true, s)
+		case .menu: .menu
+		case .tile(let xy): tileTap(xy, s)
+		case .scale(let value): { scale = value; return nil }()
+		case .pan(let dxy): handlePan(dxy, s)
+		default: nil
+		}
+	}
+
+	mutating func moveCursor(_ direction: Direction, _ s: borrowing EditorState) -> EditorAction? {
 		let xy = cursor.neighbor(direction)
-		if map.contains(xy) { cursor = xy }
+		if s.map.contains(xy) { cursor = xy }
 		return nil
 	}
 
-	mutating func tileTap(_ xy: XY) -> EditorAction? {
-		guard map.contains(xy) else { return nil }
+	mutating func tileTap(_ xy: XY, _ s: borrowing EditorState) -> EditorAction? {
+		guard s.map.contains(xy) else { return nil }
 		cursor = xy
-		return .paint(xy, brush)
+		return .paint(xy, s.brush)
 	}
 
-	mutating func handlePan(_ dxy: XY) -> EditorAction? {
-		cursor = (cursor + dxy).clamped(map.size)
-		camera = (camera + dxy).clamped(map.size)
+	mutating func handlePan(_ dxy: XY, _ s: borrowing EditorState) -> EditorAction? {
+		cursor = (cursor + dxy).clamped(s.map.size)
+		camera = (camera + dxy).clamped(s.map.size)
 		return nil
 	}
 
-	func cycleBrush(reversed: Bool) -> EditorAction? {
+	func cycleBrush(reversed: Bool, _ s: borrowing EditorState) -> EditorAction? {
 		let palette = Terrain.palette
-		let i = palette.firstIndex(of: brush) ?? 0
+		let i = palette.firstIndex(of: s.brush) ?? 0
 		let n = palette.count
 		let next = (i + (reversed ? n - 1 : 1)) % n
 		return .setBrush(palette[next])
 	}
+}
+
+private extension EditorState {
 
 	mutating func paint(_ xy: XY, _ terrain: Terrain) {
 		guard map.contains(xy), map[xy] != terrain else { return }

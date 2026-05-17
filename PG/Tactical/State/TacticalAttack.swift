@@ -94,7 +94,7 @@ extension TacticalState {
 		return max(0, enemies - 1)
 	}
 
-	mutating func attack(src: UID, dst: UID, surprise: Bool = false) {
+	mutating func attack(src: UID, dst: UID, surprise: Bool = false, ui: inout TacticalUI) {
 		let (si, di) = (src.index, dst.index)
 		guard units[si].country == country,
 			  units[si].country.team != units[di].country.team,
@@ -142,7 +142,7 @@ extension TacticalState {
 			retreat(unit: dst, from: position[si])
 		}
 		if self[units[si].country].type == .human {
-			selectUnit(units[si].alive && units[si].hasActions ? src : .none)
+			ui.selectUnit(units[si].alive && units[si].hasActions ? src : .none, in: self)
 		}
 	}
 
