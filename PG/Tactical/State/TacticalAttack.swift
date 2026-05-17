@@ -5,7 +5,7 @@ extension TacticalState {
 		let du = units[dst.index]
 		let sp = position[src.index]
 		let dp = position[dst.index]
-		return sp.distance(to: dp) <= su.rng * 2 + 1
+		return sp.stepDistance(to: dp) <= su.rng * 2 + 1
 			&& su.atk(du) > 0
 			&& (su.isAir ? su.ammo > 0 : true)
 	}

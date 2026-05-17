@@ -107,7 +107,7 @@ extension Map<Terrain> {
 			&& !self[p].isBuilding
 			&& self[p] != .water
 			&& self[p] != .mountain
-			&& !placed.contains { $0.distance(to: p) < minSpacing }
+			&& !placed.contains { $0.stepDistance(to: p) < minSpacing }
 		}
 
 		return (0 ..< citiesCount).reduce(into: []) { placed, i in

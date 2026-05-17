@@ -21,7 +21,7 @@ extension TacticalState {
 		return buildings.compactMap { [country] _, b in
 			b.country.team != country.team ? b.position : nil
 		}
-		.sorted { a, b in a.distance(to: mid) < b.distance(to: mid) }
+		.sorted { a, b in a.stepDistance(to: mid) < b.stepDistance(to: mid) }
 		.first
 	}
 
@@ -69,7 +69,7 @@ extension TacticalState {
 			? buildings.compactMap {
 				$1.country == country && ($1.type == .airfield) == u.isAir ? $1 : nil
 			}.min { a, b in
-				a.position.distance(to: position[i]) < b.position.distance(to: position[i])
+				a.position.stepDistance(to: position[i]) < b.position.stepDistance(to: position[i])
 			}.flatMap { b in
 				move(id: i.uid, to: b.position)
 			}
@@ -110,9 +110,9 @@ extension TacticalState {
 			.set
 			.max(by: { a, b in
 				(
-					max(0, Int(map[a].def)) - target.distance(to: a)
+					max(0, Int(map[a].def)) - target.stepDistance(to: a)
 				) < (
-					max(0, Int(map[b].def)) - target.distance(to: b)
+					max(0, Int(map[b].def)) - target.stepDistance(to: b)
 				)
 			})
 			.map { x in .move(id, x) }

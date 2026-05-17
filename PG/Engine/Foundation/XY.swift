@@ -45,7 +45,7 @@ extension XY {
 		(self - xy).manhattan
 	}
 
-	func distance(to xy: XY) -> Int {
+	func stepDistance(to xy: XY) -> Int {
 		(self - xy).doubleRadius
 	}
 
