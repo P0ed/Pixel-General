@@ -109,11 +109,10 @@ extension XY {
 		let rng = dr >> 1
 		arr.reserveCapacity(rng * (rng - 1) * 4 + 1)
 		arr.append(self)
-		for x in 0...rng {
-			for y in 1...rng {
-				let xy = XY(x, y)
-				if xy.doubleRadius <= dr {
-					let mirrored = xy.mirror
+		for d in 1...dr {
+			for x in 0...rng {
+				for y in 1...rng where XY(x, y).doubleRadius == d {
+					let mirrored = XY(x, y).mirror
 					for i in mirrored.indices {
 						arr.append(self + mirrored[i])
 					}

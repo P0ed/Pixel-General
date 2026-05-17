@@ -34,19 +34,48 @@ extension TacticalState {
 				tail: .empty
 			)
 		}
-		let capitals = players.indices.map { i in
-			buildings.filter { $0.country == players[i].country && $0.type == .city }.first?.position ?? .zero
+		let size = self.map.size
+		let placements = [4 of CArray<1024, XY>].init { i in
+			guard i < players.count else { return .init(tail: .zero) }
+
+			let cities = buildings
+				.filter {
+					i < players.count && $0.country == players[i].country && $0.type == .city
+				}
+				.map { $0.position }
+			let disks = (cities.isEmpty ? [.zero] : cities).map { $0.circle(13) }
+			var out = CArray<1024, XY>(tail: .zero)
+			var cursors = [Int](repeating: 0, count: disks.count)
+			var progressed = true
+			while progressed {
+				progressed = false
+				for k in disks.indices where cursors[k] < disks[k].count {
+					out.add(disks[k][cursors[k]])
+					cursors[k] += 1
+					progressed = true
+				}
+			}
+			return out
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
+		
 		self.units.forEach { i, u in
-			guard let player = players.firstIndex(where: { $0.country == u.country })
+			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { return }
 
-			let idx = allocatedUnits[player]
-			position[i] = XY(idx % 4, idx % 16 / 4) + capitals[player] - .one
-			allocatedUnits[player] += 1
+			let candidates = placements[player]
+			var k = allocatedUnits[player]
+			while k < candidates.count {
+				let xy = candidates[k]
+				if xy.x >= 0, xy.y >= 0, xy.x < size, xy.y < size, unitsMap[xy] < 0 {
+					break
+				}
+				k += 1
+			}
+			guard k < candidates.count else { fatalError() }
 
-			guard unitsMap[position[i]] < 0 else { fatalError() }
+			position[i] = candidates[k]
+			allocatedUnits[player] = k + 1
 			unitsMap[position[i]] = i.uid
 		}
 
