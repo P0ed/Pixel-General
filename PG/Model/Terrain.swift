@@ -108,6 +108,7 @@ extension Terrain {
 	var baseEntrenchment: UInt8 {
 		switch self {
 		case .forest, .hill, .forestHill, .mountain, .airfield: 2
+		case .roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE: 2
 		case .city: 3
 		default: 0
 		}
