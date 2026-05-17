@@ -96,10 +96,6 @@ extension TacticalNodes {
 		}
 	}
 
-	/// View-only flush: camera, zoom, cursor and selection. Cheap and safe to
-	/// run while the scene is processing — it touches no simulation state and
-	/// skips the fog pass (the only animation-conflicting work), so it backs
-	/// the live pan/cursor carve-out in the scene loop.
 	func updateView(_ state: borrowing TacticalState) {
 		let cameraPosition = state.camera.point
 		if camera.position != cameraPosition {

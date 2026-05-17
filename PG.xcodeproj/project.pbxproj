@@ -25,6 +25,7 @@
 		5F5A716D2F24FB830059B314 /* Terrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5A716C2F24FB790059B314 /* Terrain.swift */; };
 		5F649EEE2F94E55000F9CE89 /* HQInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F649EED2F94E54C00F9CE89 /* HQInput.swift */; };
 		5F649EF22F952C6900F9CE89 /* HQNewGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F649EF12F952C6600F9CE89 /* HQNewGame.swift */; };
+		5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472D32FB347A300EBC354 /* TacticalTests.swift */; };
 		5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */; };
 		5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87CF592F7BD46900BC87CA /* CArray.swift */; };
 		5F8E87312EB3BEEC0023B28F /* Speicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87302EB3BEEC0023B28F /* Speicher.swift */; };
@@ -649,6 +650,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */,
+				5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
