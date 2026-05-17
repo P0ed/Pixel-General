@@ -1,6 +1,7 @@
 extension TacticalState {
 
-	func runAI() -> TacticalAction {
+	func runAIIfNeeded() -> TacticalAction? {
+		guard player.type == .ai else { return .none }
 		guard let target else { return .end }
 
 		if let nextPurchase { return nextPurchase }

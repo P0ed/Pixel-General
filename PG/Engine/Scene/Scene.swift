@@ -77,26 +77,18 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		if case .some = menuState {
 			menuState?.apply(input)
 		} else if processing {
-			if mode.live(input) {
-				_ = mode.input(&state, input)
-				if let nodes { mode.liveUpdate(nodes, state) }
-			} else {
-				pending = input
-			}
+			pending = input
 		} else {
 			send(mode.input(&state, input))
 		}
 	}
 
-	/// Idle step of the scene loop. Runs when no `Task` is in flight and no
-	/// menu overlay is up: drains a scheduled input first, otherwise lets the
-	/// mode's auto-driver (e.g. AI) take a turn. A menu being open pauses both.
 	private func advance() {
 		guard !processing, menuState == nil else { return }
 		if let input = pending {
 			pending = nil
 			apply(input)
-		} else if let action = mode.auto(state) {
+		} else if let action = mode.ai(state) {
 			send(action)
 		}
 	}
