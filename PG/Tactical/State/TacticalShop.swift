@@ -2,6 +2,11 @@ extension TacticalState {
 
 	func shopUnits(at xy: XY) -> [Unit] {
 		let country = country
+		let enemyAdjacent = neighbors(at: xy).contains { id in
+			units[id.index].country.team != country.team
+		}
+		if enemyAdjacent { return [] }
+
 		let unitSlots = units.reduce(into: [0, 0] as [2 of Int]) { c, i, u in
 			if u.country == country { c[u[.aux] ? 1 : 0] += 1 }
 		}

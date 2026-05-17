@@ -43,7 +43,7 @@ extension TacticalState {
 					i < players.count && $0.country == players[i].country && $0.type == .city
 				}
 				.map { $0.position }
-			let disks = (cities.isEmpty ? [.zero] : cities).map { $0.circle(13) }
+			let disks = (cities.isEmpty ? [.zero] : cities).map { $0.circle(9) }
 			var out = CArray<1024, XY>(tail: .zero)
 			var cursors = [Int](repeating: 0, count: disks.count)
 			var progressed = true
