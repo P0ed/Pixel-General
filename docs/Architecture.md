@@ -25,19 +25,20 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 | Type | File | Purpose |
 |------|------|---------|
-| `CArray<N, Element>` | `Engine/Foundation/CArray.swift` | Fixed-capacity array |
+| `CArray<N, Element>` | `Engine/Foundation/CArray.swift` | Fixed-capacity array, must be used in game mechanics instead of `Array<Element>` |
 | `Speicher<N, Element: DeadOrAlive>` | `Engine/Foundation/Speicher.swift` | Same as CArray + quick elements removal and slot reuse |
 | `Map<Element>` | `Engine/Foundation/Map.swift` | 32×32 grid |
 | `SetXY` | `Engine/Foundation/XY.swift` | Efficient coordinate set for visibility/movement |
 | `D20` | `Engine/Foundation/D20.swift` | PRNG for combat resolution |
 
-### Global State
+### State
 
 `Core` class (`PG/Core.swift`) manages save/load. The root `State` struct holds `.hq`, `.strategic`, `.tactical` sub-states and a `.location` enum that drives which scene is active. All state is persisted to UserDefaults on location transitions.
+Game mechanics implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`.
 
 ### Concurrency
 
-Strict concurrency is enabled project-wide. All scene/node code runs on `@MainActor`.
+Strict concurrency is enabled project-wide.
 
 ## Module Map
 
