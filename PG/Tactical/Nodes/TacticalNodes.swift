@@ -96,26 +96,29 @@ extension TacticalNodes {
 		}
 	}
 
-	func update(_ state: borrowing TacticalState) {
+	/// View-only flush: camera, zoom, cursor and selection. Cheap and safe to
+	/// run while the scene is processing — it touches no simulation state and
+	/// skips the fog pass (the only animation-conflicting work), so it backs
+	/// the live pan/cursor carve-out in the scene loop.
+	func updateView(_ state: borrowing TacticalState) {
 		let cameraPosition = state.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
+		}
+		let cameraScale = CGFloat(state.scale)
+		if camera.xScale != cameraScale {
+			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}
 		map.update(
 			map: state.map,
 			cursor: state.cursor,
 			selected: state.selectedUnit.map { i in state.position[i.index] }
 		)
-		let cameraScale = CGFloat(state.scale)
-		if camera.xScale != cameraScale {
-			camera.run(.scale(to: cameraScale, duration: 0.15))
-		}
+	}
 
+	func update(_ state: borrowing TacticalState) {
+		updateView(state)
 		updateFogIfNeeded(state: state)
-
-		if state.player.type == .ai {
-			scene?.send(state.runAI())
-		}
 	}
 
 	func updateFogIfNeeded(state: borrowing TacticalState) {

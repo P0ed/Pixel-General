@@ -12,6 +12,9 @@ extension TacticalMode {
 			process: { event, nodes, state in await nodes.process(event, state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nodes.mouse(event) },
+			auto: { state in state.player.type == .ai ? state.runAI() : nil },
+			live: { input in switch input { case .pan, .scale: true; default: false } },
+			liveUpdate: { nodes, state in nodes.updateView(state) },
 			save: { state in core.store(state) }
 		)
 	}

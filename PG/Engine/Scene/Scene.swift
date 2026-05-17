@@ -6,6 +6,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private let hid = HIDController()
 
 	private var processing = false
+	private var pending: Input?
 	private var panAccumulator: CGPoint = .zero
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
@@ -50,6 +51,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
+		advance()
 
 		eventsMonitor = panHandler
 	}
@@ -74,8 +76,28 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func apply(_ input: Input) {
 		if case .some = menuState {
 			menuState?.apply(input)
-		} else if !processing {
+		} else if processing {
+			if mode.live(input) {
+				_ = mode.input(&state, input)
+				if let nodes { mode.liveUpdate(nodes, state) }
+			} else {
+				pending = input
+			}
+		} else {
 			send(mode.input(&state, input))
+		}
+	}
+
+	/// Idle step of the scene loop. Runs when no `Task` is in flight and no
+	/// menu overlay is up: drains a scheduled input first, otherwise lets the
+	/// mode's auto-driver (e.g. AI) take a turn. A menu being open pauses both.
+	private func advance() {
+		guard !processing, menuState == nil else { return }
+		if let input = pending {
+			pending = nil
+			apply(input)
+		} else if let action = mode.auto(state) {
+			send(action)
 		}
 	}
 
@@ -89,6 +111,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			}
 			processing = false
 			didSetState()
+			advance()
 		}
 	}
 
@@ -129,6 +152,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			baseNodes?.updateMenu(menuState)
 		}
 		updateStatus()
+		advance()
 	}
 
 	private func updateStatus() {
