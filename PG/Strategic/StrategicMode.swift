@@ -4,14 +4,14 @@ typealias StrategicScene = Scene<StrategicState, StrategicAction, StrategicEvent
 extension StrategicMode {
 
 	static var strategic: Self {
-		.init(
+		StrategicMode(
 			make: StrategicNodes.init,
 			input: { state, input in state.apply(input) },
-			update: { nodes, state in nodes.update(state) },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
+			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
-			mouse: { nodes, event in nodes.mouse(event) },
+			mouse: { nodes, event in nil },
 			save: { state in core.store(state) }
 		)
 	}

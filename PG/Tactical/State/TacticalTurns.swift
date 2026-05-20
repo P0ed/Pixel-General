@@ -9,13 +9,22 @@ extension TacticalState {
 	mutating func endTurn() {
 		captureCities()
 
+		for i in units.indices where units[i].alive && units[i].country == player.country {
+			resupply(unit: i.uid, endOfTurn: true)
+		}
+
 		guard nextTurn() else { return events.add(.end) }
 	}
 
 	private mutating func nextTurn() -> Bool {
 		for _ in 0..<players.count {
 			turn += 1
-			if playerIndex == 0 { startNextDay() }
+
+			player.visible = vision(for: player.country)
+
+			if playerIndex == 0 {
+				player.prestige.increment(by: income(for: player.country))
+			}
 			if player.alive {
 				return aliveTeams.count > 1
 			}
@@ -23,34 +32,10 @@ extension TacticalState {
 		return false
 	}
 
-	private mutating func startNextDay() {
-		let ps = players.map { _, p in
-			guard p.alive else { return p }
-			return modifying(p) { p in endTurn(player: &p) }
-		}
-		players.modifyEach { i, p in p = ps[i] }
-
-		for i in units.indices where units[i].alive {
-			endTurn(unit: i.uid)
-		}
-	}
-
-	private func income(for player: Player) -> UInt16 {
+	private func income(for country: Country) -> UInt16 {
 		buildings.reduce(into: 0) { r, _, b in
-			r += b.country == player.country ? b.income : 0
+			r += b.country == country ? b.income : 0
 		}
-	}
-
-	private func endTurn(player: inout Player) {
-		player.visible = vision(for: player.country)
-		player.prestige.increment(by: income(for: player))
-	}
-
-	private mutating func endTurn(unit id: UID) {
-		regen(unit: id)
-		entrench(unit: id)
-		resupply(unit: id)
-		rest(unit: id)
 	}
 
 	func neighbors(at position: XY) -> CArray<8, UID> {

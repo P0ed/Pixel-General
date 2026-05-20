@@ -31,7 +31,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	override func sceneDidLoad() {
 		backgroundColor = .black
 		scaleMode = .aspectFit
-		audioEngine.mainMixerNode.outputVolume = 0.5
+		audioEngine.mainMixerNode.outputVolume = core.settings.outputVolume
 
 		willCloseWindow = NotificationCenter.default.addMainActorObserver(
 			forName: NSWindow.willCloseNotification,
@@ -51,7 +51,6 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
-		advance()
 
 		eventsMonitor = panHandler
 	}
@@ -96,8 +95,8 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func send(_ action: Action?) {
 		guard let nodes, !processing else { return }
 		processing = true
+		let events = mode.reduce(&state, action)
 		Task {
-			let events = mode.reduce(&state, action)
 			for event in events {
 				await mode.process(event, nodes, state)
 			}

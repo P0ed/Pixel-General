@@ -35,6 +35,10 @@ extension SKTileGroup {
 
 	static let white = make(.white)
 	static let gray = make(.gray)
+	static let blue = make(.blue)
+	static let yellow = make(.yellow)
+	static let green = make(.green)
+	static let red = make(.red)
 
 	static let field = make(.field)
 	static let forest = make(.forest)
@@ -167,9 +171,14 @@ extension SKTileSet {
 		tileSetType: .isometric
 	)
 
-	static let hq = SKTileSet(
+	static let colors = SKTileSet(
 		tileGroups: [
 			.gray,
+			.white,
+			.blue,
+			.yellow,
+			.green,
+			.red
 		],
 		tileSetType: .isometric
 	)

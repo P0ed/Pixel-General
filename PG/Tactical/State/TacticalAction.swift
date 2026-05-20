@@ -13,6 +13,7 @@ enum TacticalAction {
 extension TacticalState {
 
 	mutating func reduce(_ action: TacticalAction?) -> [TacticalEvent] {
+		if let action { print("reduce \(action)") }
 		switch action {
 		case .attack(let src, let dst): attack(src: src, dst: dst)
 		case .move(let unit, let xy): move(unit: unit, to: xy)
@@ -38,15 +39,14 @@ extension TacticalState {
 		} != nil
 	}
 
-	mutating func resupply(unit id: UID) {
-		guard cargo[id.index] == -1 || units[id.index][.transport], units[id.index].untouched else { return }
+	mutating func resupply(unit id: UID, endOfTurn: Bool = false) {
+		guard units[id.index].country == country && units[id.index].untouched || endOfTurn,
+			  cargo[id.index] == -1 || units[id.index][.transport]
+		else { return }
 
-		let country = country
 		var unit = units[id.index]
+		let country = unit.country
 		let position = position[id.index]
-
-		guard unit.country == country, unit.untouched else { return }
-
 		let neighbors = neighbors(at: position)
 
 		let noEnemy = !neighbors.contains { n in
@@ -57,41 +57,39 @@ extension TacticalState {
 			&& units[n.index][.supply]
 		}
 		let hasBuildings = hasBuildings(near: id)
+		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)
+
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
-			unit.ammo.increment(
-				by: (unit.untouched ? (noEnemy ? 2 : 1) : 0) + (hasSupply ? (noEnemy ? 2 : 0) : 0),
-				cap: unit.maxAmmo
-			)
+			if unit.untouched {
+				unit.ammo.increment(
+					by: (noEnemy ? 2 : 1) * (supply + 1),
+					cap: unit.maxAmmo
+				)
+			}
+			if endOfTurn {
+				unit.ammo.increment(
+					by: noEnemy && supply > 0 ? 1 : 0,
+					cap: unit.maxAmmo
+				)
+			}
 		}
-		if !unit.isAir || hasBuildings {
-			unit.healLoosingXP(
-				(unit.untouched ? (noEnemy ? 4 : 2) : 0) + (hasSupply ? (noEnemy ? 3 : 1) : 0)
-			)
+		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {
+			let healCap: UInt8 = (noEnemy ? 3 : 2) * (supply + 1)
+			let healed = unit.heal(healCap)
+			unit.exp.decrement(by: UInt16(healed) * 3 << unit.lvl)
+			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}
-		unit.ap = 0
-		unit.mp = 0
+		if endOfTurn, units[id.index][.regen], !units[id.index].isAir || hasBuildings {
+			units[id.index].hp.increment(by: 1, cap: units[id.index].maxHP)
+		}
+		if endOfTurn, !unit.isAir {
+			let base = map[position].baseEntrenchment * 4
+			unit.ent = min(base + 5 * 4, max(base, unit.ent + unit.entRate))
+		}
+		unit.ap = endOfTurn ? unit.maxAP : 0
+		unit.mp = endOfTurn ? unit.maxMP : 0
 		units[id.index] = unit
 		events.add(.update(id))
-	}
-
-	mutating func regen(unit id: UID) {
-		guard units[id.index][.regen], !units[id.index].isAir || hasBuildings(near: id) else { return }
-		units[id.index].hp.increment(by: 1, cap: units[id.index].maxHP)
-	}
-
-	mutating func rest(unit id: UID) {
-		units[id.index] = modifying(units[id.index]) { u in
-			u.ap = u.maxAP
-			u.mp = u.maxMP
-		}
-	}
-
-	mutating func entrench(unit id: UID) {
-		if units[id.index].isAir { return }
-		units[id.index].ent = min(7, max(
-			map[position[id.index]].baseEntrenchment,
-			units[id.index].ent + 1
-		))
 	}
 
 	func vision(for uid: UID) -> SetXY {

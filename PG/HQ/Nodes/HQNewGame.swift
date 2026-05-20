@@ -17,22 +17,3 @@ extension HQNodes {
 		)
 	}
 }
-
-private extension PlayerType {
-
-	mutating func toggle() {
-		self = switch self {
-		case .human: .ai
-		case .ai: .remote
-		case .remote: .human
-		}
-	}
-
-	var icon: String {
-		switch self {
-		case .human: "Human"
-		case .ai: "AI"
-		case .remote: "Remote"
-		}
-	}
-}

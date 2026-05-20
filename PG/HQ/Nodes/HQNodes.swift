@@ -32,7 +32,7 @@ extension HQNodes {
 	private static func addMap(root: SKNode, state: borrowing HQState) -> MapNodes {
 
 		let layers = (0 ..< state.map.size * 2 - 1).map { idx in
-			SKTileMapNode(tiles: .hq, size: state.map.size)
+			SKTileMapNode(tiles: .colors, size: state.map.size)
 		}
 		layers.enumerated().forEach { idx, layer in
 			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
@@ -85,16 +85,6 @@ extension HQNodes {
 			map: state.map,
 			cursor: state.cursor,
 			selected: state.selected.map { i in XY(i.index % 4, i.index / 4) }
-		)
-	}
-
-	func mouse(_ event: NSEvent) -> Input? {
-		let location = event.location(in: map.layers[0])
-		return .tile(
-			XY(
-				map.layers[0].tileColumnIndex(fromPosition: location),
-				map.layers[0].tileRowIndex(fromPosition: location)
-			)
 		)
 	}
 

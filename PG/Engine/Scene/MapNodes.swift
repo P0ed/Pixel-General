@@ -10,6 +10,19 @@ struct MapNodes {
 
 extension MapNodes {
 
+	func tile(at event: NSEvent) -> Input? {
+		guard !layers.isEmpty else { return .none }
+
+		let map = layers[0]
+		let location = event.location(in: map)
+		return .tile(
+			XY(
+				map.tileColumnIndex(fromPosition: location),
+				map.tileRowIndex(fromPosition: location)
+			)
+		)
+	}
+
 	func layer(at xy: XY) -> Int {
 		xy.x + size - 1 - xy.y
 	}

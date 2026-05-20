@@ -5,12 +5,8 @@ final class Core {
 	private(set) var state = State()
 
 	var settings: Settings {
-		get {
-			UserDefaults.standard.data(forKey: "settings").flatMap(decode) ?? Settings()
-		}
-		set {
-			UserDefaults.standard.set(encode(newValue), forKey: "settings")
-		}
+		get { UserDefaults.standard.data(forKey: "settings").flatMap(decode) ?? Settings() }
+		set { UserDefaults.standard.set(encode(newValue), forKey: "settings") }
 	}
 
 	init() {
@@ -20,7 +16,7 @@ final class Core {
 	func new(country: Country = .default) {
 		state = State(
 			hq: HQState(
-				player: Player(country: country),
+				player: Player(country: country, type: .human),
 				units: .init(
 					head: .base(country).mapInPlace { u in u.hp = u.maxHP },
 					tail: .empty
@@ -77,7 +73,7 @@ final class Core {
 	}
 
 	func complete(_ tactical: borrowing TacticalState) {
-		guard let c = state.hq?.player.country, tactical.map.size == 32 else {
+		guard let c = state.hq?.player.country else {
 			state.tactical = nil
 			state.location = .hq
 			save()
@@ -94,7 +90,7 @@ final class Core {
 					u.ent = 0
 				}
 			}
-		state.hq?.units = .init(head: Array(units.prefix(16)), tail: .empty)
+		state.hq?.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
 		state.hq?.cursor = .zero
 		state.hq?.player.prestige = tactical[c].prestige
 

@@ -30,7 +30,7 @@ extension TacticalState {
 		unitsMap = .init(size: self.map.size, zero: -1)
 		auxilia = .init { i in
 			CArray(
-				head: .aux(country: players[i].country),
+				head: i < players.count ? .aux(country: players[i].country) : [],
 				tail: .empty
 			)
 		}
@@ -156,16 +156,15 @@ extension TacticalState {
 	var country: Country { player.country }
 
 	func isVisible(_ id: UID) -> Bool {
-		player.visible[position[id.index]] && unitsMap[position[id.index]] == id
+		unitsMap[position[id.index]] == id && player.visible[position[id.index]]
 	}
 
 	func isVisibleToHuman(_ id: UID) -> Bool {
-		players.firstMap { _, p in
-			p.type == .human
-			&& p.visible[position[id.index]]
-			&& unitsMap[position[id.index]] == id
-			? true : nil
-		} ?? false
+		unitsMap[position[id.index]] == id && isVisibleToHuman(position[id.index])
+	}
+
+	func isVisibleToHuman(_ xy: XY) -> Bool {
+		players.contains { p in p.type == .human && p.visible[xy] }
 	}
 }
 

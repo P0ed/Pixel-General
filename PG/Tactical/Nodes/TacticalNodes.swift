@@ -96,7 +96,12 @@ extension TacticalNodes {
 		}
 	}
 
-	func updateView(_ state: borrowing TacticalState) {
+	func update(_ state: borrowing TacticalState) {
+		updateView(state)
+		updateFogIfNeeded(state: state)
+	}
+
+	private func updateView(_ state: borrowing TacticalState) {
 		let cameraPosition = state.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
@@ -112,12 +117,7 @@ extension TacticalNodes {
 		)
 	}
 
-	func update(_ state: borrowing TacticalState) {
-		updateView(state)
-		updateFogIfNeeded(state: state)
-	}
-
-	func updateFogIfNeeded(state: borrowing TacticalState) {
+	private func updateFogIfNeeded(state: borrowing TacticalState) {
 		let lit = state.selectable ?? state.visibleToHuman
 
 		guard self.lit != lit else { return }
@@ -129,16 +129,6 @@ extension TacticalNodes {
 		state.units.forEach { i, u in
 			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)
 		}
-	}
-
-	func mouse(_ event: NSEvent) -> Input? {
-		let pos = event.location(in: map.layers[0])
-		return .tile(
-			XY(
-				map.layers[0].tileColumnIndex(fromPosition: pos),
-				map.layers[0].tileRowIndex(fromPosition: pos)
-			)
-		)
 	}
 }
 

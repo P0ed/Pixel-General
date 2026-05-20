@@ -1,9 +1,9 @@
-struct Player: DeadOrAlive {
+struct Player {
 	var country: Country = .default
 	var type: PlayerType = .human
-	var alive: Bool = true
 	var prestige: UInt16 = 0xF00
 	var visible: SetXY = .empty
+	var alive: Bool = true
 }
 
 enum PlayerType: UInt8 {
@@ -33,7 +33,5 @@ extension Country {
 
 extension Player {
 
-	static var none: Self {
-		.init(country: .default, alive: false)
-	}
+	static var none: Self { .init(alive: false) }
 }

@@ -19,21 +19,21 @@ extension TacticalState {
 		}
 	}
 
-	func aura(_ trait: Traits, country: Country, at xy: XY) -> Bool {
-		(unitAt(xy)?[trait] ?? false) || neighbors(at: xy).contains {
-			units[$0.index].country == country && units[$0.index][trait]
+	func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
+		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
+			units[$0.index].country == country && units[$0.index][skills]
 		}
 	}
 
 	mutating func fire(src: UID, dst: UID, defMod: Int8) {
 		let (si, di) = (src.index, dst.index)
-		let maxAM: Int8 = units[si].ammo == units[si].maxAmmo ? 1 : 0
+		let maxAM: Int8 = units[si].fullAmmo ? 1 : 0
 		let aLR: Int8 = aura(.leadership, country: units[si].country, at: position[si]) ? 1 : 0
 		let aRC: Int8 = aura(.recon, country: units[si].country, at: position[si]) ? 1 : 0
 		let dLR: Int8 = aura(.leadership, country: units[di].country, at: position[di]) ? 1 : 0
 		let dRC: Int8 = aura(.recon, country: units[di].country, at: position[di]) ? 1 : 0
-		let atk = Int8(units[si].atk(units[di]) + units[si].stars) + maxAM + aRC + aLR
-		let def = Int8(units[di].def(units[si]) + units[di].stars) + defMod + dRC + dLR
+		let atk = Int8(units[si].atk(units[di]) + units[si].lvl) + maxAM + aRC + aLR
+		let def = Int8(units[di].def(units[si]) + units[di].lvl) + defMod + dRC + dLR
 
 		let dif = atk - def
 		let t1 = max(0, 7 - dif)
@@ -62,8 +62,9 @@ extension TacticalState {
 
 		units[si].ammo.decrement()
 		let alive = damage(id: dst, dmg: dmg)
-		units[si].exp.increment(by: 1 + dmg * (alive ? 3 : 5) / 7)
+		units[si].exp.increment(by: UInt16(dmg) * units[di].cost / (alive ? 32 : 24))
 		if !alive {
+			units[si].kills.increment(by: 1)
 			units[si].promote(using: &d20)
 			self[units[si].country].prestige.increment(by: units[di].cost / 16)
 		}
@@ -98,21 +99,35 @@ extension TacticalState {
 		let (si, di) = (src.index, dst.index)
 		guard units[si].country == country,
 			  units[si].country.team != units[di].country.team,
-			  units[si].canAttack, unitCanHit(src, dst)
+			  units[si].canAttack, units[si].ammo > 0, unitCanHit(src, dst)
 		else { return }
 
 		let (su, du) = (units[si], units[di])
 		let (sp, dp) = (position[si], position[di])
+		let dxy = dp - sp
 		let dt = map[dp]
-		let dstDef = du.defMod(vs: su, in: dt, dxy: dp - sp) - encirclement(id: dst)
+
+		units[si].ap.decrement()
 
 		let ruggedDefence: Bool = !surprise && su[.art] ? false : (
-			d20() + Int(su.ini + su.stars) * 2
+			d20() + Int(su.ini + su.lvl) * 2
 		) < (
-			Int(du.ent + du.ini + du.stars) * 2 + (surprise ? 10 : 0)
+			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
 		)
 		if ruggedDefence { print("Rugged Defence!") }
-		units[si].ap.decrement()
+
+		let mountaineer: Int8 = dt.isHighground
+			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
+		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
+		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
+
+		let srcDef: Int8 = (su[.art] ? 0 : dt.closeCombat(su.type))
+			+ (ruggedDefence ? -3 : 0)
+			+ (du.ammo == 0 ? 4 : 0)
+		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type)
+			+ mountaineer
+			+ mhtn + diag
+			- encirclement(id: dst)
 
 		if !su.isAir, !du.isAir, !su[.art],
 			let art = support(trait: .art, defender: dst, attacker: src) {
@@ -123,22 +138,16 @@ extension TacticalState {
 		}
 		if !ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[di].ent.decrement()
+			units[di].ent.decrement(by: 4)
 		}
 		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su[.art] || du[.art] || surprise {
-			let srcDef = (su[.art] || su.isAir ? 0 : dt.closeCombatPenalty(su.type))
-			+ (ruggedDefence ? -3 : 0)
-			+ (du.ammo == 0 ? 5 : 0)
 			fire(src: dst, dst: src, defMod: srcDef)
 		}
 		if ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[di].ent.decrement()
+			units[di].ent.decrement(by: 4)
 		}
-		var lowHPRetreat: Bool {
-			!units[si][.art] && units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20
-		}
-		if units[di].alive, lowHPRetreat {
+		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
 			retreat(unit: dst, from: position[si])
 		}
 		if self[units[si].country].type == .human {
@@ -163,8 +172,8 @@ extension TacticalState {
 
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
 		let (a, d) = (units[attacker.index], units[defender.index])
-		let atk = Int8(a.atk(d) + a.stars)
-		let def = Int8(d.def(a) + d.stars) + map[position[defender.index]].def
+		let atk = Int8(a.atk(d) + a.lvl)
+		let def = Int8(d.def(a) + d.entDef + d.lvl)
 
 		let rounds = Int(a.hp + 3) / 3
 		let base = max(0, 127 + Int(atk - def) * 15)

@@ -112,14 +112,11 @@ private extension TacticalNodes {
 
 		var vol: Int {
 			let v = scene.audioEngine.mainMixerNode.outputVolume
-			return v < 0.1 ? 0 : v < 0.7 ? 1 : 2
+			return v < 0.1 ? 0 : v < 0.5 ? 1 : 2
 		}
 		let toggleVol = { [audioEngine = scene.audioEngine] in
-			switch vol {
-			case 0: audioEngine.mainMixerNode.outputVolume = 0.5
-			case 1: audioEngine.mainMixerNode.outputVolume = 1.0
-			default: audioEngine.mainMixerNode.outputVolume = 0.0
-			}
+			core.settings.toggleSound()
+			audioEngine.mainMixerNode.outputVolume = core.settings.outputVolume
 		}
 
 		scene.show(MenuState(
@@ -136,7 +133,7 @@ private extension TacticalNodes {
 					if let scene { restartGame(scene.state) }
 				},
 				MenuItem(
-					icon: "S",
+					icon: "Prestige1",
 					status: .init(text: "Prestige: \(state.player.prestige)"),
 					update: id
 				),

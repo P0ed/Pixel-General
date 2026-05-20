@@ -5,53 +5,48 @@ extension XY: CustomStringConvertible {
 extension Unit {
 
 	var status: String {
-		.makeStatus(pad: 14) { add in
-			add("\(typeDescription)\(traits.contains(.aux) ? "*": "")")
-		} + .makeStatus(pad: 10) { add in
-			add("\(mpString)\(apString)  \(starsString)")
-		} + .makeStatus(pad: 7) { add in
-			add("AM: \(ammo)")
-			add("MV: \(mov)")
-			add("IN: \(ini)")
-			add("SA: \(softAtk)")
-			add("HA: \(hardAtk)")
-			add("AA: \(airAtk)")
-			add("GD: \(groundDef)")
-			add("AD: \(airDef)")
-			add("EN: \(ent)")
-		} + (
-			(self[.leadership] ? "[LR]" : "")
-			+ (self[.recon] ? "[RC]" : "")
-			+ (self[.crit] ? "[CR]" : "")
-			+ (self[.evasion] ? "[EV]" : "")
-			+ (self[.regen] ? "[RG]" : "")
-			+ (self[.mountaineer] ? "[MT]" : "")
-			+ (self[.mhtn] ? "[MH]" : "")
-			+ (self[.diag] ? "[DI]" : "")
-		)
-	}
-
-	private var mpString: String { canMove ? "⇧" : " " }
-	private var apString: String { canAttack ? "⦿" : "⦾" }
-}
-
-extension Unit {
-
-	var starsString: String {
-		switch stars {
-		case 4: "★★★★"
-		case 3: "★★★☆"
-		case 2: "★★☆☆"
-		case 1: "★☆☆☆"
-		default: "☆☆☆☆"
+		.make { status in
+			status += "\(typeDescription)\(traits.contains(.aux) ? "*": "")"
+			status.pad(to: 14)
+			status += "\(apString)  "
+			status += .makeStatus(pad: 7) { add in
+				add("AM: \(ammo)")
+				add("SA: \(softAtk)")
+				add("HA: \(hardAtk)")
+				add("AA: \(airAtk)")
+				add("GD: \(groundDef)")
+				add("AD: \(airDef)")
+				add("IN: \(ini)")
+				add("MV: \(mov)")
+				add("EN: \(entDef)")
+			}
+			status += skillsString
 		}
 	}
+
+	private var skillsString: String {
+		("XP: \(xpString)  ")
+		+ (self[.leadership] ? "[LR]" : "")
+		+ (self[.recon] ? "[RC]" : "")
+		+ (self[.crit] ? "[CR]" : "")
+		+ (self[.evasion] ? "[EV]" : "")
+		+ (self[.regen] ? "[RG]" : "")
+		+ (self[.mountaineer] ? "[MT]" : "")
+		+ (self[.mhtn] ? "[MH]" : "")
+		+ (self[.diag] ? "[DI]" : "")
+		+ ("  K: \(kills)")
+	}
+
+	private var apString: String { "[\(canMove ? "M" : " ")|\(canAttack ? (ammo > 0 ? "A" : "L") : " ")]" }
+	private var xpString: String { "\(lvl).\(subLvl)" }
 }
 
 extension TacticalState {
 
 	var status: Status {
-		if let selectedUnit {
+		if player.type != .human {
+			Status(text: "\(player.country) turn")
+		} else if let selectedUnit {
 			Status(
 				text: units[selectedUnit.index].status,
 				action: .init(units[selectedUnit.index].country.flag)
@@ -62,7 +57,7 @@ extension TacticalState {
 				action: .init(building.country.flag)
 			)
 		} else {
-			Status(text: "\(cursor) \(map[cursor])", action: .init(""))
+			Status(text: "\(cursor) \(map[cursor])", action: .init("day \(day)"))
 		}
 	}
 }

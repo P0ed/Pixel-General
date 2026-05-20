@@ -9,11 +9,17 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
 `Tactical/State/TacticalTurns.swift`
 
 - Players act in a fixed rotation. `playerIndex = turn % players.count`,
-  `day = turn / players.count + 1`.
-- `endTurn()` captures cities under the acting player's units, then advances
-  `turn`. When `playerIndex` wraps to `0`, a new **day** starts.
-- **Start of day** (per living player): vision is recomputed and prestige
-  income is paid. Per living unit: regen → entrench → resupply → rest.
+  `day = turn / players.count + 1`. A **day** ends when `playerIndex` wraps
+  to `0`.
+- `endTurn()` for the acting player runs in this order:
+  1. **captureCities** — reflag buildings under the acting player's ground
+     units; players with no remaining cities are marked dead.
+  2. **Per living unit** of the acting player: resupply (ammo top-up if
+     adjacent to a friendly `supply` and no enemy nearby) → regen (`regen`
+     trait, +1 HP) → entrench (ground only, towards terrain base) → rest
+     (refresh `ap`/`mp` to max).
+  3. **Player upkeep**: vision is recomputed and prestige income is paid.
+  4. Advance `turn` to the next living player.
 - The battle ends when only one team remains alive (`.end` event).
 
 ## Units
@@ -28,10 +34,11 @@ A `Unit` is a value struct of `UInt8` stats:
 | `mp` | Movement points this turn (`maxMP` = 1, air = 2). |
 | `ap` | Attack points this turn (`maxAP` = 1). |
 | `ammo` | Shots remaining; `maxAmmo` depends on type/traits. |
-| `ent` | Entrenchment, 0–7 (defensive bonus). |
-| `exp` | Experience, drives `stars` (0–4). |
-| `mov` | Move range. |
-| `rng` | Attack range (tiles = `rng*2+1` in grid distance). |
+| `ent` | Entrenchment in quarter-units. Effective bonus `entDef = ent/4`. Capped at `terrain.baseEntrenchment*4 + 20`. |
+| `exp` | Experience, drives `lvl` (0–8). |
+| `kills` | Lifetime kill count. |
+| `mov` | Move range (BFS depth in steps). |
+| `rng` | Attack range (tiles reachable = grid distance ≤ `rng*2+1`). |
 | `ini` | Initiative — extra fire round + rugged-defence rolls. |
 | `softAtk`/`hardAtk`/`airAtk` | Attack vs soft / armored / air targets. |
 | `groundDef`/`airDef` | Defense vs ground / air attackers. |
@@ -40,28 +47,37 @@ A `Unit` is a value struct of `UInt8` stats:
 `heavyTrack`, `heli`, `jet`. `heli`/`jet` are air units (`isAir`). Attack value
 is chosen by target type via `atk(_:)`; defense by attacker via `def(_:)`.
 
-**Traits** (`Traits` option set): `aux`, `art` (artillery — defensive support
-fire, no counterattack received in melee), `aa` (anti-air support), `supply`,
-`elite`, `transport`, `radar` (spot 3 vs 2), `leadership`/`recon` (adjacent
-friendly aura: +1 atk/def), `crit` (chance to double damage), `evasion`
-(chance to negate damage), `regen` (heal 1 HP/day), `mountaineer` (highground
-def), `mhtn`/`diag` (directional defense vs straight/diagonal attacks).
+**Traits** (`Traits` option set):
+- `aux` — auxiliary unit, half cost; bought from a fixed pool.
+- `art` — artillery; provides defensive support fire when an adjacent ally
+  is attacked, and shrugs off counterattacks from non-art defenders unless
+  it's a surprise. Soft-type artillery loses `ap` after moving.
+- `aa` — anti-air; provides support fire to an adjacent ally attacked from
+  the air (when that ally lacks `aa` itself).
+- `supply` — adjacent friendlies get a supply bonus to ammo/HP refills.
+- `elite` — flag for premium templates.
+- `transport` — can carry one `soft` cargo (see Transport).
+- `radar` — `spot = 3` (vision radius `2*spot = 6`) instead of 2.
 
-**Experience & promotion.** `stars = 4 - leadingZeroBitCount(exp)`, capping at
-4. Killing/damaging enemies grants `exp`; on a kill `promote(using:)` may roll
-to add a random combat trait. Healing costs `exp` (`healLoosingXP`).
+**Experience & promotion.** `lvl = 8 - leadingZeroBitCount(exp)`, capping at
+8. Killing/damaging enemies grants `exp`; on a kill `promote(using:)` may roll
+to add a random combat skill. Healing costs `exp`.
 
 ## Movement
 
 `Tactical/State/TacticalMove.swift`
 
-- BFS from the unit's tile within `mov` range. Orthogonal step costs
-  `terrain.moveCost*2`, diagonal `*3`, plus +1 per adjacent enemy (zone of
-  control); a unit with ≥2 adjacent enemies cannot move diagonally.
-- Air units always pay `moveCost` 1 per tile.
-- Moving resets `ent` to 0 and spends 1 `mp`. Soft artillery can not attack after move.
-- Moving through a hidden enemy triggers an interrupting **surprise attack**.
-- Movement reveals fog of war along the route.
+- BFS from the unit's tile within a budget of `mov*2 + 1`. Orthogonal step
+  costs `terrain.moveCost*2`, diagonal `*3`, plus `n` per step where `n`
+  is the number of enemies adjacent to the *source* tile (zone of control).
+  A unit standing next to ≥2 enemies cannot step diagonally.
+- Air units pay `moveCost` 1 per tile regardless of terrain; they cannot
+  share tiles with ground units and vice versa.
+- Moving resets `ent` to 0 and spends 1 `mp`. Soft-type artillery cannot
+  attack after moving (`ap` is zeroed).
+- Walking onto a tile occupied by a hidden enemy interrupts the move and
+  triggers a **surprise attack** on the blocker.
+- Movement reveals fog of war along the route (vision disc each step).
 
 **Vision / fog of war** (`TacticalAction.swift`): each player sees the union of
 unit vision discs (`2*spot`, spot = 3 with `radar` else 2) and a radius-3 disc
@@ -75,31 +91,46 @@ around owned buildings.
 `ammo>0`, and target within `rng*2+1`. Sequence:
 
 1. Spends 1 `ap`.
-2. **Support fire** before the duel: if a melee land attack, an adjacent
-   friendly `art` of the defender fires on the attacker; if an air attack and
-   defender lacks `aa`, an adjacent friendly `aa` fires on the attacker.
-3. **Rugged Defence** check (unless attacker is `art`/surprise): if
-   `d20 + (ini+stars)*2 < (ent+ini+stars)*2 [+10 surprise]`, defender fires
-   first and attacker's shot is delayed.
-4. Attacker fires (`fire`), reducing defender `ent` by 1.
-5. Defender counterattacks if alive, in range and can hit the attacker. Counter defMod includes close-combat terrain penalty, a −3 if rugged defence triggered, and +5 if the attacker is out of ammo.
-6. Low-HP defenders may **retreat** (`hp*2 + ini + d20 < 20`, not vs artillery)
-   to the farthest reachable tile away from the attacker.
+2. **Support fire** before the duel: if both sides are ground *and* the
+   attacker is not artillery, an adjacent friendly `art` of the defender
+   fires on the attacker; if the attack is from the air and the defender
+   lacks `aa` itself, an adjacent friendly `aa` of the defender fires on
+   the attacker.
+3. **Rugged Defence** check (skipped only if attacker is `art` *and* this
+   is not a surprise): if
+   `d20 + (su.ini+su.lvl)*2  <  (du.ent+du.ini+du.lvl)*2 + (surprise ? 10 : 0)`,
+   defender fires first and the attacker's shot is delayed until after the
+   counter. The +10 surprise bonus goes to the defender's side — ambushed
+   units are more likely to dig in.
+4. Attacker fires (`fire`), reducing defender `ent` by 1 (one quarter-unit).
+5. Defender counterattacks if alive, in range, can hit the attacker, and
+   the matchup isn't (attacker art vs non-art defender without surprise).
+   Counter `defMod` for the attacker (now being shot at) is
+   `(art ? 0 : defenderTile.combatPenalty(attackerType))
+    + (ruggedDef ? −3 : 0) + (defenderOutOfAmmo ? +5 : 0)` —
+   the +5 makes the out-of-ammo counter weaker.
+6. Low-HP defenders may **retreat** (`du.hp*2 + du.ini + d20 < 20`, never
+   against artillery) to the reachable tile farthest from the attacker.
 
 **`fire(src:dst:defMod:)`** — the damage core:
 
-- `atk = atk(target) + stars + fullAmmoBonus + leadershipAura + reconAura`
-- `def = def(attacker) + stars + defMod + leadershipAura + reconAura`
-  where `defMod = ent + terrain.def + closeCombat + mountaineer + mhtn + diag
-  − encirclement` (encirclement = friendly-of-attacker count around defender
-  beyond the first).
+- `atk = atk(target) + lvl + fullAmmoBonus + leadershipAura + reconAura`
+  (fullAmmoBonus = 1 if attacker had full ammo entering the shot).
+- `def = def(attacker) + lvl + defMod + leadershipAura + reconAura`
+  where `defMod = entDef + terrain.combatPenalty(defType)
+  + mountaineer + mhtn + diag − encirclement`.
+  `entDef = ent/4`; `combatPenalty` is negative on unfavorable terrain (e.g.
+  roads, bridges, rivers, open field for soft); `encirclement` =
+  `max(0, friendlyEnemiesAround − 1)` so the first surrounder is free.
 - `dif = atk − def`. Three thresholds `t1=max(0,7−dif)`,
   `t2=max(5,15−dif)`, `t3=max(10,24−dif)`.
-- Rounds = `(hp+3)/3 + (ini>d20(max 2) ? 1 : 0)`. Each round rolls `d20`
+- Rounds = `(hp+3)/3 + (ini > d20(max 2) ? 1 : 0)`. Each round rolls `d20`
   (0–19): `>t3`→3, `>t2`→2, `>t1`→1, else 0 damage. `crit` may double a
   round (`d20>16`); `evasion` may zero it (`d20>16`).
-- Damage hits the unit (and its cargo). Kills award prestige (`cost/16`) and a
-  promotion roll. `estimateDamage` is the AI's deterministic preview.
+- Damage hits the unit (and its cargo). Every shot grants `dmg * du.cost / 24`
+  exp; a killing shot grants `dmg * du.cost / 16` instead, plus a
+  `cost/16` prestige bounty and a promotion roll. `estimateDamage` is the
+  AI's deterministic preview.
 
 `D20` is a SplitMix64 PRNG (`Engine/Foundation/D20.swift`) seeded per battle so
 combat is reproducible.
@@ -108,26 +139,42 @@ combat is reproducible.
 
 `Model/Terrain.swift`
 
-- **Move cost** varies by `UnitType` (roads always 1; rivers cost full `mov`
-  for ground; mountains block wheels).
-- **Defense** `def`: field 0, forest/hill/airfield +2, forestHill/mountain/city
-  +3, rivers −3, bridges −2, roads −1.
-- **Base entrenchment**: forest/hill/airfield 2, city 3 — units passively
-  entrench up to 7 (+1/turn) capped by terrain when standing still.
-- **Close-combat penalty**: light/heavy armor attacking into rough terrain at
-  range 1 loses part of the terrain defense bonus.
-- **Highground** (hill/forestHill/mountain): `mountaineer` attackers +2, defenders −1.
+- **Move cost** varies by `UnitType` (roads always 1; rivers cost a ground
+  unit its full `mov` — one tile and done; mountains block wheels).
+- **Base entrenchment** (per tile, before the `*4` scaling):
+  field 0; hill/airfield/T-road 1; forest/forestHill/mountain/cross-road 2;
+  city 3. Standing still, ground units gain `entRate` per turn (soft 4,
+  wheels & light tracks 3, heavy tracks 2, air 0) up to `base*4 + 20`.
+- **`combatPenalty(unitType)`** is a per-tile defensive *penalty* applied
+  to whoever sits on the tile. Road/bridge/river penalize crossing units;
+  open field penalizes soft infantry; rough terrain (forest, city,
+  mountain, forestHill) penalizes wheels and tracks, heavy tracks worst.
+  Air units ignore terrain penalties.
+- **Highground** (hill/forestHill/mountain) with `mountaineer`: defender
+  with the skill gets +2 to `defMod`; attacker with the skill subtracts 1
+  from `defMod` (i.e. +1 effective attack). The two stack.
 
 ## Supply, Repair, Entrench
 
-`Tactical/State/TacticalAction.swift` (start-of-day, per unit)
+`Tactical/State/TacticalAction.swift`
 
-- **resupply**: untouched units regain ammo and HP. Bonuses for no adjacent
-  enemy and for an adjacent friendly `supply` unit. Air units only resupply
-  next to an owned airfield. Healing spends experience.
-- **regen**: `regen`-trait units +1 HP/day (air needs a building).
-- **entrench**: ground units +1 `ent` up to terrain cap (max 7).
-- **rest**: refresh `ap`/`mp` to max.
+The `resupply(unit:endOfTurn:)` routine drives both the player-initiated
+`.resupply` action *and* the per-unit end-of-turn pass. Behavior differs:
+
+- **Ammo**. Player-initiated (untouched only) restores
+  `(noEnemy ? 2 : 1) * (supplyBonus + 1)`. End-of-turn restores 1 only when
+  `noEnemy && supplyBonus > 0`. `supplyBonus` = (adjacent friendly `supply` ? 1 : 0)
+  + (adjacent owned airfield/city ? 1 : 0). Air units only gain ammo
+  adjacent to an owned building.
+- **Healing**. *Only* on the player-initiated path (untouched units).
+  Heal cap = `(noEnemy ? 3 : 2) * (supplyBonus + 1)`. Each HP healed
+  spends `3 << lvl` exp and `cost/32` prestige. Air heals only adjacent
+  to an owned building.
+- **Regen**. End-of-turn only; `regen`-trait units +1 HP (air needs a
+  building).
+- **Entrench**. End-of-turn only; ground units `ent ← min(base+20, max(base, ent + entRate))`
+  where `base = terrain.baseEntrenchment * 4`.
+- **Rest**. End-of-turn only; `ap`/`mp` refresh to max.
 
 ## Transport
 
@@ -148,9 +195,15 @@ damages its cargo; destroying it kills the cargo.
   prestige ≥ `unit.cost`. Airfields sell air units; cities sell ground.
 - **Slots**: up to 16 core + 16 auxiliary units per player. Core units come
   from `[Unit].shop`; auxiliary units are drawn from a fixed `aux` pool and
-  cost half (consumed from the pool when bought).
-- **Unit `cost`** = `(expCost + typeCost + traitCost + statSum*2) / (aux ? 2:1)`
-  — scales with experience, type, trait count, and combat stats.
+  cost less (consumed from the pool when bought).
+- **Unit `cost`** =
+  `(lvl + 3) * (typeCost + traitCost + statSum * sumMult) / (aux ? 6 : 3)`
+  where `sumMult = 4` for artillery, `3` otherwise.
+  - `typeCost`: soft 33, softWheel 47, lightWheel 100, lightTrack 120,
+    heavyTrack 150, heli 180, jet 220.
+  - `traitCost = traitsCount * 15`.
+  - `statSum = softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng`.
+  - `lvl + 3` makes veterans linearly pricier; `aux` halves the result.
 
 ## Players & Victory
 
@@ -163,3 +216,28 @@ damages its cargo; destroying it kills the cargo.
 - Capturing every tile-occupying ground unit reflags buildings to the
   occupier's country. A player with no remaining cities is eliminated
   (`alive = false`). Last team standing wins.
+
+### Skills:
+
+16 bit option set, each skill is rolled randomly on successful unit promotion
+
+- `leadership`: aura — self and 8-neighbours get +1 atk/def while in range.
+- `recon`: aura — self and 8-neighbours get +1 atk/def while in range.
+- `crit`: 15% chance (`d20>16`) to double a round's damage.
+- `evasion`: 15% chance (`d20>16`) to zero a round's incoming damage.
+- `regen`: +1 HP at end of own turn (air needs an owned building).
+- `mountaineer`: on highground (hill/forestHill/mountain), defender with
+  this skill +2 defMod; attacker with this skill −1 defMod (i.e. +1 atk).
+- `mhtn`: −1 defMod when the attack is along a row/column (`dx == 0` or
+  `dy == 0`).
+- `diag`: −1 defMod when the attack is on a pure diagonal (`|dx| == |dy|`).
+
+
+### Proposed skills:
+
+- `armor`: only takes dmg that is > 1 per round
+- `pillage`: prestige on dmg
+
+### Proposed traits:
+
+- `engineer`: entrenches faster, ignores enemy ent

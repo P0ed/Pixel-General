@@ -92,32 +92,73 @@ extension Terrain {
 		}
 	}
 
-	var def: Int8 {
-		switch self {
-		case .field: 0
-		case .roadNWE, .roadSEN, .roadSWE, .roadSWN: 1
-		case .forest, .hill, .airfield, .roadNWSE: 2
-		case .forestHill, .mountain, .city: 3
-		case _ where isRiver: -3
-		case _ where isBridge: -2
-		case _ where isRoad: -1
-		default: 0
-		}
-	}
-
 	var baseEntrenchment: UInt8 {
 		switch self {
-		case .forest, .hill, .forestHill, .mountain, .airfield: 2
-		case .roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE: 2
+		case .field: 0
+		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN: 1
+		case .forest, .forestHill, .mountain, .roadNWSE: 2
 		case .city: 3
 		default: 0
 		}
 	}
 
-	func closeCombatPenalty(_ type: UnitType) -> Int8 {
-		switch type {
-		case .lightWheel, .lightTrack: -Int8(abs(def))
-		case .heavyTrack: -Int8(abs(def) * 2)
+	func closeCombat(_ type: UnitType) -> Int8 {
+		switch self {
+		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+			switch type {
+			case .lightWheel, .lightTrack: -1
+			case .heavyTrack: -2
+			default: 0
+			}
+		case .forest, .roadNWSE:
+			switch type {
+			case .lightWheel, .lightTrack: -2
+			case .heavyTrack: -4
+			default: 0
+			}
+		case .city, .mountain, .forestHill:
+			switch type {
+			case .lightWheel, .lightTrack: -3
+			case .heavyTrack: -6
+			default: 0
+			}
+		default: 0
+		}
+	}
+
+	func def(_ type: UnitType) -> Int8 {
+		switch self {
+		case _ where type == .heli || type == .jet: 0
+		case _ where isRoad: -1
+		case _ where isBridge: -2
+		case _ where isRiver:
+			switch type {
+			case .soft, .softWheel: -2
+			case .lightWheel, .lightTrack: -3
+			case .heavyTrack: -5
+			default: 0
+			}
+		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+			switch type {
+			case .soft: 1
+			case .lightWheel, .lightTrack: -1
+			case .heavyTrack: -2
+			default: 0
+			}
+		case .forest, .roadNWSE:
+			switch type {
+			case .soft: 2
+			case .lightWheel, .lightTrack: -2
+			case .heavyTrack: -4
+			default: 0
+			}
+		case .city, .mountain, .forestHill:
+			switch type {
+			case .soft: 3
+			case .lightWheel, .lightTrack: -3
+			case .heavyTrack: -6
+			default: 0
+			}
 		default: 0
 		}
 	}

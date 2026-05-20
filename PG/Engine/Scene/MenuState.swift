@@ -44,8 +44,8 @@ extension MenuState {
 	mutating func apply(_ input: Input) {
 		switch input {
 		case .direction(let direction?): moveCursor(direction)
-		case .tile(let xy): cursor = xy.x
-		case .action(.a): action = .action(cursor)
+		case .tile(let xy) where xy.x != cursor: cursor = xy.x
+		case .action(.a), .tile: action = .action(cursor)
 		case .menu, .action(.b): action = .close
 		default: break
 		}

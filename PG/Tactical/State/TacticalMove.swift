@@ -77,7 +77,9 @@ extension TacticalState {
 	}
 
 	mutating func move(unit uid: UID, to target: XY) {
-		guard units[uid.index].country == country, units[uid.index].canMove else { return }
+		guard units[uid.index].country == country, units[uid.index].canMove,
+			  cargo[uid.index] == -1 || units[uid.index][.transport]
+		else { return }
 
 		let moves = moves(for: uid, target: target)
 		let route = moves.route(to: target)

@@ -1,7 +1,6 @@
 extension TacticalState {
 
-	func runAIIfNeeded() -> TacticalAction? {
-		guard player.type == .ai else { return .none }
+	func sovietAI() -> TacticalAction {
 		guard let target else { return .end }
 
 		if let nextPurchase { return nextPurchase }
@@ -111,9 +110,9 @@ extension TacticalState {
 			.set
 			.max(by: { a, b in
 				(
-					max(0, Int(map[a].def)) - target.stepDistance(to: a)
+					max(0, Int(map[a].baseEntrenchment)) - target.stepDistance(to: a)
 				) < (
-					max(0, Int(map[b].def)) - target.stepDistance(to: b)
+					max(0, Int(map[b].baseEntrenchment)) - target.stepDistance(to: b)
 				)
 			})
 			.map { x in .move(id, x) }

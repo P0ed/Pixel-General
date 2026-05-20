@@ -113,7 +113,7 @@ extension Unit {
 	}
 
 	var veteran: Self {
-		modifying(self, { u in u.exp = 0x10 })
+		modifying(self, { u in u.exp = 512 })
 	}
 
 	static var truck: Self {

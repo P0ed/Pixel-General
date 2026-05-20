@@ -11,9 +11,11 @@ extension HQNodes {
 		]
 		var countriesLeft: [Country] {
 			Country.allCases.filter { c in
-				players.firstMap { $0.country == c ? $0.country : nil } == nil
+				players.firstMap { $0.alive && $0.country == c ? $0.country : nil } == nil
 			}
 		}
+		var size = 0
+		let sizes = ["SizeS", "SizeM", "SizeL"]
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
@@ -26,14 +28,23 @@ extension HQNodes {
 								icon: "\(c)",
 								status: .init(text: "\(c)"),
 								update: { _ in
-									players[idx].country = c
-									return modifying(menu) { menu in
+									modifying(menu) { menu in
+										players[idx].alive = true
+										players[idx].country = c
 										menu.items[idx].icon = "\(c)"
 										menu.cursor = idx
 									}
 								}
 							)
-						},
+						} + [
+							.init(icon: "neutral", status: .init(text: "Open"), update: { _ in
+								modifying(menu) { menu in
+									players[idx].alive = false
+									menu.items[idx].icon = "neutral"
+									menu.cursor = idx
+								}
+							})
+						],
 						close: { _ in
 							modifying(menu) { $0.cursor = idx }
 						}
@@ -56,24 +67,32 @@ extension HQNodes {
 		}
 		let prestige = (0..<4).map { idx in
 			MenuItem<HQAction>(
-				icon: "\(players[idx].prestige < .rich ? "S" : "SS")",
+				icon: "\(players[idx].prestige < .rich ? "Prestige1" : "Prestige2")",
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
 					modifying(menu) { menu in
 						players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
-						menu.items[8 + idx].icon = players[idx].prestige < .rich ? "S" : "SS"
+						menu.items[8 + idx].icon = players[idx].prestige < .rich ? "Prestige1" : "Prestige2"
 						menu.cursor = 8 + idx
 					}
 				}
 			)
 		}
 		let start: [MenuItem<HQAction>] = [
-			.space, .space, .space,
+			.space, .space,
+			.init(icon: sizes[size], status: .init(text: "Size: \(16 + size * 8)"), update: { m in
+				modifying(m) { m in
+					size = (size + 1) % 3
+					m.items[14].icon = sizes[size]
+					m.items[14].status.text = "Size: \(16 + size * 8)"
+				}
+			}),
 			.close(icon: "Start", status: "Start", update: { _ in
 				guard let scene else { return }
 				core.startScenario(TacticalState.make(
-					players: players,
-					units: scene.state.units.compactMap { u in u.alive ? u : nil }
+					players: players.compactMap { $0.alive ? $0 : nil },
+					units: scene.state.units.compactMap { u in u.alive ? u : nil },
+					size: 16 + size * 8
 				))
 				present(.make(core.state))
 			})
@@ -86,13 +105,13 @@ extension HQNodes {
 	}
 }
 
-private extension PlayerType {
+extension PlayerType {
 
 	mutating func toggle() {
 		self = switch self {
 		case .human: .ai
-		case .ai: .remote
-		case .remote: .human
+		case .ai: .human
+		case .remote: .remote
 		}
 	}
 
