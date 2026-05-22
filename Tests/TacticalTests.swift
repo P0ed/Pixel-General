@@ -4,11 +4,11 @@ import Testing
 struct TacticalTests {
 
 	private static func players(
-		types: [4 of PlayerType] = [.human, .ai, .ai, .ai]
-	) -> [4 of Player] {
+		types: [PlayerType] = [.human, .ai, .ai, .ai]
+	) -> [Player] {
 		let countries: [4 of Country] = [.swe, .usa, .rus, .pak]
-		return [4 of Player].init { i in
-			Player(country: countries[i], type: types[i], alive: true, prestige: 0xF00)
+		return types.enumerated().map { i, type in
+			Player(country: countries[i], type: type, prestige: 0xF00)
 		}
 	}
 
@@ -125,7 +125,8 @@ struct TacticalTests {
 		let maxIterations = 4_000
 
 		outer: while iterations < maxIterations {
-			let action = state.runAI()
+			var ai = TacticalState.AI(turn: 0)
+			let action = state.axisAI(ai: &ai)
 			_ = state.reduce(action)
 			iterations += 1
 			if action == .end {

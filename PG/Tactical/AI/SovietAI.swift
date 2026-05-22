@@ -1,6 +1,6 @@
 extension TacticalState {
 
-	func sovietAI() -> TacticalAction {
+	func soviet(ai: inout AI) -> TacticalAction {
 		guard let target else { return .end }
 
 		if let nextPurchase { return nextPurchase }
@@ -23,10 +23,6 @@ extension TacticalState {
 		}
 		.sorted { a, b in a.stepDistance(to: mid) < b.stepDistance(to: mid) }
 		.first
-	}
-
-	private var unitActions: [TacticalAction] {
-		[]
 	}
 
 	private var nextPurchase: TacticalAction? {

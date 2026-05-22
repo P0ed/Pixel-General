@@ -1,6 +1,6 @@
 import CoreGraphics
 
-enum TacticalAction {
+enum TacticalAction: Equatable {
 	case move(UID, XY)
 	case embark(UID, UID)
 	case disembark(UID, XY)

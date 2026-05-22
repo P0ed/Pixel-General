@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		5F04CAF92F93C72900E7ADBB /* HQAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F04CAF82F93C72500E7ADBB /* HQAction.swift */; };
 		5F168CF12FC0A572004AEFFA /* SovietAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF02FC0A572004AEFFA /* SovietAI.swift */; };
-		5F168CF32FC0A599004AEFFA /* AlliesAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF22FC0A595004AEFFA /* AlliesAI.swift */; };
 		5F168CF52FC0AD48004AEFFA /* AxisAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF42FC0AD45004AEFFA /* AxisAI.swift */; };
 		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
 		5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9502F7EA89B002BBF38 /* HQScenario.swift */; };
@@ -102,7 +101,6 @@
 /* Begin PBXFileReference section */
 		5F04CAF82F93C72500E7ADBB /* HQAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQAction.swift; sourceTree = "<group>"; };
 		5F168CF02FC0A572004AEFFA /* SovietAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietAI.swift; sourceTree = "<group>"; };
-		5F168CF22FC0A595004AEFFA /* AlliesAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlliesAI.swift; sourceTree = "<group>"; };
 		5F168CF42FC0AD45004AEFFA /* AxisAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisAI.swift; sourceTree = "<group>"; };
 		5F24DC322EA95FE50085FDDC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5F26B9502F7EA89B002BBF38 /* HQScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQScenario.swift; sourceTree = "<group>"; };
@@ -215,7 +213,6 @@
 			children = (
 				5F2A33AB2EA93AC3008A0A95 /* TacticalAI.swift */,
 				5F168CF02FC0A572004AEFFA /* SovietAI.swift */,
-				5F168CF22FC0A595004AEFFA /* AlliesAI.swift */,
 				5F168CF42FC0AD45004AEFFA /* AxisAI.swift */,
 			);
 			path = AI;
@@ -615,7 +612,6 @@
 				5F41DDD52EE32745008FBF17 /* Map.swift in Sources */,
 				5F649EF22F952C6900F9CE89 /* HQNewGame.swift in Sources */,
 				5F919D662EA9596E0037A208 /* TacticalShop.swift in Sources */,
-				5F168CF32FC0A599004AEFFA /* AlliesAI.swift in Sources */,
 				5F8E87312EB3BEEC0023B28F /* Speicher.swift in Sources */,
 				5FF679772F06FB1300586323 /* TacticalMove.swift in Sources */,
 				5F5A716D2F24FB830059B314 /* Terrain.swift in Sources */,

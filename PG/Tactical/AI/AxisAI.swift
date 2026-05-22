@@ -1,6 +1,6 @@
 extension TacticalState {
 
-	func axisAI(ai: inout AI) -> TacticalAction {
+	func axis(ai: inout AI) -> TacticalAction {
 		if ai.turn != turn { populateQueues(&ai) }
 
 		if let act = purchase { return act }
@@ -13,12 +13,12 @@ extension TacticalState {
 	}
 
 	// MARK: - Priority queues (cached in `ai`)
-
 	private func priority(_ u: Unit) -> Int {
-		if u[.aa] { 0 }
-		else if u.isAir { 1 }
-		else if u[.art]  { 2 }
-		else { 3 }
+		if u.isAir { 0 }
+		else if u[.art] { 1 }
+		else if u[.aa] { 2 }
+		else if u.isArmor { 3 }
+		else { 4 }
 	}
 
 	private func populateQueues(_ ai: inout AI) {
@@ -121,7 +121,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Objectives
-
 	private var enemyCities: [XY] {
 		buildings.compactMap { [country] _, b in
 			b.country.team != country.team && b.type == .city ? b.position : nil
@@ -141,7 +140,10 @@ extension TacticalState {
 	}
 
 	private func hasAirfield(_ xy: XY) -> Bool {
-		xy.n4.firstMap { n in map[n] == .airfield ? n : nil } != nil
+		buildings.firstMap { [country] _, b in
+			b.country == country && b.type == .airfield
+			&& b.position.manhattanDistance(to: xy) <= 1 ? true : nil
+		} ?? false
 	}
 
 	private var enemyHasAir: Bool {
@@ -154,7 +156,7 @@ extension TacticalState {
 		let u = units[uid.index]
 		let p = position[uid.index]
 
-		if u.isAir, u.ammo == 0, u.hp < 6 {
+		if u.isAir, u.ammo == 0 || u.hp < 8 {
 			if let af = ownAirfields.min(by: { a, b in
 				a.position.stepDistance(to: p) < b.position.stepDistance(to: p)
 			}) {
@@ -178,7 +180,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Purchase
-
 	private var purchase: TacticalAction? {
 		guard player.prestige >= 0x300 else { return nil }
 
@@ -188,7 +189,7 @@ extension TacticalState {
 			guard !shop.isEmpty else { return nil }
 
 			let pick = shop.enumerated().compactMap { i, t -> (Int, Int)? in
-				guard t.cost <= player.prestige * 3 / 4 else { return nil }
+				guard t.cost <= player.prestige * 2 / 3 else { return nil }
 				return (i, score(t))
 			}.max(by: { a, b in a.1 < b.1 })
 
@@ -197,6 +198,7 @@ extension TacticalState {
 	}
 
 	private func score(_ u: Unit) -> Int {
+		let enemyHasAir = enemyHasAir
 		var s = Int(u.softAtk) * 4
 			+ Int(u.hardAtk) * 5
 			+ Int(u.airAtk) * (enemyHasAir ? 5 : 2)
@@ -216,7 +218,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Resupply
-
 	private func needsResupply(_ i: Int, _ u: Unit) -> Bool {
 		guard u.untouched else { return false }
 		guard cargo[i] == -1 || u[.transport] else { return false }
@@ -231,7 +232,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Embark / Disembark
-
 	private var embark: TacticalAction? {
 		units.firstMap { [country] i, u in
 			guard u.country == country, u.type == .soft, u.canMove, cargo[i] == -1
@@ -264,7 +264,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Attack (priority-ordered)
-
 	private func attack(_ ai: borrowing AI) -> TacticalAction? {
 		for uid in activeQueue(ai) {
 			let u = units[uid.index]
@@ -305,7 +304,6 @@ extension TacticalState {
 	}
 
 	// MARK: - Move (priority-ordered)
-
 	private func move(_ ai: borrowing AI) -> TacticalAction? {
 		for uid in activeQueue(ai) {
 			let u = units[uid.index]

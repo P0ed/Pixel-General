@@ -27,14 +27,24 @@ extension [Unit] {
 	static func base(_ country: Country) -> [Unit] {
 		[
 			.truck,
+			.regular,
+			.regular,
 			.regular.veteran,
+
 			.regular.veteran,
-			.regular.veteran,
+			.tank(country),
 			.tank(country).veteran,
-			.tank(country).veteran,
+			.tank2(country).veteran,
+
+			.ifv(country),
 			.ifv(country).veteran,
 			.art(country).veteran,
 			.art(country).veteran,
+
+			.art2(country).veteran,
+			.art2(country).veteran,
+			.aa(country).veteran,
+			.aa(country).veteran,
 		].map { (u: Unit) -> Unit in
 			u.country(country)
 		}
