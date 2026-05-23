@@ -44,6 +44,7 @@ extension TacticalState {
 		let id = idx.uid
 		unitsMap[pos] = id
 		position[idx] = pos
+		cargo[idx] = -1
 		player.prestige.decrement(by: unit.cost)
 		if unit[.aux] {
 			let idx = auxilia[playerIndex].firstMap { i, u in u == template ? i : nil }

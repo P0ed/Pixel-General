@@ -81,7 +81,11 @@ private extension TacticalNodes {
 	}
 
 	func update(_ id: UID, _ state: borrowing TacticalState) {
-		units[id.index]?.update(hp: state.units[id.index].hp)
+		if state.units[id.index].alive {
+			units[id.index]?.update(hp: state.units[id.index].hp)
+		} else {
+			removeUnit(id)
+		}
 	}
 
 	func processShop(_ state: borrowing TacticalState) {

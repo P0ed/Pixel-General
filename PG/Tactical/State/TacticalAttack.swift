@@ -74,15 +74,21 @@ extension TacticalState {
 
 	private mutating func damage(id: UID, dmg: UInt8) -> Bool {
 		units[id.index].hp.decrement(by: dmg)
-		if cargo[id.index] != -1 {
-			units[cargo[id.index].index].hp.decrement(by: dmg)
+		let cargoId = cargo[id.index]
+		if cargoId != -1 {
+			units[cargoId.index].hp.decrement(by: dmg)
 		}
 		let alive = units[id.index].alive
 		if !alive {
 			unitsMap[position[id.index]] = -1
-			if cargo[id.index] != -1 {
-				units[cargo[id.index].index].hp = 0x0
+			if cargoId != -1 {
+				units[cargoId.index].hp = 0x0
 			}
+		}
+		if cargoId != -1, !units[cargoId.index].alive {
+			cargo[id.index] = -1
+			cargo[cargoId.index] = -1
+			events.add(.update(cargoId))
 		}
 		return alive
 	}
@@ -168,6 +174,9 @@ extension TacticalState {
 		}
 		units[id.index].ent = 0
 		events.add(.move(id, pos))
+		if cargo[id.index] != -1 {
+			events.add(.move(cargo[id.index], pos))
+		}
 	}
 
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
