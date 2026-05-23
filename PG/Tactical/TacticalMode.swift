@@ -4,11 +4,10 @@ typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, Ta
 extension TacticalMode {
 
 	static var tactical: Self {
-		var ai = TacticalState.AI(turn: 0)
-		return .init(
+		.init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			ai: { state in state.runAIIfNeeded(ai: &ai) },
+			ai: TacticalState.ai,
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },

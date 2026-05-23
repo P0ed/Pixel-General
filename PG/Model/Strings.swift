@@ -6,8 +6,8 @@ extension Unit {
 
 	var status: String {
 		.make { status in
-			status += "\(typeDescription)\(traits.contains(.aux) ? "*": "")"
-			status.pad(to: 14)
+			status += "\(self[.aux] ? "☆" : "★") \(typeDescription)"
+			status.pad(to: 12)
 			status += "\(apString)  "
 			status += .makeStatus(pad: 7) { add in
 				add("AM: \(ammo)")
@@ -34,7 +34,7 @@ extension Unit {
 		+ (self[.mountaineer] ? "[MT]" : "")
 		+ (self[.mhtn] ? "[MH]" : "")
 		+ (self[.diag] ? "[DI]" : "")
-		+ ("  K: \(kills)")
+		+ (kills != 0 ? "[\(kills)]" : "")
 	}
 
 	private var apString: String { "[\(canMove ? "M" : " ")|\(canAttack ? (ammo > 0 ? "A" : "L") : " ")]" }

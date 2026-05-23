@@ -285,16 +285,16 @@ extension TacticalState {
 					: 0
 
 				let kill = dmg >= t.hp
-				var s = Int(dmg) * Int(t.cost) * 3 / 2
+				var score = Int(dmg) * Int(t.cost) * 3 / 2
 					  - Int(counter) * Int(u.cost) / 2
-				if kill { s += Int(t.cost) * 10 }
-				if t[.art] { s += Int(u.cost) * 3 }
-				if t[.aa], u.isAir { s += Int(u.cost) * 5 }
-				if t[.supply] { s += Int(u.cost) * 2 }
-				if t.ammo == 0 { s += Int(t.cost) * 2 }
+				if kill { score += Int(t.cost) * 10 }
+				if t[.art] { score += Int(u.cost) * 3 }
+				if t[.aa], u.isAir { score += Int(u.cost) * 5 }
+				if t[.supply] { score += Int(u.cost) * 2 }
+				if t.ammo == 0 { score += Int(t.cost) * 2 }
 
-				if s > bestScore {
-					bestScore = s
+				if score > bestScore {
+					bestScore = score
 					bestTarget = j.uid
 				}
 			}
