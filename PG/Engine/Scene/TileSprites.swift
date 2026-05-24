@@ -4,12 +4,11 @@ import GameplayKit
 @MainActor
 extension SKTileGroup {
 
-	static let white = make(color: .white)
-	static let gray = make(color: .gray)
-	static let blue = make(color: .blue)
-	static let yellow = make(color: .yellow)
-	static let green = make(color: .green)
-	static let red = make(color: .red)
+	static let gray = make(color: .graySurface)
+	static let blue = make(color: .blueSurface)
+	static let yellow = make(color: .yellowSurface)
+	static let green = make(color: .greenSurface)
+	static let red = make(color: .redSurface)
 
 	private static func make(_ image: NSImage) -> SKTileGroup {
 		let texture = SKTexture(image: image)
@@ -120,7 +119,7 @@ extension SKTileSet {
 	)
 
 	static let colors = SKTileSet(
-		tileGroups: [.gray, .white, .blue, .yellow, .green, .red],
+		tileGroups: [.gray, .blue, .yellow, .green, .red],
 		tileSetType: .isometric
 	)
 }

@@ -1,21 +1,5 @@
 import SpriteKit
 
-extension SKColor {
-	static var baseSelection: SKColor { .init(white: 0.33, alpha: 0.47) }
-	static var baseCursor: SKColor { .init(white: 0.22, alpha: 0.33) }
-
-	static var lineSelection: SKColor { .init(white: 0.22, alpha: 0.47) }
-	static var lineCursor: SKColor { .init(white: 0.22, alpha: 0.82) }
-
-	static var selectedCursor: SKColor { .init(red: 0.82, green: 0.33, blue: 0.2, alpha: 1) }
-
-	static var textDefault: SKColor { .init(white: 0.01, alpha: 1.0) }
-
-	static var fieldSurface: SKColor { .init(red: 0.835, green: 0.804, blue: 0.725, alpha: 1.0) }
-	static var forestSurface: SKColor { .init(red: 0.482, green: 0.667, blue: 0.541, alpha: 1.0) }
-	static var waterSurface: SKColor { .init(red: 0.262, green: 0.416, blue: 0.557, alpha: 1.0) }
-}
-
 extension SKLabelNode {
 
 	enum Size: UInt8 {
@@ -59,50 +43,4 @@ extension CGSize {
 	static var tile: CGSize { .init(width: 64.0, height: 32.0) }
 	static var scene: CGSize { .init(width: 640.0, height: 400.0) }
 	static var window: CGSize { .init(width: 1280.0, height: 800.0) }
-}
-
-extension NSImage {
-
-	var cg: CGImage? {
-		unsafe cgImage(forProposedRect: nil, context: nil, hints: nil)!
-	}
-
-	func tinted(_ color: NSColor) -> NSImage {
-		cg?.tinted(color.cgColor).map {
-			NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height))
-		} ?? self
-	}
-}
-
-extension CGImage {
-
-	func tinted(_ color: CGColor) -> CGImage? {
-		let width = width
-		let height = height
-		let rect = CGRect(x: 0, y: 0, width: width, height: height)
-
-		guard let ctx = unsafe CGContext(
-			data: nil,
-			width: width,
-			height: height,
-			bitsPerComponent: 8,
-			bytesPerRow: width * 4,
-			space: CGColorSpaceCreateDeviceRGB(),
-			bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-		) else { return nil }
-
-		ctx.interpolationQuality = .none
-
-		ctx.setBlendMode(.normal)
-		ctx.draw(self, in: rect)
-
-		ctx.setBlendMode(.multiply)
-		ctx.setFillColor(color)
-		ctx.fill(rect)
-
-		ctx.setBlendMode(.destinationIn)
-		ctx.draw(self, in: rect)
-
-		return ctx.makeImage()
-	}
 }

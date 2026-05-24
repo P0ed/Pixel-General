@@ -15,6 +15,8 @@
 		5F26B9532F7EE56E002BBF38 /* TacticalTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */; };
 		5F2D145F2F7AC24600D2DF7E /* Either.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2D145E2F7AC24600D2DF7E /* Either.swift */; };
 		5F2E296D2F1012600010E6E9 /* Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E296C2F10125D0010E6E9 /* Templates.swift */; };
+		5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC52FC3441800EF7BA3 /* Colors.swift */; };
+		5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC72FC3443B00EF7BA3 /* Images.swift */; };
 		5F2F5E5E2F851700006D4D7A /* TacticalChess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2F5E5D2F8516FB006D4D7A /* TacticalChess.swift */; };
 		5F41DDD52EE32745008FBF17 /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F41DDD42EE32744008FBF17 /* Map.swift */; };
 		5F43D4A52EF051A80046AD2A /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F43D4A42EF051A80046AD2A /* Player.swift */; };
@@ -132,6 +134,8 @@
 		5F2A33C42EA93AC3008A0A95 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 		5F2D145E2F7AC24600D2DF7E /* Either.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Either.swift; sourceTree = "<group>"; };
 		5F2E296C2F10125D0010E6E9 /* Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Templates.swift; sourceTree = "<group>"; };
+		5F2E4CC52FC3441800EF7BA3 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		5F2E4CC72FC3443B00EF7BA3 /* Images.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Images.swift; sourceTree = "<group>"; };
 		5F2F5E5D2F8516FB006D4D7A /* TacticalChess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalChess.swift; sourceTree = "<group>"; };
 		5F41DDD42EE32744008FBF17 /* Map.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Map.swift; sourceTree = "<group>"; };
 		5F43D4A42EF051A80046AD2A /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
@@ -232,9 +236,9 @@
 		5F5560F52EF5ADDB00C08E14 /* Tactical */ = {
 			isa = PBXGroup;
 			children = (
-				5F168CEF2FC0A1E2004AEFFA /* AI */,
 				5F5560FD2EF5B0E400C08E14 /* State */,
 				5F649EEF2F94FD7F00F9CE89 /* Nodes */,
+				5F168CEF2FC0A1E2004AEFFA /* AI */,
 				5F5560F62EF5AE0F00C08E14 /* TacticalMode.swift */,
 			);
 			path = Tactical;
@@ -403,6 +407,8 @@
 				5F51E5BD2EF308B200A711DF /* Swift.swift */,
 				5FBA4D7A2EF6DB7700D7C1B0 /* AppKit.swift */,
 				5F2A33BE2EA93AC3008A0A95 /* SpriteKit.swift */,
+				5F2E4CC52FC3441800EF7BA3 /* Colors.swift */,
+				5F2E4CC72FC3443B00EF7BA3 /* Images.swift */,
 				5F8E87322EB3E1DA0023B28F /* Integers.swift */,
 			);
 			path = Extensions;
@@ -588,6 +594,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5FE1218B2F7FCFA1001C16A5 /* Connection.swift in Sources */,
+				5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */,
 				5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */,
 				5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */,
 				5FE44F152F9BBA1F00A589F1 /* StrategicAction.swift in Sources */,
@@ -642,6 +649,7 @@
 				5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */,
 				5F168CF52FC0AD48004AEFFA /* AxisAI.swift in Sources */,
 				5F2F5E5E2F851700006D4D7A /* TacticalChess.swift in Sources */,
+				5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */,
 				5FBA4D7B2EF6DB7900D7C1B0 /* AppKit.swift in Sources */,
 				5F919D572EA959670037A208 /* TacticalNodes.swift in Sources */,
 				5F26B9532F7EE56E002BBF38 /* TacticalTransport.swift in Sources */,
