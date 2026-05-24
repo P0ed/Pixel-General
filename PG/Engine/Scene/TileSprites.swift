@@ -22,6 +22,28 @@ extension SKTileGroup {
 		)
 	}
 
+	private struct PoliticalKey: Hashable {
+		let playerIndex: Int
+		let elevation: Int
+		let fog: Bool
+	}
+	private static var politicalCache: [PoliticalKey: SKTileGroup] = [:]
+
+	static func political(playerIndex: Int, elevation: Int, fog: Bool) -> SKTileGroup {
+		let key = PoliticalKey(playerIndex: playerIndex, elevation: elevation, fog: fog)
+		if let g = politicalCache[key] { return g }
+		let color: SKColor = switch playerIndex {
+		case 0: .blueSurface
+		case 1: .yellowSurface
+		case 2: .greenSurface
+		case 3: .redSurface
+		default: .graySurface
+		}
+		let g = make(color: color, elevation: elevation, fog: fog)
+		politicalCache[key] = g
+		return g
+	}
+
 	static func make(
 		color: SKColor,
 		elevation: Int = 0,
@@ -58,8 +80,7 @@ extension Terrain {
 
 	private static var cache: [CacheKey: SKTileGroup] = [:]
 
-	func tileGroup(fog: Bool) -> SKTileGroup? {
-		guard self != .none else { return nil }
+	func tileGroup(fog: Bool) -> SKTileGroup {
 		let key = CacheKey(terrain: self, fog: fog)
 		if let group = Self.cache[key] { return group }
 		let group = SKTileGroup.make(
@@ -113,10 +134,27 @@ extension SKTileSet {
 	]
 
 	static let terrain = SKTileSet(
-		tileGroups: tiles.map { t in t.tileGroup(fog: false)! }
-			+ tiles.map { t in t.tileGroup(fog: true)! },
+		tileGroups: .make { ts in
+			tiles.forEach { terrain in
+				ts.append(terrain.tileGroup(fog: false))
+				ts.append(terrain.tileGroup(fog: true))
+			}
+			ts += politicalTiles
+		},
 		tileSetType: .isometric
 	)
+
+	private static var politicalTiles: [SKTileGroup] {
+		.make { out in
+			for idx in -1 ... 3 {
+				for elevation in 0 ... 2 {
+					for fog in [false, true] {
+						out.append(.political(playerIndex: idx, elevation: elevation, fog: fog))
+					}
+				}
+			}
+		}
+	}
 
 	static let colors = SKTileSet(
 		tileGroups: [.gray, .blue, .yellow, .green, .red],

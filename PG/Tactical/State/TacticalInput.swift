@@ -4,7 +4,7 @@ extension TacticalState {
 		return switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .menu: { events.add(.menu); return nil }()
-		case .mode: nil
+		case .mode: { mapMode = mapMode == .terrain ? .political : .terrain; return nil }()
 		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
 		case .action(.c): squareAction()

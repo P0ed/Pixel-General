@@ -16,6 +16,11 @@ struct TacticalState: ~Copyable {
 	var selectedUnit: UID?
 	var selectable: SetXY?
 	var scale: Int = 1
+	var mapMode: MapMode = .terrain
+}
+
+enum MapMode: UInt8, Hashable {
+	case terrain, political
 }
 
 extension TacticalState {

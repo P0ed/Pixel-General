@@ -8,6 +8,7 @@ struct TacticalNodes {
 	var sounds: SoundNodes
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
+	@IO var mapMode: MapMode = .terrain
 }
 
 @MainActor
@@ -119,15 +120,31 @@ extension TacticalNodes {
 
 	private func updateFogIfNeeded(state: borrowing TacticalState) {
 		let lit = state.selectable ?? state.visibleToHuman
+		let mode = state.mapMode
 
-		guard self.lit != lit else { return }
-		defer { self.lit = lit }
+		guard self.lit != lit || self.mapMode != mode else { return }
+		defer { self.lit = lit; self.mapMode = mode }
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: !lit[xy]), at: xy)
+			map.setTileGroup(tileGroup(for: state, at: xy, fog: !lit[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
 			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)
+		}
+	}
+
+	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup? {
+		switch state.mapMode {
+		case .terrain:
+			return state.map[xy].tileGroup(fog: fog)
+		case .political:
+			let country = state.control[xy]
+			let idx = state.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
+			return .political(
+				playerIndex: idx,
+				elevation: state.map[xy].elevationLevel,
+				fog: fog
+			)
 		}
 	}
 }

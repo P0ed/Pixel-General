@@ -33,5 +33,5 @@ extension SKColor {
 	static var blueSurface: SKColor { .hex(0x75CDFF) }
 	static var yellowSurface: SKColor { .hex(0xF7EF73) }
 	static var greenSurface: SKColor { .hex(0x64B738) }
-	static var redSurface: SKColor { .hex(0x6FB2E8) }
+	static var redSurface: SKColor { .hex(0xE8B26F) }
 }
