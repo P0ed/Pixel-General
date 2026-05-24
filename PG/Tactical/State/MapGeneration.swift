@@ -193,10 +193,10 @@ extension Map<Terrain> {
 	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
-			if self[xy].isRoad, !self[xy].isBridge {
+			if self[xy].hasRoad, !self[xy].isBridge {
 				let n4 = xy.n4
 				for i in n4.indices {
-					neighbors[i] = self[n4[i]].isRoad || self[n4[i]].isBuilding
+					neighbors[i] = self[n4[i]].hasRoad
 				}
 				let r = Self.road(neighbors)
 				if r != .none { self[xy] = r }
@@ -259,7 +259,7 @@ extension Map<Terrain> {
 	/// gentler way around. Rivers are passable solely where a bridge fits.
 	private func stepCost(to: XY, from l: XY) -> UInt16? {
 		let t = self[to]
-		if t.isBuilding || t.isRoad { return 1 }
+		if t.hasRoad { return 1 }
 		switch t {
 		case .field: return 4
 		case .forest: return 6

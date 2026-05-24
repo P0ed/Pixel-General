@@ -168,7 +168,7 @@ extension Terrain: CustomStringConvertible {
 		case .mountain: "mountain"
 		case .city: "city"
 		case .airfield: "airfield"
-		case .roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE: "village"
+		case .roadNWE, .roadSEN, .roadSWE, .roadSWN: "village"
 		case _ where isRoad: "road"
 		default: ""
 		}

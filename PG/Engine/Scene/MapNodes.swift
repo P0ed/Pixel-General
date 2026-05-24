@@ -79,11 +79,15 @@ extension Map<Terrain> {
 
 extension Terrain {
 
-	var elevation: CGFloat {
+	var elevationLevel: Int {
 		switch self {
-		case .hill, .forestHill: 4.0
-		case .mountain: 8.0
-		default: 0.0
+		case .hill, .forestHill: 1
+		case .mountain: 2
+		default: 0
 		}
+	}
+
+	var elevation: CGFloat {
+		CGFloat(elevationLevel * 4)
 	}
 }

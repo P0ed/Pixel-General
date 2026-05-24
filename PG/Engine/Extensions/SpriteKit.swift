@@ -10,6 +10,10 @@ extension SKColor {
 	static var selectedCursor: SKColor { .init(red: 0.82, green: 0.33, blue: 0.2, alpha: 1) }
 
 	static var textDefault: SKColor { .init(white: 0.01, alpha: 1.0) }
+
+	static var fieldSurface: SKColor { .init(red: 0.835, green: 0.804, blue: 0.725, alpha: 1.0) }
+	static var forestSurface: SKColor { .init(red: 0.482, green: 0.667, blue: 0.541, alpha: 1.0) }
+	static var waterSurface: SKColor { .init(red: 0.262, green: 0.416, blue: 0.557, alpha: 1.0) }
 }
 
 extension SKLabelNode {
@@ -22,7 +26,7 @@ extension SKLabelNode {
 
 	convenience init(size: Size, color: SKColor = .white) {
 		self.init()
-		fontName = "Monaco"
+		fontName = "Menlo"
 		fontSize = CGFloat(size.rawValue)
 		fontColor = color
 		setScale(0.5)

@@ -16,22 +16,31 @@ extension SKTileGroup {
 		)
 	}
 
-	static let city = make(.city)
-	static let airfield = make(.airfield)
-
-	static let roadSN = make(.roadSn)
-	static let roadSE = make(.roadSe)
-	static let roadSW = make(.roadSw)
-	static let roadNE = make(.roadNe)
-	static let roadNW = make(.roadNw)
-	static let roadWE = make(.roadWe)
-
-	static let roadNWE = make(.roadNwe)
-	static let roadSEN = make(.roadSen)
-	static let roadSWE = make(.roadSwe)
-	static let roadSWN = make(.roadSwn)
-
-	static let roadNWSE = make(.roadNwse)
+	static func make(
+		color: SKColor,
+		elevation: Int,
+		fog: Bool,
+		decoration: NSImage? = nil
+	) -> SKTileGroup {
+		let frame = NSImage.frame(elevation)
+		let surface = NSImage.surface(elevation)
+		let image = composite(
+			size: frame.size,
+			frame: frame,
+			surface: surface,
+			tint: color,
+			decoration: decoration,
+			fog: fog
+		)
+		let texture = SKTexture(cgImage: image)
+		texture.filteringMode = .nearest
+		return SKTileGroup(
+			tileDefinition: SKTileDefinition(
+				texture: texture,
+				size: frame.size
+			)
+		)
+	}
 
 	static let white = make(.white)
 	static let gray = make(.gray)
@@ -39,115 +48,63 @@ extension SKTileGroup {
 	static let yellow = make(.yellow)
 	static let green = make(.green)
 	static let red = make(.red)
-
-	static let field = make(.field)
-	static let forest = make(.forest)
-	static let forestHill = make(.forestHill)
-	static let hill = make(.hill)
-	static let mountain = make(.mountain)
-
-	static let water = make(.water)
-	static let river00 = make(.river00)
-	static let river01 = make(.river01)
-	static let river10 = make(.river10)
-	static let river11 = make(.river11)
-	static let bridge01 = make(.bridge01)
-	static let bridge10 = make(.bridge10)
-
-	static let cityFog = make(.cityFog)
-	static let airfieldFog = make(.airfieldFog)
-
-	static let roadSNFog = make(.roadSnFog)
-	static let roadSEFog = make(.roadSeFog)
-	static let roadSWFog = make(.roadSwFog)
-	static let roadNEFog = make(.roadNeFog)
-	static let roadNWFog = make(.roadNwFog)
-	static let roadWEFog = make(.roadWeFog)
-
-	static let roadNWEFog = make(.roadNweFog)
-	static let roadSENFog = make(.roadSenFog)
-	static let roadSWEFog = make(.roadSweFog)
-	static let roadSWNFog = make(.roadSwnFog)
-
-	static let roadNWSEFog = make(.roadNwseFog)
-
-	static let fieldFog = make(.fieldFog)
-	static let forestFog = make(.forestFog)
-	static let forestHillFog = make(.forestHillFog)
-	static let hillFog = make(.hillFog)
-	static let mountainFog = make(.mountainFog)
-
-	static let waterFog = make(.waterFog)
-	static let river00Fog = make(.river00Fog)
-	static let river01Fog = make(.river01Fog)
-	static let river10Fog = make(.river10Fog)
-	static let river11Fog = make(.river11Fog)
-	static let bridge01Fog = make(.bridge01Fog)
-	static let bridge10Fog = make(.bridge10Fog)
 }
 
 @MainActor
 extension Terrain {
 
+	private struct CacheKey: Hashable {
+		let terrain: Terrain
+		let lit: Bool
+	}
+
+	private static var cache: [CacheKey: SKTileGroup] = [:]
+
 	func tileGroup(lit: Bool) -> SKTileGroup? {
-		if lit {
-			switch self {
-			case .field: .field
-			case .forest: .forest
-			case .hill: .hill
-			case .forestHill: .forestHill
-			case .mountain: .mountain
-			case .city: .city
-			case .airfield: .airfield
-			case .water: .water
-			case .river00: .river00
-			case .river01: .river01
-			case .river10: .river10
-			case .river11: .river11
-			case .bridge01: .bridge01
-			case .bridge10: .bridge10
-			case .roadNW: .roadNW
-			case .roadNE: .roadNE
-			case .roadWE: .roadWE
-			case .roadSN: .roadSN
-			case .roadSW: .roadSW
-			case .roadSE: .roadSE
-			case .roadNWE: .roadNWE
-			case .roadSWE: .roadSWE
-			case .roadSEN: .roadSEN
-			case .roadSWN: .roadSWN
-			case .roadNWSE: .roadNWSE
-			case .none: .none
-			}
-		} else {
-			switch self {
-			case .field: .fieldFog
-			case .forest: .forestFog
-			case .hill: .hillFog
-			case .forestHill: .forestHillFog
-			case .mountain: .mountainFog
-			case .city: .cityFog
-			case .airfield: .airfieldFog
-			case .water: .waterFog
-			case .river00: .river00Fog
-			case .river01: .river01Fog
-			case .river10: .river10Fog
-			case .river11: .river11Fog
-			case .bridge01: .bridge01Fog
-			case .bridge10: .bridge10Fog
-			case .roadNW: .roadNWFog
-			case .roadNE: .roadNEFog
-			case .roadWE: .roadWEFog
-			case .roadSN: .roadSNFog
-			case .roadSW: .roadSWFog
-			case .roadSE: .roadSEFog
-			case .roadNWE: .roadNWEFog
-			case .roadSWE: .roadSWEFog
-			case .roadSEN: .roadSENFog
-			case .roadSWN: .roadSWNFog
-			case .roadNWSE: .roadNWSEFog
-			case .none: .none
-			}
+		guard self != .none else { return nil }
+		let key = CacheKey(terrain: self, lit: lit)
+		if let group = Self.cache[key] { return group }
+		let group = SKTileGroup.make(
+			color: surfaceColor,
+			elevation: elevationLevel,
+			fog: !lit,
+			decoration: decoration
+		)
+		Self.cache[key] = group
+		return group
+	}
+
+	var surfaceColor: SKColor {
+		switch self {
+		case .forest, .forestHill: .forestSurface
+		case .water, .river00, .river01, .river10, .river11: .waterSurface
+		default: .fieldSurface
+		}
+	}
+
+	var decoration: NSImage? {
+		switch self {
+		case .none, .field, .forest, .hill, .forestHill, .mountain: nil
+		case .city: .city
+		case .airfield: .airfield
+		case .water: .water
+		case .river00: .river00
+		case .river01: .river01
+		case .river10: .river10
+		case .river11: .river11
+		case .bridge01: .bridge01
+		case .bridge10: .bridge10
+		case .roadNW: .roadNw
+		case .roadNE: .roadNe
+		case .roadWE: .roadWe
+		case .roadSN: .roadSn
+		case .roadSW: .roadSw
+		case .roadSE: .roadSe
+		case .roadNWE: .roadNwe
+		case .roadSWE: .roadSwe
+		case .roadSEN: .roadSen
+		case .roadSWN: .roadSwn
+		case .roadNWSE: .roadNwse
 		}
 	}
 }
@@ -155,31 +112,22 @@ extension Terrain {
 @MainActor
 extension SKTileSet {
 
+	private static let tiles: [Terrain] = [
+		.city, .airfield, .field, .forest, .hill, .forestHill, .mountain,
+		.water, .river00, .river01, .river10, .river11, .bridge01, .bridge10,
+		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
+		.roadNWE, .roadSWE, .roadSEN, .roadSWN, .roadNWSE,
+	]
+
 	static let terrain = SKTileSet(
-		tileGroups: [
-			.city, .airfield, .field, .forest,
-			.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
-			.roadNWE, .roadSWE, .roadSEN, .roadSWN, .roadNWSE,
-			.roadNWFog, .roadNEFog, .roadWEFog, .roadSNFog, .roadSWFog, .roadSEFog,
-			.roadNWEFog, .roadSWEFog, .roadSENFog, .roadSWNFog, .roadNWSEFog,
-			.hill, .forestHill, .mountain,
-			.river00, .river01, .river10, .river11, .bridge01, .bridge10,
-			.cityFog, .airfieldFog, .fieldFog, .forestFog,
-			.hillFog, .forestHillFog, .mountainFog,
-			.river00Fog, .river01Fog, .river10Fog, .river11Fog, .bridge01Fog, .bridge10Fog,
-		],
+		tileGroups: tiles.flatMap { t in
+			[t.tileGroup(lit: true), t.tileGroup(lit: false)]
+		}.compactMap { $0 },
 		tileSetType: .isometric
 	)
 
 	static let colors = SKTileSet(
-		tileGroups: [
-			.gray,
-			.white,
-			.blue,
-			.yellow,
-			.green,
-			.red
-		],
+		tileGroups: [.gray, .white, .blue, .yellow, .green, .red],
 		tileSetType: .isometric
 	)
 }
@@ -198,4 +146,115 @@ extension SKTileMapNode {
 	func setTileGroup(_ tileGroup: SKTileGroup?, at xy: XY) {
 		setTileGroup(tileGroup, forColumn: xy.x, row: xy.y)
 	}
+}
+
+extension NSImage {
+
+	static func frame(_ elevation: Int) -> NSImage {
+		switch elevation {
+		case 0: .frame0
+		case 1: .frame1
+		default: .frame2
+		}
+	}
+
+	static func surface(_ elevation: Int) -> NSImage {
+		switch elevation {
+		case 0: .surface0
+		case 1: .surface1
+		default: .surface2
+		}
+	}
+}
+
+@MainActor
+private func composite(
+	size: NSSize,
+	frame: NSImage,
+	surface: NSImage,
+	tint: SKColor,
+	decoration: NSImage?,
+	fog: Bool
+) -> CGImage {
+	let width = Int(size.width)
+	let height = Int(size.height)
+	let bytesPerRow = width * 4
+	let byteCount = height * bytesPerRow
+
+	let pixels = UnsafeMutablePointer<UInt8>.allocate(capacity: byteCount)
+	defer { unsafe pixels.deallocate() }
+	unsafe pixels.initialize(repeating: 0, count: byteCount)
+
+	let context = unsafe CGContext(
+		data: pixels,
+		width: width,
+		height: height,
+		bitsPerComponent: 8,
+		bytesPerRow: bytesPerRow,
+		space: CGColorSpaceCreateDeviceRGB(),
+		bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+	)!
+	context.interpolationQuality = .none
+	let rect = CGRect(origin: .zero, size: size)
+
+	if let cg = unsafe frame.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+	}
+	if let cg = tintedSurface(surface, tint: tint) {
+		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+	}
+	if let decoration, let cg = unsafe decoration.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+	}
+
+	if fog {
+		for i in stride(from: 0, to: byteCount, by: 4) {
+			unsafe pixels[i]     >>= 1
+			unsafe pixels[i + 1] >>= 1
+			unsafe pixels[i + 2] >>= 1
+		}
+	}
+
+	return context.makeImage()!
+}
+
+@MainActor
+private func tintedSurface(_ surface: NSImage, tint: SKColor) -> CGImage? {
+	guard let src = unsafe surface.cgImage(forProposedRect: nil, context: nil, hints: nil)
+	else { return nil }
+
+	let width = src.width
+	let height = src.height
+	let bytesPerRow = width * 4
+	let byteCount = height * bytesPerRow
+
+	let pixels = UnsafeMutablePointer<UInt8>.allocate(capacity: byteCount)
+	defer { unsafe pixels.deallocate() }
+	unsafe pixels.initialize(repeating: 0, count: byteCount)
+
+	let context = unsafe CGContext(
+		data: pixels,
+		width: width,
+		height: height,
+		bitsPerComponent: 8,
+		bytesPerRow: bytesPerRow,
+		space: CGColorSpaceCreateDeviceRGB(),
+		bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+	)!
+	context.interpolationQuality = .none
+	context.draw(src, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+	var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+	unsafe tint.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+	let tr = UInt16((r * 255).rounded())
+	let tg = UInt16((g * 255).rounded())
+	let tb = UInt16((b * 255).rounded())
+
+	for i in stride(from: 0, to: byteCount, by: 4) {
+		unsafe pixels[i]     = UInt8((UInt16(pixels[i])     * tr) / 255)
+		unsafe pixels[i + 1] = UInt8((UInt16(pixels[i + 1]) * tg) / 255)
+		unsafe pixels[i + 2] = UInt8((UInt16(pixels[i + 2]) * tb) / 255)
+	}
+
+	return context.makeImage()
 }

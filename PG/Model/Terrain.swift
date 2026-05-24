@@ -4,8 +4,8 @@ enum Terrain: UInt8, Hashable, Codable {
 	case bridge01, bridge10
 	case field, forest, hill, forestHill, mountain
 	case city, airfield
-	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE
-	case roadNWE, roadSWE, roadSEN, roadSWN, roadNWSE
+	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadNWSE
+	case roadNWE, roadSWE, roadSEN, roadSWN
 }
 
 extension Terrain {
@@ -19,18 +19,20 @@ extension Terrain {
 
 	var isBuilding: Bool {
 		switch self {
-		case .city, .airfield: true
+		case .city, .airfield, .roadNWE, .roadSWE, .roadSEN, .roadSWN: true
 		default: false
 		}
 	}
 
 	var isRoad: Bool {
 		switch self {
-		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE,
-				.roadNWE, .roadSEN, .roadSWE, .roadSWN, .roadNWSE,
-				.bridge01, .bridge10: true
+		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE, .roadNWSE: true
 		default: false
 		}
+	}
+
+	var hasRoad: Bool {
+		isRoad || isBridge || isBuilding
 	}
 
 	var isBridge: Bool {
@@ -61,8 +63,8 @@ extension Terrain {
 		switch stats.type {
 		case .soft:
 			switch self {
-			case _ where isRoad: 1
-			case .field, .city, .airfield: 1
+			case _ where hasRoad: 1
+			case .field: 1
 			case .forest, .hill: min(stats.mov, 2)
 			case .forestHill: min(stats.mov, 3)
 			case .mountain: stats.mov
@@ -71,8 +73,7 @@ extension Terrain {
 			}
 		case .softWheel, .lightWheel:
 			switch self {
-			case _ where isRoad: 1
-			case .city, .airfield: 1
+			case _ where hasRoad: 1
 			case .field: 2
 			case .forest, .hill: 3
 			case .forestHill: stats.mov
@@ -81,8 +82,8 @@ extension Terrain {
 			}
 		case .lightTrack, .heavyTrack:
 			switch self {
-			case _ where isRoad: 1
-			case .field, .city, .airfield: 1
+			case _ where hasRoad: 1
+			case .field: 1
 			case .forest, .hill: 2
 			case .forestHill: stats.mov
 			case _ where isRiver: stats.mov
@@ -95,8 +96,8 @@ extension Terrain {
 	var baseEntrenchment: UInt8 {
 		switch self {
 		case .field: 0
-		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN: 1
-		case .forest, .forestHill, .mountain, .roadNWSE: 2
+		case .hill, .airfield: 1
+		case .forest, .forestHill, .mountain, .roadNWE, .roadSEN, .roadSWE, .roadSWN: 2
 		case .city: 3
 		default: 0
 		}
@@ -104,13 +105,13 @@ extension Terrain {
 
 	func closeCombat(_ type: UnitType) -> Int8 {
 		switch self {
-		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+		case .hill, .airfield:
 			switch type {
 			case .lightWheel, .lightTrack: -1
 			case .heavyTrack: -2
 			default: 0
 			}
-		case .forest, .roadNWSE:
+		case .forest, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
 			switch type {
 			case .lightWheel, .lightTrack: -2
 			case .heavyTrack: -4
@@ -138,14 +139,14 @@ extension Terrain {
 			case .heavyTrack: -5
 			default: 0
 			}
-		case .hill, .airfield, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+		case .hill, .airfield:
 			switch type {
 			case .soft: 1
 			case .lightWheel, .lightTrack: -1
 			case .heavyTrack: -2
 			default: 0
 			}
-		case .forest, .roadNWSE:
+		case .forest, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
 			switch type {
 			case .soft: 2
 			case .lightWheel, .lightTrack: -2
