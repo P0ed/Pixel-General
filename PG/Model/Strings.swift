@@ -159,16 +159,15 @@ extension Terrain: CustomStringConvertible {
 
 	var description: String {
 		switch self {
-		case .river00, .river01, .river10, .river11: "river"
 		case .water: "water"
-		case .bridge01, .bridge10: "bridge"
+		case .bridgeWE, .bridgeSN: "bridge"
 		case .field: "field"
 		case .forest: "forest"
 		case .hill, .forestHill: "hill"
 		case .mountain: "mountain"
 		case .city: "city"
 		case .airfield: "airfield"
-		case .roadNWE, .roadSEN, .roadSWE, .roadSWN: "village"
+		case .villageE, .villageN, .villageW, .villageS: "village"
 		case _ where isRoad: "road"
 		default: ""
 		}

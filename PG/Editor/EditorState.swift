@@ -109,7 +109,6 @@ private extension EditorState {
 		let touchesRoad = terrain.affectsRoadShape || prev.affectsRoadShape
 
 		if touchesWater || touchesRoad {
-			map.shapeRivers()
 			map.shapeRoads()
 			events.add(.redraw)
 		} else {
@@ -134,7 +133,6 @@ private extension EditorState {
 	mutating func loadMap() {
 		guard let str = UserDefaults.standard.string(forKey: "editor.map") else { return }
 		decodeMap(str)
-		map.shapeRivers()
 		map.shapeRoads()
 		events.add(.redraw)
 	}
@@ -171,8 +169,8 @@ extension Terrain {
 
 	static let palette: [Terrain] = [
 		.field, .forest, .hill, .forestHill,
-		.mountain, .water, .river00, .city,
-		.airfield, .roadWE, .bridge01
+		.mountain, .water, .city,
+		.airfield, .roadWE, .bridgeWE
 	]
 
 	var affectsWaterShape: Bool { isRiver || isBridge || self == .water }
@@ -187,11 +185,10 @@ extension Terrain {
 		case .forestHill: "h"
 		case .mountain: "M"
 		case .water: "W"
-		case .river00, .river01, .river10, .river11: "R"
-		case .bridge01, .bridge10: "B"
+		case .bridgeWE, .bridgeSN: "B"
 		case .city: "C"
 		case .airfield: "A"
-		case _ where isRoad: "r"
+		case _ where isRoad: "R"
 		default: "."
 		}
 	}
@@ -205,11 +202,10 @@ extension Terrain {
 		case "h": self = .forestHill
 		case "M": self = .mountain
 		case "W": self = .water
-		case "R": self = .river00
-		case "B": self = .bridge01
+		case "B": self = .bridgeWE
 		case "C": self = .city
 		case "A": self = .airfield
-		case "r": self = .roadWE
+		case "R": self = .roadWE
 		default: return nil
 		}
 	}
@@ -222,12 +218,8 @@ extension Terrain {
 		case .forestHill: "ForestHill"
 		case .mountain: "Mountain"
 		case .water: "Water"
-		case .river00: "River00"
-		case .river01: "River01"
-		case .river10: "River10"
-		case .river11: "River11"
-		case .bridge01: "Bridge01"
-		case .bridge10: "Bridge10"
+		case .bridgeWE: "Bridge-WE"
+		case .bridgeSN: "Bridge-SN"
 		case .city: "City"
 		case .airfield: "Airfield"
 		case .roadNW: "Road-nw"
@@ -236,11 +228,11 @@ extension Terrain {
 		case .roadSN: "Road-sn"
 		case .roadSW: "Road-sw"
 		case .roadSE: "Road-se"
-		case .roadNWE: "Road-nwe"
-		case .roadSWE: "Road-swe"
-		case .roadSEN: "Road-sen"
-		case .roadSWN: "Road-swn"
-		case .roadNWSE: "Road-nwse"
+		case .villageE: "Village-E"
+		case .villageN: "Village-N"
+		case .villageW: "Village-W"
+		case .villageS: "Village-S"
+		case .roadX: "Road-nwse"
 		case .none: "Clear"
 		}
 	}

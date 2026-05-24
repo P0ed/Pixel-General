@@ -4,6 +4,13 @@ import GameplayKit
 @MainActor
 extension SKTileGroup {
 
+	static let white = make(color: .white)
+	static let gray = make(color: .gray)
+	static let blue = make(color: .blue)
+	static let yellow = make(color: .yellow)
+	static let green = make(color: .green)
+	static let red = make(color: .red)
+
 	private static func make(_ image: NSImage) -> SKTileGroup {
 		let texture = SKTexture(image: image)
 		texture.filteringMode = .nearest
@@ -18,14 +25,13 @@ extension SKTileGroup {
 
 	static func make(
 		color: SKColor,
-		elevation: Int,
-		fog: Bool,
+		elevation: Int = 0,
+		fog: Bool = false,
 		decoration: NSImage? = nil
 	) -> SKTileGroup {
 		let frame = NSImage.frame(elevation)
 		let surface = NSImage.surface(elevation)
 		let image = composite(
-			size: frame.size,
 			frame: frame,
 			surface: surface,
 			tint: color,
@@ -41,13 +47,6 @@ extension SKTileGroup {
 			)
 		)
 	}
-
-	static let white = make(.white)
-	static let gray = make(.gray)
-	static let blue = make(.blue)
-	static let yellow = make(.yellow)
-	static let green = make(.green)
-	static let red = make(.red)
 }
 
 @MainActor
@@ -55,19 +54,19 @@ extension Terrain {
 
 	private struct CacheKey: Hashable {
 		let terrain: Terrain
-		let lit: Bool
+		let fog: Bool
 	}
 
 	private static var cache: [CacheKey: SKTileGroup] = [:]
 
-	func tileGroup(lit: Bool) -> SKTileGroup? {
+	func tileGroup(fog: Bool) -> SKTileGroup? {
 		guard self != .none else { return nil }
-		let key = CacheKey(terrain: self, lit: lit)
+		let key = CacheKey(terrain: self, fog: fog)
 		if let group = Self.cache[key] { return group }
 		let group = SKTileGroup.make(
 			color: surfaceColor,
 			elevation: elevationLevel,
-			fog: !lit,
+			fog: fog,
 			decoration: decoration
 		)
 		Self.cache[key] = group
@@ -77,34 +76,29 @@ extension Terrain {
 	var surfaceColor: SKColor {
 		switch self {
 		case .forest, .forestHill: .forestSurface
-		case .water, .river00, .river01, .river10, .river11: .waterSurface
+		case .water, .bridgeWE, .bridgeSN: .waterSurface
 		default: .fieldSurface
 		}
 	}
 
 	var decoration: NSImage? {
 		switch self {
-		case .none, .field, .forest, .hill, .forestHill, .mountain: nil
+		case .none, .water, .field, .forest, .hill, .forestHill, .mountain: nil
 		case .city: .city
 		case .airfield: .airfield
-		case .water: .water
-		case .river00: .river00
-		case .river01: .river01
-		case .river10: .river10
-		case .river11: .river11
-		case .bridge01: .bridge01
-		case .bridge10: .bridge10
-		case .roadNW: .roadNw
-		case .roadNE: .roadNe
-		case .roadWE: .roadWe
-		case .roadSN: .roadSn
-		case .roadSW: .roadSw
-		case .roadSE: .roadSe
-		case .roadNWE: .roadNwe
-		case .roadSWE: .roadSwe
-		case .roadSEN: .roadSen
-		case .roadSWN: .roadSwn
-		case .roadNWSE: .roadNwse
+		case .bridgeWE: .bridgeWE
+		case .bridgeSN: .bridgeSN
+		case .roadNW: .roadNW
+		case .roadNE: .roadNE
+		case .roadWE: .roadWE
+		case .roadSN: .roadSN
+		case .roadSW: .roadSW
+		case .roadSE: .roadSE
+		case .villageE: .villageE
+		case .villageN: .villageN
+		case .villageW: .villageW
+		case .villageS: .villageS
+		case .roadX: .roadX
 		}
 	}
 }
@@ -114,15 +108,14 @@ extension SKTileSet {
 
 	private static let tiles: [Terrain] = [
 		.city, .airfield, .field, .forest, .hill, .forestHill, .mountain,
-		.water, .river00, .river01, .river10, .river11, .bridge01, .bridge10,
+		.water, .bridgeWE, .bridgeSN,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
-		.roadNWE, .roadSWE, .roadSEN, .roadSWN, .roadNWSE,
+		.villageE, .villageN, .villageW, .villageS, .roadX,
 	]
 
 	static let terrain = SKTileSet(
-		tileGroups: tiles.flatMap { t in
-			[t.tileGroup(lit: true), t.tileGroup(lit: false)]
-		}.compactMap { $0 },
+		tileGroups: tiles.map { t in t.tileGroup(fog: false)! }
+			+ tiles.map { t in t.tileGroup(fog: true)! },
 		tileSetType: .isometric
 	)
 
@@ -169,13 +162,13 @@ extension NSImage {
 
 @MainActor
 private func composite(
-	size: NSSize,
 	frame: NSImage,
 	surface: NSImage,
 	tint: SKColor,
 	decoration: NSImage?,
 	fog: Bool
 ) -> CGImage {
+	let size = frame.size
 	let width = Int(size.width)
 	let height = Int(size.height)
 	let bytesPerRow = width * 4
@@ -195,66 +188,23 @@ private func composite(
 		bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
 	)!
 	context.interpolationQuality = .none
-	let rect = CGRect(origin: .zero, size: size)
 
-	if let cg = unsafe frame.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+	if let cg = frame.cg {
 		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
 	}
-	if let cg = tintedSurface(surface, tint: tint) {
+	if let cg = surface.cg?.tinted(tint.cgColor) {
 		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
 	}
-	if let decoration, let cg = unsafe decoration.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+	if let cg = decoration?.cg {
 		context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
 	}
-
 	if fog {
 		for i in stride(from: 0, to: byteCount, by: 4) {
-			unsafe pixels[i]     >>= 1
+			unsafe pixels[i + 0] >>= 1
 			unsafe pixels[i + 1] >>= 1
 			unsafe pixels[i + 2] >>= 1
 		}
 	}
 
 	return context.makeImage()!
-}
-
-@MainActor
-private func tintedSurface(_ surface: NSImage, tint: SKColor) -> CGImage? {
-	guard let src = unsafe surface.cgImage(forProposedRect: nil, context: nil, hints: nil)
-	else { return nil }
-
-	let width = src.width
-	let height = src.height
-	let bytesPerRow = width * 4
-	let byteCount = height * bytesPerRow
-
-	let pixels = UnsafeMutablePointer<UInt8>.allocate(capacity: byteCount)
-	defer { unsafe pixels.deallocate() }
-	unsafe pixels.initialize(repeating: 0, count: byteCount)
-
-	let context = unsafe CGContext(
-		data: pixels,
-		width: width,
-		height: height,
-		bitsPerComponent: 8,
-		bytesPerRow: bytesPerRow,
-		space: CGColorSpaceCreateDeviceRGB(),
-		bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-	)!
-	context.interpolationQuality = .none
-	context.draw(src, in: CGRect(x: 0, y: 0, width: width, height: height))
-
-	var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-	unsafe tint.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
-	let tr = UInt16((r * 255).rounded())
-	let tg = UInt16((g * 255).rounded())
-	let tb = UInt16((b * 255).rounded())
-
-	for i in stride(from: 0, to: byteCount, by: 4) {
-		unsafe pixels[i]     = UInt8((UInt16(pixels[i])     * tr) / 255)
-		unsafe pixels[i + 1] = UInt8((UInt16(pixels[i + 1]) * tg) / 255)
-		unsafe pixels[i + 2] = UInt8((UInt16(pixels[i + 2]) * tb) / 255)
-	}
-
-	return context.makeImage()
 }

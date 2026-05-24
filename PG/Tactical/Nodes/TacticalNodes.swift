@@ -77,7 +77,7 @@ extension TacticalNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(lit: true), at: xy)
+			map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
 		}
 
 		return map
@@ -124,7 +124,7 @@ extension TacticalNodes {
 		defer { self.lit = lit }
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(lit: lit[xy]), at: xy)
+			map.setTileGroup(state.map[xy].tileGroup(fog: !lit[xy]), at: xy)
 		}
 		state.units.forEach { i, u in
 			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)

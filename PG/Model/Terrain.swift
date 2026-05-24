@@ -1,32 +1,32 @@
 enum Terrain: UInt8, Hashable, Codable {
 	case none
-	case water, river00, river01, river10, river11
-	case bridge01, bridge10
+	case water
+	case bridgeWE, bridgeSN
 	case field, forest, hill, forestHill, mountain
 	case city, airfield
-	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadNWSE
-	case roadNWE, roadSWE, roadSEN, roadSWN
+	case villageE, villageN, villageW, villageS
+	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
 }
 
 extension Terrain {
 
 	var isBridgable: Bool {
 		switch self {
-		case .airfield, .city, .field, .forest: true
+		case .airfield, .city, .villageE, .villageN, .villageW, .villageS, .field, .forest: true
 		default: false
 		}
 	}
 
 	var isBuilding: Bool {
 		switch self {
-		case .city, .airfield, .roadNWE, .roadSWE, .roadSEN, .roadSWN: true
+		case .city, .airfield, .villageE, .villageN, .villageW, .villageS: true
 		default: false
 		}
 	}
 
 	var isRoad: Bool {
 		switch self {
-		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE, .roadNWSE: true
+		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE, .roadX: true
 		default: false
 		}
 	}
@@ -37,14 +37,14 @@ extension Terrain {
 
 	var isBridge: Bool {
 		switch self {
-		case .bridge01, .bridge10: true
+		case .bridgeWE, .bridgeSN: true
 		default: false
 		}
 	}
 
 	var isRiver: Bool {
 		switch self {
-		case .river00, .river01, .river10, .river11: true
+		case .water: true
 		default: false
 		}
 	}
@@ -97,7 +97,7 @@ extension Terrain {
 		switch self {
 		case .field: 0
 		case .hill, .airfield: 1
-		case .forest, .forestHill, .mountain, .roadNWE, .roadSEN, .roadSWE, .roadSWN: 2
+		case .forest, .forestHill, .mountain, .villageE, .villageN, .villageW, .villageS: 2
 		case .city: 3
 		default: 0
 		}
@@ -111,7 +111,7 @@ extension Terrain {
 			case .heavyTrack: -2
 			default: 0
 			}
-		case .forest, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+		case .forest, .villageE, .villageN, .villageW, .villageS:
 			switch type {
 			case .lightWheel, .lightTrack: -2
 			case .heavyTrack: -4
@@ -146,7 +146,7 @@ extension Terrain {
 			case .heavyTrack: -2
 			default: 0
 			}
-		case .forest, .roadNWE, .roadSEN, .roadSWE, .roadSWN:
+		case .forest, .villageE, .villageN, .villageW, .villageS:
 			switch type {
 			case .soft: 2
 			case .lightWheel, .lightTrack: -2

@@ -16,7 +16,6 @@ extension Map<Terrain> {
 		let cities = placeCities(d20: &d20)
 		connectCities(cities: cities)
 		shapeRoads()
-		shapeRivers()
 	}
 
 	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap) {
@@ -68,16 +67,16 @@ extension Map<Terrain> {
 				if pressure[start] >= 1024 { return }
 			}
 			var head = end
-			self[end] = .river00
+			self[end] = .water
 			while head != start {
 				let xy = head.n4.compactMap { xy in
-					contains(xy) && self[xy] != .river00 ? xy : nil
+					contains(xy) && self[xy] != .water ? xy : nil
 				}
 				.max { a, b in pressure[a] < pressure[b] }
 
 				if let xy {
 					head = xy
-					self[xy] = .river00
+					self[xy] = .water
 				} else {
 					break
 				}
@@ -180,16 +179,6 @@ extension Map<Terrain> {
 		}
 	}
 
-	mutating func shapeRivers() {
-		for xy in indices where self[xy] == .river00 {
-			let n4 = xy.n4
-			self[xy] = Self.river([
-				self[n4[2]].isRiver || self[n4[2]].isBridge,
-				self[n4[1]].isRiver || self[n4[1]].isBridge
-			])
-		}
-	}
-
 	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
@@ -203,9 +192,9 @@ extension Map<Terrain> {
 			} else if self[xy].isBridge {
 				let n4 = xy.n4
 				if self[n4[0]].isRiver, self[n4[2]].isRiver {
-					self[xy] = .bridge01
+					self[xy] = .bridgeSN
 				} else if self[n4[1]].isRiver, self[n4[3]].isRiver {
-					self[xy] = .bridge10
+					self[xy] = .bridgeWE
 				}
 			}
 		}
@@ -220,22 +209,12 @@ extension Map<Terrain> {
 		case (true, false, false, true): .roadSE
 		case (false, true, true, false): .roadNW
 		case (false, false, true, true): .roadSW
-		case (true, true, true, false): .roadNWE
-		case (true, true, false, true): .roadSEN
-		case (false, true, true, true): .roadSWN
-		case (true, false, true, true): .roadSWE
-		case (true, true, true, true): .roadNWSE
+		case (false, true, true, true): .villageE
+		case (true, false, true, true): .villageN
+		case (true, true, false, true): .villageW
+		case (true, true, true, false): .villageS
+		case (true, true, true, true): .roadX
 		default: .none
-		}
-	}
-
-	private static func river(_ neighbors: [2 of Bool]) -> Terrain {
-		// West, North
-		switch (neighbors[0], neighbors[1]) {
-		case (true, true): .river00
-		case (false, true): .river10
-		case (true, false): .river01
-		case (false, false): .river11
 		}
 	}
 
@@ -334,7 +313,7 @@ extension Map<Terrain> {
 		var head = end
 		while true {
 			if !self[head].isBuilding {
-				self[head] = self[head].isRiver || self[head].isBridge ? .bridge01 : .roadNWSE
+				self[head] = self[head].isRiver || self[head].isBridge ? .bridgeWE : .roadX
 			}
 			if head == start { break }
 			let packed = prev[head]
