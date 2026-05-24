@@ -11,15 +11,19 @@ enum Terrain: UInt8, Hashable, Codable {
 extension Terrain {
 
 	var isBridgable: Bool {
+		elevationLevel == 0
+	}
+
+	var isSettlement: Bool {
 		switch self {
-		case .airfield, .city, .villageE, .villageN, .villageW, .villageS, .field, .forest: true
+		case .city, .airfield, .villageE, .villageN, .villageW, .villageS: true
 		default: false
 		}
 	}
 
-	var isBuilding: Bool {
+	var isVillage: Bool {
 		switch self {
-		case .city, .airfield, .villageE, .villageN, .villageW, .villageS: true
+		case .villageE, .villageN, .villageW, .villageS: true
 		default: false
 		}
 	}
@@ -32,7 +36,7 @@ extension Terrain {
 	}
 
 	var hasRoad: Bool {
-		isRoad || isBridge || isBuilding
+		isRoad || isBridge || isSettlement
 	}
 
 	var isBridge: Bool {

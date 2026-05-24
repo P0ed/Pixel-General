@@ -184,7 +184,7 @@ extension TacticalState {
 		guard player.prestige >= 0x300 else { return nil }
 
 		for xy in map.indices {
-			guard map[xy].isBuilding, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] < 0 else { continue }
 			let shop = shopUnits(at: xy)
 			guard !shop.isEmpty else { continue }
 
@@ -321,7 +321,7 @@ extension TacticalState {
 			let critical = u.hp <= 3 || (u.maxAmmo > 0 && u.ammo == 0)
 			if critical {
 				let havens: [XY] = map.indices.compactMap { [country] xy in
-					map[xy].isBuilding && control[xy] == country
+					map[xy].isSettlement && control[xy] == country
 					&& (map[xy] == .airfield) == u.isAir ? xy : nil
 				}
 				if let goal = havens.min(by: { a, b in

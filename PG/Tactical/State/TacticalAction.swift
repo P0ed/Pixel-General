@@ -32,7 +32,7 @@ extension TacticalState {
 		let u = units[id.index]
 		let p = position[id.index]
 		return map.indices.contains { xy in
-			map[xy].isBuilding
+			map[xy].isSettlement
 			&& control[xy] == u.country
 			&& (map[xy] == .airfield) == u.isAir
 			&& xy.manhattanDistance(to: p) <= 1
@@ -100,7 +100,7 @@ extension TacticalState {
 		var v = units.reduce(into: SetXY.empty) { v, i, u in
 			if u.country.team == country.team { v.formUnion(vision(for: i.uid)) }
 		}
-		for xy in map.indices where map[xy].isBuilding && control[xy].team == country.team {
+		for xy in map.indices where map[xy].isSettlement && control[xy].team == country.team {
 			v = v.union(xy.circle(3))
 		}
 		return v

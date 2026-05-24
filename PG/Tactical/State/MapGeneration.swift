@@ -103,7 +103,7 @@ extension Map<Terrain> {
 		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
 			contains(p)
 			&& !self[p].isRiver
-			&& !self[p].isBuilding
+			&& !self[p].isSettlement
 			&& self[p] != .water
 			&& self[p] != .mountain
 			&& !placed.contains { $0.stepDistance(to: p) < minSpacing }
@@ -312,7 +312,7 @@ extension Map<Terrain> {
 
 		var head = end
 		while true {
-			if !self[head].isBuilding {
+			if !self[head].isSettlement {
 				self[head] = self[head].isRiver || self[head].isBridge ? .bridgeWE : .roadX
 			}
 			if head == start { break }

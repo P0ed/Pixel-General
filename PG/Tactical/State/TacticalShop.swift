@@ -14,7 +14,7 @@ extension TacticalState {
 		let core = unitSlots[0] < 16
 		let aux = unitSlots[1] < 16
 
-		guard map[xy].isBuilding, control[xy] == country else { return [] }
+		guard map[xy].isSettlement, control[xy] == country else { return [] }
 		let isAir = map[xy] == .airfield
 		return .make { units in
 			if core {

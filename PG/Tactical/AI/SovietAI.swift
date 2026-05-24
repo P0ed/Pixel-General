@@ -14,12 +14,12 @@ extension TacticalState {
 
 	private var target: XY? {
 		let ownCities: [XY] = map.indices.compactMap { [country] xy in
-			map[xy].isBuilding && control[xy] == country ? xy : nil
+			map[xy].isSettlement && control[xy] == country ? xy : nil
 		}
 		let cnt = XY(ownCities.count, ownCities.count)
 		let mid = ownCities.reduce(.zero as XY) { r, e in r + e / cnt }
 		return map.indices.compactMap { [country] xy in
-			map[xy].isBuilding && control[xy].team != country.team ? xy : nil
+			map[xy].isSettlement && control[xy].team != country.team ? xy : nil
 		}
 		.sorted { a, b in a.stepDistance(to: mid) < b.stepDistance(to: mid) }
 		.first
@@ -28,7 +28,7 @@ extension TacticalState {
 	private var nextPurchase: TacticalAction? {
 		guard player.prestige >= 0x200 else { return nil }
 		for xy in map.indices {
-			guard map[xy].isBuilding, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] < 0 else { continue }
 			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(),
 			   t.cost * 2 <= player.prestige {
 				return .purchase(i, xy)
@@ -64,7 +64,7 @@ extension TacticalState {
 		units.firstMap { [country] i, u in
 			guard u.country == country, needsReinforcements(i, u) else { return nil }
 			let havens: [XY] = map.indices.compactMap { xy in
-				map[xy].isBuilding && control[xy] == country
+				map[xy].isSettlement && control[xy] == country
 				&& (map[xy] == .airfield) == u.isAir ? xy : nil
 			}
 			return havens.min { a, b in

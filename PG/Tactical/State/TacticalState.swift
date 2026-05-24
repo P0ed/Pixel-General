@@ -40,6 +40,11 @@ extension TacticalState {
 			)
 		}
 		cities.forEach { xy, c in control[xy] = c }
+		for xy in self.map.indices where self.map[xy].isVillage {
+			control[xy] = cities.min { a, b in
+				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
+			}.map { $0.1 } ?? .default
+		}
 		assignControl()
 
 		let size = self.map.size
@@ -122,22 +127,22 @@ extension TacticalState {
 extension TacticalState {
 
 	mutating func assignControl() {
-		var cityXYs: [XY] = []
-		var cityOwners: [Country] = []
-		for xy in map.indices where map[xy] == .city {
-			cityXYs.append(xy)
-			cityOwners.append(control[xy])
+		var anchors: [XY] = []
+		var owners: [Country] = []
+		for xy in map.indices where map[xy].isSettlement {
+			anchors.append(xy)
+			owners.append(control[xy])
 		}
-		guard !cityXYs.isEmpty else { return }
+		guard !anchors.isEmpty else { return }
 
-		for xy in map.indices where map[xy] != .city {
+		for xy in map.indices where !map[xy].isSettlement {
 			var best = 0
-			var bestD = xy.manhattanDistance(to: cityXYs[0])
-			for k in 1 ..< cityXYs.count {
-				let d = xy.manhattanDistance(to: cityXYs[k])
+			var bestD = xy.manhattanDistance(to: anchors[0])
+			for k in 1 ..< anchors.count {
+				let d = xy.manhattanDistance(to: anchors[k])
 				if d < bestD { bestD = d; best = k }
 			}
-			control[xy] = cityOwners[best]
+			control[xy] = owners[best]
 		}
 	}
 }

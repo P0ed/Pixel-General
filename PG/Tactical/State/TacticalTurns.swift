@@ -52,7 +52,7 @@ extension TacticalState {
 		var reflag = false
 		units.forEach { i, u in
 			let xy = position[i]
-			if map[xy] == .city, control[xy].team != u.country.team, !u.isAir {
+			if map[xy].isSettlement, control[xy].team != u.country.team, !u.isAir {
 				control[xy] = u.country
 				reflag = true
 			}
@@ -64,11 +64,11 @@ extension TacticalState {
 	}
 
 	private mutating func eliminatePlayers() {
-		let alive = players.map { i, p in p.alive && countryHasCities(p.country) }
+		let alive = players.map { i, p in p.alive && countryHasSettlements(p.country) }
 		players.modifyEach { i, player in player.alive = alive[i] }
 	}
 
-	private func countryHasCities(_ country: Country) -> Bool {
-		map.indices.contains { xy in map[xy] == .city && control[xy] == country }
+	private func countryHasSettlements(_ country: Country) -> Bool {
+		map.indices.contains { xy in map[xy].isSettlement && control[xy] == country }
 	}
 }

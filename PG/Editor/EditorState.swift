@@ -105,8 +105,8 @@ private extension EditorState {
 		let prev = map[xy]
 		map[xy] = terrain
 
-		let touchesWater = terrain.affectsWaterShape || prev.affectsWaterShape
-		let touchesRoad = terrain.affectsRoadShape || prev.affectsRoadShape
+		let touchesWater = terrain.isRiver || prev.isRiver
+		let touchesRoad = terrain.hasRoad || prev.hasRoad
 
 		if touchesWater || touchesRoad {
 			map.shapeRoads()
@@ -172,9 +172,6 @@ extension Terrain {
 		.mountain, .water, .city,
 		.airfield, .roadWE, .bridgeWE
 	]
-
-	var affectsWaterShape: Bool { isRiver || isBridge || self == .water }
-	var affectsRoadShape: Bool { isRoad || isBridge || isBuilding }
 
 	var code: Character {
 		switch self {

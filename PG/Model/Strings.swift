@@ -51,7 +51,7 @@ extension TacticalState {
 				text: units[selectedUnit.index].status,
 				action: .init(units[selectedUnit.index].country.flag)
 			)
-		} else if map[cursor].isBuilding {
+		} else if map[cursor].isSettlement {
 			Status(
 				text: "\(cursor) \(map[cursor])",
 				action: .init(control[cursor].flag)
