@@ -6,7 +6,7 @@ enum Input: Equatable {
 	case direction(Direction?)
 	case target(Target?)
 	case action(Action?)
-	case menu
+	case menu, mode
 	case tile(XY)
 	case scale(Int)
 	case pan(XY)

@@ -62,6 +62,7 @@ extension Input {
 		case "z": self = .scale(1)
 		case "x": self = .scale(2)
 		case "c": self = .scale(4)
+		case "§": self = .mode
 		default: return nil
 		}
 		}
