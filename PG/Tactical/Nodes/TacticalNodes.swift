@@ -133,7 +133,7 @@ extension TacticalNodes {
 		}
 	}
 
-	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup? {
+	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup {
 		switch state.mapMode {
 		case .terrain:
 			return state.map[xy].tileGroup(fog: fog)

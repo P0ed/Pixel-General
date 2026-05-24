@@ -22,7 +22,9 @@ extension TacticalState {
 		position[unit.index] = tp
 		unitsMap[p] = -1
 		events.add(.move(unit, tp))
-		selectUnit(transport)
+		if player.type == .human {
+			selectUnit(transport)
+		}
 	}
 
 	func canDisembark(unit: UID, to xy: XY) -> Bool {
