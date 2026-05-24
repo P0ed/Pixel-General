@@ -31,12 +31,12 @@ extension TacticalState {
 	func hasBuildings(near id: UID) -> Bool {
 		let u = units[id.index]
 		let p = position[id.index]
-		return buildings.firstMap { _, b in
-			b.country == u.country
-			&& (b.type == .airfield) == u.isAir
-			&& b.position.manhattanDistance(to: p) <= 1
-			? b : nil
-		} != nil
+		return map.indices.contains { xy in
+			map[xy].isBuilding
+			&& control[xy] == u.country
+			&& (map[xy] == .airfield) == u.isAir
+			&& xy.manhattanDistance(to: p) <= 1
+		}
 	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false) {
@@ -97,12 +97,13 @@ extension TacticalState {
 	}
 
 	func vision(for country: Country) -> SetXY {
-		units.reduce(into: SetXY.empty) { v, i, u in
+		var v = units.reduce(into: SetXY.empty) { v, i, u in
 			if u.country.team == country.team { v.formUnion(vision(for: i.uid)) }
 		}
-		.union(buildings.flatMap { _, building in
-			building.country.team == country.team ? building.position.circle(3) : []
-		})
+		for xy in map.indices where map[xy].isBuilding && control[xy].team == country.team {
+			v = v.union(xy.circle(3))
+		}
+		return v
 	}
 
 	mutating func selectUnit(_ uid: UID?) {

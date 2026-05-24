@@ -48,7 +48,7 @@ private extension TacticalState {
 				}
 			} else if unit.country == country, unit.canMove, self[country].type == .human {
 				return .move(selectedUnit, cursor)
-			} else if buildings[cursor]?.country == country, self[country].type == .human {
+			} else if map[cursor].isBuilding, control[cursor] == country, player.type == .human {
 				events.add(.shop)
 			} else {
 				selectUnit(.none)
@@ -56,7 +56,7 @@ private extension TacticalState {
 		} else {
 			if player.visible[cursor], unitAt(cursor) != nil {
 				selectUnit(unitsMap[cursor])
-			} else if buildings[cursor]?.country == country, self[country].type == .human {
+			} else if map[cursor].isBuilding, control[cursor] == country, player.type == .human {
 				events.add(.shop)
 			}
 		}

@@ -2,7 +2,7 @@ struct TacticalState: ~Copyable {
 	var map: Map<Terrain>
 	var players: CArray<4, Player>
 	var auxilia: [4 of CArray<16, Unit>]
-	var buildings: CArray<32, Building>
+	var control: Map<Country>
 	var units: Speicher<128, Unit>
 	var position: [128 of XY]
 	var cargo: [128 of UID]
@@ -20,30 +20,31 @@ struct TacticalState: ~Copyable {
 
 extension TacticalState {
 
-	init(map: consuming Map<Terrain>, players: [Player], buildings: [Building], units: [Unit]) {
+	init(map: consuming Map<Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
-		self.buildings = .init(head: buildings, tail: .empty)
 		self.units = .init(head: units, tail: .empty)
 		self.position = .init(repeating: .zero)
 		cargo = .init(repeating: -1)
 		unitsMap = .init(size: self.map.size, zero: -1)
+		control = .init(size: self.map.size, zero: .default)
 		auxilia = .init { i in
 			CArray(
 				head: i < players.count ? .aux(country: players[i].country) : [],
 				tail: .empty
 			)
 		}
+		cities.forEach { xy, c in control[xy] = c }
+		assignControl()
+
 		let size = self.map.size
 		let placements = [4 of CArray<1024, XY>].init { i in
 			guard i < players.count else { return .init(tail: .zero) }
 
-			let cities = buildings
-				.filter {
-					i < players.count && $0.country == players[i].country && $0.type == .city
-				}
-				.map { $0.position }
-			let disks = (cities.isEmpty ? [.zero] : cities).map { $0.circle(9) }
+			let cityXYs = cities
+				.filter { _, c in c == players[i].country }
+				.map { xy, _ in xy }
+			let disks = (cityXYs.isEmpty ? [.zero] : cityXYs).map { $0.circle(9) }
 			var out = CArray<1024, XY>(tail: .zero)
 			var cursors = [Int](repeating: 0, count: disks.count)
 			var progressed = true
@@ -58,7 +59,7 @@ extension TacticalState {
 			return out
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
-		
+
 		self.units.forEach { i, u in
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { return }
@@ -78,13 +79,6 @@ extension TacticalState {
 			position[i] = candidates[k]
 			allocatedUnits[player] = k + 1
 			unitsMap[position[i]] = i.uid
-		}
-
-		buildings.forEach { b in
-			switch b.type {
-			case .city: self.map[b.position] = .city
-			case .airfield: self.map[b.position] = .airfield
-			}
 		}
 
 		let v = self.players.map { i, p in vision(for: p.country) }
@@ -120,27 +114,26 @@ extension TacticalState {
 	}
 }
 
-struct Building: Hashable {
-	var country: Country
-	var position: XY
-	var type: BuildingType
-}
+extension TacticalState {
 
-enum BuildingType: UInt8, Hashable {
-	case city, airfield
-}
+	mutating func assignControl() {
+		var cityXYs: [XY] = []
+		var cityOwners: [Country] = []
+		for xy in map.indices where map[xy] == .city {
+			cityXYs.append(xy)
+			cityOwners.append(control[xy])
+		}
+		guard !cityXYs.isEmpty else { return }
 
-extension Building {
-
-	static var empty: Building {
-		Building(country: .default, position: .zero, type: .city)
-	}
-}
-
-extension CArray where Element == Building {
-
-	subscript(_ xy: XY) -> Building? {
-		firstMap { _, b in b.position == xy ? b : nil }
+		for xy in map.indices where map[xy] != .city {
+			var best = 0
+			var bestD = xy.manhattanDistance(to: cityXYs[0])
+			for k in 1 ..< cityXYs.count {
+				let d = xy.manhattanDistance(to: cityXYs[k])
+				if d < bestD { bestD = d; best = k }
+			}
+			control[xy] = cityOwners[best]
+		}
 	}
 }
 
@@ -168,12 +161,14 @@ extension TacticalState {
 	}
 }
 
-extension Building {
+extension Terrain {
 
 	var income: UInt16 {
-		switch type {
-		case .city: 0x12
-		case .airfield: 0x06
+		switch self {
+		case .city: 0xE
+		case .villageE, .villageN, .villageS, .villageW: 0xA
+		case .airfield: 0x6
+		default: 0
 		}
 	}
 }

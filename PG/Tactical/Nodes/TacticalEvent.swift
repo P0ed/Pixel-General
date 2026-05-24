@@ -89,8 +89,8 @@ private extension TacticalNodes {
 	}
 
 	func processShop(_ state: borrowing TacticalState) {
-		guard let building = state.buildings[state.cursor],
-			  building.country == state.country,
+		guard state.map[state.cursor].isBuilding,
+			  state.control[state.cursor] == state.country,
 			  state.unitAt(state.cursor) == nil
 		else { return }
 

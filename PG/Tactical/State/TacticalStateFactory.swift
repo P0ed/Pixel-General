@@ -8,7 +8,7 @@ extension TacticalState {
 	) -> TacticalState {
 		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
 		let map = Map<Terrain>(size: size, seed: seed)
-		let buildings: [Building] = buildings(
+		let cities: [(XY, Country)] = cities(
 			countries: players.map { p in p.country },
 			map: map
 		)
@@ -30,39 +30,29 @@ extension TacticalState {
 		return TacticalState(
 			map: map,
 			players: players,
-			buildings: buildings,
+			cities: cities,
 			units: units
 		)
 	}
 
-	private static func buildings(countries: [Country], map: borrowing Map<Terrain>) -> [Building] {
-		let cities: [Building] = map.indices.compactMap { xy in
-			map[xy] == .city ? Building(country: .default, position: xy, type: .city) : nil
+	private static func cities(countries: [Country], map: borrowing Map<Terrain>) -> [(XY, Country)] {
+		let cityXYs: [XY] = map.indices.compactMap { xy in
+			map[xy] == .city ? xy : nil
 		}
-		let airfields: [Building] = map.indices.compactMap { xy in
-			map[xy] == .airfield ? Building(country: .default, position: xy, type: .airfield) : nil
-		}
-		var buildings: [Building] = cities.enumerated().map { [cities = cities.count] i, b in
-			modifying(b) { b in
-				b.country = switch countries.count {
-				case 4: i < cities * 1 / 4 ? countries[0]
-					: i < cities * 2 / 4 ? countries[1]
-					: i < cities * 3 / 4 ? countries[2]
-					: countries[3]
-				case 3: i < cities * 1 / 3 ? countries[0]
-					: i < cities * 2 / 3 ? countries[1]
-					: countries[2]
-				case 2: i < cities * 1 / 2 ? countries[0] : countries[1]
-				default: fatalError()
-				}
+		let n = cityXYs.count
+		return cityXYs.enumerated().map { i, xy in
+			let c: Country = switch countries.count {
+			case 4: i < n * 1 / 4 ? countries[0]
+				: i < n * 2 / 4 ? countries[1]
+				: i < n * 3 / 4 ? countries[2]
+				: countries[3]
+			case 3: i < n * 1 / 3 ? countries[0]
+				: i < n * 2 / 3 ? countries[1]
+				: countries[2]
+			case 2: i < n * 1 / 2 ? countries[0] : countries[1]
+			default: fatalError()
 			}
+			return (xy, c)
 		}
-		buildings += airfields.map { b in
-			modifying(b) { b in
-				b.country = buildings.first { c in (c.position - b.position).manhattan == 1 }
-					.map { c in c.country } ?? .swe
-			}
-		}
-		return buildings
 	}
 }

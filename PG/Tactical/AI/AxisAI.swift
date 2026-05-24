@@ -37,7 +37,7 @@ extension TacticalState {
 		let cityCount = min(8, cities.count)
 
 		for c in 0 ..< cityCount {
-			let cityPos = cities[c].position
+			let cityPos = cities[c]
 			let base = c * 4
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
@@ -115,35 +115,35 @@ extension TacticalState {
 		let cities = ownCities
 		for k in 0 ..< 32 where ai.defenders[k] == uid {
 			let idx = k / 4
-			if idx < cities.count { return cities[idx].position }
+			if idx < cities.count { return cities[idx] }
 		}
 		return nil
 	}
 
 	// MARK: - Objectives
 	private var enemyCities: [XY] {
-		buildings.compactMap { [country] _, b in
-			b.country.team != country.team && b.type == .city ? b.position : nil
+		map.indices.compactMap { [country] xy in
+			map[xy] == .city && control[xy].team != country.team ? xy : nil
 		}
 	}
 
-	private var ownCities: [Building] {
-		buildings.compactMap { [country] _, b in
-			b.country == country && b.type == .city ? b : nil
+	private var ownCities: [XY] {
+		map.indices.compactMap { [country] xy in
+			map[xy] == .city && control[xy] == country ? xy : nil
 		}
 	}
 
-	private var ownAirfields: [Building] {
-		buildings.compactMap { [country] _, b in
-			b.country == country && b.type == .airfield ? b : nil
+	private var ownAirfields: [XY] {
+		map.indices.compactMap { [country] xy in
+			map[xy] == .airfield && control[xy] == country ? xy : nil
 		}
 	}
 
 	private func hasAirfield(_ xy: XY) -> Bool {
-		buildings.firstMap { [country] _, b in
-			b.country == country && b.type == .airfield
-			&& b.position.manhattanDistance(to: xy) <= 1 ? true : nil
-		} ?? false
+		map.indices.contains { [country] p in
+			map[p] == .airfield && control[p] == country
+			&& p.manhattanDistance(to: xy) <= 1
+		}
 	}
 
 	private var enemyHasAir: Bool {
@@ -158,9 +158,9 @@ extension TacticalState {
 
 		if u.isAir, u.ammo == 0 || u.hp < 8 {
 			if let af = ownAirfields.min(by: { a, b in
-				a.position.stepDistance(to: p) < b.position.stepDistance(to: p)
+				a.stepDistance(to: p) < b.stepDistance(to: p)
 			}) {
-				return af.position
+				return af
 			}
 		}
 
@@ -183,18 +183,19 @@ extension TacticalState {
 	private var purchase: TacticalAction? {
 		guard player.prestige >= 0x300 else { return nil }
 
-		return buildings.firstMap { [country] _, b in
-			guard b.country == country, unitsMap[b.position] < 0 else { return nil }
-			let shop = shopUnits(at: b.position)
-			guard !shop.isEmpty else { return nil }
+		for xy in map.indices {
+			guard map[xy].isBuilding, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			let shop = shopUnits(at: xy)
+			guard !shop.isEmpty else { continue }
 
 			let pick = shop.enumerated().compactMap { i, t -> (Int, Int)? in
 				guard t.cost <= player.prestige * 2 / 3 else { return nil }
 				return (i, score(t))
 			}.max(by: { a, b in a.1 < b.1 })
 
-			return pick.map { i, _ in .purchase(i, b.position) }
+			if let pick { return .purchase(pick.0, xy) }
 		}
+		return nil
 	}
 
 	private func score(_ u: Unit) -> Int {
@@ -319,8 +320,9 @@ extension TacticalState {
 
 			let critical = u.hp <= 3 || (u.maxAmmo > 0 && u.ammo == 0)
 			if critical {
-				let havens: [XY] = buildings.compactMap { [country] _, b in
-					b.country == country && (b.type == .airfield) == u.isAir ? b.position : nil
+				let havens: [XY] = map.indices.compactMap { [country] xy in
+					map[xy].isBuilding && control[xy] == country
+					&& (map[xy] == .airfield) == u.isAir ? xy : nil
 				}
 				if let goal = havens.min(by: { a, b in
 					a.stepDistance(to: position[uid.index]) < b.stepDistance(to: position[uid.index])
@@ -375,16 +377,16 @@ extension TacticalState {
 					if nu[.supply] { support += 4 }
 				}
 			}
-			if let b = buildings[n], b.country.team == team, b.type == .airfield, u.isAir {
+			if map[n] == .airfield, control[n].team == team, u.isAir {
 				support += 4
 			}
 		}
 		score += attackBonus + support
 
-		if u.isAir, let b = buildings[xy], b.country.team == team, b.type == .airfield {
+		if u.isAir, map[xy] == .airfield, control[xy].team == team {
 			score += 6
 		}
-		if !u.isAir, let b = buildings[xy], b.country.team != team, b.type == .city {
+		if !u.isAir, map[xy] == .city, control[xy].team != team {
 			score += 50
 		}
 

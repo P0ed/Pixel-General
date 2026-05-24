@@ -14,18 +14,17 @@ extension TacticalState {
 		let core = unitSlots[0] < 16
 		let aux = unitSlots[1] < 16
 
-		return buildings[xy].map { b in
-			.make { units in
-				let isAir = b.type == .airfield
-				if core {
-					units += .shop(country: country, filterAir: isAir)
-				}
-				if aux {
-					units += auxilia[playerIndex]
-						.compactMap { i, u in u.isAir == isAir ? u : nil }
-				}
+		guard map[xy].isBuilding, control[xy] == country else { return [] }
+		let isAir = map[xy] == .airfield
+		return .make { units in
+			if core {
+				units += .shop(country: country, filterAir: isAir)
 			}
-		} ?? []
+			if aux {
+				units += auxilia[playerIndex]
+					.compactMap { i, u in u.isAir == isAir ? u : nil }
+			}
+		}
 	}
 
 	mutating func buy(_ idx: Int, at pos: XY) {

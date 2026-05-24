@@ -13,25 +13,28 @@ extension TacticalState {
 	}
 
 	private var target: XY? {
-		let ownCities = buildings.compactMap { [country] _, b in
-			b.country == country ? b : nil
+		let ownCities: [XY] = map.indices.compactMap { [country] xy in
+			map[xy].isBuilding && control[xy] == country ? xy : nil
 		}
 		let cnt = XY(ownCities.count, ownCities.count)
-		let mid = ownCities.reduce(.zero as XY) { r, e in r + e.position / cnt }
-		return buildings.compactMap { [country] _, b in
-			b.country.team != country.team ? b.position : nil
+		let mid = ownCities.reduce(.zero as XY) { r, e in r + e / cnt }
+		return map.indices.compactMap { [country] xy in
+			map[xy].isBuilding && control[xy].team != country.team ? xy : nil
 		}
 		.sorted { a, b in a.stepDistance(to: mid) < b.stepDistance(to: mid) }
 		.first
 	}
 
 	private var nextPurchase: TacticalAction? {
-		player.prestige < 0x200 ? .none : buildings.firstMap { [country] _, b in
-			b.country == country && unitsMap[b.position] < 0
-			? shopUnits(at: b.position).enumerated().randomElement()
-				.flatMap { i, t in t.cost * 2 <= player.prestige ? .purchase(i, b.position) : nil }
-			: nil
+		guard player.prestige >= 0x200 else { return nil }
+		for xy in map.indices {
+			guard map[xy].isBuilding, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(),
+			   t.cost * 2 <= player.prestige {
+				return .purchase(i, xy)
+			}
 		}
+		return nil
 	}
 
 	private func needsReinforcements(_ idx: Int, _ unit: Unit) -> Bool {
@@ -59,17 +62,16 @@ extension TacticalState {
 
 	private var nextRetreat: TacticalAction? {
 		units.firstMap { [country] i, u in
-			(
-				u.country == country && needsReinforcements(i, u)
-			)
-			? buildings.compactMap {
-				$1.country == country && ($1.type == .airfield) == u.isAir ? $1 : nil
-			}.min { a, b in
-				a.position.stepDistance(to: position[i]) < b.position.stepDistance(to: position[i])
-			}.flatMap { b in
-				move(id: i.uid, to: b.position)
+			guard u.country == country, needsReinforcements(i, u) else { return nil }
+			let havens: [XY] = map.indices.compactMap { xy in
+				map[xy].isBuilding && control[xy] == country
+				&& (map[xy] == .airfield) == u.isAir ? xy : nil
 			}
-			: nil
+			return havens.min { a, b in
+				a.stepDistance(to: position[i]) < b.stepDistance(to: position[i])
+			}.flatMap { xy in
+				move(id: i.uid, to: xy)
+			}
 		}
 	}
 

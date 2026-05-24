@@ -27,7 +27,9 @@ struct TacticalTests {
 		#expect(state.map.size == 32)
 		#expect(state.players.count == 4)
 		#expect(state.units.count > 0, "No units placed")
-		#expect(state.buildings.count > 0, "No buildings placed")
+		var cityCount = 0
+		for xy in state.map.indices where state.map[xy] == .city { cityCount += 1 }
+		#expect(cityCount > 0, "No cities placed")
 		#expect(state.turn == 0)
 
 		// Every alive unit must occupy a unique tile and the unitsMap must
@@ -49,19 +51,17 @@ struct TacticalTests {
 		#expect(collisions.isEmpty, "Tile collisions: \(collisions)")
 		#expect(unitsMapMismatches.isEmpty, "unitsMap mismatches at: \(unitsMapMismatches)")
 
-		// Every building's country is one of the players or .swe (default
-		// for unaligned airfields), and lies within the map.
+		// Every city is controlled by one of the players (or default for the
+		// degenerate empty-map case).
 		let playerCountries = Set(players.map { $0.country })
-		var buildingsOutOfMap: [XY] = []
-		var buildingsBadCountry: [Country] = []
-		state.buildings.forEach { _, b in
-			if !state.map.contains(b.position) { buildingsOutOfMap.append(b.position) }
-			if !playerCountries.contains(b.country), b.country != .swe {
-				buildingsBadCountry.append(b.country)
+		var cityBadCountry: [Country] = []
+		for xy in state.map.indices where state.map[xy] == .city {
+			let c = state.control[xy]
+			if !playerCountries.contains(c), c != .swe {
+				cityBadCountry.append(c)
 			}
 		}
-		#expect(buildingsOutOfMap.isEmpty, "Buildings out of map: \(buildingsOutOfMap)")
-		#expect(buildingsBadCountry.isEmpty, "Buildings with unexpected country: \(buildingsBadCountry)")
+		#expect(cityBadCountry.isEmpty, "Cities with unexpected country: \(cityBadCountry)")
 	}
 
 	@Test func cursorMovementStaysInBounds() {
@@ -126,7 +126,7 @@ struct TacticalTests {
 
 		outer: while iterations < maxIterations {
 			var ai = TacticalState.AI(turn: 0)
-			let action = state.axisAI(ai: &ai)
+			let action = state.axis(ai: &ai)
 			_ = state.reduce(action)
 			iterations += 1
 			if action == .end {

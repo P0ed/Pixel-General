@@ -9,11 +9,11 @@ extension TacticalState {
 			Player(country: .swe),
 			Player(country: .isr),
 		]
-		let buildings: [Building] = [
-			Building(country: .irn, position: XY(4, 0), type: .city),
-			Building(country: .isr, position: XY(3, 7), type: .city),
+		let cityPlacements: [(XY, Country)] = [
+			(XY(4, 0), .irn),
+			(XY(3, 7), .isr),
 		]
-		buildings.indices.forEach { i in map[buildings[i].position] = .city }
+		cityPlacements.forEach { xy, _ in map[xy] = .city }
 
 		var units: [Unit] = []
 		+ [
@@ -51,14 +51,19 @@ extension TacticalState {
 			u.ammo = u.maxAmmo
 		}
 
+		var control = Map<Country>(size: 8, zero: .default)
+		cityPlacements.forEach { xy, c in control[xy] = c }
+		for xy in map.indices where map[xy] != .city {
+			control[xy] = cityPlacements.min { a, b in
+				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
+			}.map { $0.1 } ?? .default
+		}
+
 		var state = TacticalState(
 			map: map,
 			players: .init(head: [players[0], players[1]], tail: .none),
 			auxilia: .init { i in .init(tail: .empty) },
-			buildings: .init(
-				head: [buildings[0], buildings[1]],
-				tail: .empty
-			),
+			control: control,
 			units: .init(head: units, tail: .empty),
 			position: position,
 			cargo: .init(repeating: -1),

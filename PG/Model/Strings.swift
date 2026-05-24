@@ -51,10 +51,10 @@ extension TacticalState {
 				text: units[selectedUnit.index].status,
 				action: .init(units[selectedUnit.index].country.flag)
 			)
-		} else if let building = buildings[cursor] {
+		} else if map[cursor].isBuilding {
 			Status(
-				text: "\(cursor) \(building.type)",
-				action: .init(building.country.flag)
+				text: "\(cursor) \(map[cursor])",
+				action: .init(control[cursor].flag)
 			)
 		} else {
 			Status(text: "\(cursor) \(map[cursor])", action: .init("day \(day)"))

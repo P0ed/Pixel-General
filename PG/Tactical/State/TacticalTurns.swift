@@ -33,8 +33,8 @@ extension TacticalState {
 	}
 
 	private func income(for country: Country) -> UInt16 {
-		buildings.reduce(into: 0) { r, _, b in
-			r += b.country == country ? b.income : 0
+		map.indices.reduce(into: 0) { r, xy in
+			r += control[xy] == country ? map[xy].income : 0
 		}
 	}
 
@@ -49,18 +49,16 @@ extension TacticalState {
 	}
 
 	private mutating func captureCities() {
-		let reflag = units.reduce(into: false) { reflag, i, u in
-
-			let idx = buildings.firstMap { j, b in
-				b.position == position[i] ? j : nil
-			}
-
-			if let idx, buildings[idx].country.team != u.country.team, !u.isAir {
-				buildings[idx].country = u.country
+		var reflag = false
+		units.forEach { i, u in
+			let xy = position[i]
+			if map[xy] == .city, control[xy].team != u.country.team, !u.isAir {
+				control[xy] = u.country
 				reflag = true
 			}
 		}
 		if reflag {
+			assignControl()
 			eliminatePlayers()
 		}
 	}
@@ -71,8 +69,6 @@ extension TacticalState {
 	}
 
 	private func countryHasCities(_ country: Country) -> Bool {
-		buildings.firstMap { _, b in
-			b.type == .city && b.country == country ? true : nil
-		} ?? false
+		map.indices.contains { xy in map[xy] == .city && control[xy] == country }
 	}
 }
