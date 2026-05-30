@@ -4,9 +4,9 @@ extension XY: CustomStringConvertible {
 
 extension Unit {
 
-	var status: String {
+	func status(cargo: Bool = false) -> String {
 		.make { status in
-			status += "\(self[.aux] ? "☆" : "★") \(typeDescription)"
+			status += "\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")"
 			status.pad(to: 12)
 			status += "\(apString)  "
 			status += .makeStatus(pad: 7) { add in
@@ -46,10 +46,10 @@ extension TacticalState {
 	var status: Status {
 		if player.type != .human {
 			Status(text: "\(player.country) turn")
-		} else if let selectedUnit {
+		} else if selectedUnit != .none {
 			Status(
-				text: units[selectedUnit.index].status,
-				action: .init(units[selectedUnit.index].country.flag)
+				text: units[selectedUnit].status(cargo: cargo[selectedUnit] != .none),
+				action: .init(units[selectedUnit].country.flag)
 			)
 		} else if map[cursor].isSettlement {
 			Status(
@@ -121,7 +121,11 @@ extension Unit {
 			if self[.aa] {
 				"Lvkv 90"
 			} else if self[.art] {
-				"PzH 2000"
+				switch country.team {
+				case .axis: "PzH 2000"
+				case .allies: "M270"
+				case .soviet: "2С3"
+				}
 			} else {
 				switch country.team {
 				case .axis: "Strf 90"

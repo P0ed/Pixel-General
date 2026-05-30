@@ -40,8 +40,7 @@ struct TacticalTests {
 		var outOfMapPositions: [XY] = []
 		var collisions: [XY] = []
 		var unitsMapMismatches: [XY] = []
-		state.units.forEach { i, u in
-			guard u.alive else { return }
+		state.units.forEachAlive { i, u in
 			let p = state.position[i]
 			if !state.map.contains(p) { outOfMapPositions.append(p) }
 			if !seen.insert(p).inserted { collisions.append(p) }
@@ -94,7 +93,7 @@ struct TacticalTests {
 			seed: Self.goodSeed
 		)
 		// Ensure player 0's vision covers their own units (init does this).
-		let ownUnitPos = state.units.firstMap { i, u in
+		let ownUnitPos = state.units.firstMapAlive { i, u in
 			u.country == state.country && u.canMove ? state.position[i] : nil
 		}
 		guard let ownUnitPos else {
@@ -160,7 +159,7 @@ struct TacticalTests {
 			seed: Self.goodSeed
 		)
 
-		let pick = state.units.firstMap { i, u in
+		let pick = state.units.firstMapAlive { i, u in
 			u.country == state.country && u.canMove ? i.uid : nil
 		}
 		guard let uid = pick else {
@@ -169,7 +168,7 @@ struct TacticalTests {
 		}
 		let moves = state.moves(for: uid)
 		#expect(
-			moves.moves[state.position[uid.index]] > 0,
+			moves.moves[state.position[uid]] > 0,
 			"Movable unit's own tile must be reachable"
 		)
 	}

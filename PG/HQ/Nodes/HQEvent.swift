@@ -38,7 +38,7 @@ extension HQNodes {
 			items: [Unit].shop(country: state.country).enumerated().map { i, u in
 				.close(
 					icon: u.imageName,
-					status: .init(text: u.status, action: .init("\(u.cost) / \(state.player.prestige)")),
+					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.player.prestige)")),
 					action: .purchase(i, state.cursor.x + state.cursor.y * 4)
 				)
 			}

@@ -29,9 +29,9 @@ extension HQState {
 	mutating func mainAction() -> HQAction? {
 		if let selected {
 			if selected == units[cursor]?.0 {
-				self.selected = .none
+				self.selected = nil
 			} else {
-				self.selected = .none
+				self.selected = nil
 				return .swap(selected.index, cursor.x + cursor.y * 4)
 			}
 		} else if let (i, _) = units[cursor] {
@@ -41,13 +41,13 @@ extension HQState {
 	}
 
 	mutating func secondaryAction() -> HQAction? {
-		selected = .none
+		selected = nil
 		return nil
 	}
 
 	mutating func shopAction() -> HQAction? {
 		if let selected {
-			self.selected = .none
+			self.selected = nil
 			return .sell(selected.index)
 		} else if units[cursor] == nil {
 			events.add(.shop)

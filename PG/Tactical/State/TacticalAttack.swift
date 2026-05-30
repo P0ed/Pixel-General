@@ -1,19 +1,19 @@
 extension TacticalState {
 
 	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
-		let su = units[src.index]
-		let du = units[dst.index]
-		let sp = position[src.index]
-		let dp = position[dst.index]
+		let su = units[src]
+		let du = units[dst]
+		let sp = position[src]
+		let dp = position[dst]
 		return sp.stepDistance(to: dp) <= su.rng * 2 + 1
 			&& su.atk(du) > 0
 			&& (su.isAir ? su.ammo > 0 : true)
 	}
 
 	func support(trait: Traits, defender: UID, attacker: UID) -> UID? {
-		position[defender.index].n8.firstMap { hx in
+		position[defender].n8.firstMap { hx in
 			return unitAt(hx).flatMap { u in
-				u.country.team == units[defender.index].country.team && u[trait]
+				u.country.team == units[defender].country.team && u[trait]
 				? unitsMap[hx] : nil
 			}
 		}
@@ -21,28 +21,28 @@ extension TacticalState {
 
 	func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
 		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
-			units[$0.index].country == country && units[$0.index][skills]
+			units[$0].country == country && units[$0][skills]
 		}
 	}
 
 	mutating func fire(src: UID, dst: UID, defMod: Int8) {
-		let (si, di) = (src.index, dst.index)
-		let maxAM: Int8 = units[si].fullAmmo ? 1 : 0
-		let aLR: Int8 = aura(.leadership, country: units[si].country, at: position[si]) ? 1 : 0
-		let aRC: Int8 = aura(.recon, country: units[si].country, at: position[si]) ? 1 : 0
-		let dLR: Int8 = aura(.leadership, country: units[di].country, at: position[di]) ? 1 : 0
-		let dRC: Int8 = aura(.recon, country: units[di].country, at: position[di]) ? 1 : 0
-		let atk = Int8(units[si].atk(units[di]) + units[si].lvl) + maxAM + aRC + aLR
-		let def = Int8(units[di].def(units[si]) + units[di].lvl) + defMod + dRC + dLR
+		var (source, destination) = (units[src], units[dst])
+		let maxAM: Int8 = source.fullAmmo ? 1 : 0
+		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src]) ? 1 : 0
+		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
+		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
+		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
+		let atk = Int8(source.atk(destination) + source.lvl) + maxAM + aRC + aLR
+		let def = Int8(destination.def(source) + destination.lvl) + defMod + dRC + dLR
 
 		let dif = atk - def
 		let t1 = max(0, 7 - dif)
 		let t2 = max(5, 15 - dif)
 		let t3 = max(10, 24 - dif)
-		let iniRound = units[si].ini > d20(.max(2)) ? 1 : 0 as UInt8
-		let rounds = (units[si].hp + 3) / 3 + iniRound
-		let crit = units[si][.crit]
-		let evasion = units[di][.evasion]
+		let iniRound = source.ini > d20(.max(2)) ? 1 : 0 as UInt8
+		let rounds = (source.hp + 3) / 3 + iniRound
+		let crit = source[.crit]
+		let evasion = destination[.evasion]
 
 		let ds = (0 ..< rounds).map { _ in d20() }
 		let dmgs = ds.map { d in
@@ -54,47 +54,44 @@ extension TacticalState {
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
 
 		///# Logs
-		let srcStr = units[si].shortDescription
-		let dstStr = units[di].shortDescription
+		let srcStr = source.shortDescription
+		let dstStr = destination.shortDescription
 		let dmgLine = "ts: \([t1, t2, t3]) ds: \(ds) dmg: \(dmg) \(dmgs)"
 		print("fire \(srcStr) -> \(dstStr)\natk: \(atk) def: \(def)\n\(dmgLine)")
 		///# Logs
 
-		units[si].ammo.decrement()
-		let alive = damage(id: dst, dmg: dmg)
-		units[si].exp.increment(by: UInt16(dmg) * units[di].cost / (alive ? 32 : 24))
-		if !alive {
-			units[si].kills.increment(by: 1)
-			units[si].promote(using: &d20)
-			self[units[si].country].prestige.increment(by: units[di].cost / 16)
-		}
+		source.ammo.decrement()
+		destination.hp.decrement(by: dmg)
 
-		events.add(.fire(src, dst, dmg, units[di].hp))
-	}
-
-	private mutating func damage(id: UID, dmg: UInt8) -> Bool {
-		units[id.index].hp.decrement(by: dmg)
-		let cargoId = cargo[id.index]
-		if cargoId != -1 {
-			units[cargoId.index].hp.decrement(by: dmg)
+		let cargoId = cargo[dst]
+		if cargoId != .none {
+			units[cargoId].hp.decrement(by: dmg)
 		}
-		let alive = units[id.index].alive
-		if !alive {
-			unitsMap[position[id.index]] = -1
-			if cargoId != -1 {
-				units[cargoId.index].hp = 0x0
+		if !destination.alive {
+			unitsMap[position[dst]] = .none
+			if cargoId != .none {
+				units[cargoId].hp = 0x0
 			}
 		}
-		if cargoId != -1, !units[cargoId.index].alive {
-			cargo[id.index] = -1
-			cargo[cargoId.index] = -1
+		if cargoId != .none, !units[cargoId].alive {
+			cargo[dst] = .none
+			cargo[cargoId] = .none
 			events.add(.update(cargoId))
 		}
-		return alive
+
+		source.exp.increment(by: UInt16(dmg) * destination.cost / (destination.alive ? 32 : 24))
+		if !destination.alive {
+			source.kills.increment(by: 1)
+			source.promote(using: &d20)
+			self[source.country].prestige.increment(by: destination.cost / 16)
+		}
+		units[src] = source
+		units[dst] = destination
+		events.add(.fire(src, dst, dmg, destination.hp))
 	}
 
 	private func encirclement(id: UID) -> Int8 {
-		let team = units[id.index].country.team
+		let team = units[id].country.team
 		let enemies = position[id.index].n4.reduce(into: 0 as Int8) { r, xy in
 			r += (unitAt(xy).map { u in u.country.team != team ? 1 : 0 } ?? 0)
 		}
@@ -162,25 +159,27 @@ extension TacticalState {
 	}
 
 	private mutating func retreat(unit id: UID, from xy: XY) {
-		let p = position[id.index]
+		let p = position[id]
 		let pos = moves(for: id).set.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
-		unitsMap[position[id.index]] = -1
+		unitsMap[position[id]] = .none
 		unitsMap[pos] = id
-		position[id.index] = pos
-		if cargo[id.index] != -1 {
-			position[cargo[id.index].index] = pos
+		position[id] = pos
+		if cargo[id] != .none {
+			position[cargo[id].index] = pos
 		}
-		units[id.index].ent = 0
-		events.add(.move(id, pos))
-		if cargo[id.index] != -1 {
-			events.add(.move(cargo[id.index], pos))
+		units[id].ent = 0
+		var path = CArray<16, XY>(head: p, tail: .zero)
+		path.add(pos)
+		events.add(.move(id, path))
+		if cargo[id.index] != .none {
+			events.add(.move(cargo[id], path))
 		}
 	}
 
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
-		let (a, d) = (units[attacker.index], units[defender.index])
+		let (a, d) = (units[attacker], units[defender])
 		let atk = Int8(a.atk(d) + a.lvl)
 		let def = Int8(d.def(a) + d.entDef + d.lvl)
 

@@ -28,7 +28,7 @@ extension TacticalState {
 	private var nextPurchase: TacticalAction? {
 		guard player.prestige >= 0x200 else { return nil }
 		for xy in map.indices {
-			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] == .none else { continue }
 			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(),
 			   t.cost * 2 <= player.prestige {
 				return .purchase(i, xy)
@@ -38,7 +38,7 @@ extension TacticalState {
 	}
 
 	private func needsReinforcements(_ idx: Int, _ unit: Unit) -> Bool {
-		(cargo[idx] == -1 || unit[.transport]) && (
+		(cargo[idx] == .none || unit[.transport]) && (
 			unit.hp < 6 || (
 				!unit[.supply] && unit.ammo < unit.maxAmmo / 2
 			)
@@ -46,7 +46,7 @@ extension TacticalState {
 	}
 
 	private var nextReinforce: TacticalAction? {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			(
 				u.country == country && needsReinforcements(i, u)
 				&& u.untouched && (!u.isAir || hasAirfield(position[i]))
@@ -61,7 +61,7 @@ extension TacticalState {
 	}
 
 	private var nextRetreat: TacticalAction? {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			guard u.country == country, needsReinforcements(i, u) else { return nil }
 			let havens: [XY] = map.indices.compactMap { xy in
 				map[xy].isSettlement && control[xy] == country
@@ -76,7 +76,7 @@ extension TacticalState {
 	}
 
 	private var nextAttack: TacticalAction? {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			u.country != country
 			? nil
 			: targets(id: i.uid)
@@ -98,7 +98,7 @@ extension TacticalState {
 	}
 
 	private func nextMove(target: XY) -> TacticalAction? {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			u.country != country ? nil : move(id: i.uid, to: target)
 		}
 	}
@@ -117,8 +117,8 @@ extension TacticalState {
 	}
 
 	private func targets(id: UID) -> [(UID, Unit)] {
-		let su = units[id.index]
-		return !su.canAttack ? [] : units.reduce(into: []) { r, i, du in
+		let su = units[id]
+		return !su.canAttack ? [] : units.reduceAlive(into: []) { r, i, du in
 			if du.country.team != su.country.team, isVisible(i.uid), unitCanHit(id, i.uid) {
 				r.append((i.uid, du))
 			}

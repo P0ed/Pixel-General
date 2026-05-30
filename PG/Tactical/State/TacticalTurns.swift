@@ -40,17 +40,17 @@ extension TacticalState {
 
 	func neighbors(at position: XY) -> CArray<8, UID> {
 		let n8 = position.n8
-		var result = CArray<8, UID>(tail: -1)
+		var result = CArray<8, UID>(tail: .none)
 		for i in n8.indices {
 			let uid = unitsMap[n8[i]]
-			if uid != -1 { result.add(uid) }
+			if uid != .none { result.add(uid) }
 		}
 		return result
 	}
 
 	private mutating func captureCities() {
 		var reflag = false
-		units.forEach { i, u in
+		units.forEachAlive { i, u in
 			let xy = position[i]
 			if map[xy].isSettlement, control[xy].team != u.country.team, !u.isAir {
 				control[xy] = u.country

@@ -3,11 +3,11 @@ extension TacticalState {
 	func shopUnits(at xy: XY) -> [Unit] {
 		let country = country
 		let enemyAdjacent = neighbors(at: xy).contains { id in
-			units[id.index].country.team != country.team
+			units[id].country.team != country.team
 		}
 		if enemyAdjacent { return [] }
 
-		let unitSlots = units.reduce(into: [0, 0] as [2 of Int]) { c, i, u in
+		let unitSlots = units.reduceAlive(into: [0, 0] as [2 of Int]) { c, i, u in
 			if u.country == country { c[u[.aux] ? 1 : 0] += 1 }
 		}
 
@@ -31,7 +31,7 @@ extension TacticalState {
 		let shop = shopUnits(at: pos)
 		guard idx < shop.count else { return }
 		let template = shop[idx]
-		guard player.prestige >= template.cost, unitsMap[pos] < 0 else { return }
+		guard player.prestige >= template.cost, unitsMap[pos] == .none else { return }
 
 		let unit = modifying(template) { u in
 			u.hp = u.maxHP
@@ -39,11 +39,11 @@ extension TacticalState {
 			u.ap = 0
 			u.ammo = u.maxAmmo
 		}
-		let idx = units.add(unit)
+		let idx = units.insert(unit)
 		let id = idx.uid
 		unitsMap[pos] = id
 		position[idx] = pos
-		cargo[idx] = -1
+		cargo[idx] = .none
 		player.prestige.decrement(by: unit.cost)
 		if unit[.aux] {
 			let idx = auxilia[playerIndex].firstMap { i, u in u == template ? i : nil }

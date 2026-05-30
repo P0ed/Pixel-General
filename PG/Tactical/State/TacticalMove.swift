@@ -2,16 +2,16 @@ extension TacticalState {
 
 	func uidAt(_ xy: XY) -> UID? {
 		let id = unitsMap[xy]
-		return id < 0 ? nil : id
+		return id == .none ? nil : id
 	}
 
 	func unitAt(_ xy: XY) -> Unit? {
-		uidAt(xy).map { uid in units[uid.index] }
+		uidAt(xy).map { uid in units[uid] }
 	}
 
 	func moves(for uid: UID, target: XY? = nil) -> Moves {
-		let unit = units[uid.index]
-		var mov = Moves(start: position[uid.index], size: map.size)
+		let unit = units[uid]
+		var mov = Moves(start: position[uid], size: map.size)
 		if !unit.canMove { return mov }
 
 		let team = unit.country.team
@@ -25,8 +25,8 @@ extension TacticalState {
 		}
 
 		let r = unit.mov
-		mov.moves[position[uid.index]] = r * 2 + 1
-		var front = CArray<1024, XY>(head: position[uid.index], tail: .zero)
+		mov.moves[position[uid]] = r * 2 + 1
+		var front = CArray<1024, XY>(head: position[uid], tail: .zero)
 		var next = CArray<1024, XY>(tail: .zero)
 
 		for _ in 0 ..< r where !front.isEmpty {
@@ -68,7 +68,7 @@ extension TacticalState {
 			next.erase()
 		}
 		if target == nil {
-			units.forEach { i, u in
+			units.forEachAlive { i, u in
 				if visible[position[i]] { mov.moves[position[i]] = 0 }
 			}
 		}
@@ -77,8 +77,8 @@ extension TacticalState {
 	}
 
 	mutating func move(unit uid: UID, to target: XY) {
-		guard units[uid.index].country == country, units[uid.index].canMove,
-			  cargo[uid.index] == -1 || units[uid.index][.transport]
+		guard units[uid].country == country, units[uid].canMove,
+			  cargo[uid] == .none || units[uid][.transport]
 		else { return }
 
 		let moves = moves(for: uid, target: target)
@@ -89,8 +89,8 @@ extension TacticalState {
 		var interruptor: UID?
 		for xy in route.reversed() {
 			if let tid = uidAt(xy) {
-				let u = units[tid.index]
-				if u.country.team != units[uid.index].country.team, !player.visible[position[tid.index]] {
+				let u = units[tid]
+				if u.country.team != units[uid].country.team, !player.visible[position[tid.index]] {
 					interruptor = unitsMap[xy]
 					break
 				}
@@ -99,33 +99,36 @@ extension TacticalState {
 			}
 		}
 		for xy in route.reversed() {
-			xy.circle(2 * Int(units[uid.index].spot)).forEach { xy in
-				player.visible[xy] = true
-			}
+			player.visible.formUnion(vision(at: xy, spot: units[uid].spot))
 			if xy == pos { break }
 		}
 
-		unitsMap[position[uid.index]] = -1
+		unitsMap[position[uid]] = .none
 		unitsMap[pos] = uid
-		position[uid.index] = pos
-		if cargo[uid.index] != -1 {
+		position[uid] = pos
+		if cargo[uid.index] != .none {
 			position[cargo[uid.index].index] = pos
 		}
-		units[uid.index].mp.decrement()
-		units[uid.index].ent = 0
-		if units[uid.index].type == .soft, units[uid.index][.art] {
-			units[uid.index].ap = 0
+		units[uid].mp.decrement()
+		units[uid].ent = 0
+		if units[uid].type == .soft, units[uid][.art] {
+			units[uid].ap = 0
 		}
 
 		if player.type == .human {
-			selectUnit(units[uid.index].hasActions ? uid : .none)
+			selectUnit(units[uid].hasActions ? uid : .none)
 		}
-		events.add(.move(uid, pos))
-		if cargo[uid.index] != -1 {
-			events.add(.move(cargo[uid.index], pos))
+		var path = CArray<16, XY>(head: moves.start, tail: .zero)
+		for xy in route.reversed() {
+			path.add(xy)
+			if xy == pos { break }
+		}
+		events.add(.move(uid, path))
+		if cargo[uid.index] != .none {
+			events.add(.move(cargo[uid.index], path))
 		}
 
-		if let interruptor, units[interruptor.index].country.team != units[uid.index].country.team {
+		if let interruptor, units[interruptor].country.team != units[uid].country.team {
 			attack(src: uid, dst: interruptor, surprise: true)
 		}
 	}
@@ -133,7 +136,7 @@ extension TacticalState {
 
 struct Moves: ~Copyable {
 	var start: XY
-	var moves: Map<UInt8>
+	var moves: Map<32, UInt8>
 
 	subscript(_ xy: XY) -> Bool { moves[xy] != 0 }
 

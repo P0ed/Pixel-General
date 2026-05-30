@@ -1,7 +1,7 @@
 extension TacticalState {
 
 	static func chess() -> TacticalState {
-		var map = Map<Terrain>(size: 8, zero: .field)
+		var map = Map<32, Terrain>(size: 8, zero: .field)
 		map.indices.forEach { xy in
 			map[xy] = (xy.x + xy.y) % 2 == 0 ? .field : .forest
 		}
@@ -42,7 +42,7 @@ extension TacticalState {
 			XY(i % 8, i < 16 ? i / 8 : 4 + i / 8)
 		}
 
-		var unitsMap = Map<UID>(size: 8, zero: -1)
+		var unitsMap = Map<32, UID>(size: 8, zero: .none)
 		units.enumerated().forEach { i, u in unitsMap[position[i]] = i.uid }
 		units.modifyEach { u in
 			u.hp = u.maxHP
@@ -51,7 +51,7 @@ extension TacticalState {
 			u.ammo = u.maxAmmo
 		}
 
-		var control = Map<Country>(size: 8, zero: .default)
+		var control = Map<32, Country>(size: 8, zero: .default)
 		cityPlacements.forEach { xy, c in control[xy] = c }
 		for xy in map.indices where map[xy] != .city {
 			control[xy] = cityPlacements.min { a, b in
@@ -61,13 +61,13 @@ extension TacticalState {
 
 		var state = TacticalState(
 			map: map,
+			control: control,
+			unitsMap: unitsMap,
 			players: .init(head: [players[0], players[1]], tail: .none),
 			auxilia: .init { i in .init(tail: .empty) },
-			control: control,
 			units: .init(head: units, tail: .empty),
 			position: position,
-			cargo: .init(repeating: -1),
-			unitsMap: unitsMap
+			cargo: .init(repeating: .none)
 		)
 		state.players[0].visible = state.vision(for: state.players[0].country)
 		state.players[1].visible = state.vision(for: state.players[1].country)

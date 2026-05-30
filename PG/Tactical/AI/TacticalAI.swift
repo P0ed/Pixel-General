@@ -2,8 +2,8 @@ extension TacticalState {
 	
 	struct AI {
 		var turn: UInt32
-		var defenders: [32 of UID] = .init(repeating: -1)
-		var attackers: [32 of UID] = .init(repeating: -1)
+		var defenders: [32 of UID] = .init(repeating: .none)
+		var attackers: [32 of UID] = .init(repeating: .none)
 	}
 
 	static var ai: (borrowing TacticalState) -> TacticalAction? {

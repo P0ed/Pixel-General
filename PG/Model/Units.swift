@@ -288,7 +288,7 @@ extension Unit {
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 9
-			stats.airAtk = 4
+			stats.airAtk = 3
 			stats.groundDef = 11
 			stats.airDef = 7
 		}
@@ -349,8 +349,8 @@ extension Unit {
 			stats.ini = 5
 			stats.softAtk = 11
 			stats.hardAtk = 7
-			stats.groundDef = 7
-			stats.airDef = 6
+			stats.groundDef = 6
+			stats.airDef = 5
 		}
 	}
 
@@ -359,12 +359,12 @@ extension Unit {
 			stats.type = .soft
 			stats[.art] = true
 			stats.mov = 1
-			stats.rng = 3
+			stats.rng = 2
 			stats.ini = 2
 			stats.softAtk = 9
 			stats.hardAtk = 5
-			stats.groundDef = 4
-			stats.airDef = 3
+			stats.groundDef = 5
+			stats.airDef = 4
 		}
 	}
 
@@ -405,8 +405,8 @@ extension Unit {
 			stats.ini = 5
 			stats.softAtk = 11
 			stats.hardAtk = 7
-			stats.groundDef = 7
-			stats.airDef = 6
+			stats.groundDef = 5
+			stats.airDef = 4
 		}
 	}
 
@@ -446,7 +446,7 @@ extension Unit {
 			stats.ini = 9
 			stats.softAtk = 10
 			stats.hardAtk = 9
-			stats.airAtk = 4
+			stats.airAtk = 3
 			stats.groundDef = 10
 			stats.airDef = 7
 		}
@@ -537,7 +537,7 @@ extension Unit {
 			stats.ini = 8
 			stats.softAtk = 8
 			stats.hardAtk = 7
-			stats.airAtk = 3
+			stats.airAtk = 2
 			stats.groundDef = 7
 			stats.airDef = 6
 		}

@@ -1,7 +1,7 @@
 import Foundation
 
 struct EditorState: ~Copyable {
-	var map: Map<Terrain>
+	var map: Map<32, Terrain>
 	var brush: Terrain = .field
 	var cursor: XY = .zero
 	var camera: XY = .zero

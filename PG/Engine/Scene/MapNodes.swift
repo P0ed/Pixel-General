@@ -35,7 +35,7 @@ extension MapNodes {
 		CGFloat(layer(at: xy))
 	}
 
-	func update(map: borrowing Map<Terrain>, cursor: XY, selected: XY?) {
+	func update<let size: Int>(map: borrowing Map<size, Terrain>, cursor: XY, selected: XY?) {
 		let cursorCG = map.point(at: cursor)
 		if self.cursor.position != cursorCG {
 			self.cursor.position = cursorCG
@@ -70,7 +70,7 @@ extension MapNodes {
 	}
 }
 
-extension Map<Terrain> {
+extension Map where Element == Terrain {
 
 	func point(at xy: XY) -> CGPoint {
 		xy.point + CGPoint(x: 0, y: self[xy].elevation)

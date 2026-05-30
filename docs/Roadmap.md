@@ -8,10 +8,10 @@
 Fix options:
 - Add a hard iteration cap; on overflow, retry with a different `(start, end)` pair or fall back to a Bresenham line carve.
 - Relax the `hasNoRivers(at:)` constraint once pressure exceeds a threshold.
-- Make the init failable: `Map<Terrain>(size:seed:) -> Map<Terrain>?` so callers can retry the seed.
+- Make the init failable: `Map<32, Terrain>(size:seed:) -> Map<32, Terrain>?` so callers can retry the seed.
 
 ### `placeCities` divides by zero for size < 16
-`Tactical/State/MapGeneration.swift:96` — `dw = (size - 8) / (div - 1) - 1` with `div = size / 8`. For `size < 16`, `div - 1 == 0`. Either guard with `precondition(size >= 16)` in `Map<Terrain>.init` or rewrite the layout math to handle small maps.
+`Tactical/State/MapGeneration.swift:96` — `dw = (size - 8) / (div - 1) - 1` with `div = size / 8`. For `size < 16`, `div - 1 == 0`. Either guard with `precondition(size >= 16)` in `Map<32, Terrain>.init` or rewrite the layout math to handle small maps.
 
 ### `connect()` has the same unbounded loop pattern
 `MapGeneration.swift:241` — same `while true` with no termination guarantee. Bound and return `false` on cap.

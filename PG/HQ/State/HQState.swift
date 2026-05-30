@@ -1,5 +1,5 @@
 struct HQState: ~Copyable {
-	var map = Map<Terrain>(size: 4, zero: .field)
+	var map = Map<4, Terrain>(size: 4, zero: .field)
 	var player: Player
 	var units: [16 of Unit]
 	var events: CArray<16, HQEvent> = .init(tail: .menu)
@@ -13,7 +13,7 @@ extension HQState {
 
 	var status: Status {
 		Status(
-			text: selected.map { units[$0.index].status } ?? .makeStatus { add in
+			text: selected.map { units[$0.index].status() } ?? .makeStatus { add in
 				add("prestige: \(player.prestige)")
 			},
 			action: .init({

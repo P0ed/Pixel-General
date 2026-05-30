@@ -1,6 +1,6 @@
 import GameplayKit
 
-extension Map<Terrain> {
+extension Map<32, Terrain> {
 
 	init(size: Int, seed: Int) {
 		self = Map(size: size, zero: .none)
@@ -45,7 +45,7 @@ extension Map<Terrain> {
 
 			var front = CArray<1024, XY>(head: start, tail: .zero)
 			var next = CArray<1024, XY>(tail: .zero)
-			var pressure = Map<UInt16>(size: size, zero: 0)
+			var pressure = Map<32, UInt16>(size: size, zero: 0)
 			pressure[start] = 1
 
 			while true {
@@ -119,7 +119,8 @@ extension Map<Terrain> {
 				margin + Int((Double(gy) + jy) * cellH)
 			).clamped(size)
 
-			if !isCitySite(p, placed), let alt = p.circle(6).first(where: { isCitySite($0, placed) }) {
+			if !isCitySite(p, placed),
+			   let alt = p.n36.firstMap({ isCitySite($0, placed) ? $0 : nil }) {
 				p = alt
 			}
 			guard isCitySite(p, placed) else { return }
@@ -249,8 +250,8 @@ extension Map<Terrain> {
 	}
 
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
-		var dist = Map<UInt16>(size: size, zero: .max)
-		var prev = Map<UInt16>(size: size, zero: 0)
+		var dist = Map<32, UInt16>(size: size, zero: .max)
+		var prev = Map<32, UInt16>(size: size, zero: 0)
 		dist[start] = 0
 
 		var heapD = CArray<1024, UInt16>(head: 0, tail: 0)

@@ -1,4 +1,5 @@
 .DS_Store
 *.xcuserstate
-PG.xcodeproj/xcshareddataPG.xcodeproj/xcuserdata
+*.xcbkptlist
+*.xcodeproj/xcshareddata/*.xcodeproj/xcuserdata/
 build/

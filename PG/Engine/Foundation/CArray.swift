@@ -1,6 +1,6 @@
 struct CArray<let capacity: Int, Element> {
 	private(set) var count: Int
-	private var mem: InlineArray<capacity, Element>
+	private(set) var mem: InlineArray<capacity, Element>
 }
 
 extension CArray {
@@ -17,6 +17,16 @@ extension CArray {
 	init(head: Element, tail: Element) {
 		mem = .init { i in i == 0 ? head : tail }
 		count = 1
+	}
+
+	init(_ array: consuming InlineArray<capacity, Element>) {
+		mem = array
+		count = capacity
+	}
+
+	init<let length: Int>(head: consuming InlineArray<length, Element>, tail: Element) {
+		mem = .init { i in i < length ? head[i] : tail }
+		count = length
 	}
 
 	init(head: [Element], tail: Element) {

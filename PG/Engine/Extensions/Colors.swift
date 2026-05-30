@@ -29,7 +29,9 @@ extension SKColor {
 	static var forestSurface: SKColor { .hex(0xA0C0A7) }
 	static var waterSurface: SKColor { .hex(0x90C0F0) }
 
-	static var graySurface: SKColor { .hex(0xA0A0A0) }
+	static var lightSurface: SKColor { .hex(0xBFBFBF) }
+	static var darkSurface: SKColor { .hex(0x8F8F8F) }
+	static var graySurface: SKColor { .hex(0xAFAFAF) }
 	static var blueSurface: SKColor { .hex(0x75CDFF) }
 	static var yellowSurface: SKColor { .hex(0xF7EF73) }
 	static var greenSurface: SKColor { .hex(0x64B738) }

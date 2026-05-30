@@ -28,6 +28,13 @@ extension Terrain {
 		}
 	}
 
+	var isNoFlyZone: Bool {
+		switch self {
+		case .city, .villageE, .villageN, .villageW, .villageS: true
+		default: false
+		}
+	}
+
 	var isRoad: Bool {
 		switch self {
 		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE, .roadX: true
@@ -93,7 +100,8 @@ extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .heli, .jet: 1
+		case .heli, .jet:
+			self.isNoFlyZone ? 0x10 : 1
 		}
 	}
 

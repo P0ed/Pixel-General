@@ -24,9 +24,9 @@ extension TacticalState {
 	private func populateQueues(_ ai: inout AI) {
 		ai = AI(turn: turn)
 
-		var ownUnits: CArray<32, UID> = .init(tail: -1)
-		units.forEach { [country] i, u in
-			if u.country == country, cargo[i] == -1 || u[.transport] {
+		var ownUnits: CArray<32, UID> = .init(tail: .none)
+		units.forEachAlive { [country] i, u in
+			if u.country == country, cargo[i] == .none || u[.transport] {
 				ownUnits.add(i.uid)
 			}
 		}
@@ -41,50 +41,50 @@ extension TacticalState {
 			let base = c * 4
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
-				guard claimed & 1 << uid == 0,
-					  units[uid.index].type == .soft, !units[uid.index][.art], !units[uid.index][.aa]
+				guard claimed & 1 << uid.rawValue == 0,
+					  units[uid].type == .soft, !units[uid][.art], !units[uid][.aa]
 				else { return nil }
-				return (uid, position[uid.index].stepDistance(to: cityPos))
+				return (uid, position[uid].stepDistance(to: cityPos))
 			}).min(by: { a, b in a.1 < b.1 }) {
 				ai.defenders[base + 0] = pick.0
-				claimed |= 1 << pick.0
+				claimed |= 1 << pick.0.rawValue
 			}
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int, Bool)? in
-				guard claimed & 1 << uid == 0, units[uid.index][.art] else { return nil }
-				return (uid, position[uid.index].stepDistance(to: cityPos), units[uid.index].type == .soft)
+				guard claimed & 1 << uid.rawValue == 0, units[uid][.art] else { return nil }
+				return (uid, position[uid].stepDistance(to: cityPos), units[uid].type == .soft)
 			}).min(by: { a, b in
 				a.2 != b.2 ? a.2 : a.1 < b.1
 			}) {
 				ai.defenders[base + 1] = pick.0
-				claimed |= 1 << pick.0
+				claimed |= 1 << pick.0.rawValue
 			}
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
-				guard claimed & 1 << uid == 0, units[uid.index][.aa] else { return nil }
-				return (uid, position[uid.index].stepDistance(to: cityPos))
+				guard claimed & 1 << uid.rawValue == 0, units[uid][.aa] else { return nil }
+				return (uid, position[uid].stepDistance(to: cityPos))
 			}).min(by: { a, b in a.1 < b.1 }) {
 				ai.defenders[base + 2] = pick.0
-				claimed |= 1 << pick.0
+				claimed |= 1 << pick.0.rawValue
 			}
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
-				guard claimed & 1 << uid == 0, units[uid.index].isArmor else { return nil }
-				return (uid, position[uid.index].stepDistance(to: cityPos))
+				guard claimed & 1 << uid.rawValue == 0, units[uid].isArmor else { return nil }
+				return (uid, position[uid].stepDistance(to: cityPos))
 			}).min(by: { a, b in a.1 < b.1 }) {
 				ai.defenders[base + 3] = pick.0
-				claimed |= 1 << pick.0
+				claimed |= 1 << pick.0.rawValue
 			}
 		}
 
 		var order: [(Int, UID)] = []
 		ownUnits.forEach { _, uid in
-			if claimed & 1 << uid == 0 {
-				order.append((priority(units[uid.index]), uid))
+			if claimed & 1 << uid.rawValue == 0 {
+				order.append((priority(units[uid]), uid))
 			}
 		}
 		order.sort { a, b in
-			a.0 != b.0 ? a.0 < b.0 : a.1 < b.1
+			a.0 != b.0 ? a.0 < b.0 : a.1.rawValue < b.1.rawValue
 		}
 		let n = min(order.count, 32)
 		for k in 0 ..< n { ai.attackers[k] = order[k].1 }
@@ -94,7 +94,7 @@ extension TacticalState {
 		var out: [UID] = []
 		for k in 0 ..< 32 {
 			let uid = ai.attackers[k]
-			if uid == -1 { continue }
+			if uid == .none { continue }
 			let i = uid.index
 			guard i >= 0, i < units.count else { continue }
 			let u = units[i]
@@ -102,7 +102,7 @@ extension TacticalState {
 		}
 		for k in 0 ..< 32 {
 			let uid = ai.defenders[k]
-			if uid == -1 { continue }
+			if uid == .none { continue }
 			let i = uid.index
 			guard i >= 0, i < units.count else { continue }
 			let u = units[i]
@@ -147,14 +147,14 @@ extension TacticalState {
 	}
 
 	private var enemyHasAir: Bool {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			u.country.team != country.team && u.isAir && isVisible(i.uid) ? true : nil
 		} ?? false
 	}
 
 	private func objective(for uid: UID) -> XY? {
-		let u = units[uid.index]
-		let p = position[uid.index]
+		let u = units[uid]
+		let p = position[uid]
 
 		if u.isAir, u.ammo == 0 || u.hp < 8 {
 			if let af = ownAirfields.min(by: { a, b in
@@ -170,7 +170,7 @@ extension TacticalState {
 
 		var best: XY? = nil
 		var bestD = Int.max
-		units.forEach { [country] i, e in
+		units.forEachAlive { [country] i, e in
 			if e.country.team != country.team, isVisible(i.uid) {
 				let d = position[i].stepDistance(to: p)
 				if d < bestD { bestD = d; best = position[i] }
@@ -184,7 +184,7 @@ extension TacticalState {
 		guard player.prestige >= 0x300 else { return nil }
 
 		for xy in map.indices {
-			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] < 0 else { continue }
+			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] == .none else { continue }
 			let shop = shopUnits(at: xy)
 			guard !shop.isEmpty else { continue }
 
@@ -221,43 +221,43 @@ extension TacticalState {
 	// MARK: - Resupply
 	private func needsResupply(_ i: Int, _ u: Unit) -> Bool {
 		guard u.untouched else { return false }
-		guard cargo[i] == -1 || u[.transport] else { return false }
+		guard cargo[i] == .none || u[.transport] else { return false }
 		if u.isAir, !hasAirfield(position[i]) { return false }
 		return u.hp < 6 || (u.maxAmmo > 0 && u.ammo == 0)
 	}
 
 	private var resupply: TacticalAction? {
-		units.firstMap { [country] i, u in
+		units.firstMapAlive { [country] i, u in
 			u.country == country && needsResupply(i, u) ? .resupply(i.uid) : nil
 		}
 	}
 
 	// MARK: - Embark / Disembark
 	private var embark: TacticalAction? {
-		units.firstMap { [country] i, u in
-			guard u.country == country, u.type == .soft, u.canMove, cargo[i] == -1
+		units.firstMapAlive { [country] i, u in
+			guard u.country == country, u.type == .soft, u.canMove, cargo[i] == .none
 			else { return nil }
 			guard let target = objective(for: i.uid),
 				  position[i].stepDistance(to: target) >= 4
 			else { return nil }
 			return position[i].n4.firstMap { xy -> TacticalAction? in
 				guard let tid = uidAt(xy) else { return nil }
-				let t = units[tid.index]
-				return t.country == country && t[.transport] && cargo[tid.index] == -1
+				let t = units[tid]
+				return t.country == country && t[.transport] && cargo[tid] == .none
 				? .embark(i.uid, tid) : nil
 			}
 		}
 	}
 
 	private var disembark: TacticalAction? {
-		units.firstMap { [country] i, u in
-			guard u.country == country, u[.transport], cargo[i] != -1 else { return nil }
+		units.firstMapAlive { [country] i, u in
+			guard u.country == country, u[.transport], cargo[i] != .none else { return nil }
 			let cid = cargo[i]
 			guard let target = objective(for: cid),
 				  position[i].stepDistance(to: target) <= 2
 			else { return nil }
 			return position[i].n4.firstMap { xy -> TacticalAction? in
-				map.contains(xy) && unitsMap[xy] < 0
+				map.contains(xy) && unitsMap[xy] == .none
 				&& !map[xy].isRiver && map[xy] != .water
 				? .disembark(i.uid, xy) : nil
 			}
@@ -267,13 +267,13 @@ extension TacticalState {
 	// MARK: - Attack (priority-ordered)
 	private func attack(_ ai: borrowing AI) -> TacticalAction? {
 		for uid in activeQueue(ai) {
-			let u = units[uid.index]
+			let u = units[uid]
 			guard u.canAttack, u.ammo > 0 else { continue }
-			if cargo[uid.index] != -1, !u[.transport] { continue }
+			if cargo[uid] != .none, !u[.transport] { continue }
 
-			var bestTarget: UID = -1
+			var bestTarget: UID = .none
 			var bestScore = 0
-			units.forEach { j, t in
+			units.forEachAlive { j, t in
 				guard t.country.team != u.country.team,
 					  isVisible(j.uid),
 					  unitCanHit(uid, j.uid) else { return }
@@ -307,12 +307,12 @@ extension TacticalState {
 	// MARK: - Move (priority-ordered)
 	private func move(_ ai: borrowing AI) -> TacticalAction? {
 		for uid in activeQueue(ai) {
-			let u = units[uid.index]
+			let u = units[uid]
 			guard u.canMove else { continue }
-			if cargo[uid.index] != -1, !u[.transport] { continue }
+			if cargo[uid] != .none, !u[.transport] { continue }
 
 			if let city = defenderCity(ai, uid) {
-				let p = position[uid.index]
+				let p = position[uid]
 				if p.stepDistance(to: city) <= 1 { continue }
 				if let m = pick(id: uid, toward: city, defensive: true) { return m }
 				continue
@@ -325,7 +325,7 @@ extension TacticalState {
 					&& (map[xy] == .airfield) == u.isAir ? xy : nil
 				}
 				if let goal = havens.min(by: { a, b in
-					a.stepDistance(to: position[uid.index]) < b.stepDistance(to: position[uid.index])
+					a.stepDistance(to: position[uid]) < b.stepDistance(to: position[uid])
 				}), let m = pick(id: uid, toward: goal, defensive: true) {
 					return m
 				}
@@ -351,7 +351,7 @@ extension TacticalState {
 	}
 
 	private func tileScore(at xy: XY, for id: UID, toward target: XY, defensive: Bool) -> Int {
-		let u = units[id.index]
+		let u = units[id]
 		let team = u.country.team
 		var score = 0
 
@@ -368,7 +368,7 @@ extension TacticalState {
 		for k in n4.indices {
 			let n = n4[k]
 			if let uid = uidAt(n) {
-				let nu = units[uid.index]
+				let nu = units[uid]
 				if nu.country.team != team, isVisible(uid) {
 					attackBonus += Int(u.atk(nu)) * 3
 				} else if nu.country.team == team {
@@ -391,7 +391,7 @@ extension TacticalState {
 		}
 
 		var threat = 0
-		units.forEach { j, e in
+		units.forEachAlive { j, e in
 			guard e.country.team != team, isVisible(j.uid) else { return }
 			let d = position[j].stepDistance(to: xy)
 			let reach = Int(e.rng) * 2 + 1 + Int(e.mov) * 2 + 1

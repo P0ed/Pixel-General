@@ -1,19 +1,22 @@
 struct TacticalState: ~Copyable {
-	var map: Map<Terrain>
+	var map: Map<32, Terrain>
+	var control: Map<32, Country>
+	var unitsMap: Map<32, UID>
+
 	var players: CArray<4, Player>
 	var auxilia: [4 of CArray<16, Unit>]
-	var control: Map<Country>
+
 	var units: Speicher<128, Unit>
 	var position: [128 of XY]
 	var cargo: [128 of UID]
-	var unitsMap: Map<UID>
+
 	var turn: UInt32 = 0
 	var d20: D20 = D20()
 	var events: CArray<128, TacticalEvent> = .init(tail: .end)
 
 	var cursor: XY = .zero
 	var camera: XY = .zero
-	var selectedUnit: UID?
+	var selectedUnit: UID = .none
 	var selectable: SetXY?
 	var scale: Int = 1
 	var mapMode: MapMode = .terrain
@@ -25,13 +28,13 @@ enum MapMode: UInt8, Hashable {
 
 extension TacticalState {
 
-	init(map: consuming Map<Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
+	init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
 		self.units = .init(head: units, tail: .empty)
 		self.position = .init(repeating: .zero)
-		cargo = .init(repeating: -1)
-		unitsMap = .init(size: self.map.size, zero: -1)
+		cargo = .init(repeating: .none)
+		unitsMap = .init(size: self.map.size, zero: .none)
 		control = .init(size: self.map.size, zero: .default)
 		auxilia = .init { i in
 			CArray(
@@ -47,21 +50,20 @@ extension TacticalState {
 		}
 		assignControl()
 
-		let size = self.map.size
 		let placements = [4 of CArray<1024, XY>].init { i in
 			guard i < players.count else { return .init(tail: .zero) }
 
 			let cityXYs = cities
 				.filter { _, c in c == players[i].country }
 				.map { xy, _ in xy }
-			let disks = (cityXYs.isEmpty ? [.zero] : cityXYs).map { $0.circle(9) }
+			let squares = (cityXYs.isEmpty ? [.zero] : cityXYs).map { $0.s49.map { $0 } }
 			var out = CArray<1024, XY>(tail: .zero)
-			var cursors = [Int](repeating: 0, count: disks.count)
+			var cursors = [Int](repeating: 0, count: squares.count)
 			var progressed = true
 			while progressed {
 				progressed = false
-				for k in disks.indices where cursors[k] < disks[k].count {
-					out.add(disks[k][cursors[k]])
+				for k in squares.indices where cursors[k] < squares[k].count {
+					out.add(squares[k][cursors[k]])
 					cursors[k] += 1
 					progressed = true
 				}
@@ -70,23 +72,21 @@ extension TacticalState {
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
 
-		self.units.forEach { i, u in
+		self.units.forEachAlive { i, u in
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { return }
 
-			let candidates = placements[player]
 			var k = allocatedUnits[player]
-			while k < candidates.count {
-				let xy = candidates[k]
-				if xy.x >= 0, xy.y >= 0, xy.x < size, xy.y < size,
-					unitsMap[xy] < 0, !self.map[xy].isRiver {
+			while k < placements[player].count {
+				let xy = placements[player][k]
+				if self.map.contains(xy), unitsMap[xy] == .none, !self.map[xy].isRiver {
 					break
 				}
 				k += 1
 			}
-			guard k < candidates.count else { fatalError() }
+			guard k < placements[player].count else { fatalError() }
 
-			position[i] = candidates[k]
+			position[i] = placements[player][k]
 			allocatedUnits[player] = k + 1
 			unitsMap[position[i]] = i.uid
 		}
@@ -114,12 +114,6 @@ extension TacticalState {
 			if let idx = players.firstMap({ i, p in p.country == country ? i : nil }) {
 				players[idx] = newValue
 			}
-		}
-	}
-
-	var visibleToHuman: SetXY {
-		players.reduce(into: .empty) { r, _, p in
-			p.type == .human ? r.combine(p.visible) : ()
 		}
 	}
 }
@@ -158,16 +152,26 @@ extension TacticalState {
 
 	var country: Country { player.country }
 
+	func offMap(unit id: UID) -> Bool {
+		unitsMap[position[id]] != id
+	}
+
 	func isVisible(_ id: UID) -> Bool {
-		unitsMap[position[id.index]] == id && player.visible[position[id.index]]
+		!offMap(unit: id) && player.visible[position[id]]
 	}
 
 	func isVisibleToHuman(_ id: UID) -> Bool {
-		unitsMap[position[id.index]] == id && isVisibleToHuman(position[id.index])
+		!offMap(unit: id) && isVisibleToHuman(position[id])
 	}
 
 	func isVisibleToHuman(_ xy: XY) -> Bool {
 		players.contains { p in p.type == .human && p.visible[xy] }
+	}
+
+	var visibleToHuman: SetXY {
+		players.reduce(into: .empty) { r, _, p in
+			p.type == .human ? r.combine(p.visible) : ()
+		}
 	}
 }
 
@@ -175,9 +179,9 @@ extension Terrain {
 
 	var income: UInt16 {
 		switch self {
-		case .city: 0xE
-		case .villageE, .villageN, .villageS, .villageW: 0xA
-		case .airfield: 0x6
+		case .city: 0xF
+		case .villageE, .villageN, .villageS, .villageW: 0x7
+		case .airfield: 0x3
 		default: 0
 		}
 	}

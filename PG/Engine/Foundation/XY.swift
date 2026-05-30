@@ -53,30 +53,6 @@ extension XY {
 		XY(max(0, min(size - 1, x)), max(0, min(size - 1, y)))
 	}
 
-	private static var d4: [4 of XY] {
-		[XY(1, 0), XY(0, 1), XY(-1, 0), XY(0, -1)]
-	}
-
-	private static var x4: [4 of XY] {
-		[XY(1, 1), XY(-1, 1), XY(-1, -1), XY(1, -1)]
-	}
-
-	private static var d8: [8 of XY] {
-		[XY(1, 0), XY(1, 1), XY(0, 1), XY(-1, 1), XY(-1, 0), XY(-1, -1), XY(0, -1), XY(1, -1)]
-	}
-
-	var n4: [4 of XY] {
-		Self.d4.map { xy in xy + self }
-	}
-
-	var x4: [4 of XY] {
-		Self.x4.map { xy in xy + self }
-	}
-
-	var n8: [8 of XY] {
-		Self.d8.map { xy in xy + self }
-	}
-
 	func neighbor(_ direction: Direction) -> XY {
 		switch direction {
 		case .right: XY(1, 0) + self
@@ -100,26 +76,6 @@ extension XY {
 
 	static func / (lhs: XY, rhs: XY) -> XY {
 		XY(lhs.x / rhs.x, lhs.y / rhs.y)
-	}
-
-	func circle(_ dr: Int) -> [XY] {
-		guard dr > 1 else { return [self] }
-
-		var arr = [] as [XY]
-		let rng = dr >> 1
-		arr.reserveCapacity(rng * (rng - 1) * 4 + 1)
-		arr.append(self)
-		for d in 1...dr {
-			for x in 0...rng {
-				for y in 1...rng where XY(x, y).doubleRadius == d {
-					let mirrored = XY(x, y).mirror
-					for i in mirrored.indices {
-						arr.append(self + mirrored[i])
-					}
-				}
-			}
-		}
-		return arr
 	}
 
 	var pt: CGPoint {

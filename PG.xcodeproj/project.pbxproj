@@ -10,6 +10,8 @@
 		5F04CAF92F93C72900E7ADBB /* HQAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F04CAF82F93C72500E7ADBB /* HQAction.swift */; };
 		5F168CF12FC0A572004AEFFA /* SovietAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF02FC0A572004AEFFA /* SovietAI.swift */; };
 		5F168CF52FC0AD48004AEFFA /* AxisAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF42FC0AD45004AEFFA /* AxisAI.swift */; };
+		5F178BF82FC9A3D6003251A0 /* Shapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F178BF72FC9A3D4003251A0 /* Shapes.swift */; };
+		5F178BFA2FC9B21E003251A0 /* MapIndices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F178BF92FC9B21E003251A0 /* MapIndices.swift */; };
 		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
 		5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9502F7EA89B002BBF38 /* HQScenario.swift */; };
 		5F26B9532F7EE56E002BBF38 /* TacticalTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */; };
@@ -18,6 +20,7 @@
 		5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC52FC3441800EF7BA3 /* Colors.swift */; };
 		5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC72FC3443B00EF7BA3 /* Images.swift */; };
 		5F2F5E5E2F851700006D4D7A /* TacticalChess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2F5E5D2F8516FB006D4D7A /* TacticalChess.swift */; };
+		5F389F952FC84CB800F9B86F /* MenuModes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F389F942FC84CB300F9B86F /* MenuModes.swift */; };
 		5F41DDD52EE32745008FBF17 /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F41DDD42EE32744008FBF17 /* Map.swift */; };
 		5F43D4A52EF051A80046AD2A /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F43D4A42EF051A80046AD2A /* Player.swift */; };
 		5F51E5BE2EF308B400A711DF /* Swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F51E5BD2EF308B200A711DF /* Swift.swift */; };
@@ -63,7 +66,7 @@
 		5FA0F0992EF2255B0022EC68 /* D20.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA0F0982EF2255B0022EC68 /* D20.swift */; };
 		5FB4D0D52EAE26240010E702 /* TacticalAttack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */; };
 		5FB4D1262EAFABCB0010E702 /* TacticalTurns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */; };
-		5FB524AA2FACB2C20017B672 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* Tests.swift */; };
+		5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* RNGTests.swift */; };
 		5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */; };
 		5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AE2FAD10AA0017B672 /* EditorState.swift */; };
 		5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524B02FAD111E0017B672 /* EditorNodes.swift */; };
@@ -104,6 +107,8 @@
 		5F04CAF82F93C72500E7ADBB /* HQAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQAction.swift; sourceTree = "<group>"; };
 		5F168CF02FC0A572004AEFFA /* SovietAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietAI.swift; sourceTree = "<group>"; };
 		5F168CF42FC0AD45004AEFFA /* AxisAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisAI.swift; sourceTree = "<group>"; };
+		5F178BF72FC9A3D4003251A0 /* Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shapes.swift; sourceTree = "<group>"; };
+		5F178BF92FC9B21E003251A0 /* MapIndices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapIndices.swift; sourceTree = "<group>"; };
 		5F24DC322EA95FE50085FDDC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5F26B9502F7EA89B002BBF38 /* HQScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQScenario.swift; sourceTree = "<group>"; };
 		5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTransport.swift; sourceTree = "<group>"; };
@@ -137,6 +142,7 @@
 		5F2E4CC52FC3441800EF7BA3 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		5F2E4CC72FC3443B00EF7BA3 /* Images.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Images.swift; sourceTree = "<group>"; };
 		5F2F5E5D2F8516FB006D4D7A /* TacticalChess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalChess.swift; sourceTree = "<group>"; };
+		5F389F942FC84CB300F9B86F /* MenuModes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuModes.swift; sourceTree = "<group>"; };
 		5F41DDD42EE32744008FBF17 /* Map.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Map.swift; sourceTree = "<group>"; };
 		5F43D4A42EF051A80046AD2A /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		5F51E5BD2EF308B200A711DF /* Swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swift.swift; sourceTree = "<group>"; };
@@ -166,7 +172,7 @@
 		5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalAttack.swift; sourceTree = "<group>"; };
 		5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTurns.swift; sourceTree = "<group>"; };
 		5FB5249F2FACB2990017B672 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5FB524A82FACB2C20017B672 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
+		5FB524A82FACB2C20017B672 /* RNGTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNGTests.swift; sourceTree = "<group>"; };
 		5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorMode.swift; sourceTree = "<group>"; };
 		5FB524AE2FAD10AA0017B672 /* EditorState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorState.swift; sourceTree = "<group>"; };
 		5FB524B02FAD111E0017B672 /* EditorNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorNodes.swift; sourceTree = "<group>"; };
@@ -291,6 +297,7 @@
 				5F2A33BA2EA93AC3008A0A95 /* SceneInput.swift */,
 				5F2A33BD2EA93AC3008A0A95 /* HIDController.swift */,
 				5F2A33BB2EA93AC3008A0A95 /* BaseNodes.swift */,
+				5F389F942FC84CB300F9B86F /* MenuModes.swift */,
 				5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */,
 				5F2A33BF2EA93AC3008A0A95 /* TileSprites.swift */,
 			);
@@ -351,7 +358,7 @@
 		5FB524A92FACB2C20017B672 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				5FB524A82FACB2C20017B672 /* Tests.swift */,
+				5FB524A82FACB2C20017B672 /* RNGTests.swift */,
 				5F7472D32FB347A300EBC354 /* TacticalTests.swift */,
 				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
 			);
@@ -419,11 +426,13 @@
 			children = (
 				5F2A33B32EA93AC3008A0A95 /* Monoid.swift */,
 				5F2A33AF2EA93AC3008A0A95 /* XY.swift */,
+				5F178BF72FC9A3D4003251A0 /* Shapes.swift */,
 				5F2A33A82EA93AC3008A0A95 /* Arrays.swift */,
 				5F2D145E2F7AC24600D2DF7E /* Either.swift */,
 				5F87CF592F7BD46900BC87CA /* CArray.swift */,
 				5F8E87302EB3BEEC0023B28F /* Speicher.swift */,
 				5F41DDD42EE32744008FBF17 /* Map.swift */,
+				5F178BF92FC9B21E003251A0 /* MapIndices.swift */,
 				5FA0F0962EF21C3A0022EC68 /* SetXY.swift */,
 				5FBA4D822EF7016D00D7C1B0 /* Input.swift */,
 				5FA0F0982EF2255B0022EC68 /* D20.swift */,
@@ -600,6 +609,7 @@
 				5FE44F152F9BBA1F00A589F1 /* StrategicAction.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
 				5F919D5E2EA9596E0037A208 /* Unit.swift in Sources */,
+				5F178BFA2FC9B21E003251A0 /* MapIndices.swift in Sources */,
 				5F919D5F2EA9596E0037A208 /* Units.swift in Sources */,
 				5FA0F0972EF21C3A0022EC68 /* SetXY.swift in Sources */,
 				5F5561052EF5B89B00C08E14 /* HQEvent.swift in Sources */,
@@ -610,6 +620,7 @@
 				5F8E87332EB3E1DD0023B28F /* Integers.swift in Sources */,
 				5FCABBCA2EAA787D008EE894 /* Strings.swift in Sources */,
 				5F919D642EA9596E0037A208 /* MenuState.swift in Sources */,
+				5F178BF82FC9A3D6003251A0 /* Shapes.swift in Sources */,
 				5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */,
 				5F5560FA2EF5B05D00C08E14 /* HQMode.swift in Sources */,
 				5F2D145F2F7AC24600D2DF7E /* Either.swift in Sources */,
@@ -630,6 +641,7 @@
 				5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */,
 				5F919D692EA9596E0037A208 /* XY.swift in Sources */,
 				5FA0F0992EF2255B0022EC68 /* D20.swift in Sources */,
+				5F389F952FC84CB800F9B86F /* MenuModes.swift in Sources */,
 				5F5560FC2EF5B0CF00C08E14 /* HQNodes.swift in Sources */,
 				5FF7EB3D2EB6428F00E287FF /* MapGeneration.swift in Sources */,
 				5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */,
@@ -675,7 +687,7 @@
 			files = (
 				5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */,
 				5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */,
-				5FB524AA2FACB2C20017B672 /* Tests.swift in Sources */,
+				5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -711,6 +723,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				INFOPLIST_FILE = PG/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pixel General";
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -748,6 +761,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				INFOPLIST_FILE = PG/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pixel General";
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";

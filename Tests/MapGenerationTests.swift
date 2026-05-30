@@ -11,7 +11,7 @@ struct MapGenerationTests {
 
 	@Test func terminatesAcrossManySeeds() {
 		for seed in 0 ..< 128 {
-			_ = Map<Terrain>(size: 8 + seed % 24, seed: seed)
+			_ = Map<32, Terrain>(size: 8 + seed % 24, seed: seed)
 		}
 	}
 
@@ -21,7 +21,7 @@ struct MapGenerationTests {
 		var noRiverSeeds: [Int] = []
 
 		for seed in 0 ..< 32 {
-			let map = Map<Terrain>(size: 32, seed: seed)
+			let map = Map<32, Terrain>(size: 32, seed: seed)
 			var hasNonZero = false
 			var hasCity = false
 			var hasRiver = false
@@ -43,8 +43,8 @@ struct MapGenerationTests {
 
 	@Test func isDeterministicForSameSeed() {
 		for seed in [0, 1, 7, 100, 999, 1023] {
-			let a = Map<Terrain>(size: 32, seed: seed)
-			let b = Map<Terrain>(size: 32, seed: seed)
+			let a = Map<32, Terrain>(size: 32, seed: seed)
+			let b = Map<32, Terrain>(size: 32, seed: seed)
 			for xy in a.indices where a[xy] != b[xy] {
 				Issue.record("Map differs at \(xy) for seed \(seed): \(a[xy]) vs \(b[xy])")
 				break
@@ -57,7 +57,7 @@ struct MapGenerationTests {
 		// derived from the city count, so it has no divisor that collapses to
 		// zero and works across the full 8...32 range.
 		for size in 8 ... 32 {
-			let map = Map<Terrain>(size: size, seed: 0)
+			let map = Map<32, Terrain>(size: size, seed: 0)
 			#expect(map.size == size)
 			#expect(map.count == size * size)
 			var hasCity = false
@@ -71,7 +71,7 @@ struct MapGenerationTests {
 		// orthogonal neighbors (after `shapeRivers`). Diagonal-only adjacency
 		// would mean the river was disconnected.
 		for seed in [3, 11, 23] {
-			let map = Map<Terrain>(size: 32, seed: seed)
+			let map = Map<32, Terrain>(size: 32, seed: seed)
 			for xy in map.indices where map[xy].isRiver {
 				let n4 = xy.n4
 				var connected = false

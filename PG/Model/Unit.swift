@@ -1,4 +1,8 @@
-typealias UID = Int8
+struct UID: Equatable {
+	var rawValue: Int8
+
+	init(_ value: Int8) { rawValue = value }
+}
 
 struct Unit: Equatable {
 	var country: Country = .default
@@ -46,7 +50,6 @@ struct Skills: OptionSet, Equatable {
 	static var mountaineer: Self { .init(rawValue: 1 << 5) }
 	static var mhtn: Self { .init(rawValue: 1 << 6) }
 	static var diag: Self { .init(rawValue: 1 << 7) }
-
 }
 
 extension Unit {
@@ -59,7 +62,7 @@ extension Unit {
 	var spot: UInt8 { self[.radar] ? 3 : 2 }
 
 	var maxHP: UInt8 { 0xF }
-	var maxAP: UInt8 { 1 }
+	var maxAP: UInt8 { rng == 0 ? 0 : 1 }
 	var maxMP: UInt8 { isAir ? 2 : 1 }
 
 	var fullHP: Bool { hp == maxHP }
@@ -68,7 +71,7 @@ extension Unit {
 	var fullAmmo: Bool { ammo == maxAmmo }
 
 	var maxAmmo: UInt8 {
-		guard softAtk > 0 || hardAtk > 0 || airAtk > 0 else { return 0 }
+		guard rng > 0 else { return 0 }
 
 		return switch type {
 		case .jet where rng > 1: 2
@@ -208,5 +211,31 @@ extension InlineArray where Element == Unit, count == 16 {
 	}
 }
 
-extension UID { var index: Int { Int(self) } }
-extension Int { var uid: UID { UID(self) } }
+extension CArray where capacity == 128 {
+	subscript(_ id: UID) -> Element {
+		get { self[id.index] }
+		set { self[id.index] = newValue }
+	}
+}
+
+extension InlineArray where count == 128 {
+	subscript(_ id: UID) -> Element {
+		get { self[id.index] }
+		set { self[id.index] = newValue }
+	}
+}
+
+extension Array {
+	subscript(_ id: UID) -> Element {
+		get { self[id.index] }
+		set { self[id.index] = newValue }
+	}
+}
+
+extension UID {
+
+	static let none = UID(-1)
+
+	var index: Int { Int(rawValue) }
+}
+extension Int { var uid: UID { UID(Int8(clamping: self)) } }

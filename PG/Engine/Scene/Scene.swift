@@ -7,7 +7,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	private var processing = false
 	private var pending: Input?
-	private var panAccumulator: CGPoint = .zero
+	private(set) var pan: CGPoint = .zero
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
@@ -157,23 +157,23 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			guard let self, e.type == .scrollWheel else { return e }
 			let x = e.scrollingDeltaX
 			let y = e.scrollingDeltaY
-			panAccumulator.x += x
-			panAccumulator.y += y
+			pan.x += x
+			pan.y += y
 
-			if panAccumulator.x > 64 {
-				panAccumulator.x -= 64
+			if pan.x > 64 {
+				pan.x -= 64
 				apply(.pan(.zero.neighbor(.left).neighbor(.down)))
-			} else if panAccumulator.x < -64 {
-				panAccumulator.x += 64
+			} else if pan.x < -64 {
+				pan.x += 64
 				apply(.pan(.zero.neighbor(.right).neighbor(.up)))
-			} else if panAccumulator.y > 32 {
-				panAccumulator.y -= 32
+			} else if pan.y > 32 {
+				pan.y -= 32
 				apply(.pan(.zero.neighbor(.up).neighbor(.left)))
-			} else if panAccumulator.y < -32 {
-				panAccumulator.y += 32
+			} else if pan.y < -32 {
+				pan.y += 32
 				apply(.pan(.zero.neighbor(.down).neighbor(.right)))
 			}
-			if abs(x) < 0.1, abs(y) < 0.1 { panAccumulator = .zero }
+			if abs(x) < 0.1, abs(y) < 0.1 { pan = .zero }
 
 			return e
 		}

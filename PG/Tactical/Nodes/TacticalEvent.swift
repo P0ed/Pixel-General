@@ -3,7 +3,7 @@ import AVFoundation
 
 enum TacticalEvent {
 	case spawn(UID)
-	case move(UID, XY)
+	case move(UID, CArray<16, XY>)
 	case fire(UID, UID, UInt8, UInt8)
 	case update(UID)
 	case shop
@@ -16,7 +16,7 @@ extension TacticalNodes {
 	func process(_ event: TacticalEvent, _ state: borrowing TacticalState) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
-		case let .move(uid, xy): await processMove(uid, xy, state)
+		case let .move(uid, path): await processMove(uid, path, state)
 		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp, state: state)
 		case let .update(id): update(id, state)
 		case .shop: processShop(state)
@@ -29,36 +29,54 @@ extension TacticalNodes {
 private extension TacticalNodes {
 
 	func processSpawn(_ uid: UID, _ state: borrowing TacticalState) {
-		let sprite = state.units[uid.index].sprite
-		let xy = state.position[uid.index]
+		let sprite = state.units[uid].sprite
+		let xy = state.position[uid]
 		sprite.position = state.map.point(at: xy)
 		sprite.zPosition = map.zPosition(at: xy)
 		sprite.isHidden = !state.isVisibleToHuman(uid)
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(_ uid: UID, _ xy: XY, _ state: borrowing TacticalState) async {
-		guard let unit = units[uid.index] else { return }
+	func processMove(_ uid: UID, _ path: CArray<16, XY>, _ state: borrowing TacticalState) async {
+		guard let node = units[uid], !path.isEmpty else { return }
 
-		let p = state.map.point(at: xy)
-		let z = map.zPosition(at: xy)
-		unit.zPosition = max(unit.zPosition, z)
-
-		if !unit.isHidden {
-			sounds.mov.play()
-			let d = (unit.position - p).length / 640.0
-			await unit.run(.move(to: p, duration: d))
-		} else {
-			unit.position = p
+		let dst = path[path.count - 1]
+		node.zPosition = path.reduce(into: node.zPosition) { z, _, xy in
+			z = max(z, map.zPosition(at: xy))
 		}
-		unit.zPosition = map.zPosition(at: xy)
-		unit.isHidden = !state.isVisibleToHuman(uid)
+
+		let onMap = state.unitsMap[state.position[uid]] == uid || !node.isHidden
+		let anyVisible = onMap && path.contains { xy in state.isVisibleToHuman(xy) }
+		guard anyVisible else {
+			node.position = state.map.point(at: dst)
+			node.zPosition = map.zPosition(at: dst)
+			node.isHidden = true
+			return
+		}
+
+		sounds.mov.play()
+		node.isHidden = !state.isVisibleToHuman(path[0])
+
+		var actions: [SKAction] = []
+		for i in 1 ..< path.count {
+			let xy = path[i]
+			let point = state.map.point(at: xy)
+			let prev = state.map.point(at: path[i - 1])
+			let duration = (prev - point).length / 480.0
+			let hidden = i == path.count - 1
+				? !state.isVisibleToHuman(uid)
+				: !state.isVisibleToHuman(xy)
+			actions.append(.move(to: point, duration: duration))
+			actions.append(.run { node.isHidden = hidden })
+		}
+		await node.run(.sequence(actions))
+		node.zPosition = map.zPosition(at: dst)
 	}
 
 	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8, state: borrowing TacticalState) async {
 		defer {
 			if hp > 0 {
-				units[dst.index]?.update(hp: hp)
+				units[dst]?.update(hp: hp)
 			} else {
 				removeUnit(dst)
 			}
@@ -66,9 +84,9 @@ private extension TacticalNodes {
 
 		guard state.isVisibleToHuman(src) || state.isVisibleToHuman(dst) else { return }
 
-		units[src.index]?.showSight(for: 0.47)
+		units[src]?.showSight(for: 0.47)
 		await scene?.run(.wait(forDuration: 0.22))
-		units[dst.index]?.showSight(for: 0.47 - 0.22)
+		units[dst]?.showSight(for: 0.47 - 0.22)
 		await scene?.run(.wait(forDuration: 0.22))
 
 		if dmg > 0, hp == 0 {
@@ -81,8 +99,8 @@ private extension TacticalNodes {
 	}
 
 	func update(_ id: UID, _ state: borrowing TacticalState) {
-		if state.units[id.index].alive {
-			units[id.index]?.update(hp: state.units[id.index].hp)
+		if state.units[id].alive {
+			units[id]?.update(hp: state.units[id].hp)
 		} else {
 			removeUnit(id)
 		}
@@ -99,7 +117,7 @@ private extension TacticalNodes {
 			MenuItem<TacticalAction>.close(
 				icon: template.imageName,
 				status: .init(
-					text: template.status,
+					text: template.status(),
 					action: .init("\(template.cost) / \(state.player.prestige)")
 				),
 				action: .purchase(i, xy)

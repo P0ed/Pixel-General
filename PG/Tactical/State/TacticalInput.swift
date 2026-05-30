@@ -36,8 +36,8 @@ private extension TacticalState {
 	}
 
 	mutating func primaryAction() -> TacticalAction? {
-		if let selectedUnit {
-			let unit = units[selectedUnit.index]
+		if selectedUnit != .none {
+			let unit = units[selectedUnit]
 
 			if let dst = unitAt(cursor), player.visible[cursor] {
 				if dst.country.team != unit.country.team, self[country].type == .human {
@@ -70,7 +70,7 @@ private extension TacticalState {
 	}
 
 	mutating func squareAction() -> TacticalAction? {
-		guard let selectedUnit,
+		guard selectedUnit != .none,
 			  canDisembark(unit: selectedUnit, to: cursor),
 			  self[country].type == .human
 		else { return nil }
@@ -78,13 +78,13 @@ private extension TacticalState {
 	}
 
 	mutating func triangleAction() -> TacticalAction? {
-		guard let selectedUnit,
-			  units[selectedUnit.index].country == country,
-			  units[selectedUnit.index].untouched,
+		guard selectedUnit != .none,
+			  units[selectedUnit].country == country,
+			  units[selectedUnit].untouched,
 			  self[country].type == .human
 		else { return nil }
 
-		selectUnit(.none)
+		defer { selectUnit(.none) }
 		return .resupply(selectedUnit)
 	}
 
@@ -94,7 +94,7 @@ private extension TacticalState {
 
 	mutating func nextUnit(reversed: Bool = false) -> TacticalAction? {
 		let cnt = units.count
-		var idx = selectedUnit?.index ?? (reversed ? cnt - 1 : 0)
+		var idx = selectedUnit != .none ? selectedUnit.index : (reversed ? cnt - 1 : 0)
 		let country = country
 
 		for _ in units.indices {
@@ -102,12 +102,12 @@ private extension TacticalState {
 			let i = (cnt + idx) % cnt
 			let u = units[i]
 
-			if u.alive, u.country == country, u.hasActions {
+			if u.alive, !offMap(unit: i.uid), u.country == country, u.hasActions {
 				selectUnit(i.uid)
 				return nil
 			}
 		}
-		selectUnit(nil)
+		selectUnit(.none)
 		return nil
 	}
 

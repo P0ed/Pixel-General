@@ -30,11 +30,13 @@ extension TacticalNodes {
 		)
 		units = .init(
 			head: scene.state.units.map { i, u in
-				let sprite = scene.state.units[i].sprite
+				guard u.alive else { return nil }
+				let sprite = u.sprite
 				let xy = scene.state.position[i]
 				sprite.position = scene.state.map.point(at: xy)
 				sprite.zPosition = map.zPosition(at: xy)
-				sprite.isHidden = !scene.state.player.visible[xy]
+				sprite.isHidden = !scene.state.isVisibleToHuman(i.uid)
+					|| scene.state.unitsMap[xy] != i.uid
 				scene.addChild(sprite)
 				return sprite
 			},
@@ -92,7 +94,7 @@ extension TacticalNodes {
 	}
 
 	func updateUnits(_ state: borrowing TacticalState) {
-		state.units.forEach { i, u in
+		state.units.forEachAlive { i, u in
 			units[i]?.update(hp: u.hp)
 		}
 	}
@@ -114,7 +116,7 @@ extension TacticalNodes {
 		map.update(
 			map: state.map,
 			cursor: state.cursor,
-			selected: state.selectedUnit.map { i in state.position[i.index] }
+			selected: state.selectedUnit == .none ? nil : state.position[state.selectedUnit]
 		)
 	}
 
@@ -128,7 +130,7 @@ extension TacticalNodes {
 		state.map.indices.forEach { xy in
 			map.setTileGroup(tileGroup(for: state, at: xy, fog: !lit[xy]), at: xy)
 		}
-		state.units.forEach { i, u in
+		state.units.forEachAlive { i, u in
 			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)
 		}
 	}
@@ -153,11 +155,11 @@ extension TacticalNodes {
 
 	func addUnit(_ uid: UID, node: SKNode) {
 		scene?.addChild(node)
-		units[uid.index] = node
+		units[uid] = node
 	}
 
 	func removeUnit(_ uid: UID) {
-		units[uid.index]?.removeFromParent()
-		units[uid.index] = .none
+		units[uid]?.removeFromParent()
+		units[uid] = .none
 	}
 }

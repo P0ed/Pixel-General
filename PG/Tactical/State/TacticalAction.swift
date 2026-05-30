@@ -29,7 +29,7 @@ extension TacticalState {
 	}
 
 	func hasBuildings(near id: UID) -> Bool {
-		let u = units[id.index]
+		let u = units[id]
 		let p = position[id.index]
 		return map.indices.contains { xy in
 			map[xy].isSettlement
@@ -40,21 +40,21 @@ extension TacticalState {
 	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false) {
-		guard units[id.index].country == country && units[id.index].untouched || endOfTurn,
-			  cargo[id.index] == -1 || units[id.index][.transport]
+		guard units[id].country == country && units[id].untouched || endOfTurn,
+			  cargo[id] == .none || units[id][.transport]
 		else { return }
 
-		var unit = units[id.index]
+		var unit = units[id]
 		let country = unit.country
 		let position = position[id.index]
 		let neighbors = neighbors(at: position)
 
 		let noEnemy = !neighbors.contains { n in
-			units[n.index].country.team != country.team
+			units[n].country.team != country.team
 		}
 		let hasSupply = neighbors.contains { n in
-			units[n.index].country.team == country.team
-			&& units[n.index][.supply]
+			units[n].country.team == country.team
+			&& units[n][.supply]
 		}
 		let hasBuildings = hasBuildings(near: id)
 		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)
@@ -79,8 +79,8 @@ extension TacticalState {
 			unit.exp.decrement(by: UInt16(healed) * 3 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}
-		if endOfTurn, units[id.index][.regen], !units[id.index].isAir || hasBuildings {
-			units[id.index].hp.increment(by: 1, cap: units[id.index].maxHP)
+		if endOfTurn, units[id][.regen], !units[id].isAir || hasBuildings {
+			units[id].hp.increment(by: 1, cap: units[id].maxHP)
 		}
 		if endOfTurn, !unit.isAir {
 			let base = map[position].baseEntrenchment * 4
@@ -88,31 +88,41 @@ extension TacticalState {
 		}
 		unit.ap = endOfTurn ? unit.maxAP : 0
 		unit.mp = endOfTurn ? unit.maxMP : 0
-		units[id.index] = unit
+		units[id] = unit
 		events.add(.update(id))
 	}
 
-	func vision(for uid: UID) -> SetXY {
-		SetXY(position[uid.index].circle(2 * Int(units[uid.index].spot)))
+	func vision(for id: UID) -> SetXY {
+		vision(at: position[id], spot: units[id].spot)
+	}
+
+	func vision(at pos: XY, spot: UInt8) -> SetXY {
+		.make { v in
+			v[pos] = true
+			switch spot {
+			case 3: pos.n36.forEach { xy in v[xy] = true }
+			default: pos.n20.forEach { xy in v[xy] = true }
+			}
+		}
 	}
 
 	func vision(for country: Country) -> SetXY {
-		var v = units.reduce(into: SetXY.empty) { v, i, u in
+		var v = units.reduceAlive(into: SetXY.empty) { v, i, u in
 			if u.country.team == country.team { v.formUnion(vision(for: i.uid)) }
 		}
 		for xy in map.indices where map[xy].isSettlement && control[xy].team == country.team {
-			v = v.union(xy.circle(3))
+			v[xy] = true
+			xy.n8.forEach { xy in v[xy] = true }
 		}
 		return v
 	}
 
-	mutating func selectUnit(_ uid: UID?) {
-		if let uid {
-			selectedUnit = uid
-			cursor = position[uid.index]
-			selectable = units[uid.index].canMove ? moves(for: uid).setXY : .none
+	mutating func selectUnit(_ uid: UID) {
+		selectedUnit = uid
+		if uid != .none {
+			cursor = position[uid]
+			selectable = units[uid].canMove ? moves(for: uid).setXY : .none
 		} else {
-			selectedUnit = .none
 			selectable = .none
 		}
 	}

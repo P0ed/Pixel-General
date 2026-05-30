@@ -1,32 +1,20 @@
-struct Map<Element>: ~Copyable {
-	private var tiles: InlineArray<1024, Element>
+struct Map<let maxSize: Int, Element>: ~Copyable {
+	private var tiles: InlineArray<maxSize, InlineArray<maxSize, Element>>
 	private var zero: Element
-	var size: Int
+	private(set) var size: Int
 
 	var count: Int { size * size }
 
 	init(size: Int, zero: Element) {
-		precondition(size > 0 && size <= 32)
+		precondition(size > 0 && size <= maxSize)
 		self.size = size
 		self.zero = zero
-		tiles = .init(repeating: zero)
-	}
-
-	var indices: AnySequence<XY> {
-		AnySequence { [size, count] in
-			var i = 0
-			return AnyIterator {
-				defer { i += 1 }
-				return i < count
-				? XY(i % size, i / size)
-				: nil
-			}
-		}
+		tiles = .init(repeating: .init(repeating: zero))
 	}
 
 	subscript(xy: XY) -> Element {
-		get { contains(xy) ? tiles[xy.x + xy.y * size] : zero }
-		set { contains(xy) ? tiles[xy.x + xy.y * size] = newValue : () }
+		get { contains(xy) ? tiles[xy.y][xy.x] : zero }
+		set { contains(xy) ? tiles[xy.y][xy.x] = newValue : () }
 	}
 
 	func contains(_ xy: XY) -> Bool {
