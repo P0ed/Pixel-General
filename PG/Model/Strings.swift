@@ -49,15 +49,15 @@ extension TacticalState {
 		} else if selectedUnit != .none {
 			Status(
 				text: units[selectedUnit].status(cargo: cargo[selectedUnit] != .none),
-				action: .init(units[selectedUnit].country.flag)
+				flag: units[selectedUnit].country.flag
 			)
 		} else if map[cursor].isSettlement {
 			Status(
 				text: "\(cursor) \(map[cursor])",
-				action: .init(control[cursor].flag)
+				flag: control[cursor].flag
 			)
 		} else {
-			Status(text: "\(cursor) \(map[cursor])", action: .init("day \(day)"))
+			Status(text: "\(cursor) \(map[cursor])", action: "day \(day)")
 		}
 	}
 }

@@ -16,15 +16,15 @@ extension D20: RandomNumberGenerator {
 		.random(in: 0..<20, using: &self)
 	}
 
-	mutating func callAsFunction(_ `throw`: Throw) -> Int {
+	mutating func callAsFunction(_ `throw`: Throw, _ cnt: Int) -> Int {
 		switch `throw` {
-		case .min(let cnt): (0 ..< cnt).map { _ in self() }.min() ?? 0
-		case .max(let cnt): (0 ..< cnt).map { _ in self() }.max() ?? 0
-		case .sum(let cnt): (0 ..< cnt).reduce(into: 0, { r, i in r += self() })
+		case .min: modifying(.max) { r in for _ in 0 ..< cnt { r = min(r, self()) } }
+		case .max: modifying(0) { r in for _ in 0 ..< cnt { r = max(r, self()) } }
+		case .sum: modifying(0) { r in for _ in 0 ..< cnt { r += self() } }
 		}
 	}
 }
 
 extension D20 {
-	enum Throw { case min(Int), max(Int), sum(Int) }
+	enum Throw { case min, max, sum }
 }

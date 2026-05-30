@@ -16,7 +16,7 @@ extension HQState {
 			text: selected.map { units[$0.index].status() } ?? .makeStatus { add in
 				add("prestige: \(player.prestige)")
 			},
-			action: .init({
+			action: {
 				if selected != nil {
 					"C: sell"
 				} else if units[cursor] == nil {
@@ -24,7 +24,7 @@ extension HQState {
 				} else {
 					""
 				}
-			}())
+			}()
 		)
 	}
 }

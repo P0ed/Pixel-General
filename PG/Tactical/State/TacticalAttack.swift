@@ -39,7 +39,7 @@ extension TacticalState {
 		let t1 = max(0, 7 - dif)
 		let t2 = max(5, 15 - dif)
 		let t3 = max(10, 24 - dif)
-		let iniRound = source.ini > d20(.max(2)) ? 1 : 0 as UInt8
+		let iniRound = source.ini > d20(.max, 2) ? 1 : 0 as UInt8
 		let rounds = (source.hp + 3) / 3 + iniRound
 		let crit = source[.crit]
 		let evasion = destination[.evasion]

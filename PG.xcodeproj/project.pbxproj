@@ -11,11 +11,9 @@
 		5F168CF12FC0A572004AEFFA /* SovietAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF02FC0A572004AEFFA /* SovietAI.swift */; };
 		5F168CF52FC0AD48004AEFFA /* AxisAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F168CF42FC0AD45004AEFFA /* AxisAI.swift */; };
 		5F178BF82FC9A3D6003251A0 /* Shapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F178BF72FC9A3D4003251A0 /* Shapes.swift */; };
-		5F178BFA2FC9B21E003251A0 /* MapIndices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F178BF92FC9B21E003251A0 /* MapIndices.swift */; };
 		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
 		5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9502F7EA89B002BBF38 /* HQScenario.swift */; };
 		5F26B9532F7EE56E002BBF38 /* TacticalTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */; };
-		5F2D145F2F7AC24600D2DF7E /* Either.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2D145E2F7AC24600D2DF7E /* Either.swift */; };
 		5F2E296D2F1012600010E6E9 /* Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E296C2F10125D0010E6E9 /* Templates.swift */; };
 		5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC52FC3441800EF7BA3 /* Colors.swift */; };
 		5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC72FC3443B00EF7BA3 /* Images.swift */; };
@@ -108,7 +106,6 @@
 		5F168CF02FC0A572004AEFFA /* SovietAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietAI.swift; sourceTree = "<group>"; };
 		5F168CF42FC0AD45004AEFFA /* AxisAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisAI.swift; sourceTree = "<group>"; };
 		5F178BF72FC9A3D4003251A0 /* Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shapes.swift; sourceTree = "<group>"; };
-		5F178BF92FC9B21E003251A0 /* MapIndices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapIndices.swift; sourceTree = "<group>"; };
 		5F24DC322EA95FE50085FDDC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5F26B9502F7EA89B002BBF38 /* HQScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQScenario.swift; sourceTree = "<group>"; };
 		5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTransport.swift; sourceTree = "<group>"; };
@@ -137,7 +134,6 @@
 		5F2A33C02EA93AC3008A0A95 /* UnitSprites.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSprites.swift; sourceTree = "<group>"; };
 		5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5F2A33C42EA93AC3008A0A95 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
-		5F2D145E2F7AC24600D2DF7E /* Either.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Either.swift; sourceTree = "<group>"; };
 		5F2E296C2F10125D0010E6E9 /* Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Templates.swift; sourceTree = "<group>"; };
 		5F2E4CC52FC3441800EF7BA3 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		5F2E4CC72FC3443B00EF7BA3 /* Images.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Images.swift; sourceTree = "<group>"; };
@@ -428,11 +424,9 @@
 				5F2A33AF2EA93AC3008A0A95 /* XY.swift */,
 				5F178BF72FC9A3D4003251A0 /* Shapes.swift */,
 				5F2A33A82EA93AC3008A0A95 /* Arrays.swift */,
-				5F2D145E2F7AC24600D2DF7E /* Either.swift */,
 				5F87CF592F7BD46900BC87CA /* CArray.swift */,
 				5F8E87302EB3BEEC0023B28F /* Speicher.swift */,
 				5F41DDD42EE32744008FBF17 /* Map.swift */,
-				5F178BF92FC9B21E003251A0 /* MapIndices.swift */,
 				5FA0F0962EF21C3A0022EC68 /* SetXY.swift */,
 				5FBA4D822EF7016D00D7C1B0 /* Input.swift */,
 				5FA0F0982EF2255B0022EC68 /* D20.swift */,
@@ -609,7 +603,6 @@
 				5FE44F152F9BBA1F00A589F1 /* StrategicAction.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
 				5F919D5E2EA9596E0037A208 /* Unit.swift in Sources */,
-				5F178BFA2FC9B21E003251A0 /* MapIndices.swift in Sources */,
 				5F919D5F2EA9596E0037A208 /* Units.swift in Sources */,
 				5FA0F0972EF21C3A0022EC68 /* SetXY.swift in Sources */,
 				5F5561052EF5B89B00C08E14 /* HQEvent.swift in Sources */,
@@ -623,7 +616,6 @@
 				5F178BF82FC9A3D6003251A0 /* Shapes.swift in Sources */,
 				5F87CF5A2F7BD46900BC87CA /* CArray.swift in Sources */,
 				5F5560FA2EF5B05D00C08E14 /* HQMode.swift in Sources */,
-				5F2D145F2F7AC24600D2DF7E /* Either.swift in Sources */,
 				5F919D652EA9596E0037A208 /* TacticalStateFactory.swift in Sources */,
 				5FBA4D832EF7016F00D7C1B0 /* Input.swift in Sources */,
 				5FBA4D7E2EF6E26800D7C1B0 /* StrategicState.swift in Sources */,

@@ -64,10 +64,7 @@ extension CArray {
 	}
 
 	mutating func swapAt(_ i: Int, _ j: Int) {
-		guard i != j else { return }
-		let v = self[j]
-		self[j] = self[i]
-		self[i] = v
+		mem.swapAt(i, j)
 	}
 
 	mutating func removeLast() -> Element {

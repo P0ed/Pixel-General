@@ -43,7 +43,7 @@ extension EditorNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+			map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
 		}
 
 		return map
@@ -65,10 +65,10 @@ extension EditorNodes {
 	func process(_ event: EditorEvent, _ state: borrowing EditorState) async {
 		switch event {
 		case let .set(xy, terrain):
-			map.setTileGroup(terrain.tileGroup(fog: false), at: xy)
+			map.setTileGroup(.tileGroup(terrain: terrain, fog: false), at: xy)
 		case .redraw:
 			state.map.indices.forEach { xy in
-				map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+				map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
 			}
 		case .menu:
 			processMenu(state)

@@ -1,9 +1,3 @@
-struct UID: Equatable {
-	var rawValue: Int8
-
-	init(_ value: Int8) { rawValue = value }
-}
-
 struct Unit: Equatable {
 	var country: Country = .default
 	var hp: UInt8 = 0
@@ -154,7 +148,7 @@ extension Unit {
 		let all = [8 of Skills].init { i in Skills(rawValue: 1 << i) }
 		let cnt = skills.rawValue.nonzeroBitCount
 
-		if Int(lvl) > cnt, d20(.min(2)) > 9 + cnt * 3 - Int(lvl) * 2,
+		if Int(lvl) > cnt, d20(.min, 2) > 9 + cnt * 3 - Int(lvl) * 2,
 		   let rnd = all.compactMap(id).randomElement(using: &d20)
 		{
 			skills.insert(rnd)
@@ -202,6 +196,23 @@ extension Unit: DeadOrAlive {
 	var alive: Bool { hp > 0 }
 }
 
+struct UID: Equatable {
+	var rawValue: Int8
+
+	init(_ value: Int8) { rawValue = value }
+}
+
+extension UID {
+
+	static let none = UID(-1)
+
+	var index: Int { Int(rawValue) }
+}
+
+extension Int {
+	var uid: UID { UID(Int8(self)) }
+}
+
 extension InlineArray where Element == Unit, count == 16 {
 
 	subscript(_ xy: XY) -> (UID, Unit)? {
@@ -231,11 +242,3 @@ extension Array {
 		set { self[id.index] = newValue }
 	}
 }
-
-extension UID {
-
-	static let none = UID(-1)
-
-	var index: Int { Int(rawValue) }
-}
-extension Int { var uid: UID { UID(Int8(clamping: self)) } }

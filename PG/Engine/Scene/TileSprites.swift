@@ -71,7 +71,7 @@ extension SKTileGroup {
 }
 
 @MainActor
-extension Terrain {
+extension SKTileGroup {
 
 	private struct CacheKey: Hashable {
 		let terrain: Terrain
@@ -80,18 +80,21 @@ extension Terrain {
 
 	private static var cache: [CacheKey: SKTileGroup] = [:]
 
-	func tileGroup(fog: Bool) -> SKTileGroup {
-		let key = CacheKey(terrain: self, fog: fog)
+	static func tileGroup(terrain: Terrain, fog: Bool) -> SKTileGroup {
+		let key = CacheKey(terrain: terrain, fog: fog)
 		if let group = Self.cache[key] { return group }
 		let group = SKTileGroup.make(
-			color: surfaceColor,
-			elevation: elevationLevel,
+			color: terrain.surfaceColor,
+			elevation: terrain.elevationLevel,
 			fog: fog,
-			decoration: decoration
+			decoration: terrain.decoration
 		)
 		Self.cache[key] = group
 		return group
 	}
+}
+
+extension Terrain {
 
 	var surfaceColor: SKColor {
 		switch self {
@@ -136,8 +139,8 @@ extension SKTileSet {
 	static let terrain = SKTileSet(
 		tileGroups: .make { ts in
 			tiles.forEach { terrain in
-				ts.append(terrain.tileGroup(fog: false))
-				ts.append(terrain.tileGroup(fog: true))
+				ts.append(.tileGroup(terrain: terrain, fog: false))
+				ts.append(.tileGroup(terrain: terrain, fog: true))
 			}
 			ts += politicalTiles
 		},

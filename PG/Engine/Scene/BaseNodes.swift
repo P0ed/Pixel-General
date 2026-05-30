@@ -10,7 +10,8 @@ struct BaseNodes {
 
 struct Status {
 	var text: String = ""
-	var action: Either<String, NSImage> = .init("")
+	var action: String = ""
+	var flag: NSImage?
 }
 
 extension Scene where State: ~Copyable {
@@ -75,8 +76,8 @@ extension BaseNodes {
 
 	func updateStatus(_ data: Status) {
 		status.text = data.text
-		action.text = data.action.mapA(id)
-		icon.texture = data.action.mapB(SKTexture.init(image:))
+		action.text = data.action
+		icon.texture = data.flag.map(SKTexture.init(image:))
 		icon.texture?.filteringMode = .nearest
 	}
 }

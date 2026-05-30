@@ -80,7 +80,7 @@ extension TacticalNodes {
 		)
 
 		state.map.indices.forEach { xy in
-			map.setTileGroup(state.map[xy].tileGroup(fog: false), at: xy)
+			map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
 		}
 
 		return map
@@ -138,7 +138,7 @@ extension TacticalNodes {
 	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup {
 		switch state.mapMode {
 		case .terrain:
-			return state.map[xy].tileGroup(fog: fog)
+			return .tileGroup(terrain: state.map[xy], fog: fog)
 		case .political:
 			let country = state.control[xy]
 			let idx = state.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
