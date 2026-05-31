@@ -8,9 +8,13 @@ extension TacticalState {
 
 		return u.country == country
 		&& t.country == country
-		&& u.type == .soft && u.canMove && cargo[unit] == .none
+		&& canEmbarkType(unit: u, transport: t) && u.canMove && cargo[unit] == .none
 		&& t[.transport] && cargo[transport] == .none
 		&& up.manhattanDistance(to: tp) == 1
+	}
+
+	func canEmbarkType(unit: Unit, transport: Unit) -> Bool {
+		unit.transportable ? (transport.isAir ? unit[.elite] : true) : false
 	}
 
 	mutating func embark(unit: UID, transport: UID) {
@@ -47,7 +51,7 @@ extension TacticalState {
 		position[idx] = xy
 		units[idx].mp = 0
 		units[idx].ent = 0
-		if units[idx][.art] { units[idx].ap = 0 }
+		if units[idx].isArt { units[idx].ap = 0 }
 		unitsMap[xy] = idx.uid
 		player.visible.formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)

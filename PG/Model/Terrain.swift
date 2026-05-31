@@ -72,7 +72,7 @@ extension Terrain {
 
 	func moveCost(_ stats: Unit) -> UInt8 {
 		switch stats.type {
-		case .soft:
+		case .inf, .aa, .art:
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 1
@@ -82,7 +82,7 @@ extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .softWheel, .lightWheel:
+		case .supply, .wheelArt, .wheelAA, .lightWheel:
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 2
@@ -91,7 +91,7 @@ extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .lightTrack, .heavyTrack:
+		case .trackArt, .trackAA, .lightTrack, .heavyTrack:
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 1
@@ -146,29 +146,29 @@ extension Terrain {
 		case _ where isBridge: -2
 		case _ where isRiver:
 			switch type {
-			case .soft, .softWheel: -2
-			case .lightWheel, .lightTrack: -3
+			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: -2
+			case .lightWheel, .lightTrack, .trackAA, .trackArt: -3
 			case .heavyTrack: -5
 			default: 0
 			}
 		case .hill, .airfield:
 			switch type {
-			case .soft: 1
-			case .lightWheel, .lightTrack: -1
+			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 1
+			case .lightWheel, .lightTrack, .trackAA, .trackArt: -1
 			case .heavyTrack: -2
 			default: 0
 			}
 		case .forest, .villageE, .villageN, .villageW, .villageS:
 			switch type {
-			case .soft: 2
-			case .lightWheel, .lightTrack: -2
+			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 2
+			case .lightWheel, .lightTrack, .trackAA, .trackArt: -2
 			case .heavyTrack: -4
 			default: 0
 			}
 		case .city, .mountain, .forestHill:
 			switch type {
-			case .soft: 3
-			case .lightWheel, .lightTrack: -3
+			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 3
+			case .lightWheel, .lightTrack, .trackAA, .trackArt: -3
 			case .heavyTrack: -6
 			default: 0
 			}

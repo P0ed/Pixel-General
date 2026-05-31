@@ -90,13 +90,9 @@ extension Unit {
 
 	var typeDescription: String {
 		switch type {
-		case .soft:
-			if self[.art] {
-				switch country.team {
-				case .allies: "M777"
-				default: hardAtk > 6 ? "155mm" : "105mm"
-				}
-			} else if self[.elite] {
+		case .supply: "Truck"
+		case .inf:
+			if self[.elite] {
 				switch country.team {
 				case .axis: "KSK"
 				case .allies: "Delta Force"
@@ -105,33 +101,27 @@ extension Unit {
 			} else {
 				"Infantry"
 			}
-		case .softWheel:
-			if self[.aa] {
-				"Neva"
-			} else if self[.art] {
-				"Bohdana"
-			} else if self[.supply] {
-				"Truck"
-			} else {
-				""
+		case .art:
+			switch country.team {
+			case .allies: "M777"
+			default: hardAtk > 6 ? "155mm" : "105mm"
 			}
-		case .lightWheel:
-			"Boxer"
+		case .wheelArt: "Bohdana"
+		case .trackArt:
+			switch country.team {
+			case .axis: "PzH 2000"
+			case .allies: "M270"
+			case .soviet: "2С3"
+			}
+		case .aa: "Bofors 40L/70"
+		case .wheelAA: "Neva"
+		case .trackAA: "Lvkv 90"
+		case .lightWheel: "Boxer"
 		case .lightTrack:
-			if self[.aa] {
-				"Lvkv 90"
-			} else if self[.art] {
-				switch country.team {
-				case .axis: "PzH 2000"
-				case .allies: "M270"
-				case .soviet: "2С3"
-				}
-			} else {
-				switch country.team {
-				case .axis: "Strf 90"
-				case .allies: hardAtk > 5 ? "M2A2" : "M113"
-				case .soviet: "BMP"
-				}
+			switch country.team {
+			case .axis: "Strf 90"
+			case .allies: hardAtk > 5 ? "M2A2" : "M113"
+			case .soviet: "BMP"
 			}
 		case .heavyTrack:
 			switch country.team {

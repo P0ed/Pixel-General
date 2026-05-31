@@ -111,7 +111,7 @@ extension TacticalState {
 		}
 		units[uid].mp.decrement()
 		units[uid].ent = 0
-		if units[uid].type == .soft, units[uid][.art] {
+		if units[uid].type == .art {
 			units[uid].ap = 0
 		}
 

@@ -118,8 +118,7 @@ extension Unit {
 
 	static var truck: Self {
 		.make { u in
-			u.type = .softWheel
-			u[.supply] = true
+			u.type = .supply
 			u[.transport] = true
 			u.mov = 8
 			u.groundDef = 3
@@ -129,7 +128,7 @@ extension Unit {
 
 	static var militia: Self {
 		.make { stats in
-			stats.type = .soft
+			stats.type = .inf
 			stats.mov = 3
 			stats.rng = 1
 			stats.ini = 3
@@ -142,7 +141,7 @@ extension Unit {
 
 	static var regular: Self {
 		.make { stats in
-			stats.type = .soft
+			stats.type = .inf
 			stats.mov = 3
 			stats.rng = 1
 			stats.ini = 4
@@ -155,7 +154,7 @@ extension Unit {
 
 	static var delta: Self {
 		.make { stats in
-			stats.type = .soft
+			stats.type = .inf
 			stats[.elite] = true
 			stats.mov = 4
 			stats.rng = 1
@@ -170,7 +169,7 @@ extension Unit {
 
 	static var ksk: Self {
 		.make { stats in
-			stats.type = .soft
+			stats.type = .inf
 			stats[.elite] = true
 			stats.mov = 4
 			stats.rng = 1
@@ -185,7 +184,7 @@ extension Unit {
 
 	static var speznas: Self {
 		.make { stats in
-			stats.type = .soft
+			stats.type = .inf
 			stats[.elite] = true
 			stats.mov = 4
 			stats.rng = 1
@@ -296,8 +295,7 @@ extension Unit {
 
 	static var lvkv90: Self {
 		.make { stats in
-			stats.type = .lightTrack
-			stats[.aa] = true
+			stats.type = .trackAA
 			stats[.radar] = true
 			stats.mov = 7
 			stats.rng = 1
@@ -327,7 +325,6 @@ extension Unit {
 	static var gripen: Self {
 		.make { stats in
 			stats.type = .jet
-			stats[.aa] = true
 			stats[.radar] = true
 			stats.mov = 12
 			stats.rng = 2
@@ -342,8 +339,7 @@ extension Unit {
 
 	static var pzh: Self {
 		.make { stats in
-			stats.type = .lightTrack
-			stats[.art] = true
+			stats.type = .trackArt
 			stats.mov = 5
 			stats.rng = 3
 			stats.ini = 5
@@ -356,8 +352,7 @@ extension Unit {
 
 	static var art105: Self {
 		.make { stats in
-			stats.type = .soft
-			stats[.art] = true
+			stats.type = .art
 			stats.mov = 1
 			stats.rng = 2
 			stats.ini = 2
@@ -370,8 +365,7 @@ extension Unit {
 
 	static var art155: Self {
 		.make { stats in
-			stats.type = .soft
-			stats[.art] = true
+			stats.type = .art
 			stats.mov = 1
 			stats.rng = 3
 			stats.ini = 2
@@ -384,8 +378,7 @@ extension Unit {
 
 	static var m777: Self {
 		.make { stats in
-			stats.type = .soft
-			stats[.art] = true
+			stats.type = .art
 			stats.mov = 1
 			stats.rng = 3
 			stats.ini = 2
@@ -398,8 +391,7 @@ extension Unit {
 
 	static var m270: Self {
 		.make { stats in
-			stats.type = .lightTrack
-			stats[.art] = true
+			stats.type = .trackArt
 			stats.mov = 5
 			stats.rng = 3
 			stats.ini = 5
@@ -484,7 +476,6 @@ extension Unit {
 	static var f16: Self {
 		.make { stats in
 			stats.type = .jet
-			stats[.aa] = true
 			stats[.radar] = true
 			stats.mov = 12
 			stats.rng = 2
@@ -500,7 +491,6 @@ extension Unit {
 	static var f35: Self {
 		.make { stats in
 			stats.type = .jet
-			stats[.aa] = true
 			stats[.radar] = true
 			stats.mov = 12
 			stats.rng = 2
@@ -515,8 +505,7 @@ extension Unit {
 
 	static var neva: Self {
 		.make { stats in
-			stats.type = .softWheel
-			stats[.aa] = true
+			stats.type = .wheelAA
 			stats.mov = 7
 			stats.rng = 3
 			stats.ini = 10
@@ -575,7 +564,6 @@ extension Unit {
 	static var mig: Self {
 		.make { stats in
 			stats.type = .jet
-			stats[.aa] = true
 			stats[.radar] = true
 			stats.mov = 12
 			stats.rng = 2

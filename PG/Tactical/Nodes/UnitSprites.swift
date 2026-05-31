@@ -39,27 +39,21 @@ extension Unit {
 
 	var imageName: String {
 		switch type {
-		case .soft:
-			if self[.art] { "Art" }
-			else if self[.elite] { "SF" }
-			else { "Reg" }
-		case .softWheel:
-			if self[.supply] { "Truck" }
-			else if self[.aa] { "Neva" }
-			else { "Truck" }
-		case .lightWheel: "boxer"
-		case .lightTrack:
-			if self[.aa] {
-				"SPAA"
-			} else if self[.art] {
-				switch country.team {
-				case .axis: "PZH"
-				case .allies: "M270"
-				case .soviet: "2S3"
-				}
-			} else {
-				"Recon"
+		case .aa: "<>"
+		case .wheelArt: "<>"
+		case .supply: "Truck"
+		case .inf: if self[.elite] { "SF" } else { "Reg" }
+		case .art: "Art"
+		case .trackArt:
+			switch country.team {
+			case .axis: "PZH"
+			case .allies: "M270"
+			case .soviet: "2S3"
 			}
+		case .wheelAA: "Neva"
+		case .trackAA: "SPAA"
+		case .lightWheel: "boxer"
+		case .lightTrack: "Recon"
 		case .heavyTrack:
 			switch country.team {
 			case .allies: "M1A2"

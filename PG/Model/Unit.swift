@@ -7,7 +7,7 @@ struct Unit: Equatable {
 	var ent: UInt8 = 0
 	var exp: UInt16 = 0
 	var kills: UInt16 = 0
-	var type: UnitType = .soft
+	var type: UnitType = .supply
 	var mov: UInt8 = 0
 	var rng: UInt8 = 0
 	var ini: UInt8 = 0
@@ -24,10 +24,10 @@ struct Traits: OptionSet, Equatable {
 	var rawValue: UInt16
 
 	static var aux: Self { .init(rawValue: 1 << 0) }
-	static var art: Self { .init(rawValue: 1 << 1) }
-	static var aa: Self { .init(rawValue: 1 << 2) }
+	static var xxx: Self { .init(rawValue: 1 << 1) }
+	static var _x_: Self { .init(rawValue: 1 << 2) }
 	static var x_x: Self { .init(rawValue: 1 << 3) }
-	static var supply: Self { .init(rawValue: 1 << 4) }
+	static var ___: Self { .init(rawValue: 1 << 4) }
 	static var elite: Self { .init(rawValue: 1 << 5) }
 	static var transport: Self { .init(rawValue: 1 << 6) }
 	static var radar: Self { .init(rawValue: 1 << 7) }
@@ -65,25 +65,45 @@ extension Unit {
 	var fullAmmo: Bool { ammo == maxAmmo }
 
 	var maxAmmo: UInt8 {
-		guard rng > 0 else { return 0 }
-
-		return switch type {
-		case .jet where rng > 1: 2
-		case .jet: 3
+		switch type {
+		case .supply: 0
+		case .jet: rng > 1 ? 2 : 3
 		case .heli: 3
-		case .soft where self[.art]: 6
-		case .soft where self[.aa] && rng > 1: 5
-		case .soft where self[.aa]: 7
-		case _ where self[.art]: 5
-		case _ where self[.aa] && rng > 1: 4
-		case _ where self[.aa]: 6
-		default: 7
+		case .art: 6
+		case .wheelArt, .trackArt: 5
+		case .aa: rng > 1 ? 5 : 7
+		case .wheelAA, .trackAA: rng > 1 ? 4 : 6
+		case .inf: 7
+		case .lightWheel: 7
+		case .lightTrack: 7
+		case .heavyTrack: 7
 		}
 	}
 
 	var isArmor: Bool {
 		switch type {
-		case .lightWheel, .lightTrack, .heavyTrack: !self[.art] && !self[.aa];
+		case .lightWheel, .lightTrack, .heavyTrack: true;
+		default: false
+		}
+	}
+
+	var isArt: Bool {
+		switch type {
+		case .art, .wheelArt, .trackArt: true;
+		default: false
+		}
+	}
+
+	var isAA: Bool {
+		switch type {
+		case .aa, .wheelAA, .trackAA, .jet: true;
+		default: false
+		}
+	}
+
+	var transportable: Bool {
+		switch type {
+		case .inf, .art, .aa: true
 		default: false
 		}
 	}
@@ -94,9 +114,9 @@ extension Unit {
 
 	var entRate: UInt8 {
 		switch type {
-		case .soft: 4
-		case .softWheel, .lightWheel, .lightTrack: 3
-		case .heavyTrack: 2
+		case .supply, .inf: 4
+		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3
+		case .heavyTrack, .trackAA, .trackArt: 2
 		case .heli, .jet: 0
 		}
 	}
@@ -126,8 +146,8 @@ extension Unit {
 
 	func atk(_ dst: Unit) -> UInt8 {
 		switch dst.type {
-		case .soft, .softWheel: softAtk
-		case .lightWheel, .lightTrack, .heavyTrack: hardAtk
+		case .inf, .supply, .art, .aa, .wheelAA, .wheelArt: softAtk
+		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack: hardAtk
 		case .heli, .jet: airAtk
 		}
 	}
@@ -160,7 +180,7 @@ extension Unit {
 	}
 
 	private var sumMult: UInt16 {
-		self[.art] ? 4 : 3
+		isArt || isAA || isAir ? 4 : 3
 	}
 
 	private var traitCost: UInt16 {
@@ -173,8 +193,14 @@ extension Unit {
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .soft: 33
-		case .softWheel: 47
+		case .supply: 22
+		case .inf: 33
+		case .art: 47
+		case .aa: 68
+		case .wheelArt: 100
+		case .wheelAA: 120
+		case .trackArt: 150
+		case .trackAA: 180
 		case .lightWheel: 100
 		case .lightTrack: 120
 		case .heavyTrack: 150
@@ -189,7 +215,11 @@ extension Unit {
 }
 
 enum UnitType: UInt8, Hashable {
-	case soft, softWheel, lightWheel, lightTrack, heavyTrack, heli, jet
+	case supply, inf,
+		 art, wheelArt, trackArt,
+		 aa, wheelAA, trackAA,
+		 lightWheel, lightTrack, heavyTrack,
+		 heli, jet
 }
 
 extension Unit: DeadOrAlive {

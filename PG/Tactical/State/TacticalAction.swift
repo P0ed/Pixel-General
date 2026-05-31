@@ -54,7 +54,7 @@ extension TacticalState {
 		}
 		let hasSupply = neighbors.contains { n in
 			units[n].country.team == country.team
-			&& units[n][.supply]
+			&& units[n].type == .supply
 		}
 		let hasBuildings = hasBuildings(near: id)
 		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)

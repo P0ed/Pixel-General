@@ -40,7 +40,7 @@ extension TacticalState {
 	private func needsReinforcements(_ idx: Int, _ unit: Unit) -> Bool {
 		(cargo[idx] == .none || unit[.transport]) && (
 			unit.hp < 6 || (
-				!unit[.supply] && unit.ammo < unit.maxAmmo / 2
+				unit.type != .supply && unit.ammo < unit.maxAmmo / 2
 			)
 		)
 	}
@@ -82,15 +82,15 @@ extension TacticalState {
 			: targets(id: i.uid)
 				.max(by: { a, b in
 					(
-						(a.1[.art] ? 5 : 0)
-						+ (a.1[.aa] ? 6 : 0)
+						(a.1.isArt ? 5 : 0)
+						+ (a.1.isAA ? 6 : 0)
 						+ (a.1.maxHP - a.1.hp)
-						+ (u[.aa] && a.1.isAir ? 10 : 0)
+						+ (u.isAA && a.1.isAir ? 10 : 0)
 					) < (
-						(b.1[.art] ? 5 : 0)
-						+ (b.1[.aa] ? 6 : 0)
+						(b.1.isArt ? 5 : 0)
+						+ (b.1.isAA ? 6 : 0)
 						+ (b.1.maxHP - b.1.hp)
-						+ (u[.aa] && b.1.isAir ? 10 : 0)
+						+ (u.isAA && b.1.isAir ? 10 : 0)
 					)
 				})
 				.map { t in .attack(i.uid, t.0) }

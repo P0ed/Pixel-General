@@ -10,10 +10,19 @@ extension TacticalState {
 			&& (su.isAir ? su.ammo > 0 : true)
 	}
 
-	func support(trait: Traits, defender: UID, attacker: UID) -> UID? {
+	func artSupport(defender: UID, attacker: UID) -> UID? {
 		position[defender].n8.firstMap { hx in
 			return unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u[trait]
+				u.country.team == units[defender].country.team && u.isArt
+				? unitsMap[hx] : nil
+			}
+		}
+	}
+
+	func aaSupport(defender: UID, attacker: UID) -> UID? {
+		position[defender].n8.firstMap { hx in
+			return unitAt(hx).flatMap { u in
+				u.country.team == units[defender].country.team && u.isAA
 				? unitsMap[hx] : nil
 			}
 		}
@@ -112,7 +121,7 @@ extension TacticalState {
 
 		units[si].ap.decrement()
 
-		let ruggedDefence: Bool = !surprise && su[.art] ? false : (
+		let ruggedDefence: Bool = !surprise && su.isArt ? false : (
 			d20() + Int(su.ini + su.lvl) * 2
 		) < (
 			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
@@ -124,7 +133,7 @@ extension TacticalState {
 		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
 		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
 
-		let srcDef: Int8 = (su[.art] ? 0 : dt.closeCombat(su.type))
+		let srcDef: Int8 = (su.isArt ? 0 : dt.closeCombat(su.type))
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 4 : 0)
 		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type)
@@ -132,18 +141,18 @@ extension TacticalState {
 			+ mhtn + diag
 			- encirclement(id: dst)
 
-		if !su.isAir, !du.isAir, !su[.art],
-			let art = support(trait: .art, defender: dst, attacker: src) {
+		if !su.isAir, !du.isAir, !su.isArt,
+			let art = artSupport(defender: dst, attacker: src) {
 			fire(src: art, dst: src, defMod: 0)
 		}
-		if su.isAir, !du[.aa], let aa = support(trait: .aa, defender: dst, attacker: src) {
+		if su.isAir, !du.isAA, let aa = aaSupport(defender: dst, attacker: src) {
 			fire(src: aa, dst: src, defMod: 0)
 		}
 		if !ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
 			units[di].ent.decrement(by: 4)
 		}
-		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su[.art] || du[.art] || surprise {
+		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
 			fire(src: dst, dst: src, defMod: srcDef)
 		}
 		if ruggedDefence, units[si].alive {

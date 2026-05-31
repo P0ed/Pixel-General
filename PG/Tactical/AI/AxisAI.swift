@@ -15,8 +15,8 @@ extension TacticalState {
 	// MARK: - Priority queues (cached in `ai`)
 	private func priority(_ u: Unit) -> Int {
 		if u.isAir { 0 }
-		else if u[.art] { 1 }
-		else if u[.aa] { 2 }
+		else if u.isArt { 1 }
+		else if u.isAA { 2 }
 		else if u.isArmor { 3 }
 		else { 4 }
 	}
@@ -41,8 +41,7 @@ extension TacticalState {
 			let base = c * 4
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
-				guard claimed & 1 << uid.rawValue == 0,
-					  units[uid].type == .soft, !units[uid][.art], !units[uid][.aa]
+				guard claimed & 1 << uid.rawValue == 0, units[uid].type == .inf
 				else { return nil }
 				return (uid, position[uid].stepDistance(to: cityPos))
 			}).min(by: { a, b in a.1 < b.1 }) {
@@ -51,8 +50,8 @@ extension TacticalState {
 			}
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int, Bool)? in
-				guard claimed & 1 << uid.rawValue == 0, units[uid][.art] else { return nil }
-				return (uid, position[uid].stepDistance(to: cityPos), units[uid].type == .soft)
+				guard claimed & 1 << uid.rawValue == 0, units[uid].isArt else { return nil }
+				return (uid, position[uid].stepDistance(to: cityPos), units[uid].type == .art)
 			}).min(by: { a, b in
 				a.2 != b.2 ? a.2 : a.1 < b.1
 			}) {
@@ -61,7 +60,7 @@ extension TacticalState {
 			}
 
 			if let pick = ownUnits.compactMap({ (_, uid) -> (UID, Int)? in
-				guard claimed & 1 << uid.rawValue == 0, units[uid][.aa] else { return nil }
+				guard claimed & 1 << uid.rawValue == 0, units[uid].isAA else { return nil }
 				return (uid, position[uid].stepDistance(to: cityPos))
 			}).min(by: { a, b in a.1 < b.1 }) {
 				ai.defenders[base + 2] = pick.0
@@ -208,11 +207,11 @@ extension TacticalState {
 			+ Int(u.ini) * 4
 			+ Int(u.mov) * 3
 			+ Int(u.rng) * 5
-		if u[.art] { s += 14 }
-		if u[.aa], enemyHasAir { s += 18 }
+		if u.isArt { s += 14 }
+		if u.isAA, enemyHasAir { s += 18 }
 		if u.isAir { s += 8 }
 		if u[.transport] { s += 4 }
-		if u[.supply] { s += 6 }
+		if u.type == .supply { s += 6 }
 		if u[.aux] { s += 6 }
 		s -= Int(u.cost / 80)
 		return s
@@ -235,14 +234,15 @@ extension TacticalState {
 	// MARK: - Embark / Disembark
 	private var embark: TacticalAction? {
 		units.firstMapAlive { [country] i, u in
-			guard u.country == country, u.type == .soft, u.canMove, cargo[i] == .none
-			else { return nil }
-			guard let target = objective(for: i.uid),
-				  position[i].stepDistance(to: target) >= 4
-			else { return nil }
+			guard u.country == country, u.transportable, u.canMove, cargo[i] == .none else { return nil }
+			guard let target = objective(for: i.uid) else { return nil }
+			guard position[i].stepDistance(to: target) >= 3 * u.mov else { return nil }
+
 			return position[i].n4.firstMap { xy -> TacticalAction? in
 				guard let tid = uidAt(xy) else { return nil }
 				let t = units[tid]
+				guard canEmbarkType(unit: u, transport: t) else { return nil }
+
 				return t.country == country && t[.transport] && cargo[tid] == .none
 				? .embark(i.uid, tid) : nil
 			}
@@ -280,7 +280,7 @@ extension TacticalState {
 				let dmg = estimateDamage(attacker: uid, defender: j.uid)
 				guard dmg > 0 else { return }
 
-				let canCounter = unitCanHit(j.uid, uid) && (!u[.art] || t[.art])
+				let canCounter = unitCanHit(j.uid, uid) && (!u.isArt || t.isArt)
 				let counter: UInt8 = canCounter
 					? estimateDamage(attacker: j.uid, defender: uid)
 					: 0
@@ -289,9 +289,9 @@ extension TacticalState {
 				var score = Int(dmg) * Int(t.cost) * 3 / 2
 					  - Int(counter) * Int(u.cost) / 2
 				if kill { score += Int(t.cost) * 10 }
-				if t[.art] { score += Int(u.cost) * 3 }
-				if t[.aa], u.isAir { score += Int(u.cost) * 5 }
-				if t[.supply] { score += Int(u.cost) * 2 }
+				if t.isArt { score += Int(u.cost) * 3 }
+				if t.isAA, u.isAir { score += Int(u.cost) * 5 }
+				if t.type == .supply { score += Int(u.cost) * 2 }
 				if t.ammo == 0 { score += Int(t.cost) * 2 }
 
 				if score > bestScore {
@@ -332,7 +332,7 @@ extension TacticalState {
 			}
 
 			guard let goal = objective(for: uid) else { continue }
-			let defensive = u[.art] || u.hp <= 4
+			let defensive = u.isArt || u.hp <= 4
 			if let m = pick(id: uid, toward: goal, defensive: defensive) {
 				return m
 			}
@@ -372,9 +372,9 @@ extension TacticalState {
 				if nu.country.team != team, isVisible(uid) {
 					attackBonus += Int(u.atk(nu)) * 3
 				} else if nu.country.team == team {
-					if nu[.art] { support += 3 }
-					if nu[.aa], !u[.aa] { support += 2 }
-					if nu[.supply] { support += 4 }
+					if nu.isArt { support += 3 }
+					if nu.isAA, !u.isAA { support += 2 }
+					if nu.type == .supply { support += 4 }
 				}
 			}
 			if map[n] == .airfield, control[n].team == team, u.isAir {
