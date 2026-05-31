@@ -7,7 +7,7 @@ extension TacticalState {
 		seed: Int = .random(in: 0...1023)
 	) -> TacticalState {
 		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
-		let map = Map<32, Terrain>(size: size, seed: seed)
+		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count)
 		let cities: [(XY, Country)] = cities(
 			countries: players.map { p in p.country },
 			map: map

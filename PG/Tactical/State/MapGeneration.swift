@@ -2,7 +2,7 @@ import GameplayKit
 
 extension Map<32, Terrain> {
 
-	init(size: Int, seed: Int) {
+	init(size: Int, seed: Int, players: Int = 4) {
 		self = Map(size: size, zero: .none)
 
 		let size = SIMD2<Int32>(Int32(size), Int32(size))
@@ -13,7 +13,7 @@ extension Map<32, Terrain> {
 
 		generateTerrain(height: height, humidity: humidity)
 		placeRivers(height: height)
-		let cities = placeCities(d20: &d20)
+		let cities = placeCities(d20: &d20, players: players)
 		connectCities(cities: cities)
 		shapeRoads()
 	}
@@ -88,7 +88,7 @@ extension Map<32, Terrain> {
 		xy.n8.firstMap { xy in self[xy].isRiver ? .some(xy) : .none } == .none
 	}
 
-	private mutating func placeCities(d20: inout D20) -> [XY] {
+	private mutating func placeCities(d20: inout D20, players: Int) -> [XY] {
 		let citiesCount = min(16, max(6, count / 48))
 
 		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
@@ -109,7 +109,10 @@ extension Map<32, Terrain> {
 			&& !placed.contains { $0.stepDistance(to: p) < minSpacing }
 		}
 
-		return (0 ..< citiesCount).reduce(into: []) { placed, i in
+		var placed: [XY] = []
+		var cities: [XY] = []
+
+		for i in 0 ..< citiesCount {
 			let gx = i % cols
 			let gy = i / cols
 			let jx = Double.random(in: 0.15 ... 0.85, using: &d20)
@@ -123,19 +126,38 @@ extension Map<32, Terrain> {
 			   let alt = p.n36.firstMap({ isCitySite($0, placed) ? $0 : nil }) {
 				p = alt
 			}
-			guard isCitySite(p, placed) else { return }
+			guard isCitySite(p, placed) else { continue }
 
 			self[p] = .city
 			placed.append(p)
+			cities.append(p)
 
-			if d20() < 7, let ap = p.n4
-				.compactMap({ p in contains(p) && self[p] == .field ? p : nil })
-				.randomElement(using: &d20)
-			{
-				self[ap] = .airfield
-				placed.append(ap)
+			if cities.count % 3 == 0 { placeAirfield(near: p, placed: &placed, d20: &d20) }
+		}
+
+		var airfieldCount = placed.count - cities.count
+		for city in cities where airfieldCount < players {
+			let hasAirfield = city.n4.firstMap { ap in
+				contains(ap) && self[ap] == .airfield ? ap : nil
+			} != nil
+			if !hasAirfield, placeAirfield(near: city, placed: &placed, d20: &d20) {
+				airfieldCount += 1
 			}
 		}
+
+		return placed
+	}
+
+	@discardableResult
+	private mutating func placeAirfield(near city: XY, placed: inout [XY], d20: inout D20) -> Bool {
+		guard let ap = city.n4
+			.compactMap({ p in contains(p) && self[p] == .field ? p : nil })
+			.randomElement(using: &d20)
+		else { return false }
+		self[ap] = .airfield
+		placed.append(ap)
+		print("placed airfield at \(ap)")
+		return true
 	}
 
 	private mutating func connectCities(cities: [XY]) {
@@ -183,7 +205,7 @@ extension Map<32, Terrain> {
 	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
-			if self[xy].hasRoad, !self[xy].isBridge {
+			if self[xy].hasRoad, !self[xy].isBridge, !self[xy].isSettlement {
 				let n4 = xy.n4
 				for i in n4.indices {
 					neighbors[i] = self[n4[i]].hasRoad
