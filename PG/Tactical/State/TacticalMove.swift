@@ -69,7 +69,7 @@ extension TacticalState {
 		}
 		if target == nil {
 			units.forEachAlive { i, u in
-				if visible[position[i]] { mov.moves[position[i]] = 0 }
+				if !offMap(unit: i.uid), visible[position[i]] { mov.moves[position[i]] = 0 }
 			}
 		}
 

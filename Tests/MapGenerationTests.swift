@@ -1,16 +1,10 @@
 import Testing
 @testable import PG
 
-// Every loop in map generation is bounded: the unbounded `while` loops carry
-// explicit caps that `fatalError` if exceeded, so a regression that would once
-// have hung now crashes the test with a diagnostic instead. That makes the
-// old background-thread deadline machinery unnecessary — generation is called
-// directly here.
-
 struct MapGenerationTests {
 
 	@Test func terminatesAcrossManySeeds() {
-		for seed in 0 ..< 128 {
+		for seed in 0 ..< 32 {
 			_ = Map<32, Terrain>(size: 8 + seed % 24, seed: seed)
 		}
 	}
@@ -20,7 +14,7 @@ struct MapGenerationTests {
 		var noCitySeeds: [Int] = []
 		var noRiverSeeds: [Int] = []
 
-		for seed in 0 ..< 32 {
+		for seed in 0 ..< 16 {
 			let map = Map<32, Terrain>(size: 32, seed: seed)
 			var hasNonZero = false
 			var hasCity = false

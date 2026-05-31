@@ -102,7 +102,7 @@ struct TacticalTests {
 		}
 
 		_ = state.apply(.tile(ownUnitPos))
-		#expect(state.selectedUnit != nil, "Selecting own unit's tile should select it")
+		#expect(state.selectedUnit != .none, "Selecting own unit's tile should select it")
 		#expect(state.selectable != nil, "Selectable moves should be set for movable unit")
 	}
 
@@ -151,7 +151,7 @@ struct TacticalTests {
 		#expect(state.turn == before + 1, "End-of-turn must advance the turn counter")
 	}
 
-	@Test func movesForOwnUnitIncludeStartTile() {
+	@Test func movesForOwnUnitNotIncludeStartTile() {
 		let state = TacticalState.make(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
@@ -166,10 +166,9 @@ struct TacticalTests {
 			Issue.record("No movable own unit found")
 			return
 		}
-		let moves = state.moves(for: uid)
 		#expect(
-			moves.moves[state.position[uid]] > 0,
-			"Movable unit's own tile must be reachable"
+			!state.moves(for: uid)[state.position[uid]],
+			"Movable unit's own tile must not be reachable"
 		)
 	}
 }
