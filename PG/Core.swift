@@ -84,7 +84,7 @@ final class Core {
 		}
 
 		let units: [Unit] = tactical.units
-			.compactMap { i, u in
+			.compactMapAlive { i, u in
 				u.country != c || u[.aux] ? nil : modifying(u) { u in
 					u.hp = u.maxHP
 					u.ap = u.maxAP
