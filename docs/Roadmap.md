@@ -2,19 +2,8 @@
 
 ## Known bugs
 
-### Map generation hangs for some seeds
-`Tactical/State/MapGeneration.swift:51` — `placeRivers`'s `while true` BFS can fail to reach `end` when previously placed rivers (via `hasNoRivers(at:)` on diagonal neighbors) wall off every path. Confirmed for seeds **42** and **77** at size 32. Also: `pressure[xy] += 1` on a `Map<UInt16>` will trap if the loop drags on past 65 535 iterations.
-
-Fix options:
-- Add a hard iteration cap; on overflow, retry with a different `(start, end)` pair or fall back to a Bresenham line carve.
-- Relax the `hasNoRivers(at:)` constraint once pressure exceeds a threshold.
-- Make the init failable: `Map<32, Terrain>(size:seed:) -> Map<32, Terrain>?` so callers can retry the seed.
-
-### `placeCities` divides by zero for size < 16
-`Tactical/State/MapGeneration.swift:96` — `dw = (size - 8) / (div - 1) - 1` with `div = size / 8`. For `size < 16`, `div - 1 == 0`. Either guard with `precondition(size >= 16)` in `Map<32, Terrain>.init` or rewrite the layout math to handle small maps.
-
-### `connect()` has the same unbounded loop pattern
-`MapGeneration.swift:241` — same `while true` with no termination guarantee. Bound and return `false` on cap.
+### `placeRivers` can silently abort
+`Tactical/State/MapGeneration.swift:51` — the `while true` BFS now bails out cleanly when `pressure[start] >= 1024`, but on abort it leaves the river half-carved (no rollback) and falls through to `placeCities` with whatever partial water tiles were laid. Detect the abort and either retry with a different `(start, end)` pair, fall back to a Bresenham line carve, or make the initializer failable so callers can retry the seed.
 
 ### Possible AI non-termination
 `TacticalAI.runAI` plus the outer driver in `TacticalMode` will loop forever if no team can be eliminated and no player runs out of meaningful actions. Add a stalemate detector (e.g. N consecutive `.end` actions with no state change → declare draw).
@@ -30,26 +19,15 @@ Fix options:
 - `clone(_:)` in `Engine/Extensions/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
 - `encode(_:) / decode(_:)` is bitwise; warn that adding a non-`BitwiseCopyable` field to any persisted state silently corrupts saves.
 
-### `MapGeneration.swift` is a 367-line monolith
+### `MapGeneration.swift` is a 430-line monolith
 Split into:
 - `MapGenTerrain.swift` — height/humidity → terrain
-- `MapGenRivers.swift` — `placeRivers`, `shapeRivers`
-- `MapGenCities.swift` — `placeCities`
-- `MapGenRoads.swift` — `connectCities`, `connect`, `shapeRoads`
-
-### `UID = Int8` with `-1` sentinel
-Spread across the codebase as `< 0` checks, `id.index`, `i.uid`, `unitsMap[xy] < 0`, `cargo[idx] == -1`. Wrap as a struct:
-```swift
-struct UID: Hashable { var raw: Int8 }
-extension UID { static let none = UID(raw: -1); var isValid: Bool { raw >= 0 } }
-```
-Replace sentinel reads with `Optional<UID>` returns where call sites already pattern-match.
+- `MapGenRivers.swift` — `placeRivers`
+- `MapGenCities.swift` — `placeCities`, `placeAirfield`
+- `MapGenRoads.swift` — `connectCities`, `connect` (Dijkstra), `shapeRoads`
 
 ### `fatalError` in `TacticalState.init`
-`TacticalState.swift:49` aborts when two units land on the same starting tile. Spawn-placement is data-driven (`capitals`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
-
-### `Map.indices` allocates an `AnySequence`
-`Engine/Foundation/Map.swift:15` returns a type-erased iterator on every access. Hot loops in `placeRivers`/`shapeRoads` iterate it repeatedly. Provide a custom `IndexingIterator`-style struct or a `for x, y` two-loop accessor.
+`TacticalState.swift:87` aborts when a unit's allocated placement square is full. Spawn-placement is data-driven (`cities`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
 
 ## Tests
 
