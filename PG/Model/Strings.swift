@@ -113,13 +113,13 @@ extension Unit {
 			case .allies: "M270"
 			case .soviet: "2С3"
 			}
-		case .aa: "Bofors 40L/70"
+		case .aa: "Bofors 40/70"
 		case .wheelAA: "Neva"
 		case .trackAA: "Lvkv 90"
 		case .lightWheel: "Boxer"
 		case .lightTrack:
 			switch country.team {
-			case .axis: "Strf 90"
+			case .axis: self[.elite] ? "SPz Puma" : "Strf 90"
 			case .allies: hardAtk > 5 ? "M2A2" : "M113"
 			case .soviet: "BMP"
 			}

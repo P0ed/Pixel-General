@@ -18,7 +18,10 @@ final class Core {
 			hq: HQState(
 				player: Player(country: country, type: .human),
 				units: .init(
-					head: .base(country).mapInPlace { u in u.hp = u.maxHP },
+					head: modifying(.base(country)) { base in
+						base[15] = .puma.lvl(3).skills([.crit, .evasion]).country(country)
+						base.modifyEach { u in u.hp = u.maxHP }
+					},
 					tail: .empty
 				)
 			)

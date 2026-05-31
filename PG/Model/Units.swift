@@ -112,8 +112,14 @@ extension Unit {
 		}
 	}
 
-	var veteran: Self {
-		modifying(self, { u in u.exp = 512 })
+	var veteran: Self { lvl(2) }
+
+	func lvl(_ lvl: Int) -> Self {
+		modifying(self, { u in u.exp = 1 << (7 + lvl) })
+	}
+
+	func skills(_ skills: Skills) -> Self {
+		modifying(self, { u in u.skills.formUnion(skills) })
 	}
 
 	static var truck: Self {
@@ -290,6 +296,21 @@ extension Unit {
 			stats.airAtk = 3
 			stats.groundDef = 11
 			stats.airDef = 7
+		}
+	}
+
+	static var puma: Self {
+		.make { stats in
+			stats.type = .lightTrack
+			stats[.elite] = true
+			stats.mov = 7
+			stats.rng = 1
+			stats.ini = 9
+			stats.softAtk = 11
+			stats.hardAtk = 10
+			stats.airAtk = 5
+			stats.groundDef = 12
+			stats.airDef = 8
 		}
 	}
 

@@ -24,10 +24,10 @@ struct Traits: OptionSet, Equatable {
 	var rawValue: UInt16
 
 	static var aux: Self { .init(rawValue: 1 << 0) }
-	static var xxx: Self { .init(rawValue: 1 << 1) }
-	static var _x_: Self { .init(rawValue: 1 << 2) }
-	static var x_x: Self { .init(rawValue: 1 << 3) }
-	static var ___: Self { .init(rawValue: 1 << 4) }
+	static var engineer: Self { .init(rawValue: 1 << 1) }
+	static var fpv: Self { .init(rawValue: 1 << 2) }
+	static var atm: Self { .init(rawValue: 1 << 3) }
+	static var aam: Self { .init(rawValue: 1 << 4) }
 	static var elite: Self { .init(rawValue: 1 << 5) }
 	static var transport: Self { .init(rawValue: 1 << 6) }
 	static var radar: Self { .init(rawValue: 1 << 7) }

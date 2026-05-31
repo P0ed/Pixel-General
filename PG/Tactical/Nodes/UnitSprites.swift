@@ -53,7 +53,7 @@ extension Unit {
 		case .wheelAA: "Neva"
 		case .trackAA: "SPAA"
 		case .lightWheel: "boxer"
-		case .lightTrack: "Recon"
+		case .lightTrack: self[.elite] ? "Puma" : "Recon"
 		case .heavyTrack:
 			switch country.team {
 			case .allies: "M1A2"
