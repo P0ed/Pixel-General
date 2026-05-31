@@ -89,7 +89,7 @@ extension Map<32, Terrain> {
 	}
 
 	private mutating func placeCities(d20: inout D20) -> [XY] {
-		let citiesCount = min(16, max(3, count / 64))
+		let citiesCount = min(16, max(6, count / 48))
 
 		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
 		let rows = (citiesCount + cols - 1) / cols

@@ -43,7 +43,7 @@ extension TacticalState {
 			)
 		}
 		cities.forEach { xy, c in control[xy] = c }
-		for xy in self.map.indices where self.map[xy].isVillage {
+		for xy in self.map.indices where self.map[xy].isVillage || self.map[xy] == .airfield {
 			control[xy] = cities.min { a, b in
 				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
 			}.map { $0.1 } ?? .default
