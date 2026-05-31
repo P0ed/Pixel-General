@@ -41,8 +41,8 @@ extension TacticalState {
 		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
 		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
 		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
-		let atk = Int8(source.atk(destination) + source.lvl) + maxAM + aRC + aLR
-		let def = Int8(destination.def(source) + destination.lvl) + defMod + dRC + dLR
+		let atk = Int8(source.atk(destination)) + maxAM + aRC + aLR
+		let def = Int8(destination.def(source)) + defMod + dRC + dLR
 
 		let dif = atk - def
 		let t1 = max(0, 7 - dif)
@@ -162,7 +162,7 @@ extension TacticalState {
 		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
 			retreat(unit: dst, from: position[si])
 		}
-		if self[units[si].country].type == .human {
+		if player.type == .human {
 			selectUnit(units[si].alive && units[si].hasActions ? src : .none)
 		}
 	}
@@ -189,8 +189,8 @@ extension TacticalState {
 
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
 		let (a, d) = (units[attacker], units[defender])
-		let atk = Int8(a.atk(d) + a.lvl)
-		let def = Int8(d.def(a) + d.entDef + d.lvl)
+		let atk = Int8(a.atk(d))
+		let def = Int8(d.def(a) + d.entDef)
 
 		let rounds = Int(a.hp + 3) / 3
 		let base = max(0, 127 + Int(atk - def) * 15)

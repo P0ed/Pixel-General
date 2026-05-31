@@ -146,14 +146,17 @@ extension Unit {
 
 	func atk(_ dst: Unit) -> UInt8 {
 		switch dst.type {
-		case .inf, .supply, .art, .aa, .wheelAA, .wheelArt: softAtk
-		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack: hardAtk
-		case .heli, .jet: airAtk
+		case .inf, .supply, .art, .aa, .wheelAA, .wheelArt:
+			softAtk > 0 ? softAtk + lvl : 0
+		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack:
+			hardAtk > 0 ? hardAtk + (isArmor ? lvl : (lvl / 2)) : 0
+		case .heli, .jet:
+			airAtk > 0 ? airAtk + (isAA ? lvl : (lvl / 2)) : 0
 		}
 	}
 
 	func def(_ src: Unit) -> UInt8 {
-		src.isAir ? airDef : groundDef
+		(src.isAir ? airDef : groundDef) + lvl
 	}
 
 	@discardableResult
@@ -176,11 +179,7 @@ extension Unit {
 	}
 
 	var cost: UInt16 {
-		UInt16(lvl + 3) * (typeCost + traitCost + sum * sumMult) / (self[.aux] ? 6 : 3)
-	}
-
-	private var sumMult: UInt16 {
-		isArt || isAA || isAir ? 4 : 3
+		UInt16(lvl + 3) * (typeCost + traitCost + skillCost + sum * 3) / (self[.aux] ? 5 : 3)
 	}
 
 	private var traitCost: UInt16 {
@@ -188,7 +187,7 @@ extension Unit {
 	}
 
 	private var skillCost: UInt16 {
-		UInt16(skills.rawValue.nonzeroBitCount) * 18
+		UInt16(skills.rawValue.nonzeroBitCount) * 15
 	}
 
 	private var typeCost: UInt16 {
