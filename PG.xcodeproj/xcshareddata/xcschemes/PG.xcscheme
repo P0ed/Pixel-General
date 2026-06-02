@@ -41,6 +41,17 @@
                ReferencedContainer = "container:PG.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5F10D2132FCEDEE900E6B598"
+               BuildableName = "TACTests.xctest"
+               BlueprintName = "TACTests"
+               ReferencedContainer = "container:PG.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

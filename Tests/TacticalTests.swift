@@ -1,5 +1,5 @@
 import Testing
-@testable import PG
+@testable import COR
 
 struct TacticalTests {
 

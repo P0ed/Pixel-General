@@ -1,0 +1,83 @@
+import SpriteKit
+import COR
+
+extension HQNodes {
+
+	func process(_ event: HQEvent, _ state: borrowing HQState) async {
+		switch event {
+		case .move(let uid, let xy): processMove(uid, xy)
+		case .spawn(let uid): processSpawn(uid, state)
+		case .remove(let uid): removeUnit(uid)
+		case .shop: processShop(state)
+		case .menu: processMenu()
+		@unknown default: fatalError()
+		}
+	}
+
+	private func processMove(_ uid: UID, _ xy: XY) {
+		units[uid.index]?.position = xy.point
+		units[uid.index]?.zPosition = map.zPosition(at: xy)
+	}
+
+	private func processSpawn(_ uid: UID, _ state: borrowing HQState) {
+		let sprite = state.units[uid.index].hqSprite
+		let xy = XY(uid.index % 4, uid.index / 4)
+		sprite.position = xy.point
+		sprite.zPosition = map.zPosition(at: xy)
+		addUnit(uid, node: sprite)
+	}
+
+	private func processShop(_ state: borrowing HQState) {
+		scene?.show(.init(
+			items: [Unit].shop(country: state.country).enumerated().map { i, u in
+				.close(
+					icon: u.imageName,
+					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.player.prestige)")),
+					action: .purchase(i, state.cursor.x + state.cursor.y * 4)
+				)
+			}
+		))
+	}
+
+	private func processMenu() {
+		scene?.show(MenuState(items: [
+			.init(icon: "Start", status: .init(text: "Scenario"), update: { m in
+				guard let scene else { return nil }
+				return scenarioMenu(m, scene.state)
+			}),
+			.space, .space, .space,
+
+			.init(icon: "Start", status: .init(text: "Campaign"), update: { m in
+				guard let scene else { return nil }
+				return campaignMenu(m, scene.state)
+			}),
+			.space, .space, .space,
+
+			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
+				core.startScenario(TacticalState.chess())
+				present(.auto)
+			}),
+			.space, .space, .space,
+
+			.init(icon: "New", status: .init(text: "New")) { _ in
+				guard let scene else { return nil }
+				return newGameMenu(scene.state)
+			},
+			.close(icon: "Save", status: .init(text: "Save")) { _ in
+				if let scene {
+					core.store(scene.state)
+					core.save(auto: false)
+				}
+			},
+			.close(icon: "Load", status: .init(text: "Load")) { _ in
+				core = .load(auto: false)
+				present(.auto)
+			},
+			.close(icon: "Chess", status: .init(text: "Editor")) { _ in
+				guard let scene else { return }
+				core.store(scene.state)
+				present(.editor)
+			},
+		]))
+	}
+}

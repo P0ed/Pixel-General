@@ -3,7 +3,7 @@
 ## Known bugs
 
 ### `placeRivers` can silently abort
-`Tactical/State/MapGeneration.swift:51` — the `while true` BFS now bails out cleanly when `pressure[start] >= 1024`, but on abort it leaves the river half-carved (no rollback) and falls through to `placeCities` with whatever partial water tiles were laid. Detect the abort and either retry with a different `(start, end)` pair, fall back to a Bresenham line carve, or make the initializer failable so callers can retry the seed.
+`COR/Tactical/MapGeneration.swift:51` — the `while true` BFS now bails out cleanly when `pressure[start] >= 1024`, but on abort it leaves the river half-carved (no rollback) and falls through to `placeCities` with whatever partial water tiles were laid. Detect the abort and either retry with a different `(start, end)` pair, fall back to a Bresenham line carve, or make the initializer failable so callers can retry the seed.
 
 ### Possible AI non-termination
 `TacticalAI.runAI` plus the outer driver in `TacticalMode` will loop forever if no team can be eliminated and no player runs out of meaningful actions. Add a stalemate detector (e.g. N consecutive `.end` actions with no state change → declare draw).
@@ -16,7 +16,7 @@
 ## Architecture
 
 ### `BitwiseCopyable` constraints
-- `clone(_:)` in `Engine/Extensions/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
+- `clone(_:)` in `COR/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
 - `encode(_:) / decode(_:)` is bitwise; warn that adding a non-`BitwiseCopyable` field to any persisted state silently corrupts saves.
 
 ### `MapGeneration.swift` is a 430-line monolith

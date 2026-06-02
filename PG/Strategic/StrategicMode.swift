@@ -1,3 +1,5 @@
+import COR
+
 typealias StrategicMode = SceneMode<StrategicState, StrategicAction, StrategicEvent, StrategicNodes>
 typealias StrategicScene = Scene<StrategicState, StrategicAction, StrategicEvent, StrategicNodes>
 
@@ -12,7 +14,14 @@ extension StrategicMode {
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nil },
-			save: { state in core.store(state) }
+			save: { state in core.store(state); core.save(auto: true) }
 		)
+	}
+}
+
+extension StrategicState {
+
+	var status: Status {
+		.init()
 	}
 }

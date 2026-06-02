@@ -1,3 +1,5 @@
+import COR
+
 typealias HQMode = SceneMode<HQState, HQAction, HQEvent, HQNodes>
 typealias HQScene = Scene<HQState, HQAction, HQEvent, HQNodes>
 
@@ -12,7 +14,27 @@ extension HQMode {
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			mouse: { nodes, event in nodes.map.tile(at: event) },
-			save: { state in core.store(state) }
+			save: { state in core.store(state); core.save(auto: true) }
+		)
+	}
+}
+
+extension HQState {
+
+	var status: Status {
+		Status(
+			text: selected != .none ? units[selected.index].status() : .makeStatus { add in
+				add("prestige: \(player.prestige)")
+			},
+			action: {
+				if selected != .none {
+					"C: sell"
+				} else if units[cursor] == nil {
+					"C: shop"
+				} else {
+					""
+				}
+			}()
 		)
 	}
 }

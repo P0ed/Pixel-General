@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 struct EditorState: ~Copyable {
 	var map: Map<32, Terrain>
@@ -231,6 +232,7 @@ extension Terrain {
 		case .villageS: "Village-S"
 		case .roadX: "Road-nwse"
 		case .none: "Clear"
+		@unknown default: fatalError()
 		}
 	}
 }

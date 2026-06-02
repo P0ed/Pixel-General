@@ -1,4 +1,7 @@
 import SpriteKit
+import COR
+
+defer { NSApplication.shared.run() }
 
 let window = NSWindow(
 	contentRect: NSRect(origin: .zero, size: .window),
@@ -12,13 +15,11 @@ view.autoresizingMask = [.width, .height]
 view.ignoresSiblingOrder = true
 
 window.contentView = view
+window.minSize = .scene
 window.titlebarAppearsTransparent = true
 window.center()
 window.makeKeyAndOrderFront(nil)
 window.makeFirstResponder(view)
 
-let core = Core()
-//core.new()
-present(.make(core.state))
-
-NSApplication.shared.run()
+var core: Core = .load(auto: true)
+present(.auto)

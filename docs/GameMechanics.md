@@ -6,7 +6,7 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
 
 ## Turn Structure
 
-`Tactical/State/TacticalTurns.swift`
+`COR/Tactical/TacticalTurns.swift`
 
 - Players act in a fixed rotation. `playerIndex = turn % players.count`,
   `day = turn / players.count + 1`. A **day** ends when `playerIndex` wraps
@@ -24,7 +24,7 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
 
 ## Units
 
-`Model/Unit.swift`, `Model/Units.swift`
+`COR/Model/Unit.swift`, `COR/Model/Units.swift`
 
 A `Unit` is a value struct of `UInt8` stats:
 
@@ -50,9 +50,12 @@ A `Unit` is a value struct of `UInt8` stats:
 light/heavy wheeled or tracked combat vehicle). `atk(_:)` picks softAtk
 for `inf`/`supply`/`art`/`aa`/`wheelArt`/`wheelAA` targets, hardAtk for
 `trackArt`/`trackAA` and any `lightWheel`/`lightTrack`/`heavyTrack`
-target, airAtk for `heli`/`jet`. `def(src:)` is just `groundDef` vs
-ground attackers or `airDef` vs air attackers — all terrain modifiers
-live on `Terrain`.
+target, airAtk for `heli`/`jet`, then adds the attacker's experience
+`lvl`: full `lvl` vs soft targets; vs hard targets full `lvl` if the
+attacker `isArmor` else `lvl/2`; vs air targets full `lvl` if the
+attacker `isAA` else `lvl/2`. `def(src:)` is `groundDef` vs ground
+attackers or `airDef` vs air attackers, plus the defender's full `lvl`;
+all terrain modifiers live on `Terrain`.
 
 **Traits** (`Traits` option set):
 - `aux` — auxiliary unit, half cost; bought from a fixed pool.
@@ -67,7 +70,7 @@ to add a random combat skill. Healing costs `exp`.
 
 ## Movement
 
-`Tactical/State/TacticalMove.swift`
+`COR/Tactical/TacticalMove.swift`
 
 - BFS from the unit's tile within a budget of `mov*2 + 1`. Orthogonal step
   costs `terrain.moveCost(unit)*2`, diagonal `*3`, plus `n` per step where
@@ -85,13 +88,13 @@ to add a random combat skill. Healing costs `exp`.
   triggers a **surprise attack** on the blocker.
 - Movement reveals fog of war along the route (vision disc each step).
 
-**Vision / fog of war** (`TacticalAction.swift`): each player sees the union
+**Vision / fog of war** (`COR/Tactical/TacticalAction.swift`): each player sees the union
 of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
 `spot = 3`) plus the tile and 8-neighbourhood of every owned settlement.
 
 ## Combat
 
-`Tactical/State/TacticalAttack.swift`
+`COR/Tactical/TacticalAttack.swift`
 
 `attack(src:dst:)` requires same-country attacker, enemy target, `ap>0`,
 `ammo>0`, and target within `rng*2+1`. Sequence:
@@ -113,40 +116,41 @@ of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
    the matchup isn't (`isArt` attacker vs non-`isArt` defender without
    surprise). Counter `defMod` for the attacker (now being shot at) is
    `(isArt ? 0 : defenderTile.closeCombat(attackerType))
-    + (ruggedDef ? −3 : 0) + (defenderOutOfAmmo ? +4 : 0)` —
-   the +4 makes the out-of-ammo counter weaker.
+    + (ruggedDef ? −3 : 0) + (defenderOutOfAmmo ? +5 : 0)` —
+   the +5 makes the out-of-ammo counter weaker.
 6. Low-HP defenders may **retreat** (`du.hp*2 + du.ini + d20 < 20`) to the
    reachable tile farthest from the attacker.
 
 **`fire(src:dst:defMod:)`** — the damage core:
 
-- `atk = atk(target) + lvl + fullAmmoBonus + leadershipAura + reconAura`
-  (fullAmmoBonus = 1 if attacker had full ammo entering the shot).
-- `def = def(attacker) + lvl + defMod + leadershipAura + reconAura`
-  where `defMod = entDef + terrain.def(defType)
+- `atk = atk(target) + leadershipAura + reconAura` (each aura = +1 if the
+  firing unit or a friendly neighbour has the skill). `lvl` is already
+  folded into `atk(target)`.
+- `def = def(attacker) + defMod + leadershipAura + reconAura`, with `lvl`
+  folded into `def(attacker)` and `defMod = entDef + terrain.def(defType)
   + mountaineer + mhtn + diag − encirclement`.
   `entDef = ent/4`; `terrain.def(_:)` is a per-type bonus/penalty
   (negative on roads, bridges, rivers; positive on cover for foot/wheeled
   arty/AA; negative for wheels and tracks in cover, worst for heavy
   tracks); `encirclement` = `max(0, enemiesAround − 1)` so the first
   surrounder is free.
-- `dif = atk − def`. Three thresholds `t1=max(0,7−dif)`,
-  `t2=max(5,15−dif)`, `t3=max(10,24−dif)`.
-- Rounds = `(hp+3)/3 + (ini > d20(max 2) ? 1 : 0)`. Each round rolls `d20`
-  (0–19): `>t3`→3, `>t2`→2, `>t1`→1, else 0 damage. `crit` may double a
-  round (`d20>16`); `evasion` may zero it (`d20>16`).
+- `dif = atk − def`. Four thresholds `t1=max(0,9−dif)`, `t2=max(1,15−dif)`,
+  `t3=max(2,21−dif)`, `t4=max(3,27−dif)`.
+- Rounds = `(hp+2)/3 + (ini + lvl/2 > d20(max of 2) ? 1 : 0)`. Each round
+  rolls `d20` (0–19): `>t4`→4, `>t3`→3, `>t2`→2, `>t1`→1, else 0 damage.
+  `crit` may double a round (`d20>16`); `evasion` may zero it (`d20>16`).
 - Damage hits the unit (and its cargo). Each shot grants
   `dmg * du.cost / 32` exp if the defender survives, `dmg * du.cost / 24`
   if the shot kills. A kill also grants a flat `du.cost / 16` prestige
   bounty and rolls for promotion. `estimateDamage` is the AI's
   deterministic preview.
 
-`D20` is a SplitMix64 PRNG (`Engine/Foundation/D20.swift`) seeded per battle so
+`D20` is a SplitMix64 PRNG (`COR/Foundation/D20.swift`) seeded per battle so
 combat is reproducible.
 
 ## Terrain
 
-`Model/Terrain.swift`
+`COR/Model/Terrain.swift`
 
 - **Tile kinds** include `field`, `forest`, `hill`, `forestHill`,
   `mountain`, `water` (rivers), `bridgeWE`/`bridgeSN`, a 7-way road
@@ -179,7 +183,7 @@ combat is reproducible.
 
 ## Supply, Repair, Entrench
 
-`Tactical/State/TacticalAction.swift`
+`COR/Tactical/TacticalAction.swift`
 
 The `resupply(unit:endOfTurn:)` routine drives both the player-initiated
 `.resupply` action *and* the per-unit end-of-turn pass. Behavior differs:
@@ -202,7 +206,7 @@ The `resupply(unit:endOfTurn:)` routine drives both the player-initiated
 
 ## Transport
 
-`Tactical/State/TacticalTransport.swift`
+`COR/Tactical/TacticalTransport.swift`
 
 Transportable types (`inf`, `art`, `aa`) can `embark` an adjacent friendly
 unit carrying the `transport` trait (one slot, `cargo`). Air transports
@@ -213,7 +217,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 ## Economy & Shop
 
-`Tactical/State/TacticalShop.swift`, `Model/Templates.swift`
+`COR/Tactical/TacticalShop.swift`, `COR/Model/Templates.swift`
 
 - Each player has **prestige** (starts `0xF00`). Income per day = sum of
   owned settlements' income (city `0xF`, village `0x7`, airfield `0x3`).
@@ -235,12 +239,12 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 ## Players & Victory
 
-`Model/Player.swift`, `TacticalTurns.swift`
+`COR/Model/Player.swift`, `COR/Tactical/TacticalTurns.swift`
 
 - `Country` maps to one of three `Team`s: **axis** (swe/den/ned/ukr),
   **allies** (isr/pak/usa), **soviet** (ind/irn/rus). Friendly fire is
   impossible within a team; combat requires cross-team.
-- `PlayerType`: `human`, `remote` (network), `ai` (`Tactical/State/TacticalAI`).
+- `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
   reflags it to the unit's country. A player with no remaining
   settlements is eliminated (`alive = false`). Last team standing wins.

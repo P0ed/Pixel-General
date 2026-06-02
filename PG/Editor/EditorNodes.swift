@@ -1,4 +1,5 @@
 import SpriteKit
+import COR
 
 @MainActor
 struct EditorNodes {
@@ -73,7 +74,7 @@ extension EditorNodes {
 		case .menu:
 			processMenu(state)
 		case .hq:
-			present(.make(core.state))
+			present(.auto)
 		}
 	}
 }
