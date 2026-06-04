@@ -1,11 +1,5 @@
 public extension Unit {
 
-	static var empty: Self { .init() }
-
-	static func make(_ tfm: (inout Self) -> Void) -> Self {
-		modifying(.empty, tfm)
-	}
-
 	func country(_ country: Country) -> Self {
 		modifying(self, { u in u.country = country })
 	}
@@ -24,24 +18,36 @@ public extension Unit {
 	static func inf2(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .ksk.veteran
-		case .allies: country == .pak ? .regular.veteran : .delta.veteran
+		case .allies: .delta.veteran
 		case .soviet: .speznas
 		}
 	}
 
-	static func ifv(_ country: Country) -> Self {
+	static func inf3(_ country: Country) -> Self {
+		.engineer
+	}
+
+	static func recon1(_ country: Country) -> Self? {
+		switch country.team {
+		case .axis: .fennek
+		case .allies: nil
+		case .soviet: .brdm2
+		}
+	}
+
+	static func ifv1(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .boxer
-		case .allies: .m113
+		case .allies: .m2A2
 		case .soviet: .bmp
 		}
 	}
 
-	static func ifv2(_ country: Country) -> Self {
+	static func ifv2(_ country: Country) -> Self? {
 		switch country.team {
 		case .axis: .strf90
-		case .allies: .m2A2
-		case .soviet: .t55
+		case .allies: nil
+		case .soviet: nil
 		}
 	}
 
@@ -50,7 +56,7 @@ public extension Unit {
 		case .ned, .den, .swe, .ukr: .leo1
 		case .usa, .isr: .m48
 		case .pak: .m48
-		case .rus: .t72
+		case .rus: .t55
 		case .irn, .ind: .t55
 		}
 	}
@@ -58,10 +64,20 @@ public extension Unit {
 	static func tank2(_ country: Country) -> Self {
 		switch country {
 		case .ned, .den, .swe, .ukr: .strv122
-		case .usa, .isr: .m1A2
-		case .pak: .m48.veteran
-		case .rus: .t90m
+		case .usa, .isr: .m1A1
+		case .pak: .m1A1
+		case .rus: .t72
 		case .irn, .ind: .t72
+		}
+	}
+
+	static func tank3(_ country: Country) -> Self? {
+		switch country {
+		case .ned, .den, .swe, .ukr: .strv122
+		case .usa, .isr: .m1A2
+		case .pak: nil
+		case .rus: .t90m
+		case .irn, .ind: nil
 		}
 	}
 
@@ -81,33 +97,53 @@ public extension Unit {
 		}
 	}
 
-	static func heli(_ country: Country) -> Self {
+	static func air(_ country: Country) -> Self {
 		switch country.team {
+		case .axis: .skeldar
 		case .allies: .mh6
-		case .axis: .h135
 		case .soviet: .mi8
 		}
 	}
 
-	static func fighter(_ country: Country) -> Self {
+	static func air2(_ country: Country) -> Self {
+		switch country.team {
+		case .axis: .nh90
+		case .allies: .f16
+		case .soviet: .mi24
+		}
+	}
+
+	static func air3(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .gripen
-		case .allies: .f16
+		case .allies: .f35
 		case .soviet: .mig
 		}
 	}
 
-	static func air(_ country: Country) -> Self {
+	static func air4(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .gripen.veteran
-		case .allies: country == .usa || country == .isr ? .f35 : .f16.veteran
-		case .soviet: .mi24
+		case .axis: .skeldarm
+		case .allies: .mq9
+		case .soviet: .orlan
 		}
 	}
 
 	static func aa(_ country: Country) -> Self {
 		switch country.team {
+		default: .bofors
+		}
+	}
+
+	static func aa2(_ country: Country) -> Self {
+		switch country.team {
 		case .axis: .lvkv90
+		default: .tunguska
+		}
+	}
+
+	static func aa3(_ country: Country) -> Self {
+		switch country.team {
 		default: .neva
 		}
 	}
@@ -115,485 +151,53 @@ public extension Unit {
 	var veteran: Self { lvl(2) }
 
 	func lvl(_ lvl: Int) -> Self {
-		modifying(self, { u in u.exp = 1 << (7 + lvl) })
+		modifying(self) { u in u.exp = 1 << (7 + lvl) }
 	}
 
 	func skills(_ skills: Skills) -> Self {
-		modifying(self, { u in u.skills.formUnion(skills) })
+		modifying(self) { u in u.skills.formUnion(skills) }
 	}
 
-	static var truck: Self {
-		.make { u in
-			u.type = .supply
-			u[.transport] = true
-			u.mov = 8
-			u.groundDef = 3
-			u.airDef = 1
-		}
-	}
+	static let truck = Unit(
+		type: .supply,
+		mov: 8,
+		groundDef: 3,
+		airDef: 1,
+		traits: .transport
+	)
 
-	static var militia: Self {
-		.make { stats in
-			stats.type = .inf
-			stats.mov = 3
-			stats.rng = 1
-			stats.ini = 3
-			stats.softAtk = 5
-			stats.hardAtk = 1
-			stats.groundDef = 5
-			stats.airDef = 3
-		}
-	}
+	static let regular = Unit(
+		type: .inf,
+		mov: 3,
+		rng: 1,
+		ini: 4,
+		softAtk: 7,
+		hardAtk: 2,
+		groundDef: 6,
+		airDef: 4
+	)
 
-	static var regular: Self {
-		.make { stats in
-			stats.type = .inf
-			stats.mov = 3
-			stats.rng = 1
-			stats.ini = 4
-			stats.softAtk = 7
-			stats.hardAtk = 2
-			stats.groundDef = 6
-			stats.airDef = 4
-		}
-	}
+	static let engineer = Unit(
+		type: .inf,
+		mov: 3,
+		rng: 1,
+		ini: 5,
+		softAtk: 8,
+		hardAtk: 6,
+		airAtk: 2,
+		groundDef: 7,
+		airDef: 5,
+		traits: .engineer
+	)
 
-	static var delta: Self {
-		.make { stats in
-			stats.type = .inf
-			stats[.elite] = true
-			stats.mov = 4
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 11
-			stats.hardAtk = 5
-			stats.airAtk = 2
-			stats.groundDef = 9
-			stats.airDef = 8
-		}
-	}
-
-	static var ksk: Self {
-		.make { stats in
-			stats.type = .inf
-			stats[.elite] = true
-			stats.mov = 4
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 5
-			stats.airAtk = 3
-			stats.groundDef = 9
-			stats.airDef = 8
-		}
-	}
-
-	static var speznas: Self {
-		.make { stats in
-			stats.type = .inf
-			stats[.elite] = true
-			stats.mov = 4
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 9
-			stats.hardAtk = 4
-			stats.airAtk = 2
-			stats.groundDef = 8
-			stats.airDef = 7
-		}
-	}
-
-	static var t55: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.mov = 5
-			stats.rng = 1
-			stats.ini = 6
-			stats.softAtk = 7
-			stats.hardAtk = 10
-			stats.groundDef = 9
-			stats.airDef = 5
-		}
-	}
-
-	static var t72: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 7
-			stats.softAtk = 9
-			stats.hardAtk = 12
-			stats.groundDef = 10
-			stats.airDef = 5
-		}
-	}
-
-	static var t90m: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 9
-			stats.hardAtk = 13
-			stats.groundDef = 11
-			stats.airDef = 6
-		}
-	}
-
-	static var leo1: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 8
-			stats.hardAtk = 11
-			stats.groundDef = 10
-			stats.airDef = 7
-		}
-	}
-
-	static var strv122: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats[.elite] = true
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 14
-			stats.groundDef = 13
-			stats.airDef = 8
-		}
-	}
-
-	static var boxer: Self {
-		.make { stats in
-			stats.type = .lightWheel
-			stats[.transport] = true
-			stats.mov = 8
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 10
-			stats.hardAtk = 9
-			stats.airAtk = 4
-			stats.groundDef = 9
-			stats.airDef = 7
-		}
-	}
-
-	static var strf90: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.transport] = true
-			stats.mov = 7
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 9
-			stats.airAtk = 3
-			stats.groundDef = 11
-			stats.airDef = 7
-		}
-	}
-
-	static var puma: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.elite] = true
-			stats.mov = 7
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 11
-			stats.hardAtk = 10
-			stats.airAtk = 5
-			stats.groundDef = 12
-			stats.airDef = 8
-		}
-	}
-
-	static var lvkv90: Self {
-		.make { stats in
-			stats.type = .trackAA
-			stats[.radar] = true
-			stats.mov = 7
-			stats.rng = 1
-			stats.ini = 10
-			stats.softAtk = 9
-			stats.hardAtk = 8
-			stats.airAtk = 11
-			stats.groundDef = 10
-			stats.airDef = 11
-		}
-	}
-
-	static var h135: Self {
-		.make { stats in
-			stats.type = .heli
-			stats.mov = 9
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 8
-			stats.hardAtk = 9
-			stats.airAtk = 9
-			stats.groundDef = 7
-			stats.airDef = 7
-		}
-	}
-
-	static var gripen: Self {
-		.make { stats in
-			stats.type = .jet
-			stats[.radar] = true
-			stats.mov = 12
-			stats.rng = 2
-			stats.ini = 12
-			stats.softAtk = 9
-			stats.hardAtk = 11
-			stats.airAtk = 12
-			stats.groundDef = 10
-			stats.airDef = 11
-		}
-	}
-
-	static var pzh: Self {
-		.make { stats in
-			stats.type = .trackArt
-			stats.mov = 5
-			stats.rng = 3
-			stats.ini = 5
-			stats.softAtk = 11
-			stats.hardAtk = 7
-			stats.groundDef = 6
-			stats.airDef = 5
-		}
-	}
-
-	static var art105: Self {
-		.make { stats in
-			stats.type = .art
-			stats.mov = 1
-			stats.rng = 2
-			stats.ini = 2
-			stats.softAtk = 9
-			stats.hardAtk = 5
-			stats.groundDef = 5
-			stats.airDef = 4
-		}
-	}
-
-	static var art155: Self {
-		.make { stats in
-			stats.type = .art
-			stats.mov = 1
-			stats.rng = 3
-			stats.ini = 2
-			stats.softAtk = 11
-			stats.hardAtk = 7
-			stats.groundDef = 5
-			stats.airDef = 4
-		}
-	}
-
-	static var m777: Self {
-		.make { stats in
-			stats.type = .art
-			stats.mov = 1
-			stats.rng = 3
-			stats.ini = 2
-			stats.softAtk = 11
-			stats.hardAtk = 7
-			stats.groundDef = 5
-			stats.airDef = 4
-		}
-	}
-
-	static var m270: Self {
-		.make { stats in
-			stats.type = .trackArt
-			stats.mov = 5
-			stats.rng = 3
-			stats.ini = 5
-			stats.softAtk = 11
-			stats.hardAtk = 7
-			stats.groundDef = 5
-			stats.airDef = 4
-		}
-	}
-
-	static var m48: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats.mov = 5
-			stats.rng = 1
-			stats.ini = 7
-			stats.softAtk = 8
-			stats.hardAtk = 10
-			stats.groundDef = 10
-			stats.airDef = 6
-		}
-	}
-
-	static var m1A2: Self {
-		.make { stats in
-			stats.type = .heavyTrack
-			stats[.elite] = true
-			stats.mov = 7
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 14
-			stats.groundDef = 12
-			stats.airDef = 7
-		}
-	}
-
-	static var m2A2: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.transport] = true
-			stats.mov = 7
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 10
-			stats.hardAtk = 9
-			stats.airAtk = 3
-			stats.groundDef = 10
-			stats.airDef = 7
-		}
-	}
-
-	static var m113: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.transport] = true
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 7
-			stats.softAtk = 7
-			stats.hardAtk = 3
-			stats.airAtk = 2
-			stats.groundDef = 8
-			stats.airDef = 6
-		}
-	}
-
-	static var mh6: Self {
-		.make { stats in
-			stats.type = .heli
-			stats.mov = 9
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 8
-			stats.hardAtk = 9
-			stats.airAtk = 9
-			stats.groundDef = 7
-			stats.airDef = 7
-		}
-	}
-
-	static var f16: Self {
-		.make { stats in
-			stats.type = .jet
-			stats[.radar] = true
-			stats.mov = 12
-			stats.rng = 2
-			stats.ini = 11
-			stats.softAtk = 9
-			stats.hardAtk = 11
-			stats.airAtk = 13
-			stats.groundDef = 10
-			stats.airDef = 10
-		}
-	}
-
-	static var f35: Self {
-		.make { stats in
-			stats.type = .jet
-			stats[.radar] = true
-			stats.mov = 12
-			stats.rng = 2
-			stats.ini = 13
-			stats.softAtk = 10
-			stats.hardAtk = 13
-			stats.airAtk = 15
-			stats.groundDef = 11
-			stats.airDef = 13
-		}
-	}
-
-	static var neva: Self {
-		.make { stats in
-			stats.type = .wheelAA
-			stats.mov = 7
-			stats.rng = 3
-			stats.ini = 10
-			stats.softAtk = 0
-			stats.hardAtk = 0
-			stats.airAtk = 13
-			stats.groundDef = 4
-			stats.airDef = 8
-		}
-	}
-
-	static var bmp: Self {
-		.make { stats in
-			stats.type = .lightTrack
-			stats[.transport] = true
-			stats.mov = 6
-			stats.rng = 1
-			stats.ini = 8
-			stats.softAtk = 8
-			stats.hardAtk = 7
-			stats.airAtk = 2
-			stats.groundDef = 7
-			stats.airDef = 6
-		}
-	}
-
-	static var mi8: Self {
-		.make { stats in
-			stats.type = .heli
-			stats[.transport] = true
-			stats.mov = 8
-			stats.rng = 1
-			stats.ini = 7
-			stats.softAtk = 6
-			stats.hardAtk = 3
-			stats.airAtk = 2
-			stats.groundDef = 6
-			stats.airDef = 6
-		}
-	}
-
-	static var mi24: Self {
-		.make { stats in
-			stats.type = .heli
-			stats.mov = 9
-			stats.rng = 1
-			stats.ini = 9
-			stats.softAtk = 9
-			stats.hardAtk = 9
-			stats.airAtk = 7
-			stats.groundDef = 8
-			stats.airDef = 7
-		}
-	}
-
-	static var mig: Self {
-		.make { stats in
-			stats.type = .jet
-			stats[.radar] = true
-			stats.mov = 12
-			stats.rng = 2
-			stats.ini = 10
-			stats.softAtk = 8
-			stats.hardAtk = 10
-			stats.airAtk = 11
-			stats.groundDef = 9
-			stats.airDef = 9
-		}
-	}
+	static let art155 = Unit(
+		type: .art,
+		mov: 2,
+		rng: 3,
+		ini: 1,
+		softAtk: 11,
+		hardAtk: 7,
+		groundDef: 5,
+		airDef: 4
+	)
 }

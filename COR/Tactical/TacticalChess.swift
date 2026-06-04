@@ -44,12 +44,7 @@ public extension TacticalState {
 
 		var unitsMap = Map<32, UID>(size: 8, zero: .none)
 		units.enumerated().forEach { i, u in unitsMap[position[i]] = i.uid }
-		units.modifyEach { u in
-			u.hp = u.maxHP
-			u.ap = u.maxAP
-			u.mp = u.maxMP
-			u.ammo = u.maxAmmo
-		}
+		units.modifyEach { u in u.reset() }
 
 		var control = Map<32, Country>(size: 8, zero: .default)
 		cityPlacements.forEach { xy, c in control[xy] = c }

@@ -7,7 +7,7 @@ public extension Unit {
 	func status(cargo: Bool = false) -> String {
 		.make { status in
 			status += "\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")"
-			status.pad(to: 12)
+			status.pad(to: 15)
 			status += "\(apString)  "
 			status += .makeStatus(pad: 7) { add in
 				add("AM: \(ammo)")
@@ -92,25 +92,25 @@ public extension Unit {
 			case .allies: "M270"
 			case .soviet: "2С3"
 			}
-		case .aa: "Bofors 40/70"
+		case .aa: "40mm L/70"
 		case .wheelAA: "Neva"
 		case .trackAA: "Lvkv 90"
 		case .lightWheel: "Boxer"
 		case .lightTrack:
 			switch country.team {
-			case .axis: self[.elite] ? "SPz Puma" : "Strf 90"
+			case .axis: self[.elite] ? "KF41" : "Strf 90"
 			case .allies: hardAtk > 5 ? "M2A2" : "M113"
 			case .soviet: "BMP"
 			}
 		case .heavyTrack:
 			switch country.team {
-			case .axis: hardAtk > 12 ? "Strv 122" : "Leopard 1"
+			case .axis: hardAtk > 14 ? "KF51" : hardAtk > 12 ? "Strv 122" : "Leopard 1A5"
 			case .allies: hardAtk > 12 ? "M1A2" : "M48"
 			case .soviet: hardAtk > 12 ? "T-90M" : hardAtk > 10 ? "T-72B" : "T-55BVM"
 			}
 		case .heli: 
 			switch country.team {
-			case .axis: "H135"
+			case .axis: self[.transport] ? "NH90" : "Skeldar"
 			case .allies: "MH6"
 			case .soviet: self[.transport] ? "Mi-8" : "Mi-24"
 			}

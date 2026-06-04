@@ -18,13 +18,7 @@ public extension TacticalState {
 			+ (players.count > 2 ? .base(players[2].country) : [])
 			+ (players.count > 3 ? .base(players[3].country) : [])
 		)
-		.mapInPlace { u in
-			u.hp = u.maxHP
-			u.ap = u.maxAP
-			u.mp = u.maxMP
-			u.ammo = u.maxAmmo
-			u.ent = 0
-		}
+		.mapInPlace { u in u.reset() }
 
 		print("Map gen done. Seed: \(seed) size: \(size)")
 		return TacticalState(

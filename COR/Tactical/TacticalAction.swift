@@ -67,8 +67,8 @@ extension TacticalState {
 			unit.exp.decrement(by: UInt16(healed) * 3 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}
-		if endOfTurn, units[id][.regen], !units[id].isAir || hasBuildings {
-			units[id].hp.increment(by: 1, cap: units[id].maxHP)
+		if endOfTurn, unit[.regen], !unit.isAir || hasBuildings {
+			unit.hp.increment(by: 1, cap: unit.maxHP)
 		}
 		if endOfTurn, !unit.isAir {
 			let base = map[position].baseEntrenchment * 4

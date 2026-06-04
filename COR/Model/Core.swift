@@ -29,8 +29,8 @@ public extension Core {
 				player: Player(country: country, type: .human),
 				units: .init(
 					head: modifying(.base(country)) { base in
-						base[15] = .puma.lvl(3).skills([.crit, .evasion]).country(country)
-						base.modifyEach { u in u.hp = u.maxHP }
+						base[15] = .kf41.lvl(3).skills([.crit, .evasion]).country(country)
+						base.modifyEach { u in u.reset() }
 					},
 					tail: .empty
 				)
@@ -76,11 +76,7 @@ public extension Core {
 		let units: [Unit] = state.units
 			.compactMapAlive { i, u in
 				u.country != c || u[.aux] ? nil : modifying(u) { u in
-					u.hp = u.maxHP
-					u.ap = u.maxAP
-					u.mp = u.maxMP
-					u.ammo = u.maxAmmo
-					u.ent = 0
+					u.reset()
 				}
 			}
 		hq?.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)

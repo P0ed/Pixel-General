@@ -60,6 +60,8 @@ public extension Skills {
 
 public extension Unit {
 
+	static var empty: Self { .init() }
+
 	var isAir: Bool { switch type { case .heli, .jet: true; default: false } }
 	var untouched: Bool { fullAP && fullMP }
 	var hasActions: Bool { canMove || canAttack }
@@ -80,7 +82,7 @@ public extension Unit {
 		switch type {
 		case .supply: 0
 		case .jet: rng > 1 ? 2 : 3
-		case .heli: 3
+		case .heli: rng > 0 ? 3 : 0
 		case .art: 6
 		case .wheelArt, .trackArt: 5
 		case .aa: rng > 1 ? 5 : 7
@@ -126,11 +128,15 @@ public extension Unit {
 
 	var entRate: UInt8 {
 		switch type {
-		case .supply, .inf: 4
-		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3
-		case .heavyTrack, .trackAA, .trackArt: 2
+		case .supply, .inf: self[.engineer] ? 8 : 4
+		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: self[.engineer] ? 6 : 3
+		case .heavyTrack, .trackAA, .trackArt: self[.engineer] ? 4 : 2
 		case .heli, .jet: 0
 		}
+	}
+
+	var entDamage: UInt8 {
+		self[.engineer] ? 8 : 4
 	}
 
 	subscript(_ ts: Traits) -> Bool {
@@ -171,6 +177,14 @@ public extension Unit {
 		(src.isAir ? airDef : groundDef) + lvl
 	}
 
+	mutating func reset() {
+		hp = maxHP
+		ap = maxAP
+		mp = maxMP
+		ammo = maxAmmo
+		ent = 0
+	}
+
 	@discardableResult
 	mutating func heal(_ amount: UInt8) -> UInt8 {
 		hp.increment(
@@ -191,7 +205,7 @@ public extension Unit {
 	}
 
 	var cost: UInt16 {
-		UInt16(lvl + 3) * (typeCost + traitCost + skillCost + sum * 3) / (self[.aux] ? 5 : 3)
+		(typeCost + traitCost + skillCost + weightedStats) / (self[.aux] ? 7 : 4)
 	}
 
 	private var traitCost: UInt16 {
@@ -204,24 +218,26 @@ public extension Unit {
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .supply: 22
-		case .inf: 33
-		case .art: 47
-		case .aa: 68
-		case .wheelArt: 100
-		case .wheelAA: 120
-		case .trackArt: 150
-		case .trackAA: 180
-		case .lightWheel: 100
-		case .lightTrack: 120
-		case .heavyTrack: 150
-		case .heli: 180
-		case .jet: 220
+		case .inf, .aa, .art: 10
+		case .supply, .wheelAA, .wheelArt, .lightWheel: 150
+		case .trackAA, .lightTrack: 220
+		case .trackArt, .heavyTrack: 270
+		case .heli: 330
+		case .jet: 470
 		}
 	}
 
-	private var sum: UInt16 {
-		UInt16(softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng)
+	private var weightedStats: UInt16 {
+		UInt16(lvl + 4) * (
+			UInt16(softAtk * 3)
+			+ UInt16(hardAtk * 4)
+			+ UInt16(airAtk * 4)
+			+ UInt16(groundDef * 3)
+			+ UInt16(airDef * 3)
+			+ UInt16(ini * 4)
+			+ UInt16(mov * 4)
+			+ UInt16(rng * 7)
+		)
 	}
 }
 

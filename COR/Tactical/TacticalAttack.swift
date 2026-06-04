@@ -151,14 +151,14 @@ extension TacticalState {
 		}
 		if !ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[di].ent.decrement(by: 4)
+			units[di].ent.decrement(by: su.entDamage)
 		}
 		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
 			fire(src: dst, dst: src, defMod: srcDef)
 		}
 		if ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef)
-			units[di].ent.decrement(by: 4)
+			units[di].ent.decrement(by: su.entDamage)
 		}
 		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
 			retreat(unit: dst, from: position[si])

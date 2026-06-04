@@ -28,8 +28,8 @@ struct RNGTests {
 
 	@Test func damageCalculation() {
 		var state = TacticalState.xs
-		for atk in UInt8.min...15 {
-			let inf = Unit.make(atk: 1 + atk * 2, def: 11).full()
+		for atk in UInt8.min...30 {
+			let inf = Unit.make(atk: 1 + atk, def: 11)
 			let u0 = inf.country(.den)
 			let u1 = inf.country(.usa)
 
@@ -38,7 +38,7 @@ struct RNGTests {
 			state.position[0] = XY(1, 1)
 			state.position[1] = XY(2, 2)
 
-			let dmg: [256 of [2 of UInt8]] = .init { i in
+			let dmg: [512 of [2 of UInt8]] = .init { i in
 				state.units[0] = u0
 				state.units[1] = u1
 				_ = state.reduce(.attack(UID(0), UID(1)))
@@ -67,16 +67,9 @@ struct RNGTests {
 extension Unit {
 
 	static func make(atk: UInt8, def: UInt8) -> Unit {
-		Unit(type: .inf, rng: 1, ini: 5, softAtk: atk, groundDef: def)
-	}
-
-	func full() -> Unit {
-		modifying(self) { u in
-			u.hp = u.maxHP
-			u.ap = u.maxAP
-			u.mp = u.maxMP
-			u.ammo = u.maxAmmo
-		}
+		var u = Unit(type: .inf, rng: 1, ini: 5, softAtk: atk, groundDef: def)
+		u.reset()
+		return u
 	}
 }
 

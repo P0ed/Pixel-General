@@ -123,6 +123,7 @@ public extension TacticalState {
 
 	var canDraw: Bool {
 		guard canRetreat, aliveTeams.nonzeroBitCount == 2 else { return false }
+
 		let settelements = map.indices.reduce(into: [2 of Int](repeating: 0)) { [country] r, xy in
 			if map[xy].isSettlement {
 				r[control[xy].team == country.team ? 0 : 1] += 1

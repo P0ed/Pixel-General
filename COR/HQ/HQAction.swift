@@ -22,7 +22,7 @@ public extension HQState {
 		let cost = u.cost
 		guard player.prestige >= cost, !units[idx].alive else { return }
 
-		let unit = modifying(u) { u in u.hp = u.maxHP }
+		let unit = modifying(u) { u in u.reset() }
 		player.prestige.decrement(by: cost)
 		units[idx] = unit
 		events.add(.spawn(idx.uid))

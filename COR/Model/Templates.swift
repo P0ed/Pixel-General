@@ -1,31 +1,39 @@
 public extension [Unit] {
 
 	static func shop(country: Country, filterAir: Bool? = nil) -> [Unit] {
-		let ground: [Unit] = [
+		let ground: [Unit?] = filterAir == true ? [] : [
 			.truck,
 			.inf(country),
 			.inf2(country),
-			.ifv(country),
+			.inf3(country),
+
+			.recon1(country),
+			.ifv1(country),
 			.ifv2(country),
 			.tank(country),
+
 			.tank2(country),
+			.tank3(country),
 			.art(country),
 			.art2(country),
+
 			.aa(country),
+			.aa2(country),
+			.aa3(country),
 		]
-		let air: [Unit] = [
-			.heli(country),
-			.fighter(country),
+
+		let air: [Unit?] = filterAir == false ? [] : [
 			.air(country),
+			.air2(country),
+			.air3(country),
+			.air4(country),
 		]
-		let units = (filterAir.map { $0 ? air : ground } ?? ground + air)
-		return units.map { (u: Unit) -> Unit in
-			u.country(country)
-		}
+
+		return (ground + air).compactMap { u in u?.country(country) }
 	}
 
 	static func base(_ country: Country) -> [Unit] {
-		[
+		let units: [Unit?] = [
 			.truck,
 			.regular,
 			.regular,
@@ -36,8 +44,8 @@ public extension [Unit] {
 			.tank(country).veteran,
 			.tank2(country).veteran,
 
-			.ifv(country),
-			.ifv(country).veteran,
+			.ifv1(country),
+			.ifv1(country).veteran,
 			.art(country).veteran,
 			.art(country).veteran,
 
@@ -45,48 +53,48 @@ public extension [Unit] {
 			.art2(country).veteran,
 			.aa(country).veteran,
 			.aa(country).veteran,
-		].map { (u: Unit) -> Unit in
-			u.country(country)
-		}
+		]
+
+		return units.compactMap { u in u?.country(country) }
 	}
 
 	static func small(_ country: Country) -> [Unit] {
-		[
+		let units: [Unit?] = [
 			.truck,
 			.regular.veteran,
 			.regular.veteran,
 			.tank(country).veteran,
-			.ifv(country).veteran,
+			.ifv1(country).veteran,
 			.art(country).veteran,
 			.aa(country).veteran,
-		].map { (u: Unit) -> Unit in
-			u.country(country)
-		}
+		]
+
+		return units.compactMap { u in u?.country(country) }
 	}
 
 	static func aux(country: Country) -> [Unit] {
-		[
+		let units: [Unit?] = [
 			.truck,
 			.truck,
 			.inf(country),
 			.inf(country),
 
 			.inf2(country),
-			.ifv(country),
+			.ifv1(country),
 			.tank(country),
 			.tank(country),
 
 			.inf2(country),
 			.ifv2(country),
-			.heli(country),
-			.heli(country),
+			.air(country),
+			.air2(country),
 
 			.art(country),
 			.art(country),
 			.aa(country),
 			.aa(country),
-		].map { (u: Unit) -> Unit in
-			u.country(country).traits(.aux)
-		}
+		]
+
+		return units.compactMap { u in u?.country(country).traits(.aux) }
 	}
 }

@@ -1,5 +1,4 @@
 import SpriteKit
-import AVFoundation
 import COR
 
 extension TacticalNodes {
@@ -16,6 +15,12 @@ extension TacticalNodes {
 		case .end: endGame(state)
 		@unknown default: fatalError()
 		}
+	}
+
+	func endGame(_ state: borrowing TacticalState) {
+		core.complete(state)
+		core.save(auto: true)
+		present(.auto)
 	}
 }
 
@@ -118,56 +123,5 @@ private extension TacticalNodes {
 		}
 
 		if !items.isEmpty { scene?.show(MenuState(items: items)) }
-	}
-
-	func processMenu(_ state: borrowing TacticalState) {
-		guard let scene, case .none = scene.menuState else {
-			return _ = scene?.show(.none)
-		}
-
-		var vol: Int {
-			let v = scene.audioEngine.mainMixerNode.outputVolume
-			return v < 0.1 ? 0 : v < 0.5 ? 1 : 2
-		}
-		let toggleVol = { [audioEngine = scene.audioEngine] in
-			settings.toggleSound()
-			audioEngine.mainMixerNode.outputVolume = settings.outputVolume
-		}
-
-		scene.show(MenuState(
-			items: [
-				.close(icon: "Start", status: "End turn", action: .end),
-				.close(icon: "Save", status: "Save") { [weak scene] _ in
-					if let scene {
-						core.store(scene.state)
-						core.save(auto: false)
-					}
-				},
-				.close(icon: "Load", status: "Load") { _ in
-					core = .load(auto: false)
-					present(.auto)
-				},
-				.close(icon: "HQ", status: "HQ") { [weak scene] _ in
-					if let scene { endGame(scene.state) }
-				},
-				MenuItem(
-					icon: "Prestige1",
-					status: .init(text: "Prestige: \(state.player.prestige)"),
-					update: id
-				),
-				MenuItem(icon: "Sound\(vol)", status: .init(text: "Volume"), update: { menu in
-					modifying(menu) { menu in
-						toggleVol()
-						menu.items[5].icon = "Sound\(vol)"
-					}
-				})
-			]
-		))
-	}
-
-	private func endGame(_ state: borrowing TacticalState) {
-		core.complete(state)
-		core.save(auto: true)
-		present(.auto)
 	}
 }

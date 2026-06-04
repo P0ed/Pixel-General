@@ -34,10 +34,9 @@ extension TacticalState {
 		guard player.prestige >= template.cost, unitsMap[pos] == .none else { return }
 
 		let unit = modifying(template) { u in
-			u.hp = u.maxHP
+			u.reset()
 			u.mp = 0
 			u.ap = 0
-			u.ammo = u.maxAmmo
 		}
 		let idx = units.insert(unit)
 		let id = idx.uid

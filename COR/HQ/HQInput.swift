@@ -34,7 +34,7 @@ extension HQState {
 			if selected == units[cursor]?.0 {
 				selected = .none
 			} else {
-				selected = .none
+				defer { selected = .none }
 				return .swap(selected.index, cursor.x + cursor.y * 4)
 			}
 		} else if let (i, _) = units[cursor] {

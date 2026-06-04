@@ -40,7 +40,7 @@ extension Unit {
 
 	var imageName: String {
 		switch type {
-		case .aa: "<>"
+		case .aa: "Flak"
 		case .wheelArt: "<>"
 		case .supply: "Truck"
 		case .inf: if self[.elite] { "SF" } else { "Reg" }
@@ -55,14 +55,16 @@ extension Unit {
 		case .wheelAA: "Neva"
 		case .trackAA: "SPAA"
 		case .lightWheel: "boxer"
-		case .lightTrack: self[.elite] ? "Puma" : "Recon"
+		case .lightTrack: 
+			self[.elite] ? "Puma" : "Recon"
 		case .heavyTrack:
 			switch country.team {
 			case .allies: "M1A2"
 			case .axis: "Tank"
 			default: "leo1"
 			}
-		case .heli: "MH6"
+		case .heli:
+			rng == 0 ? "Skeldar" : "MH6"
 		case .jet:
 			switch country.team {
 			case .allies: "F16"
