@@ -123,9 +123,9 @@ public extension TacticalState {
 			path.add(xy)
 			if xy == pos { break }
 		}
-		events.add(.move(uid, path))
+		events.add(.move(uid, Path(count: path.count, path: path.mem)))
 		if cargo[uid.index] != .none {
-			events.add(.move(cargo[uid.index], path))
+			events.add(.move(cargo[uid.index], Path(count: path.count, path: path.mem)))
 		}
 
 		if let interruptor, units[interruptor].country.team != units[uid].country.team {
@@ -182,5 +182,43 @@ public extension Moves {
 				set.insert(xy)
 			}
 		}
+	}
+}
+
+public struct Path {
+	public var count: Int
+	public var path: [16 of XY]
+
+	public init(count: Int, path: [16 of XY]) {
+		self.count = count
+		self.path = path
+	}
+
+	public subscript(i: Int) -> XY {
+		path[i]
+	}
+
+	public func contains(_ xy: XY) -> Bool {
+		contains { $0 == xy }
+	}
+
+	public func contains(_ predicate: (XY) -> Bool) -> Bool {
+		for i in 0..<count {
+			if predicate(path[i]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	public func reduce<Result>(
+		into result: Result,
+		_ fold: (inout Result, XY) -> Void
+	) -> Result {
+		var result = result
+		for i in 0..<count {
+			fold(&result, path[i])
+		}
+		return result
 	}
 }

@@ -182,9 +182,9 @@ extension TacticalState {
 		units[id].ent = 0
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(pos)
-		events.add(.move(id, path))
+		events.add(.move(id, Path(count: path.count, path: path.mem)))
 		if cargo[id.index] != .none {
-			events.add(.move(cargo[id], path))
+			events.add(.move(cargo[id], Path(count: path.count, path: path.mem)))
 		}
 	}
 

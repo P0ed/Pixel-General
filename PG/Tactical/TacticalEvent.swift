@@ -35,11 +35,11 @@ private extension TacticalNodes {
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(_ uid: UID, _ path: CArray<16, XY>, _ state: borrowing TacticalState) async {
-		guard let node = units[uid], !path.isEmpty else { return }
+	func processMove(_ uid: UID, _ path: Path, _ state: borrowing TacticalState) async {
+		guard let node = units[uid], path.count > 0 else { return }
 
 		let dst = path[path.count - 1]
-		node.zPosition = path.reduce(into: node.zPosition) { z, _, xy in
+		node.zPosition = path.reduce(into: node.zPosition) { z, xy in
 			z = max(z, map.zPosition(at: xy))
 		}
 

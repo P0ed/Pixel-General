@@ -100,19 +100,21 @@ public extension TacticalState {
 			let idx = unitsMap[xy].index
 			return if idx < 0 { nil } else { units[idx] }
 		}
-		set {
-			let idx = unitsMap[xy].index
-			if idx >= 0 { units[idx] = newValue ?? .empty }
-		}
 	}
 
 	subscript(_ country: Country) -> Player {
-		get {
-			players.firstMap { _, p in p.country == country ? p : nil } ?? Player()
-		}
-		set {
+		_read {
 			if let idx = players.firstMap({ i, p in p.country == country ? i : nil }) {
-				players[idx] = newValue
+				yield players[idx]
+			} else {
+				fatalError()
+			}
+		}
+		_modify {
+			if let idx = players.firstMap({ i, p in p.country == country ? i : nil }) {
+				yield &players[idx]
+			} else {
+				fatalError()
 			}
 		}
 	}
@@ -204,14 +206,18 @@ extension TacticalState {
 
 public extension TacticalState {
 
-	var playerIndex: Int { Int(turn) % players.count }
-
-	var player: Player {
-		borrowing get { players[playerIndex] }
-		set { players[playerIndex] = newValue }
+	var playerIndex: Int {
+		Int(turn) % players.count
 	}
 
-	var country: Country { player.country }
+	var player: Player {
+		_read { yield players[playerIndex] }
+		_modify { yield &players[playerIndex] }
+	}
+
+	var country: Country {
+		player.country
+	}
 
 	func offMap(unit id: UID) -> Bool {
 		unitsMap[position[id]] != id

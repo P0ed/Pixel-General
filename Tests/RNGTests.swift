@@ -27,6 +27,7 @@ struct RNGTests {
 	}
 
 	@Test func damageCalculation() {
+		var report = "Damage table:"
 		var state = TacticalState.xs
 		for atk in UInt8.min...30 {
 			let inf = Unit.make(atk: 1 + atk, def: 11)
@@ -59,8 +60,9 @@ struct RNGTests {
 
 			if dif >= 0 { #expect(sum[0] > sum[1]) }
 
-			print("atk - def: \(dif) dmg: \(avg0), retaliation: \(avg1)")
+			report += "\natk - def: \(dif) dmg: \(avg0), retaliation: \(avg1)"
 		}
+		print(report)
 	}
 }
 

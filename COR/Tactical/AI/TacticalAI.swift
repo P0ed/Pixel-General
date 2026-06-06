@@ -5,14 +5,18 @@ public extension TacticalState {
 	/// every subsequent call until the turn rolls over.
 	///
 	/// The plan assigns every controllable unit a `Role` plus a target tile.
-	/// Roles encode *intent* (defend a town, push the front, fall back) while
-	/// the concrete move/attack targets are re-derived from live state, so the
-	/// plan stays valid even as the board changes mid-turn.
-	struct AI {
+	/// Roles encode *intent* (defend a town, push the front, fall back).
+	struct AI: ~Copyable {
 		/// Game `turn` this plan was built for. `.max` means "no plan yet".
 		public var turn: UInt32 = .max
 		public var role: [128 of Role] = .init(repeating: .idle)
 		public var target: [128 of XY] = .init(repeating: .zero)
+
+		public var roster: CArray<128, UID> = .init(tail: .none)
+		public var enemies: CArray<128, UID> = .init(tail: .none)
+
+		public var ownSettlements: CArray<32, XY> = .init(tail: .zero)
+		public var enemySettlements: CArray<32, XY> = .init(tail: .zero)
 
 		public enum Role: UInt8 {
 			case idle      // no assignment (e.g. freshly built unit)

@@ -37,6 +37,10 @@ public extension XY {
 		{ a, b in (a - self).manhattan < (b - self).manhattan }
 	}
 
+	var stepComparator: (XY, XY) -> Bool {
+		{ a, b in stepDistance(to: a) < stepDistance(to: b) }
+	}
+
 	var manhattan: Int {
 		abs(x) + abs(y)
 	}

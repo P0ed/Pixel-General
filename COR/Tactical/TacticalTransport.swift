@@ -27,7 +27,7 @@ extension TacticalState {
 		unitsMap[p] = .none
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(tp)
-		events.add(.move(unit, path))
+		events.add(.move(unit, Path(count: path.count, path: path.mem)))
 		if player.type == .human {
 			selectUnit(transport)
 		}
@@ -56,6 +56,6 @@ extension TacticalState {
 		player.visible.formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)
 		path.add(xy)
-		events.add(.move(idx.uid, path))
+		events.add(.move(idx.uid, Path(count: path.count, path: path.mem)))
 	}
 }

@@ -281,21 +281,21 @@ public extension InlineArray where Element == Unit, count == 16 {
 
 public extension CArray where capacity == 128 {
 	subscript(_ id: UID) -> Element {
-		get { self[id.index] }
-		set { self[id.index] = newValue }
+		_read { yield self[id.index] }
+		_modify { yield &self[id.index] }
 	}
 }
 
 public extension InlineArray where count == 128 {
 	subscript(_ id: UID) -> Element {
-		get { self[id.index] }
-		set { self[id.index] = newValue }
+		_read { yield self[id.index] }
+		_modify { yield &self[id.index] }
 	}
 }
 
 public extension Array {
 	subscript(_ id: UID) -> Element {
-		get { self[id.index] }
-		set { self[id.index] = newValue }
+		_read { yield self[id.index] }
+		_modify { yield &self[id.index] }
 	}
 }

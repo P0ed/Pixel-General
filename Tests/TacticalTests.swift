@@ -12,8 +12,6 @@ struct TacticalTests {
 		}
 	}
 
-	private static let goodSeed = 1
-
 	@Test func factoryProducesValidState() {
 		let players = Self.players()
 		let units = Array<Unit>.small(.swe)
@@ -21,7 +19,7 @@ struct TacticalTests {
 			players: players,
 			units: units,
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 
 		#expect(state.map.size == 32)
@@ -68,7 +66,7 @@ struct TacticalTests {
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 
 		state.cursor = XY(0, 0)
@@ -90,7 +88,7 @@ struct TacticalTests {
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 		// Ensure player 0's vision covers their own units (init does this).
 		let ownUnitPos = state.units.firstMapAlive { i, u in
@@ -112,25 +110,27 @@ struct TacticalTests {
 		// exceed an iteration budget. We're not asserting the game ends; only
 		// that the loop completes without a crash and that the turn counter
 		// advances at least once.
+
+		var ai = TacticalState.AI()
+
 		var state = TacticalState.make(
-			players: Self.players(types: [.ai, .ai, .ai, .ai]),
-			units: Array<Unit>.small(.swe),
+			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
+			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 
 		let initialTurn = state.turn
 		var iterations = 0
-		let maxIterations = 4_000
+		let maxIterations = 1024
 
-		outer: while iterations < maxIterations {
-			var ai = TacticalState.AI(turn: 0)
+		while iterations < maxIterations {
 			let action = state.axis(ai: &ai)
 			_ = state.reduce(action)
 			iterations += 1
 			if action == .end {
 				if state.turn > initialTurn + 4 {
-					break outer
+					break
 				}
 			}
 		}
@@ -144,7 +144,7 @@ struct TacticalTests {
 			players: Self.players(types: [.ai, .ai, .ai, .ai]),
 			units: Array<Unit>.small(.swe),
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 		let before = state.turn
 		_ = state.reduce(.end)
@@ -156,7 +156,7 @@ struct TacticalTests {
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
-			seed: Self.goodSeed
+			seed: 0
 		)
 
 		let pick = state.units.firstMapAlive { i, u in

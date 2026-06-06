@@ -13,8 +13,21 @@ public struct Map<let maxSize: Int, Element>: ~Copyable {
 	}
 
 	public subscript(xy: XY) -> Element {
-		get { contains(xy) ? tiles[xy.y][xy.x] : zero }
-		set { contains(xy) ? tiles[xy.y][xy.x] = newValue : () }
+		_read {
+			if contains(xy) {
+				yield tiles[xy.y][xy.x]
+			} else {
+				yield zero
+			}
+		}
+		_modify {
+			if contains(xy) {
+				yield &tiles[xy.y][xy.x]
+			} else {
+				var z = zero
+				yield &z
+			}
+		}
 	}
 
 	public func contains(_ xy: XY) -> Bool {

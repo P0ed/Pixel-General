@@ -1,4 +1,4 @@
-public struct CArray<let capacity: Int, Element> {
+public struct CArray<let capacity: Int, Element>: ~Copyable {
 	public private(set) var count: Int
 	public private(set) var mem: InlineArray<capacity, Element>
 }
@@ -35,8 +35,8 @@ public extension CArray {
 	}
 
 	subscript(_ index: Int) -> Element {
-		get { mem[index] }
-		set { mem[index] = newValue }
+		_read { yield mem[index] }
+		_modify { yield &mem[index] }
 	}
 
 	mutating func add(_ element: Element) {
@@ -136,5 +136,14 @@ public extension CArray {
 	func contains(_ element: Element) -> Bool where Element: Equatable {
 		for i in indices where element == mem[i] { return true }
 		return false
+	}
+
+	func min(by comparator: (Element, Element) -> Bool) -> Element? {
+		guard count > 0 else { return nil }
+		var min = 0
+		for i in indices.dropFirst() where comparator(self[i], self[min]) {
+			min = i
+		}
+		return self[min]
 	}
 }

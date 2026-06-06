@@ -10,7 +10,7 @@ public struct HQState: ~Copyable {
 		map: consuming Map<4, Terrain> = Map<4, Terrain>(size: 4, zero: .field),
 		player: Player,
 		units: [16 of Unit],
-		events: CArray<16, HQEvent> = .init(tail: .menu),
+		events: consuming CArray<16, HQEvent> = .init(tail: .menu),
 		cursor: XY = .zero,
 		selected: UID = .none
 	) {

@@ -2,17 +2,18 @@ extension TacticalState {
 
 	// MARK: - Entry point
 
-	/// One AI action. The plan is (re)built whenever the turn changes; the
+	/// One AI action. The plan is rebuilt whenever the turn changes; the
 	/// generators below then translate that plan into a single concrete action,
 	/// applied in priority order: spend money, patch up, shoot, ferry, manoeuvre.
 	func axis(ai: inout AI) -> TacticalAction {
+		preplan(&ai)
 		if ai.turn != turn { plan(&ai) }
 
-		if let act = purchase { return act }
-		if let act = resupply { return act }
-		if let act = bestAttack() { return act }
-		if let act = disembark { return act }
-		if let act = embark { return act }
+		if let act = purchase(ai) { return act }
+		if let act = resupply(ai) { return act }
+		if let act = bestAttack(ai) { return act }
+		if let act = disembark(ai) { return act }
+		if let act = embark(ai) { return act }
 		if let act = bestMove(ai) { return act }
 		return .end
 	}
@@ -25,33 +26,60 @@ extension TacticalState {
 	// at the nearest enemy settlement — infantry/armor to capture, artillery and
 	// AA to shoot the approach, supply trailing behind.
 
+	// Called before every action, caches units to AI struct
+	private func preplan(_ ai: inout AI) {
+		let country = country
+		ai.roster.erase()
+		ai.enemies.erase()
+		ai.ownSettlements.erase()
+		ai.enemySettlements.erase()
+
+		units.forEachAlive { i, u in
+			if u.country == country { ai.roster.add(i.uid) }
+			if isVisible(i.uid), !offMap(unit: i.uid), u.country.team != country.team { ai.enemies.add(i.uid) }
+		}
+
+		map.indices.forEach { xy in
+			if map[xy].isSettlement {
+				if control[xy] == country {
+					ai.ownSettlements.add(xy)
+				} else {
+					ai.enemySettlements.add(xy)
+				}
+			}
+		}
+	}
+
+	// Called once at the start of the new turn
 	private func plan(_ ai: inout AI) {
-		ai = AI(turn: turn)
+		ai.turn = turn
 
-		let roster = roster
-		guard !roster.isEmpty else { return }
+		guard !ai.roster.isEmpty else { return }
 
-		let enemies = visibleEnemies
-		let havens = ownSettlements
 		var claimed: UInt128 = 0
 
 		// 1) Pull damaged or empty units back to a matching haven.
-		for uid in roster {
+		ai.roster.forEach { _, uid in
 			let u = units[uid]
-			guard u.hp <= 3 || (u.maxAmmo > 0 && u.ammo == 0) else { continue }
+			guard u.hp <= 3 || (u.maxAmmo > 0 && u.ammo == 0) else { return }
 			let air = u.isAir
-			guard let haven = havens
-				.filter({ (map[$0] == .airfield) == air })
-				.min(by: { position[uid].stepDistance(to: $0) < position[uid].stepDistance(to: $1) })
-			else { continue }
+
+			let haven = ai.ownSettlements.min(by: { a, b in
+				(map[a] == .airfield) == air
+				? position[uid].stepDistance(to: a) < position[uid].stepDistance(to: b)
+				: false
+			})
+
+			guard let haven else { return }
+
 			ai.role[uid.index] = .retreat
 			ai.target[uid.index] = haven
 			claimed |= 1 << uid.rawValue
 		}
 
 		// 2) Garrison threatened settlements with the nearest spare ground units.
-		let threatened = havens
-			.map { ($0, threat(at: $0, from: enemies)) }
+		let threatened = ai.ownSettlements
+			.map { _, xy in (xy, threat(at: xy, from: ai.enemies)) }
 			.filter { $0.1 > 0 }
 			.sorted { a, b in a.1 != b.1 ? a.1 > b.1 : map[a.0].income > map[b.0].income }
 
@@ -60,12 +88,14 @@ extension TacticalState {
 			for _ in 0 ..< need {
 				var pick: UID = .none
 				var pickKey = (Int.max, Int.max)
-				for uid in roster where claimed & (1 << uid.rawValue) == 0 {
+				ai.roster.forEach { _, uid in
+					guard claimed & (1 << uid.rawValue) == 0 else { return }
 					let u = units[uid]
-					guard garrison(u) else { continue }
+					guard garrison(u) else { return }
 					let key = (garrisonPriority(u), position[uid].stepDistance(to: city))
 					if key < pickKey { pickKey = key; pick = uid }
 				}
+
 				guard pick != .none else { break }
 				ai.role[pick.index] = .defend
 				ai.target[pick.index] = city
@@ -74,7 +104,9 @@ extension TacticalState {
 		}
 
 		// 3) Everything else goes on the offensive.
-		for uid in roster where claimed & (1 << uid.rawValue) == 0 {
+		ai.roster.forEach { _, uid in
+			guard claimed & (1 << uid.rawValue) == 0 else { return }
+
 			let u = units[uid]
 			let p = position[uid]
 			if u.type == .supply {
@@ -82,10 +114,10 @@ extension TacticalState {
 				ai.target[uid.index] = nearestFriendlyCombat(to: p, exclude: uid) ?? p
 			} else if u.isArt || u.isAA || u.isAir {
 				ai.role[uid.index] = .hunt
-				ai.target[uid.index] = frontObjective(from: p, enemies) ?? p
+				ai.target[uid.index] = frontObjective(from: p, ai) ?? p
 			} else {
 				ai.role[uid.index] = .attack
-				ai.target[uid.index] = frontObjective(from: p, enemies) ?? p
+				ai.target[uid.index] = frontObjective(from: p, ai) ?? p
 			}
 		}
 	}
@@ -100,54 +132,32 @@ extension TacticalState {
 
 	/// Rough enemy pressure on a tile: ground attackers that could reach it in
 	/// about a turn, weighted by raw firepower.
-	private func threat(at xy: XY, from enemies: [(UID, XY)]) -> Int {
+	private func threat(at xy: XY, from enemies: borrowing CArray<128, UID>) -> Int {
 		var t = 0
-		for (uid, p) in enemies {
+		enemies.forEach { _, uid in
 			let e = units[uid]
-			guard !e.isAir else { continue }
+			guard !e.isAir else { return }
+
 			let reach = Int(e.mov) * 2 + 1 + Int(e.rng) * 2 + 1
-			if p.stepDistance(to: xy) <= reach + 2 {
+			if position[uid].stepDistance(to: xy) <= reach + 2 {
 				t += Int(e.softAtk) + Int(e.hardAtk) + 4
 			}
 		}
 		return t
 	}
 
-	// MARK: - Rosters & objectives
-
-	/// Our alive, controllable units (carried cargo is skipped unless it is a
-	/// loaded transport, which still acts as one unit).
-	private var roster: [UID] {
-		units.compactMapAlive { [country] i, u in
-			u.country == country && !offMap(unit: i.uid) ? i.uid : nil
-		}
-	}
-
-	private var visibleEnemies: [(UID, XY)] {
-		units.compactMapAlive { [country] i, u in
-			u.country.team != country.team && isVisible(i.uid) ? (i.uid, position[i]) : nil
-		}
-	}
-
-	private var ownSettlements: [XY] {
-		map.indices.compactMap { [country] xy in
-			map[xy].isSettlement && control[xy] == country ? xy : nil
-		}
-	}
-
-	private var enemySettlements: [XY] {
-		map.indices.compactMap { [country] xy in
-			map[xy].isSettlement && control[xy].team != country.team ? xy : nil
-		}
-	}
-
 	/// The point a unit should advance on: the nearest enemy settlement, or
 	/// failing that the nearest visible enemy unit.
-	private func frontObjective(from p: XY, _ enemies: [(UID, XY)]) -> XY? {
-		if let c = enemySettlements.min(by: { p.stepDistance(to: $0) < p.stepDistance(to: $1) }) {
+	private func frontObjective(
+		from p: XY,
+		_ ai: borrowing AI
+	) -> XY? {
+		if let c = ai.enemySettlements.min(by: { p.stepDistance(to: $0) < p.stepDistance(to: $1) }) {
 			return c
 		}
-		return enemies.min(by: { p.stepDistance(to: $0.1) < p.stepDistance(to: $1.1) })?.1
+		return ai.enemies
+			.min(by: { p.stepDistance(to: position[$0]) < p.stepDistance(to: position[$1]) })
+			.map { position[$0] }
 	}
 
 	private func nearestFriendlyCombat(to p: XY, exclude: UID) -> XY? {
@@ -168,12 +178,6 @@ extension TacticalState {
 		}
 	}
 
-	private var enemyHasAir: Bool {
-		units.firstMapAlive { [country] i, u in
-			u.country.team != country.team && u.isAir && isVisible(i.uid) ? true : nil
-		} ?? false
-	}
-
 	private var ownSupplyCount: Int {
 		units.reduceAlive(into: 0) { [country] r, _, u in
 			if u.country == country, u.type == .supply { r += 1 }
@@ -188,16 +192,15 @@ extension TacticalState {
 
 	// MARK: - Purchase
 
-	private var purchase: TacticalAction? {
+	private func purchase(_ ai: borrowing AI) -> TacticalAction? {
 		guard player.prestige >= 0x280 else { return nil }
 
-		let enemies = visibleEnemies
 		let buildable = map.indices.filter { [country] xy in
 			map[xy].isSettlement && control[xy] == country && unitsMap[xy] == .none
 		}
-		.sorted { frontDistance($0, enemies) < frontDistance($1, enemies) }
+		.sorted { frontDistance($0, ai) < frontDistance($1, ai) }
 
-		let enemyAir = enemyHasAir
+		let enemyAir = ai.enemies.firstMap { _, uid in units[uid].isAir } != nil
 		let needSupply = ownSupplyCount == 0
 		let needAA = enemyAir && ownAACount == 0
 
@@ -217,9 +220,16 @@ extension TacticalState {
 
 	/// Distance from a buildable tile to the front (nearest enemy settlement,
 	/// else nearest visible enemy). Used to spawn units where they are needed.
-	private func frontDistance(_ xy: XY, _ enemies: [(UID, XY)]) -> Int {
-		if let d = enemySettlements.map({ xy.stepDistance(to: $0) }).min() { return d }
-		return enemies.map { xy.stepDistance(to: $0.1) }.min() ?? 0
+	private func frontDistance(_ xy: XY, _ ai: borrowing AI) -> Int {
+		if let d = ai.enemySettlements.min(
+			by: { a, b in xy.stepDistance(to: a) < xy.stepDistance(to: b) }
+		) {
+			return xy.stepDistance(to: d)
+		}
+
+		return ai.enemies
+			.min { position[$0].stepDistance(to: xy) < position[$1].stepDistance(to: xy) }
+			.map { xy.stepDistance(to: position[$0]) } ?? 0
 	}
 
 	private func score(_ u: Unit, enemyAir: Bool) -> Int {
@@ -243,25 +253,25 @@ extension TacticalState {
 
 	// MARK: - Resupply
 
-	private func needsResupply(_ i: Int, _ u: Unit) -> Bool {
-		guard u.untouched, !offMap(unit: i.uid) else { return false }
-		if u.isAir, !hasAirfield(position[i]) { return false }
+	private func needsResupply(_ uid: UID) -> Bool {
+		let u = units[uid]
+		guard u.untouched, !offMap(unit: uid) else { return false }
+		if u.isAir, !hasAirfield(position[uid]) { return false }
 		return u.hp < 6 || (u.maxAmmo > 0 && u.ammo == 0)
 	}
 
-	private var resupply: TacticalAction? {
-		units.firstMapAlive { [country] i, u in
-			u.country == country && needsResupply(i, u) ? .resupply(i.uid) : nil
+	private func resupply(_ ai: borrowing AI) -> TacticalAction? {
+		return ai.roster.firstMap { _, uid in
+			needsResupply(uid) ? .resupply(uid) : nil
 		}
 	}
 
 	// MARK: - Transport
 
-	private var embark: TacticalAction? {
-		let enemies = visibleEnemies
-		return units.firstMapAlive { [country] i, u in
+	private func embark(_ ai: borrowing AI) -> TacticalAction? {
+		units.firstMapAlive { [country] i, u in
 			guard u.country == country, u.transportable, u.canMove, cargo[i] == .none else { return nil }
-			guard let target = frontObjective(from: position[i], enemies) else { return nil }
+			guard let target = frontObjective(from: position[i], ai) else { return nil }
 			guard position[i].stepDistance(to: target) >= 3 * Int(u.mov) else { return nil }
 
 			return position[i].n4.firstMap { xy -> TacticalAction? in
@@ -274,11 +284,10 @@ extension TacticalState {
 		}
 	}
 
-	private var disembark: TacticalAction? {
-		let enemies = visibleEnemies
-		return units.firstMapAlive { [country] i, u in
+	private func disembark(_ ai: borrowing AI) -> TacticalAction? {
+		units.firstMapAlive { [country] i, u in
 			guard u.country == country, u[.transport], cargo[i] != .none else { return nil }
-			guard let target = frontObjective(from: position[i], enemies),
+			guard let target = frontObjective(from: position[i], ai),
 				  position[i].stepDistance(to: target) <= 4
 			else { return nil }
 			return position[i].n4.firstMap { xy -> TacticalAction? in
@@ -297,15 +306,16 @@ extension TacticalState {
 
 	/// Artillery softens first (it takes no counter), then air, AA, armor and
 	/// finally infantry mop up — so each shot lands against the weakest target.
-	private func attackOrder() -> [UID] {
-		roster.sorted { a, b in
-			let pa = attackPriority(units[a]), pb = attackPriority(units[b])
+	private func attackOrder(_ ai: borrowing AI) -> [UID] {
+		ai.roster.map { $1 }.sorted { a, b in
+			let pa = attackPriority(units[a])
+			let pb = attackPriority(units[b])
 			return pa != pb ? pa < pb : a.rawValue < b.rawValue
 		}
 	}
 
-	private func bestAttack() -> TacticalAction? {
-		for uid in attackOrder() {
+	private func bestAttack(_ ai: borrowing AI) -> TacticalAction? {
+		for uid in attackOrder(ai) {
 			let u = units[uid]
 			guard u.canAttack, u.ammo > 0, !offMap(unit: uid) else { continue }
 
@@ -356,23 +366,22 @@ extension TacticalState {
 		}
 	}
 
-	private func bestMove(_ ai: AI) -> TacticalAction? {
-		let order = roster.sorted { a, b in
-			let ra = roleRank(ai.role[a.index]), rb = roleRank(ai.role[b.index])
+	private func bestMove(_ ai: borrowing AI) -> TacticalAction? {
+		let order = ai.roster.map { $1 }.sorted { a, b in
+			let ra = roleRank(ai.role[a]), rb = roleRank(ai.role[b])
 			return ra != rb ? ra < rb : a.rawValue < b.rawValue
 		}
 		for uid in order {
-			let u = units[uid]
-			guard u.canMove, !offMap(unit: uid) else { continue }
+			guard units[uid].canMove, !offMap(unit: uid) else { continue }
 			if let m = moveByRole(uid, ai) { return m }
 		}
 		return nil
 	}
 
-	private func moveByRole(_ uid: UID, _ ai: AI) -> TacticalAction? {
+	private func moveByRole(_ uid: UID, _ ai: borrowing AI) -> TacticalAction? {
 		let u = units[uid]
 		let p = position[uid]
-		switch ai.role[uid.index] {
+		switch ai.role[uid] {
 		case .retreat:
 			return pick(uid, toward: ai.target[uid.index], defensive: true)
 		case .defend:
@@ -381,13 +390,13 @@ extension TacticalState {
 			let anchor = nearestFriendlyCombat(to: p, exclude: uid) ?? ai.target[uid.index]
 			return pick(uid, toward: anchor, defensive: true)
 		case .hunt:
-			guard let goal = frontObjective(from: p, visibleEnemies) else { return nil }
+			guard let goal = frontObjective(from: p, ai) else { return nil }
 			return pick(uid, toward: goal, defensive: u.isArt || u.hp <= 6)
 		case .attack:
-			guard let goal = frontObjective(from: p, visibleEnemies) else { return nil }
+			guard let goal = frontObjective(from: p, ai) else { return nil }
 			return pick(uid, toward: goal, defensive: u.hp <= 4)
 		case .idle:
-			guard let goal = frontObjective(from: p, visibleEnemies) else { return nil }
+			guard let goal = frontObjective(from: p, ai) else { return nil }
 			return pick(uid, toward: goal, defensive: false)
 		}
 	}

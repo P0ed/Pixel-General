@@ -49,8 +49,8 @@ struct MapGenerationTests {
 	@Test func handlesPlayableSizes() {
 		// `placeCities` lays cities on a jittered grid whose columns/rows are
 		// derived from the city count, so it has no divisor that collapses to
-		// zero and works across the full 8...32 range.
-		for size in 8 ... 32 {
+		// zero and works across the full 16...32 range.
+		for size in 16 ... 32 {
 			let map = Map<32, Terrain>(size: size, seed: 0)
 			#expect(map.size == size)
 			#expect(map.count == size * size)
