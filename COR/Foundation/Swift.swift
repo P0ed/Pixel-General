@@ -63,17 +63,3 @@ public struct IO<A> {
 		set = { newValue in closure = newValue }
 	}
 }
-
-@propertyWrapper
-public struct NC<Value>: ~Copyable {
-	private var value: Value
-
-	public var wrappedValue: Value {
-		_read { yield value }
-		_modify { yield &value }
-	}
-
-	public init(wrappedValue: Value) {
-		value = wrappedValue
-	}
-}

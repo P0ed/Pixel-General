@@ -3,8 +3,6 @@ import AVFAudio
 import COR
 
 final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
-	typealias Reaction = COR.Reaction<Action, Event>
-
 	let mode: SceneMode<State, Action, Event, Nodes>
 	private let hid = HIDController()
 
@@ -81,17 +79,21 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		} else if processing {
 			pending = input
 		} else {
-			send(mode.input(&state, input))
+			react(mode.input(&state, input))
 		}
 	}
 
-	func send(_ reaction: Reaction) {
+	func send(_ action: Action) {
+		react(.action(action))
+	}
+
+	private func react(_ reaction: Reaction<Action, Event>) {
 		guard let nodes, !processing else { return }
 		processing = true
 		let events: [Event] = switch reaction {
 		case .action(let action): mode.reduce(&state, action)
 		case .events(let events): events
-		case .none: []
+		@unknown default: fatalError()
 		}
 		Task {
 			for event in events {
@@ -113,11 +115,6 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		}
 	}
 
-	func send(_ action: Action?) {
-		let reaction: Reaction = action.map(Reaction.action) ?? .none
-		send(reaction)
-	}
-
 	func show(_ menu: MenuState<Action>?) {
 		menuState = menu.flatMap { m in m.items.isEmpty ? .none : m }
 	}
@@ -137,7 +134,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		if let menuState, let action = menuState.action {
 			if case let .action(idx) = action {
 				if let action = menuState.items[idx].action {
-					send(action)
+					react(.action(action))
 				}
 				self.menuState = menuState.items[idx].update(
 					modifying(menuState) { m in m.action = nil }

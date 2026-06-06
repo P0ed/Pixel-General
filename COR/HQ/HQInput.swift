@@ -1,64 +1,61 @@
 public extension HQState {
 
 	mutating func apply(_ input: Input) -> Reaction<HQAction, HQEvent> {
-		var events: [HQEvent] = []
-		let action: HQAction? = switch input {
+		switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): shopAction(into: &events)
-		case .action(.d): nil
-		case .menu: { events.append(.menu); return nil }()
+		case .action(.c): shopAction()
+		case .action(.d): .none
+		case .menu: .events([.menu])
 		case .tile(let xy): select(xy)
-		default: nil
+		default: .none
 		}
-		if !events.isEmpty { return .events(events) }
-		guard let action else { return .none }
-		return .action(action)
 	}
 }
 
 extension HQState {
 
-	mutating func select(_ xy: XY) -> HQAction? {
-		guard map.contains(xy) else { return nil }
+	mutating func select(_ xy: XY) -> Reaction<HQAction, HQEvent> {
+		guard map.contains(xy) else { return .none }
 
 		cursor = xy
 		return mainAction()
 	}
 
-	mutating func moveCursor(_ direction: Direction) -> HQAction? {
+	mutating func moveCursor(_ direction: Direction) -> Reaction<HQAction, HQEvent> {
 		let xy = cursor.neighbor(direction)
 		if map.contains(xy) { cursor = xy }
-		return nil
+		return .none
 	}
 
-	mutating func mainAction() -> HQAction? {
+	mutating func mainAction() -> Reaction<HQAction, HQEvent> {
 		if selected != .none {
 			if selected == units[cursor]?.0 {
 				selected = .none
 			} else {
 				defer { selected = .none }
-				return .swap(selected.index, cursor.x + cursor.y * 4)
+				return .action(.swap(selected.index, cursor.x + cursor.y * 4))
 			}
 		} else if let (i, _) = units[cursor] {
 			selected = i
 		}
-		return nil
+		return .none
 	}
 
-	mutating func secondaryAction() -> HQAction? {
+	mutating func secondaryAction() -> Reaction<HQAction, HQEvent> {
 		selected = .none
-		return nil
+		return .none
 	}
 
-	mutating func shopAction(into events: inout [HQEvent]) -> HQAction? {
+	mutating func shopAction() -> Reaction<HQAction, HQEvent> {
 		if selected != .none {
 			defer { selected = .none }
-			return .sell(selected.index)
+			return .action(.sell(selected.index))
 		} else if units[cursor] == nil {
-			events.append(.shop)
+			return .events([.shop])
+		} else {
+			return .none
 		}
-		return nil
 	}
 }
