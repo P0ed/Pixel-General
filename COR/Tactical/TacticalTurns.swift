@@ -11,6 +11,7 @@ extension TacticalState {
 	}
 
 	mutating func endTurn(into events: inout [TacticalEvent]) {
+		resetUI()
 		captureCities()
 
 		for i in units.indices where units[i].alive && units[i].country == player.country {
@@ -55,6 +56,11 @@ extension TacticalState {
 			assignControl()
 			eliminatePlayers()
 		}
+	}
+
+	private mutating func resetUI() {
+		selectedUnit = .none
+		selectable = .none
 	}
 
 	private mutating func eliminatePlayers() {
