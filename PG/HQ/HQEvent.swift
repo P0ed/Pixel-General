@@ -10,7 +10,6 @@ extension HQNodes {
 		case .remove(let uid): removeUnit(uid)
 		case .shop: processShop(state)
 		case .menu: processMenu()
-		@unknown default: fatalError()
 		}
 	}
 

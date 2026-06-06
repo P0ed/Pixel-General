@@ -1,4 +1,4 @@
-public enum Terrain: UInt8, Hashable, Codable, Sendable {
+@frozen public enum Terrain: UInt8, Hashable, Codable, Sendable {
 	case none
 	case water
 	case bridgeWE, bridgeSN

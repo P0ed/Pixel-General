@@ -1,3 +1,3 @@
-public enum StrategicAction {
+@frozen public enum StrategicAction {
 
 }

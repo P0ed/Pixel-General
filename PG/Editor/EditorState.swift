@@ -234,7 +234,6 @@ extension Terrain {
 		case .villageS: "Village-S"
 		case .roadX: "Road-nwse"
 		case .none: "Clear"
-		@unknown default: fatalError()
 		}
 	}
 }

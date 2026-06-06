@@ -17,7 +17,7 @@ public struct Core: ~Copyable {
 	}
 }
 
-public enum Location: UInt8 {
+@frozen public enum Location: UInt8 {
 	case hq, strategic, tactical
 }
 

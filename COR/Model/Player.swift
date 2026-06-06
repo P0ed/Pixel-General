@@ -20,15 +20,15 @@ public struct Player {
 	}
 }
 
-public enum PlayerType: UInt8, Sendable {
+@frozen public enum PlayerType: UInt8, Sendable {
 	case human, remote, ai
 }
 
-public enum Country: UInt8, Hashable, CaseIterable, Sendable {
+@frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
 	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
 }
 
-public enum Team: UInt8, Hashable, Sendable {
+@frozen public enum Team: UInt8, Hashable, Sendable {
 	case axis, allies, soviet
 }
 

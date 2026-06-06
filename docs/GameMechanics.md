@@ -37,7 +37,7 @@ A `Unit` is a value struct of `UInt8` stats:
 | `ent` | Entrenchment in quarter-units. Effective bonus `entDef = ent/4`. Capped at `terrain.baseEntrenchment*4 + 20`. |
 | `exp` | Experience, drives `lvl` (0–8). |
 | `kills` | Lifetime kill count. |
-| `mov` | Move range (BFS depth in steps). |
+| `mov` | Move range. |
 | `rng` | Attack range (tiles reachable = grid distance ≤ `rng*2+1`). |
 | `ini` | Initiative — extra fire round + rugged-defence rolls. |
 | `softAtk`/`hardAtk`/`airAtk` | Attack vs soft / armored / air targets. |
@@ -59,7 +59,8 @@ all terrain modifiers live on `Terrain`.
 
 **Traits** (`Traits` option set):
 - `aux` — auxiliary unit, half cost; bought from a fixed pool.
-- `engineer`, `fpv`, `atm`, `aam` — reserved trait bits (see [Roadmap](./Roadmap.md)).
+- `optics`, `atgm`, `aam` — reserved trait bits (see [Roadmap](./Roadmap.md)).
+- `engineer` — faster entrenchment and increased damage to enemy fortifications.
 - `elite` — flag for premium templates; also required cargo for air transports.
 - `transport` — can carry one transportable cargo (see Transport).
 - `radar` — `spot = 3` (vision uses the precomputed n36 disc) instead of 2.
@@ -109,9 +110,8 @@ of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
    is not a surprise): if
    `d20 + (su.ini+su.lvl)*2  <  (du.ent+du.ini+du.lvl)*2 + (surprise ? 10 : 0)`,
    defender fires first and the attacker's shot is delayed until after the
-   counter. The +10 surprise bonus goes to the defender's side — ambushed
-   units are more likely to dig in.
-4. Attacker fires (`fire`), reducing defender `ent` by 1 (one quarter-unit).
+   counter. The +10 surprise bonus goes to the defender's side.
+4. Attacker fires (`fire`), reducing defender `ent` by `entDamage`.
 5. Defender counterattacks if alive, in range, can hit the attacker, and
    the matchup isn't (`isArt` attacker vs non-`isArt` defender without
    surprise). Counter `defMod` for the attacker (now being shot at) is

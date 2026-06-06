@@ -1,4 +1,4 @@
-public enum Reaction<Action, Event> {
+@frozen public enum Reaction<Action, Event> {
 	case action(Action)
 	case events([Event])
 

@@ -22,13 +22,12 @@ The four instantiations are declared as typealiases alongside their nodes: `HQMo
 
 #### Reaction
 
-`input` returns a `Reaction<Action, Event>` (`COR/Foundation/Reaction.swift`) — a three-way sum of what a gesture resolves to:
+`input` returns a `Action|[Event]` enum (`COR/Foundation/Reaction.swift`) — a two-way sum of what a gesture resolves to:
 
 ```swift
 public enum Reaction<Action, Event> {
     case action(Action)   // run through Reduce
     case events([Event])  // bypass Reduce, process directly
-    case none             // gesture had no effect
 }
 ```
 
@@ -36,7 +35,6 @@ The cases are mutually exclusive by design — `input` only *interprets* the ges
 
 - **`.action`** is fed through **Reduce**, the only stage that mutates game state by applying an `Action`. Any presentation feedback that results from *applying* an action (e.g. a purchase animation) is emitted there, as a reduce `Event`.
 - **`.events`** *bypass* Reduce and go straight to **Process**. These are presentation-only effects that don't depend on a state change — e.g. opening a menu or the shop.
-- **`.none`** is the common case for navigation gestures (cursor moves, panning) that change only transient view state.
 
 `Scene.send` switches on the reaction (`PG/Scene/Scene.swift`): `.action` calls `reduce`, `.events` is taken verbatim, `.none` yields no events — and the resulting `[Event]` is dispatched to `Process`. Reduce helpers that emit events thread an `into events: inout [Event]` accumulator rather than mutating shared state.
 
@@ -60,9 +58,9 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 ### State
 
-The root `State` struct (`COR/Model/State.swift`) holds `.hq`, `.strategic`, `.tactical` sub-states and a `.location` enum that drives which scene is active.
+The root `Core` struct (`COR/Model/Core.swift`) holds `.hq`, `.strategic`, `.tactical` sub-states and a `.location` enum that drives which scene is active.
 
-The `Core` class (`PG/Core.swift`) owns the root `State` and manages save/load; it `import`s COR. All state is persisted to UserDefaults on location transitions. App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
+App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`.
 
@@ -75,7 +73,7 @@ Strict concurrency is enabled project-wide.
 ```
 COR/                  Headless game core (import COR), no UI dependency
   Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20, Monoid, Shapes, Input, Reaction
-  Model/              Shared game data: Unit, Player, Terrain, Templates, root State
+  Model/              Shared game data: Core, Unit, Player, Terrain, Templates
   Tactical/           Combat simulation: state, AI, attacks, movement, turns, map generation
   HQ/                 Unit management logic: state, action, input, events
   Strategic/          Campaign logic: state, action, input, events

@@ -59,7 +59,6 @@ extension MenuState {
 		case .up: (cursor - min(cols, items.count) + items.count) % items.count
 		case .left: (cursor / 4 * 4 + (4 + cursor - 1) % 4) % items.count
 		case .right: (cursor / 4 * 4 + (cursor + 1) % 4) % items.count
-		@unknown default: fatalError()
 		}
 	}
 }

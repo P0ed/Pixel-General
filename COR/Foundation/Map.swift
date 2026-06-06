@@ -52,7 +52,7 @@ public struct Map<let maxSize: Int, Element>: ~Copyable {
 	}
 }
 
-public enum Edge: Hashable, CaseIterable {
+@frozen public enum Edge: Hashable, CaseIterable {
 	case bottom, left, top, right
 }
 

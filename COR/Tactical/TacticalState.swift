@@ -21,7 +21,7 @@ public struct TacticalState: ~Copyable {
 	public var mapMode: MapMode = .terrain
 }
 
-public enum MapMode: UInt8, Hashable {
+@frozen public enum MapMode: UInt8, Hashable {
 	case terrain, political
 }
 

@@ -8,7 +8,6 @@ extension SKScene {
 		case .hq: .hq
 		case .strategic: .strategic
 		case .tactical: .tactical
-		@unknown default: fatalError()
 		}
 	}
 

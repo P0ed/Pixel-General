@@ -115,7 +115,6 @@ extension PlayerType {
 		case .human: .ai
 		case .ai: .human
 		case .remote: .remote
-		@unknown default: fatalError()
 		}
 	}
 
@@ -124,7 +123,6 @@ extension PlayerType {
 		case .human: "Human"
 		case .ai: "AI"
 		case .remote: "Remote"
-		@unknown default: fatalError()
 		}
 	}
 }

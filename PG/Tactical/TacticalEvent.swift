@@ -13,7 +13,6 @@ extension TacticalNodes {
 		case .shop: processShop(state)
 		case .menu: processMenu(state)
 		case .end: endGame(state)
-		@unknown default: fatalError()
 		}
 	}
 

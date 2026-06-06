@@ -50,7 +50,6 @@ extension Unit {
 			case .axis: "PZH"
 			case .allies: "M270"
 			case .soviet: "2S3"
-			@unknown default: fatalError()
 			}
 		case .wheelAA: "Neva"
 		case .trackAA: "SPAA"
@@ -70,7 +69,6 @@ extension Unit {
 			case .allies: "F16"
 			default: "F64"
 			}
-		@unknown default: fatalError()
 		}
 	}
 }
@@ -89,7 +87,6 @@ extension Country {
 		case .pak: .green
 		case .ind: .orange
 		case .isr: .blue
-		@unknown default: fatalError()
 		}
 	}
 
@@ -105,7 +102,6 @@ extension Country {
 		case .ind: .ind
 		case .den: .den
 		case .ned: .ned
-		@unknown default: fatalError()
 		}
 	}
 }

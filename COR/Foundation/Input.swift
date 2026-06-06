@@ -1,8 +1,8 @@
-public enum Direction { case right, up, left, down }
-public enum Target { case prev, next }
-public enum Action { case a, b, c, d }
+@frozen public enum Direction { case right, up, left, down }
+@frozen public enum Target { case prev, next }
+@frozen public enum Action { case a, b, c, d }
 
-public enum Input: Equatable {
+@frozen public enum Input: Equatable {
 	case direction(Direction?)
 	case target(Target?)
 	case action(Action?)

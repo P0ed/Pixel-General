@@ -1,4 +1,4 @@
-public enum HQAction {
+@frozen public enum HQAction {
 	case swap(Int, Int)
 	case purchase(Int, Int)
 	case sell(Int)

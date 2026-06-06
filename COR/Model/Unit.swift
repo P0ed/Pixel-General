@@ -244,7 +244,7 @@ extension Unit {
 	}
 }
 
-public enum UnitType: UInt8, Hashable {
+@frozen public enum UnitType: UInt8, Hashable {
 	case supply, inf,
 		 art, wheelArt, trackArt,
 		 aa, wheelAA, trackAA,

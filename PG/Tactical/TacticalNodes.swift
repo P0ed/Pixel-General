@@ -156,7 +156,6 @@ extension TacticalNodes {
 				elevation: state.map[xy].elevationLevel,
 				fog: fog
 			)
-		@unknown default: fatalError()
 		}
 	}
 }

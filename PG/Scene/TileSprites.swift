@@ -123,7 +123,6 @@ extension Terrain {
 		case .villageW: .villageW
 		case .villageS: .villageS
 		case .roadX: .roadX
-		@unknown default: fatalError()
 		}
 	}
 }

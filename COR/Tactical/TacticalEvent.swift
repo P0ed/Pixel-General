@@ -1,4 +1,4 @@
-public enum TacticalEvent {
+@frozen public enum TacticalEvent {
 	case spawn(UID)
 	case move(UID, Path)
 	case fire(UID, UID, UInt8, UInt8)

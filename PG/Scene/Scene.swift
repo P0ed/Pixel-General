@@ -93,7 +93,6 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		let events: [Event] = switch reaction {
 		case .action(let action): mode.reduce(&state, action)
 		case .events(let events): events
-		@unknown default: fatalError()
 		}
 		Task {
 			for event in events {

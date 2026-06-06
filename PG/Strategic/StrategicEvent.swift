@@ -6,7 +6,6 @@ extension StrategicNodes {
 	func process(_ event: StrategicEvent, _ state: borrowing StrategicState) async {
 		switch event {
 		case .menu: processMenu(state)
-		@unknown default: fatalError()
 		}
 	}
 
