@@ -92,9 +92,20 @@ public extension Unit {
 			case .allies: "M270"
 			case .soviet: "2С3"
 			}
-		case .aa: "40mm L/70"
+		case .aa:
+			switch country.team {
+			case _ where rng == 1: "40mm L/70"
+			case .axis: "NASAMS"
+			case .allies: "Patriot"
+			case .soviet: "S300"
+			}
 		case .wheelAA: "Neva"
-		case .trackAA: "Lvkv 90"
+		case .trackAA:
+			switch country.team {
+			case .axis: "Lvkv 90"
+			case .soviet: "Tunguska"
+			case .allies: ""
+			}
 		case .lightWheel: "Boxer"
 		case .lightTrack:
 			switch country.team {

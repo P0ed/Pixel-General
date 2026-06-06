@@ -99,6 +99,18 @@ extension Unit {
 		airDef: 4
 	)
 
+	// MARK: AA
+	static let patriot = Unit(
+		type: .aa,
+		mov: 2,
+		rng: 3,
+		ini: 9,
+		airAtk: 14,
+		groundDef: 4,
+		airDef: 7,
+		traits: .radar
+	)
+
 	// MARK: Air
 	static let mh6 = Unit(
 		type: .heli,
@@ -144,7 +156,7 @@ extension Unit {
 		mov: 9,
 		ini: 5,
 		softAtk: 7,
-		hardAtk: 8,
+		hardAtk: 9,
 		groundDef: 7,
 		airDef: 6
 	)

@@ -8,7 +8,7 @@ public extension Unit {
 		modifying(self, { u in u.traits.formUnion(traits) })
 	}
 
-	static func inf(_ country: Country) -> Self {
+	static func inf1(_ country: Country) -> Self {
 		switch country.team {
 		case .axis, .allies: .regular
 		case .soviet: .militia
@@ -51,9 +51,10 @@ public extension Unit {
 		}
 	}
 
-	static func tank(_ country: Country) -> Self {
+	static func tank1(_ country: Country) -> Self {
 		switch country {
-		case .ned, .den, .swe, .ukr: .leo1
+		case .ned, .den, .ukr: .leo1
+		case .swe: .strv103
 		case .usa, .isr: .m48
 		case .pak: .m48
 		case .rus: .t55
@@ -81,7 +82,7 @@ public extension Unit {
 		}
 	}
 
-	static func art(_ country: Country) -> Self {
+	static func art1(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .art155
 		case .allies: .m777
@@ -97,7 +98,7 @@ public extension Unit {
 		}
 	}
 
-	static func air(_ country: Country) -> Self {
+	static func air1(_ country: Country) -> Self {
 		switch country.team {
 		case .axis: .skeldar
 		case .allies: .mh6
@@ -129,22 +130,25 @@ public extension Unit {
 		}
 	}
 
-	static func aa(_ country: Country) -> Self {
+	static func aa1(_ country: Country) -> Self {
 		switch country.team {
 		default: .bofors
 		}
 	}
 
-	static func aa2(_ country: Country) -> Self {
+	static func aa2(_ country: Country) -> Self? {
 		switch country.team {
 		case .axis: .lvkv90
-		default: .tunguska
+		case .soviet: .tunguska
+		case .allies: nil
 		}
 	}
 
 	static func aa3(_ country: Country) -> Self {
 		switch country.team {
-		default: .neva
+		case .axis: .nasams
+		case .allies: .patriot
+		case .soviet: .neva
 		}
 	}
 

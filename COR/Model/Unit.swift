@@ -1,23 +1,23 @@
 public struct Unit: Equatable {
-	public var country: Country = .default
-	public var hp: UInt8 = 0
-	public var mp: UInt8 = 0
-	public var ap: UInt8 = 0
-	public var ammo: UInt8 = 0
-	public var ent: UInt8 = 0
-	public var exp: UInt16 = 0
-	public var kills: UInt16 = 0
-	public var type: UnitType = .supply
-	public var mov: UInt8 = 0
-	public var rng: UInt8 = 0
-	public var ini: UInt8 = 0
-	public var softAtk: UInt8 = 0
-	public var hardAtk: UInt8 = 0
-	public var airAtk: UInt8 = 0
-	public var groundDef: UInt8 = 0
-	public var airDef: UInt8 = 0
-	public var traits: Traits = []
-	public var skills: Skills = []
+	public internal(set) var country: Country = .default
+	public internal(set) var hp: UInt8 = 0
+	public internal(set) var mp: UInt8 = 0
+	public internal(set) var ap: UInt8 = 0
+	public internal(set) var ammo: UInt8 = 0
+	public internal(set) var ent: UInt8 = 0
+	public internal(set) var exp: UInt16 = 0
+	public internal(set) var kills: UInt16 = 0
+	public internal(set) var type: UnitType = .supply
+	public internal(set) var mov: UInt8 = 0
+	public internal(set) var rng: UInt8 = 0
+	public internal(set) var ini: UInt8 = 0
+	public internal(set) var softAtk: UInt8 = 0
+	public internal(set) var hardAtk: UInt8 = 0
+	public internal(set) var airAtk: UInt8 = 0
+	public internal(set) var groundDef: UInt8 = 0
+	public internal(set) var airDef: UInt8 = 0
+	public internal(set) var traits: Traits = []
+	public internal(set) var skills: Skills = []
 }
 
 public struct Traits: OptionSet, Equatable {
@@ -31,8 +31,8 @@ public struct Traits: OptionSet, Equatable {
 public extension Traits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
 	static var engineer: Self { .init(rawValue: 1 << 1) }
-	static var fpv: Self { .init(rawValue: 1 << 2) }
-	static var atm: Self { .init(rawValue: 1 << 3) }
+	static var optics: Self { .init(rawValue: 1 << 2) }
+	static var atgm: Self { .init(rawValue: 1 << 3) }
 	static var aam: Self { .init(rawValue: 1 << 4) }
 	static var elite: Self { .init(rawValue: 1 << 5) }
 	static var transport: Self { .init(rawValue: 1 << 6) }
@@ -177,33 +177,6 @@ public extension Unit {
 		(src.isAir ? airDef : groundDef) + lvl
 	}
 
-	mutating func reset() {
-		hp = maxHP
-		ap = maxAP
-		mp = maxMP
-		ammo = maxAmmo
-		ent = 0
-	}
-
-	@discardableResult
-	mutating func heal(_ amount: UInt8) -> UInt8 {
-		hp.increment(
-			by: amount,
-			cap: maxHP
-		)
-	}
-
-	mutating func promote(using d20: inout D20) {
-		let all = [8 of Skills].init { i in Skills(rawValue: 1 << i) }
-		let cnt = skills.rawValue.nonzeroBitCount
-
-		if Int(lvl) > cnt, d20(.min, 2) > 9 + cnt * 3 - Int(lvl) * 2,
-		   let rnd = all.compactMap(id).randomElement(using: &d20)
-		{
-			skills.insert(rnd)
-		}
-	}
-
 	var cost: UInt16 {
 		(typeCost + traitCost + skillCost + weightedStats) / (self[.aux] ? 7 : 4)
 	}
@@ -238,6 +211,36 @@ public extension Unit {
 			+ UInt16(mov * 4)
 			+ UInt16(rng * 7)
 		)
+	}
+}
+
+extension Unit {
+
+	mutating func reset() {
+		hp = maxHP
+		ap = maxAP
+		mp = maxMP
+		ammo = maxAmmo
+		ent = 0
+	}
+
+	@discardableResult
+	mutating func heal(_ amount: UInt8) -> UInt8 {
+		hp.increment(
+			by: amount,
+			cap: maxHP
+		)
+	}
+
+	mutating func promote(using d20: inout D20) {
+		let all = [8 of Skills].init { i in Skills(rawValue: 1 << i) }
+		let cnt = skills.rawValue.nonzeroBitCount
+
+		if Int(lvl) > cnt, d20(.min, 2) > 9 + cnt * 3 - Int(lvl) * 2,
+		   let rnd = all.compactMap(id).randomElement(using: &d20)
+		{
+			skills.insert(rnd)
+		}
 	}
 }
 

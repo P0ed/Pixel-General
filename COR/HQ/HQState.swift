@@ -27,5 +27,5 @@ public extension HQState {
 
 	var country: Country { player.country }
 
-	var shop: [Unit] { .shop(country: country) }
+	var shop: [Unit] { Shop(country: country).units }
 }

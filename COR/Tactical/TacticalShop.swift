@@ -18,7 +18,7 @@ extension TacticalState {
 		let isAir = map[xy] == .airfield
 		return .make { units in
 			if core {
-				units += .shop(country: country, filterAir: isAir)
+				units += Shop(country: country, filter: isAir ? .air : .land).units
 			}
 			if aux {
 				units += auxilia[playerIndex]

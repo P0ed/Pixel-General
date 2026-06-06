@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5F10B7E12FD43187004ADE44 /* Shop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F10B7E02FD43186004ADE44 /* Shop.swift */; };
 		5F10D2412FCEE14700E6B598 /* COR.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F10D23B2FCEE14700E6B598 /* COR.framework */; };
 		5F10D2422FCEE14700E6B598 /* COR.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5F10D23B2FCEE14700E6B598 /* COR.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5F10D2492FCEE19000E6B598 /* Arrays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33A82EA93AC3008A0A95 /* Arrays.swift */; };
@@ -137,6 +138,7 @@
 
 /* Begin PBXFileReference section */
 		5F04CAF82F93C72500E7ADBB /* HQAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQAction.swift; sourceTree = "<group>"; };
+		5F10B7E02FD43186004ADE44 /* Shop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shop.swift; sourceTree = "<group>"; };
 		5F10D23B2FCEE14700E6B598 /* COR.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = COR.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F10D26A2FCEE8E100E6B598 /* TacticalEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalEvent.swift; sourceTree = "<group>"; };
 		5F10D2702FCEF02C00E6B598 /* TacticalStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalStatus.swift; sourceTree = "<group>"; };
@@ -299,6 +301,7 @@
 				5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */,
 				5FF677B02FD1E1C40004A35D /* SovietUnits.swift */,
 				5F2E296C2F10125D0010E6E9 /* Templates.swift */,
+				5F10B7E02FD43186004ADE44 /* Shop.swift */,
 				5FCABBC92EAA787B008EE894 /* Strings.swift */,
 			);
 			path = Model;
@@ -710,6 +713,7 @@
 				5F10D2612FCEE89D00E6B598 /* TacticalChess.swift in Sources */,
 				5F10D2622FCEE89D00E6B598 /* TacticalAction.swift in Sources */,
 				5F10D2632FCEE89D00E6B598 /* TacticalShop.swift in Sources */,
+				5F10B7E12FD43187004ADE44 /* Shop.swift in Sources */,
 				5F10D2642FCEE89D00E6B598 /* MapGeneration.swift in Sources */,
 				5FF677B12FD1E1C70004A35D /* SovietUnits.swift in Sources */,
 				5F10D2772FCEF18400E6B598 /* HQEvent.swift in Sources */,

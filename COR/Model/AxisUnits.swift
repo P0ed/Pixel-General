@@ -22,10 +22,10 @@ extension Unit {
 		ini: 7,
 		softAtk: 5,
 		hardAtk: 3,
-		airAtk: 3,
+		airAtk: 2,
 		groundDef: 6,
 		airDef: 6,
-		traits: .transport
+		traits: .radar
 	)
 
 	static let boxer = Unit(
@@ -91,6 +91,17 @@ extension Unit {
 		airDef: 7
 	)
 
+	static let strv103 = Unit(
+		type: .heavyTrack,
+		mov: 6,
+		rng: 1,
+		ini: 7,
+		softAtk: 7,
+		hardAtk: 12,
+		groundDef: 10,
+		airDef: 7
+	)
+
 	static let strv122 = Unit(
 		type: .heavyTrack,
 		mov: 6,
@@ -120,11 +131,21 @@ extension Unit {
 		type: .aa,
 		mov: 2,
 		rng: 1,
-		ini: 8,
+		ini: 7,
 		softAtk: 7,
 		hardAtk: 7,
 		airAtk: 11,
 		groundDef: 6,
+		airDef: 7
+	)
+
+	static let nasams = Unit(
+		type: .aa,
+		mov: 2,
+		rng: 3,
+		ini: 9,
+		airAtk: 14,
+		groundDef: 4,
 		airDef: 7,
 		traits: .radar
 	)
