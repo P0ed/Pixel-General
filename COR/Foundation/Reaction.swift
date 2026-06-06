@@ -1,9 +1,5 @@
-public struct Reaction<Action, Event> {
-	public var action: Action?
-	public var events: [Event]
-
-	public init(action: Action? = nil, events: [Event] = []) {
-		self.action = action
-		self.events = events
-	}
+public enum Reaction<Action, Event> {
+	case action(Action)
+	case events([Event])
+	case none
 }

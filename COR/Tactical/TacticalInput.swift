@@ -17,7 +17,9 @@ public extension TacticalState {
 		case .pan(let dxy): handlePan(dxy)
 		default: nil
 		}
-		return .init(action: action, events: events)
+		if !events.isEmpty { return .events(events) }
+		guard let action else { return .none }
+		return .action(action)
 	}
 }
 

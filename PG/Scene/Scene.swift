@@ -88,7 +88,11 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func send(_ reaction: Reaction) {
 		guard let nodes, !processing else { return }
 		processing = true
-		let events = reaction.events + mode.reduce(&state, reaction.action)
+		let events: [Event] = switch reaction {
+		case .action(let action): mode.reduce(&state, action)
+		case .events(let events): events
+		case .none: []
+		}
 		Task {
 			for event in events {
 				await mode.process(event, nodes, state)
@@ -110,7 +114,8 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	func send(_ action: Action?) {
-		send(Reaction(action: action))
+		let reaction: Reaction = action.map(Reaction.action) ?? .none
+		send(reaction)
 	}
 
 	func show(_ menu: MenuState<Action>?) {

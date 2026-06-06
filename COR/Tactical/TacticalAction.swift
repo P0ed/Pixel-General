@@ -12,7 +12,7 @@ public enum TacticalAction: Equatable {
 
 extension TacticalState {
 
-	public mutating func reduce(_ action: TacticalAction?) -> [TacticalEvent] {
+	public mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
 		var events: [TacticalEvent] = []
 		switch action {
 		case .attack(let src, let dst): attack(src: src, dst: dst, into: &events)
@@ -22,7 +22,6 @@ extension TacticalState {
 		case .resupply(let u): resupply(unit: u, into: &events)
 		case .purchase(let idx, let xy): buy(idx, at: xy, into: &events)
 		case .end: endTurn(into: &events)
-		case .none: break
 		}
 		return events
 	}

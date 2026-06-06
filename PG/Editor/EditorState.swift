@@ -48,10 +48,12 @@ extension EditorState {
 		case .pan(let dxy): handlePan(dxy)
 		default: nil
 		}
-		return .init(action: action, events: events)
+		if !events.isEmpty { return .events(events) }
+		guard let action else { return .none }
+		return .action(action)
 	}
 
-	mutating func reduce(_ action: EditorAction?) -> [EditorEvent] {
+	mutating func reduce(_ action: EditorAction) -> [EditorEvent] {
 		var events: [EditorEvent] = []
 		switch action {
 		case .paint(let xy, let terrain): paint(xy, terrain, into: &events)
@@ -61,7 +63,6 @@ extension EditorState {
 		case .save: saveMap()
 		case .load: loadMap(into: &events)
 		case .hq: events.append(.hq)
-		case .none: break
 		}
 		return events
 	}

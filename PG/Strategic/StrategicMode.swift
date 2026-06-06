@@ -9,7 +9,6 @@ extension StrategicMode {
 		StrategicMode(
 			make: StrategicNodes.init,
 			input: { state, input in state.apply(input) },
-			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },

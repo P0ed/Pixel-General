@@ -6,13 +6,12 @@ public enum HQAction {
 
 public extension HQState {
 
-	mutating func reduce(_ action: HQAction?) -> [HQEvent] {
+	mutating func reduce(_ action: HQAction) -> [HQEvent] {
 		var events: [HQEvent] = []
 		switch action {
 		case .purchase(let t, let idx): purchase(t, idx, into: &events)
 		case .sell(let idx): sell(idx, into: &events)
 		case .swap(let src, let dst): swap(src, dst, into: &events)
-		case .none: break
 		}
 		return events
 	}

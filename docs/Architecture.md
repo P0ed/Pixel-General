@@ -22,21 +22,23 @@ The four instantiations are declared as typealiases alongside their nodes: `HQMo
 
 #### Reaction
 
-`input` returns a `Reaction<Action, Event>` (`COR/Foundation/Reaction.swift`) — an optional `Action` plus a list of `Event`s:
+`input` returns a `Reaction<Action, Event>` (`COR/Foundation/Reaction.swift`) — a three-way sum of what a gesture resolves to:
 
 ```swift
-public struct Reaction<Action, Event> {
-    public var action: Action?
-    public var events: [Event]
+public enum Reaction<Action, Event> {
+    case action(Action)   // run through Reduce
+    case events([Event])  // bypass Reduce, process directly
+    case none             // gesture had no effect
 }
 ```
 
-This separates the two ways an input can affect a screen:
+The cases are mutually exclusive by design — `input` only *interprets* the gesture, it never both mutates and emits:
 
-- **`action`** is fed through **Reduce**, the only stage that mutates game state by applying an `Action`.
-- **`events`** *bypass* Reduce and go straight to **Process**. These are presentation-only effects that don't change game state — e.g. opening a menu or the shop.
+- **`.action`** is fed through **Reduce**, the only stage that mutates game state by applying an `Action`. Any presentation feedback that results from *applying* an action (e.g. a purchase animation) is emitted there, as a reduce `Event`.
+- **`.events`** *bypass* Reduce and go straight to **Process**. These are presentation-only effects that don't depend on a state change — e.g. opening a menu or the shop.
+- **`.none`** is the common case for navigation gestures (cursor moves, panning) that change only transient view state.
 
-The scene runs both: `reaction.events + reduce(state, reaction.action)` are concatenated (input events first) and each is dispatched to `Process` (`PG/Scene/Scene.swift`). Helpers that emit events thread an `into events: inout [Event]` accumulator rather than mutating shared state.
+`Scene.send` switches on the reaction (`PG/Scene/Scene.swift`): `.action` calls `reduce`, `.events` is taken verbatim, `.none` yields no events — and the resulting `[Event]` is dispatched to `Process`. Reduce helpers that emit events thread an `into events: inout [Event]` accumulator rather than mutating shared state.
 
 The split between the two modules follows this pipeline: `State`, `Action`, `Input`, and the core `Event` payloads live in **COR**; the `Nodes` and presentation-side `Event` handling live in **PG**.
 
