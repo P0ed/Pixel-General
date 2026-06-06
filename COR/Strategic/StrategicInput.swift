@@ -1,10 +1,11 @@
 public extension StrategicState {
 
-	mutating func apply(_ input: Input) -> StrategicAction? {
+	mutating func apply(_ input: Input) -> Reaction<StrategicAction, StrategicEvent> {
+		var events: [StrategicEvent] = []
 		switch input {
-		case .menu: events.add(.menu)
+		case .menu: events.append(.menu)
 		default: break
 		}
-		return nil
+		return .init(events: events)
 	}
 }

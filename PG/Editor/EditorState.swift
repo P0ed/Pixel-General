@@ -7,7 +7,6 @@ struct EditorState: ~Copyable {
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var scale: Int = 1
-	var events: CArray<32, EditorEvent> = .init(tail: .menu)
 }
 
 enum EditorAction {
@@ -33,8 +32,9 @@ extension EditorState {
 		map = Map(size: 32, zero: .field)
 	}
 
-	mutating func apply(_ input: Input) -> EditorAction? {
-		switch input {
+	mutating func apply(_ input: Input) -> Reaction<EditorAction, EditorEvent> {
+		var events: [EditorEvent] = []
+		let action: EditorAction? = switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): .paint(cursor, brush)
 		case .action(.b): cycleBrush(reversed: false)
@@ -42,27 +42,28 @@ extension EditorState {
 		case .action(.d): nil
 		case .target(.next): cycleBrush(reversed: false)
 		case .target(.prev): cycleBrush(reversed: true)
-		case .menu: { events.add(.menu); return nil }()
+		case .menu: { events.append(.menu); return nil }()
 		case .tile(let xy): tileTap(xy)
 		case .scale(let value): { scale = value; return nil }()
 		case .pan(let dxy): handlePan(dxy)
 		default: nil
 		}
+		return .init(action: action, events: events)
 	}
 
 	mutating func reduce(_ action: EditorAction?) -> [EditorEvent] {
+		var events: [EditorEvent] = []
 		switch action {
-		case .paint(let xy, let terrain): paint(xy, terrain)
+		case .paint(let xy, let terrain): paint(xy, terrain, into: &events)
 		case .setBrush(let terrain): brush = terrain
-		case .clear: clearMap()
-		case .randomize: randomizeMap()
+		case .clear: clearMap(into: &events)
+		case .randomize: randomizeMap(into: &events)
 		case .save: saveMap()
-		case .load: loadMap()
-		case .hq: events.add(.hq)
+		case .load: loadMap(into: &events)
+		case .hq: events.append(.hq)
 		case .none: break
 		}
-		defer { events.erase() }
-		return events.map { _, e in e }
+		return events
 	}
 
 	var status: Status {
@@ -101,7 +102,7 @@ private extension EditorState {
 		return .setBrush(palette[next])
 	}
 
-	mutating func paint(_ xy: XY, _ terrain: Terrain) {
+	mutating func paint(_ xy: XY, _ terrain: Terrain, into events: inout [EditorEvent]) {
 		guard map.contains(xy), map[xy] != terrain else { return }
 		let prev = map[xy]
 		map[xy] = terrain
@@ -111,31 +112,31 @@ private extension EditorState {
 
 		if touchesWater || touchesRoad {
 			map.shapeRoads()
-			events.add(.redraw)
+			events.append(.redraw)
 		} else {
-			events.add(.set(xy, terrain))
+			events.append(.set(xy, terrain))
 		}
 	}
 
-	mutating func clearMap() {
+	mutating func clearMap(into events: inout [EditorEvent]) {
 		map.indices.forEach { xy in map[xy] = .field }
-		events.add(.redraw)
+		events.append(.redraw)
 	}
 
-	mutating func randomizeMap() {
+	mutating func randomizeMap(into events: inout [EditorEvent]) {
 		map = Map(size: map.size, seed: Int.random(in: 0 ... .max))
-		events.add(.redraw)
+		events.append(.redraw)
 	}
 
 	mutating func saveMap() {
 		UserDefaults.standard.set(encodeMap(), forKey: "editor.map")
 	}
 
-	mutating func loadMap() {
+	mutating func loadMap(into events: inout [EditorEvent]) {
 		guard let str = UserDefaults.standard.string(forKey: "editor.map") else { return }
 		decodeMap(str)
 		map.shapeRoads()
-		events.add(.redraw)
+		events.append(.redraw)
 	}
 
 	func encodeMap() -> String {

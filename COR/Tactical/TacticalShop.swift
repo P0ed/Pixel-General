@@ -27,7 +27,7 @@ extension TacticalState {
 		}
 	}
 
-	mutating func buy(_ idx: Int, at pos: XY) {
+	mutating func buy(_ idx: Int, at pos: XY, into events: inout [TacticalEvent]) {
 		let shop = shopUnits(at: pos)
 		guard idx < shop.count else { return }
 		let template = shop[idx]
@@ -48,6 +48,6 @@ extension TacticalState {
 			let idx = auxilia[playerIndex].firstMap { i, u in u == template ? i : nil }
 			if let idx { auxilia[playerIndex].remove(at: idx) }
 		}
-		events.add(.spawn(id))
+		events.append(.spawn(id))
 	}
 }

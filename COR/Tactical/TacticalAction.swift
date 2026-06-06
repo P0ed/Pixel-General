@@ -13,21 +13,21 @@ public enum TacticalAction: Equatable {
 extension TacticalState {
 
 	public mutating func reduce(_ action: TacticalAction?) -> [TacticalEvent] {
+		var events: [TacticalEvent] = []
 		switch action {
-		case .attack(let src, let dst): attack(src: src, dst: dst)
-		case .move(let unit, let xy): move(unit: unit, to: xy)
-		case .embark(let u, let t): embark(unit: u, transport: t)
-		case .disembark(let t, let xy): disembark(unit: t, to: xy)
-		case .resupply(let u): resupply(unit: u)
-		case .purchase(let idx, let xy): buy(idx, at: xy)
-		case .end: endTurn()
+		case .attack(let src, let dst): attack(src: src, dst: dst, into: &events)
+		case .move(let unit, let xy): move(unit: unit, to: xy, into: &events)
+		case .embark(let u, let t): embark(unit: u, transport: t, into: &events)
+		case .disembark(let t, let xy): disembark(unit: t, to: xy, into: &events)
+		case .resupply(let u): resupply(unit: u, into: &events)
+		case .purchase(let idx, let xy): buy(idx, at: xy, into: &events)
+		case .end: endTurn(into: &events)
 		case .none: break
 		}
-		defer { events.erase() }
-		return events.map { _, e in e }
+		return events
 	}
 
-	mutating func resupply(unit id: UID, endOfTurn: Bool = false) {
+	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
 		guard units[id].country == country && units[id].untouched || endOfTurn,
 			  cargo[id] == .none || units[id][.transport]
 		else { return }
@@ -77,7 +77,7 @@ extension TacticalState {
 		unit.ap = endOfTurn ? unit.maxAP : 0
 		unit.mp = endOfTurn ? unit.maxMP : 0
 		units[id] = unit
-		events.add(.update(id))
+		events.append(.update(id))
 	}
 
 	mutating func selectUnit(_ uid: UID) {

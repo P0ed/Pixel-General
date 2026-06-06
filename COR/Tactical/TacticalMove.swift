@@ -76,7 +76,7 @@ public extension TacticalState {
 		return mov
 	}
 
-	mutating func move(unit uid: UID, to target: XY) {
+	mutating func move(unit uid: UID, to target: XY, into events: inout [TacticalEvent]) {
 		guard units[uid].country == country, units[uid].canMove,
 			  cargo[uid] == .none || units[uid][.transport]
 		else { return }
@@ -123,13 +123,13 @@ public extension TacticalState {
 			path.add(xy)
 			if xy == pos { break }
 		}
-		events.add(.move(uid, Path(count: path.count, path: path.mem)))
+		events.append(.move(uid, Path(count: path.count, path: path.mem)))
 		if cargo[uid.index] != .none {
-			events.add(.move(cargo[uid.index], Path(count: path.count, path: path.mem)))
+			events.append(.move(cargo[uid.index], Path(count: path.count, path: path.mem)))
 		}
 
 		if let interruptor, units[interruptor].country.team != units[uid].country.team {
-			attack(src: uid, dst: interruptor, surprise: true)
+			attack(src: uid, dst: interruptor, surprise: true, into: &events)
 		}
 	}
 }

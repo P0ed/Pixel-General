@@ -1,31 +1,33 @@
 public extension TacticalState {
 
-	mutating func apply(_ input: Input) -> TacticalAction? {
-		return switch input {
+	mutating func apply(_ input: Input) -> Reaction<TacticalAction, TacticalEvent> {
+		var events: [TacticalEvent] = []
+		let action: TacticalAction? = switch input {
 		case .direction(let direction?): moveCursor(direction)
-		case .menu: { events.add(.menu); return nil }()
+		case .menu: { events.append(.menu); return nil }()
 		case .mode: { mapMode = mapMode == .terrain ? .political : .terrain; return nil }()
-		case .action(.a): primaryAction()
+		case .action(.a): primaryAction(into: &events)
 		case .action(.b): secondaryAction()
 		case .action(.c): squareAction()
 		case .action(.d): triangleAction()
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
-		case .tile(let xy): select(xy)
+		case .tile(let xy): select(xy, into: &events)
 		case .scale(let value): { scale = value; return nil }()
 		case .pan(let dxy): handlePan(dxy)
 		default: nil
 		}
+		return .init(action: action, events: events)
 	}
 }
 
 private extension TacticalState {
 
-	mutating func select(_ xy: XY) -> TacticalAction? {
+	mutating func select(_ xy: XY, into events: inout [TacticalEvent]) -> TacticalAction? {
 		guard map.contains(xy) else { return nil }
 
 		cursor = xy
-		if player.type == .human { return primaryAction() }
+		if player.type == .human { return primaryAction(into: &events) }
 		return nil
 	}
 
@@ -35,7 +37,7 @@ private extension TacticalState {
 		return nil
 	}
 
-	mutating func primaryAction() -> TacticalAction? {
+	mutating func primaryAction(into events: inout [TacticalEvent]) -> TacticalAction? {
 		if selectedUnit != .none {
 			let unit = units[selectedUnit]
 
@@ -50,7 +52,7 @@ private extension TacticalState {
 			} else if unit.country == country, unit.canMove, self[country].type == .human {
 				return .move(selectedUnit, cursor)
 			} else if map[cursor].isSettlement, control[cursor] == country, player.type == .human {
-				events.add(.shop)
+				events.append(.shop)
 			} else {
 				selectUnit(.none)
 			}
@@ -58,7 +60,7 @@ private extension TacticalState {
 			if player.visible[cursor], unitAt(cursor) != nil {
 				selectUnit(unitsMap[cursor])
 			} else if map[cursor].isSettlement, control[cursor] == country, player.type == .human {
-				events.add(.shop)
+				events.append(.shop)
 			}
 		}
 		return nil

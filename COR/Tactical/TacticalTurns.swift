@@ -10,14 +10,14 @@ extension TacticalState {
 		}
 	}
 
-	mutating func endTurn() {
+	mutating func endTurn(into events: inout [TacticalEvent]) {
 		captureCities()
 
 		for i in units.indices where units[i].alive && units[i].country == player.country {
-			resupply(unit: i.uid, endOfTurn: true)
+			resupply(unit: i.uid, endOfTurn: true, into: &events)
 		}
 
-		guard nextTurn() else { return events.add(.end) }
+		guard nextTurn() else { return events.append(.end) }
 	}
 
 	private mutating func nextTurn() -> Bool {

@@ -14,6 +14,7 @@
 		5F10D24A2FCEE19000E6B598 /* D20.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA0F0982EF2255B0022EC68 /* D20.swift */; };
 		5F10D24B2FCEE19000E6B598 /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F41DDD42EE32744008FBF17 /* Map.swift */; };
 		5F10D24C2FCEE19000E6B598 /* Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D822EF7016D00D7C1B0 /* Input.swift */; };
+		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5F10D24D2FCEE19000E6B598 /* CArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87CF592F7BD46900BC87CA /* CArray.swift */; };
 		5F10D24E2FCEE19000E6B598 /* Speicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87302EB3BEEC0023B28F /* Speicher.swift */; };
 		5F10D24F2FCEE19000E6B598 /* SetXY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA0F0962EF21C3A0022EC68 /* SetXY.swift */; };
@@ -222,6 +223,7 @@
 		5FBA4D7D2EF6E26200D7C1B0 /* StrategicState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicState.swift; sourceTree = "<group>"; };
 		5FBA4D7F2EF6FD8800D7C1B0 /* Scenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenes.swift; sourceTree = "<group>"; };
 		5FBA4D822EF7016D00D7C1B0 /* Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Input.swift; sourceTree = "<group>"; };
+		5FAAAA010000000000000002 /* Reaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reaction.swift; sourceTree = "<group>"; };
 		5FCABBC72EAA701D008EE894 /* mov.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = mov.wav; sourceTree = "<group>"; };
 		5FCABBC92EAA787B008EE894 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		5FE1218A2F7FCFA1001C16A5 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
@@ -500,6 +502,7 @@
 				5F41DDD42EE32744008FBF17 /* Map.swift */,
 				5FA0F0962EF21C3A0022EC68 /* SetXY.swift */,
 				5FBA4D822EF7016D00D7C1B0 /* Input.swift */,
+				5FAAAA010000000000000002 /* Reaction.swift */,
 				5FA0F0982EF2255B0022EC68 /* D20.swift */,
 				5F8E87322EB3E1DA0023B28F /* Integers.swift */,
 				5F51E5BD2EF308B200A711DF /* Swift.swift */,
@@ -703,6 +706,7 @@
 				5F10D2542FCEE24500E6B598 /* Integers.swift in Sources */,
 				5F10D24B2FCEE19000E6B598 /* Map.swift in Sources */,
 				5F10D24C2FCEE19000E6B598 /* Input.swift in Sources */,
+				5FAAAA010000000000000001 /* Reaction.swift in Sources */,
 				5F10D24D2FCEE19000E6B598 /* CArray.swift in Sources */,
 				5F10D24E2FCEE19000E6B598 /* Speicher.swift in Sources */,
 				5F10D2532FCEE21000E6B598 /* Swift.swift in Sources */,

@@ -34,7 +34,7 @@ extension TacticalState {
 		}
 	}
 
-	mutating func fire(src: UID, dst: UID, defMod: Int8) {
+	mutating func fire(src: UID, dst: UID, defMod: Int8, into events: inout [TacticalEvent]) {
 		var (source, destination) = (units[src], units[dst])
 		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src]) ? 1 : 0
 		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
@@ -85,7 +85,7 @@ extension TacticalState {
 		if cargoId != .none, !units[cargoId].alive {
 			cargo[dst] = .none
 			cargo[cargoId] = .none
-			events.add(.update(cargoId))
+			events.append(.update(cargoId))
 		}
 
 		source.exp.increment(by: UInt16(dmg) * destination.cost / (destination.alive ? 32 : 24))
@@ -96,7 +96,7 @@ extension TacticalState {
 		}
 		units[src] = source
 		units[dst] = destination
-		events.add(.fire(src, dst, dmg, destination.hp))
+		events.append(.fire(src, dst, dmg, destination.hp))
 	}
 
 	private func encirclement(id: UID) -> Int8 {
@@ -107,7 +107,7 @@ extension TacticalState {
 		return max(0, enemies - 1)
 	}
 
-	mutating func attack(src: UID, dst: UID, surprise: Bool = false) {
+	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
 		let (si, di) = (src.index, dst.index)
 		guard units[si].country == country,
 			  units[si].country.team != units[di].country.team,
@@ -125,7 +125,7 @@ extension TacticalState {
 			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
 		)
 		if ruggedDefence {
-			events.add(.ruggedDefence(dp))
+			events.append(.ruggedDefence(dp))
 		}
 
 		let mountaineer: Int8 = dt.isHighground
@@ -144,31 +144,31 @@ extension TacticalState {
 		units[si].ap.decrement()
 
 		if !su.isAir, !du.isAir, !su.isArt, let art = artSupport(defender: dst, attacker: src) {
-			fire(src: art, dst: src, defMod: 0)
+			fire(src: art, dst: src, defMod: 0, into: &events)
 		}
 		if su.isAir, !du.isAA, let aa = aaSupport(defender: dst, attacker: src) {
-			fire(src: aa, dst: src, defMod: 0)
+			fire(src: aa, dst: src, defMod: 0, into: &events)
 		}
 		if !ruggedDefence, units[si].alive {
-			fire(src: src, dst: dst, defMod: dstDef)
+			fire(src: src, dst: dst, defMod: dstDef, into: &events)
 			units[di].ent.decrement(by: su.entDamage)
 		}
 		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
-			fire(src: dst, dst: src, defMod: srcDef)
+			fire(src: dst, dst: src, defMod: srcDef, into: &events)
 		}
 		if ruggedDefence, units[si].alive {
-			fire(src: src, dst: dst, defMod: dstDef)
+			fire(src: src, dst: dst, defMod: dstDef, into: &events)
 			units[di].ent.decrement(by: su.entDamage)
 		}
 		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
-			retreat(unit: dst, from: position[si])
+			retreat(unit: dst, from: position[si], into: &events)
 		}
 		if player.type == .human {
 			selectUnit(units[si].alive && units[si].hasActions ? src : .none)
 		}
 	}
 
-	private mutating func retreat(unit id: UID, from xy: XY) {
+	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [TacticalEvent]) {
 		let p = position[id]
 		let pos = moves(for: id).set.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
@@ -182,9 +182,9 @@ extension TacticalState {
 		units[id].ent = 0
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(pos)
-		events.add(.move(id, Path(count: path.count, path: path.mem)))
+		events.append(.move(id, Path(count: path.count, path: path.mem)))
 		if cargo[id.index] != .none {
-			events.add(.move(cargo[id], Path(count: path.count, path: path.mem)))
+			events.append(.move(cargo[id], Path(count: path.count, path: path.mem)))
 		}
 	}
 

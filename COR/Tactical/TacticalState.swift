@@ -12,7 +12,6 @@ public struct TacticalState: ~Copyable {
 
 	public var turn: UInt32 = 0
 	public var d20: D20 = D20()
-	public var events: CArray<128, TacticalEvent> = .init(tail: .end)
 
 	public var cursor: XY = .zero
 	public var camera: XY = .zero

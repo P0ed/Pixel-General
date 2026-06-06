@@ -3,6 +3,8 @@ import AVFAudio
 import COR
 
 final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
+	typealias Reaction = COR.Reaction<Action, Event>
+
 	let mode: SceneMode<State, Action, Event, Nodes>
 	private let hid = HIDController()
 
@@ -83,6 +85,20 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		}
 	}
 
+	func send(_ reaction: Reaction) {
+		guard let nodes, !processing else { return }
+		processing = true
+		let events = reaction.events + mode.reduce(&state, reaction.action)
+		Task {
+			for event in events {
+				await mode.process(event, nodes, state)
+			}
+			processing = false
+			didSetState()
+			advance()
+		}
+	}
+
 	private func advance() {
 		guard !processing, menuState == nil else { return }
 		if let input = pending {
@@ -94,17 +110,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	func send(_ action: Action?) {
-		guard let nodes, !processing else { return }
-		processing = true
-		let events = mode.reduce(&state, action)
-		Task {
-			for event in events {
-				await mode.process(event, nodes, state)
-			}
-			processing = false
-			didSetState()
-			advance()
-		}
+		send(Reaction(action: action))
 	}
 
 	func show(_ menu: MenuState<Action>?) {

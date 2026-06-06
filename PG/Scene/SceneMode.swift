@@ -4,7 +4,7 @@ import COR
 @MainActor
 struct SceneMode<State: ~Copyable, Action, Event, Nodes> {
 	var make: @MainActor (Scene<State, Action, Event, Nodes>) -> Nodes
-	var input: @MainActor (inout State, Input) -> Action?
+	var input: @MainActor (inout State, Input) -> Reaction<Action, Event>
 	var ai: @MainActor (borrowing State) -> Action? = { _ in nil }
 	var reduce: @MainActor (inout State, Action?) -> [Event]
 	var process: @MainActor (Event, Nodes, borrowing State) async -> Void

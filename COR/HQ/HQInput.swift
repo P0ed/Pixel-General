@@ -1,16 +1,18 @@
 public extension HQState {
 
-	mutating func apply(_ input: Input) -> HQAction? {
-		switch input {
+	mutating func apply(_ input: Input) -> Reaction<HQAction, HQEvent> {
+		var events: [HQEvent] = []
+		let action: HQAction? = switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): shopAction()
+		case .action(.c): shopAction(into: &events)
 		case .action(.d): nil
-		case .menu: { events.add(.menu); return nil }()
+		case .menu: { events.append(.menu); return nil }()
 		case .tile(let xy): select(xy)
 		default: nil
 		}
+		return .init(action: action, events: events)
 	}
 }
 
@@ -48,12 +50,12 @@ extension HQState {
 		return nil
 	}
 
-	mutating func shopAction() -> HQAction? {
+	mutating func shopAction(into events: inout [HQEvent]) -> HQAction? {
 		if selected != .none {
 			defer { selected = .none }
 			return .sell(selected.index)
 		} else if units[cursor] == nil {
-			events.add(.shop)
+			events.append(.shop)
 		}
 		return nil
 	}

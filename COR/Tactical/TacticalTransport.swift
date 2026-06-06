@@ -17,7 +17,7 @@ extension TacticalState {
 		unit.transportable ? (transport.isAir ? unit[.elite] : true) : false
 	}
 
-	mutating func embark(unit: UID, transport: UID) {
+	mutating func embark(unit: UID, transport: UID, into events: inout [TacticalEvent]) {
 		guard canEmbark(unit: unit, transport: transport) else { return }
 		cargo[transport.index] = unit
 		cargo[unit.index] = transport
@@ -27,7 +27,7 @@ extension TacticalState {
 		unitsMap[p] = .none
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(tp)
-		events.add(.move(unit, Path(count: path.count, path: path.mem)))
+		events.append(.move(unit, Path(count: path.count, path: path.mem)))
 		if player.type == .human {
 			selectUnit(transport)
 		}
@@ -42,7 +42,7 @@ extension TacticalState {
 		&& unitsMap[xy] == .none
 	}
 
-	mutating func disembark(unit: UID, to xy: XY) {
+	mutating func disembark(unit: UID, to xy: XY, into events: inout [TacticalEvent]) {
 		guard canDisembark(unit: unit, to: xy) else { return }
 		let idx = cargo[unit.index].index
 		let from = position[idx]
@@ -56,6 +56,6 @@ extension TacticalState {
 		player.visible.formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)
 		path.add(xy)
-		events.add(.move(idx.uid, Path(count: path.count, path: path.mem)))
+		events.append(.move(idx.uid, Path(count: path.count, path: path.mem)))
 	}
 }
