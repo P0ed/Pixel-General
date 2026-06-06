@@ -5,7 +5,7 @@ public struct SetXY: BitwiseCopyable {
 extension SetXY: Monoid {
 
 	public static var empty: Self {
-		.init(storage: .init(repeating: 0))
+		.init(storage: .init(repeating: .zero))
 	}
 
 	public static var full: Self {

@@ -10,7 +10,7 @@ public extension Monoid {
 	}
 
 	func combined(_ other: Self) -> Self {
-		modifying(self, { m in m.combine(other) })
+		modifying(self) { m in m.combine(other) }
 	}
 }
 

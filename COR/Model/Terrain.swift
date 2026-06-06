@@ -19,7 +19,12 @@ public extension Terrain {
 	}
 
 	var isBridgable: Bool {
-		elevationLevel == 0
+		switch self {
+		case .field, .forest, .city, .airfield: true
+		case .villageE, .villageN, .villageW, .villageS: true
+		case .roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX: true
+		default: false
+		}
 	}
 
 	var isSettlement: Bool {
@@ -121,25 +126,15 @@ public extension Terrain {
 	}
 
 	func closeCombat(_ type: UnitType) -> Int8 {
-		switch self {
-		case .hill, .airfield:
-			switch type {
-			case .lightWheel, .lightTrack: -1
-			case .heavyTrack: -2
-			default: 0
-			}
-		case .forest, .villageE, .villageN, .villageW, .villageS:
-			switch type {
-			case .lightWheel, .lightTrack: -2
-			case .heavyTrack: -4
-			default: 0
-			}
-		case .city, .mountain, .forestHill:
-			switch type {
-			case .lightWheel, .lightTrack: -3
-			case .heavyTrack: -6
-			default: 0
-			}
+		let penalty: Int8 = switch type {
+		case .lightWheel, .lightTrack, .wheelArt, .wheelAA, .trackArt, .trackAA: -1
+		case .heavyTrack: -2
+		default: 0
+		}
+		return switch self {
+		case .hill, .airfield: penalty * 1
+		case .forest, .villageE, .villageN, .villageW, .villageS: penalty * 2
+		case .city, .mountain, .forestHill: penalty * 3
 		default: 0
 		}
 	}

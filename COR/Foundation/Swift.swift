@@ -3,18 +3,18 @@ import Foundation
 public func id<A>(_ x: A) -> A { x }
 public func ø<each A>(_ x: repeat each A) {}
 
-public func modifying<A>(_ value: A, _ tfm: (inout A) -> Void) -> A {
+public func modifying<A>(_ value: A, _ transform: (inout A) -> Void) -> A {
 	var value = value
-	tfm(&value)
+	transform(&value)
 	return value
 }
 
-public func clone<A: ~Copyable>(_ x: borrowing A) -> A {
+public func clone<A: ~Copyable>(_ value: borrowing A) -> A {
 	unsafe withUnsafeTemporaryAllocation(
 		byteCount: MemoryLayout<A>.size,
 		alignment: MemoryLayout<A>.alignment
 	) { raw in
-		unsafe withUnsafePointer(to: x) { src in
+		unsafe withUnsafePointer(to: value) { src in
 			unsafe raw.baseAddress!.copyMemory(
 				from: src,
 				byteCount: MemoryLayout<A>.size
@@ -26,9 +26,9 @@ public func clone<A: ~Copyable>(_ x: borrowing A) -> A {
 	}
 }
 
-public func encode<A: ~Copyable>(_ x: borrowing A) -> Data {
-	unsafe withUnsafePointer(to: x) { p in
-		unsafe Data(bytes: p, count: MemoryLayout<A>.size)
+public func encode<A: ~Copyable>(_ value: borrowing A) -> Data {
+	unsafe withUnsafePointer(to: value) { ptr in
+		unsafe Data(bytes: ptr, count: MemoryLayout<A>.size)
 	}
 }
 
