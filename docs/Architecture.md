@@ -14,11 +14,29 @@ Three game modes:
 
 Each game screen is wired up as a `SceneMode<State: ~Copyable, Action, Event, Nodes>` (defined in `PG/Scene/SceneMode.swift`):
 
-1. **Input** → `State.apply(input)` → `Action?`
+1. **Input** → `State.apply(input)` → `Reaction<Action, Event>`
 2. **Reduce** → `State.reduce(action)` → `[Event]`
 3. **Process** → async `Nodes.process(event, state)` (visuals, audio)
 
 The four instantiations are declared as typealiases alongside their nodes: `HQMode`, `TacticalMode`, `StrategicMode`, and `EditorMode`.
+
+#### Reaction
+
+`input` returns a `Reaction<Action, Event>` (`COR/Foundation/Reaction.swift`) — an optional `Action` plus a list of `Event`s:
+
+```swift
+public struct Reaction<Action, Event> {
+    public var action: Action?
+    public var events: [Event]
+}
+```
+
+This separates the two ways an input can affect a screen:
+
+- **`action`** is fed through **Reduce**, the only stage that mutates game state by applying an `Action`.
+- **`events`** *bypass* Reduce and go straight to **Process**. These are presentation-only effects that don't change game state — e.g. opening a menu or the shop.
+
+The scene runs both: `reaction.events + reduce(state, reaction.action)` are concatenated (input events first) and each is dispatched to `Process` (`PG/Scene/Scene.swift`). Helpers that emit events thread an `into events: inout [Event]` accumulator rather than mutating shared state.
 
 The split between the two modules follows this pipeline: `State`, `Action`, `Input`, and the core `Event` payloads live in **COR**; the `Nodes` and presentation-side `Event` handling live in **PG**.
 
@@ -54,7 +72,7 @@ Strict concurrency is enabled project-wide.
 
 ```
 COR/                  Headless game core (import COR), no UI dependency
-  Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20, Monoid, Shapes
+  Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20, Monoid, Shapes, Input, Reaction
   Model/              Shared game data: Unit, Player, Terrain, Templates, root State
   Tactical/           Combat simulation: state, AI, attacks, movement, turns, map generation
   HQ/                 Unit management logic: state, action, input, events
