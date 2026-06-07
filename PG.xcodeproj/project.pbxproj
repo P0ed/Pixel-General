@@ -241,6 +241,7 @@
 		5FE94DDA2F9B98FB00004EC8 /* StrategicNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicNodes.swift; sourceTree = "<group>"; };
 		5FF200762EF44FC500B659E7 /* SceneMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneMode.swift; sourceTree = "<group>"; };
 		5FF25F2F2FD19C2C002759A6 /* TacticalMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMenu.swift; sourceTree = "<group>"; };
+		5FF357512FD6094000BCE404 /* Campaign.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Campaign.md; sourceTree = "<group>"; };
 		5FF677AE2FD1E18E0004A35D /* AxisUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisUnits.swift; sourceTree = "<group>"; };
 		5FF677B02FD1E1C40004A35D /* SovietUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietUnits.swift; sourceTree = "<group>"; };
 		5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlliedUnits.swift; sourceTree = "<group>"; };
@@ -454,6 +455,7 @@
 				5F7472C92FB3276200EBC354 /* GameMechanics.md */,
 				5F7472CB2FB327C200EBC354 /* Map.md */,
 				5F7472C82FB10FF700EBC354 /* Roadmap.md */,
+				5FF357512FD6094000BCE404 /* Campaign.md */,
 				5F7472CD2FB3452300EBC354 /* Map.png */,
 				5F7472CE2FB3452300EBC354 /* Map@32x.png */,
 			);

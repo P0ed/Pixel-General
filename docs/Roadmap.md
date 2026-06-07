@@ -189,9 +189,20 @@ Lifecycle: **lobby** (host listens, assigns seats, broadcasts `lobby`) →
 
 ## Campaign mode
 
-- Setup menu.
-- Political map mode.
-- State design.
+Full design in [Campaign](./Campaign.md) — a turn-based strategic layer over the
+tactical battles ("HoI by vibes," shallower): a political map of Europe, a
+persistent RPG roster, hand-picked fronts, objective-based battles, and a
+two-pool prestige economy. Headline pieces:
+
+- Setup menu (two difficulty knobs: starting prestige + enemy base level).
+- Political map mode (`Map<32, Country>`, reusing Tactical's `.political` view).
+- `StrategicState` design + a new graph-walking strategic AI.
+- `Objective` / `BattleOutcome` types and turn-limited win checks in Tactical.
+- Anti-snowball model (supply-distance budget, permanent casualties, defender
+  consolidation, turn limits) and the loss/draw/abandon rules.
+
+Prerequisite: expand `Country` to the `Map.md` European nations (`fin` etc. are
+missing today) — independent of the deferred dynamic-diplomacy redesign.
 
 ## Editor
 
