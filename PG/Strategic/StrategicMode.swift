@@ -9,10 +9,11 @@ extension StrategicMode {
 		StrategicMode(
 			make: StrategicNodes.init,
 			input: { state, input in state.apply(input) },
+			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
-			mouse: { nodes, event in nil },
+			mouse: { nodes, event in nodes.map.tile(at: event) },
 			save: { state in core.store(state); core.save(auto: true) }
 		)
 	}
@@ -21,6 +22,12 @@ extension StrategicMode {
 extension StrategicState {
 
 	var status: Status {
-		.init()
+		Status(
+			text: .makeStatus { add in
+				add("\(owner[cursor])")
+				add("day: \(turn + 1)")
+			},
+			action: canAttack(cursor) ? "A: attack" : ""
+		)
 	}
 }

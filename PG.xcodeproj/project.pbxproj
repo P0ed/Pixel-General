@@ -85,6 +85,7 @@
 		5F919D6F2EA959FD0037A208 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */; };
 		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* RNGTests.swift */; };
+		5FCA9A010000000000000001 /* StrategicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9A020000000000000002 /* StrategicTests.swift */; };
 		5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */; };
 		5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AE2FAD10AA0017B672 /* EditorState.swift */; };
 		5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524B02FAD111E0017B672 /* EditorNodes.swift */; };
@@ -218,6 +219,7 @@
 		5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTurns.swift; sourceTree = "<group>"; };
 		5FB5249F2FACB2990017B672 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB524A82FACB2C20017B672 /* RNGTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNGTests.swift; sourceTree = "<group>"; };
+		5FCA9A020000000000000002 /* StrategicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicTests.swift; sourceTree = "<group>"; };
 		5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorMode.swift; sourceTree = "<group>"; };
 		5FB524AE2FAD10AA0017B672 /* EditorState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorState.swift; sourceTree = "<group>"; };
 		5FB524B02FAD111E0017B672 /* EditorNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorNodes.swift; sourceTree = "<group>"; };
@@ -434,6 +436,7 @@
 				5F7472D32FB347A300EBC354 /* TacticalTests.swift */,
 				5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */,
 				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
+				5FCA9A020000000000000002 /* StrategicTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -804,6 +807,7 @@
 				5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */,
 				5F720FA02FBA636600A5E3FE /* TacticalPerformanceTests.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */,
+				5FCA9A010000000000000001 /* StrategicTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

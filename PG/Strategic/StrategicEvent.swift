@@ -5,8 +5,17 @@ extension StrategicNodes {
 
 	func process(_ event: StrategicEvent, _ state: borrowing StrategicState) async {
 		switch event {
+		case .attack(let xy): processAttack(xy)
 		case .menu: processMenu(state)
 		}
+	}
+
+	private func processAttack(_ xy: XY) {
+		guard let scene else { return }
+		core.store(scene.state) // persist the strategic map before the battle
+		core.startCampaignBattle(at: xy)
+		core.save(auto: true)
+		present(.auto)
 	}
 
 	private func processMenu(_ state: borrowing StrategicState) {

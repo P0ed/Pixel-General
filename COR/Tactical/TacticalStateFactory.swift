@@ -29,6 +29,12 @@ public extension TacticalState {
 		)
 	}
 
+	/// Whether any player of `team` is still alive — used to decide the victor of
+	/// a campaign battle once the `.end` condition (one team remaining) is met.
+	func teamAlive(_ team: Team) -> Bool {
+		players.firstMap { _, p in p.alive && p.country.team == team ? true : nil } ?? false
+	}
+
 	private static func cities(countries: [Country], map: borrowing Map<32, Terrain>) -> [(XY, Country)] {
 		let cityXYs: [XY] = map.indices.compactMap { xy in
 			map[xy] == .city ? xy : nil

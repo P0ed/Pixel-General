@@ -59,6 +59,11 @@ public extension Unit {
 		case .pak: .m48
 		case .rus: .t55
 		case .irn, .ind: .t55
+		default: switch country.team {
+			case .axis: .leo1
+			case .allies: .m48
+			case .soviet: .t55
+			}
 		}
 	}
 
@@ -69,6 +74,11 @@ public extension Unit {
 		case .pak: .m1A1
 		case .rus: .t72
 		case .irn, .ind: .t72
+		default: switch country.team {
+			case .axis: .strv122
+			case .allies: .m1A1
+			case .soviet: .t72
+			}
 		}
 	}
 
@@ -79,6 +89,11 @@ public extension Unit {
 		case .pak: nil
 		case .rus: .t90m
 		case .irn, .ind: nil
+		default: switch country.team {
+			case .axis: .strv122
+			case .allies: .m1A2
+			case .soviet: .t90m
+			}
 		}
 	}
 

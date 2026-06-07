@@ -5,7 +5,7 @@ extension HQNodes {
 
 	func newGameMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
 		MenuState<HQAction>(
-			items: Country.allCases.map { c in
+			items: Country.playable.map { c in
 				.close(
 					icon: "\(c)",
 					status: "\(c)",

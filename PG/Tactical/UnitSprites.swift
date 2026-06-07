@@ -87,6 +87,12 @@ extension Country {
 		case .pak: .green
 		case .ind: .orange
 		case .isr: .blue
+		// Placeholder: campaign nations are tinted by team until bespoke colors land.
+		default: switch team {
+			case .axis: .systemYellow
+			case .allies: .blue
+			case .soviet: .red
+			}
 		}
 	}
 
@@ -102,6 +108,7 @@ extension Country {
 		case .ind: .ind
 		case .den: .den
 		case .ned: .ned
+		default: .swe // placeholder flag for campaign nations
 		}
 	}
 }
