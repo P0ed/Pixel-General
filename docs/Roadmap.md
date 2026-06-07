@@ -12,7 +12,7 @@ for the types referenced below.
 The core is already a deterministic, headless function: `TacticalState.reduce(_:)`
 is a pure function of `(state, action)`, the only randomness is the per-battle
 seeded `D20` (SplitMix64) that lives *inside* `TacticalState`, and `TacticalAction`
-is a small `@frozen` value enum (`move`/`embark`/`disembark`/`attack`/`resupply`/
+is a small enum (`move`/`embark`/`disembark`/`attack`/`resupply`/
 `purchase`/`end`) whose payloads are all `UID`/`XY`/`Int`. (Verified: nothing in
 `TacticalAttack`/`Move`/`Shop`/`Transport` reads `cursor`/`selectedUnit`/`camera`,
 and there are no `Date`/`random`/`Set`-ordering sources in the reduce path.)
@@ -191,9 +191,15 @@ Lifecycle: **lobby** (host listens, assigns seats, broadcasts `lobby`) →
 
 - **Replace `RNGTests` struct's all-or-nothing distribution check** — `randomDistribution` uses `bins[i] > expected` which fails on tail variance even for a uniform sample. Use a chi-squared test with a generous tolerance.
 
+## Campaign mode
+
+- Setup menu.
+- Political map mode.
+- State design.
+
 ## Editor
 
-- **Replace tool** replaces all tiles with selected.
+- **Replace/Bucket tool** replaces the same tiles under cursor with the current brush tile.
 - **Undo stack** for tile edits.
 - **Map validation on save** — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country). Surface as inline diagnostics, not a crash.
 
@@ -204,4 +210,3 @@ Lifecycle: **lobby** (host listens, assigns seats, broadcasts `lobby`) →
 
 ### Possible AI non-termination
 `TacticalAI.runAI` plus the outer driver in `TacticalMode` will loop forever if no team can be eliminated and no player runs out of meaningful actions. Add a stalemate detector (e.g. N consecutive `.end` actions with no state change → declare draw).
-
