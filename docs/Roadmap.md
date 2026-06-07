@@ -187,10 +187,6 @@ Lifecycle: **lobby** (host listens, assigns seats, broadcasts `lobby`) →
 ### `fatalError` in `TacticalState.init`
 `TacticalState.swift:87` aborts when a unit's allocated placement square is full. Spawn-placement is data-driven (`cities`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
 
-## Tests
-
-- **Replace `RNGTests` struct's all-or-nothing distribution check** — `randomDistribution` uses `bins[i] > expected` which fails on tail variance even for a uniform sample. Use a chi-squared test with a generous tolerance.
-
 ## Campaign mode
 
 - Setup menu.

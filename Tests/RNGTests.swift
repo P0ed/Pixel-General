@@ -7,23 +7,30 @@ struct RNGTests {
 		var d20 = D20()
 		var bins = [20 of UInt16](repeating: 0)
 
-		let throwsCount = 65_000
-		let expected = throwsCount / 21
+		let throwsCount = 20_000
 
-		(0 ..< throwsCount).forEach { i in
+		(0 ..< throwsCount).forEach { _ in
 			bins[d20()] += 1
 		}
+
+		// Pearson's chi-squared goodness-of-fit against a uniform distribution.
+		let expected = Double(throwsCount) / Double(bins.count)
+		let chiSquared = bins.indices.reduce(0.0) { sum, i in
+			let delta = Double(bins[i]) - expected
+			return sum + delta * delta / expected
+		}
+
+		// Critical value for 19 degrees of freedom (20 bins - 1) at a very
+		// generous p = 0.001. A genuinely uniform sample exceeds this less than
+		// 0.1% of the time, so tail variance alone won't fail the test.
+		let criticalValue = 43.82
 
 		let str = bins.indices
 			.map { i in "\(bins[i])" }
 			.joined(separator: ", ")
 
-		let result = bins.indices
-			.reduce(true) { r, i in r && bins[i] > expected }
-
-		print("Bins: \(str)")
-		print("Each bin is expected to be greater than: \(expected)")
-		#expect(result)
+		print("Bins: \(str)\nChi-squared: \(chiSquared), must be below \(criticalValue) for 19 dof")
+		#expect(chiSquared < criticalValue)
 	}
 
 	@Test func damageCalculation() {
