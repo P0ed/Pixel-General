@@ -1,5 +1,28 @@
 # Roadmap
 
+## Multiplayer
+
+- **TacticalMode** should allow playing over LAN/VPN network via provided `ip:port` pair.
+- **Lobby** needs to support incoming players joining in `.open` slots.
+
+## Architecture
+
+### `BitwiseCopyable` constraints
+- `clone(_:)` in `COR/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
+
+### `fatalError` in `TacticalState.init`
+`TacticalState.swift:87` aborts when a unit's allocated placement square is full. Spawn-placement is data-driven (`cities`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
+
+## Tests
+
+- **Replace `RNGTests` struct's all-or-nothing distribution check** — `randomDistribution` uses `bins[i] > expected` which fails on tail variance even for a uniform sample. Use a chi-squared test with a generous tolerance.
+
+## Editor
+
+- **Replace tool** replaces all tiles with selected.
+- **Undo stack** for tile edits.
+- **Map validation on save** — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country). Surface as inline diagnostics, not a crash.
+
 ## Known bugs
 
 ### `placeRivers` can silently abort
@@ -8,26 +31,3 @@
 ### Possible AI non-termination
 `TacticalAI.runAI` plus the outer driver in `TacticalMode` will loop forever if no team can be eliminated and no player runs out of meaningful actions. Add a stalemate detector (e.g. N consecutive `.end` actions with no state change → declare draw).
 
-## Determinism
-
-- `TacticalAI.nextPurchase` calls `shopUnits(at:).enumerated().randomElement()` — uses Swift's default RNG, not `state.d20`. Pipe `D20` through every randomization site so AI play is reproducible from a seed.
-
-## Architecture
-
-### `BitwiseCopyable` constraints
-- `clone(_:)` in `COR/Swift.swift` does an `unsafe` bitwise copy and is the only sanctioned duplication path. It silently breaks if a field becomes non-`BitwiseCopyable` (e.g. someone adds a `String` or class reference). Add a static-assert helper or a doc comment listing the constraint.
-- `encode(_:) / decode(_:)` is bitwise; warn that adding a non-`BitwiseCopyable` field to any persisted state silently corrupts saves.
-
-### `fatalError` in `TacticalState.init`
-`TacticalState.swift:87` aborts when a unit's allocated placement square is full. Spawn-placement is data-driven (`cities`, `allocatedUnits`); convert to a recoverable failure (skip placement / log) so editor-supplied scenarios can't crash the app.
-
-## Tests
-
-- **Property tests** — every river tile has an orthogonal river/bridge neighbor (already covered for 3 seeds; widen). Every city is reachable by road from at least one other city (after `shapeRoads`). No `.none` after gen.
-- **Tactical end-to-end smoke** — driver loop with all-AI players, capped at N reduce cycles, asserts no crash and turn advances. Currently `aiCanRunAndEndTurnWithoutCrash` covers turn advance only.
-- **Replace `RNGTests` struct's all-or-nothing distribution check** — `randomDistribution` uses `bins[i] > expected` which fails on tail variance even for a uniform sample. Use a chi-squared test with a generous tolerance.
-
-## Editor
-
-- **Map validation on save** — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country). Surface as inline diagnostics, not a crash.
-- **Undo stack** for tile edits.

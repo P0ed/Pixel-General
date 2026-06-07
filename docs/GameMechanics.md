@@ -279,4 +279,4 @@ input event.
 
 ### Proposed traits:
 
-- `engineer`: entrenches faster, ignores enemy ent
+- `atgm`, `aam`: boosts hard/air attack of the unit at the expence of higher ammo consumption

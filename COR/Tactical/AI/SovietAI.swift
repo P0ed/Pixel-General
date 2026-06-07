@@ -29,7 +29,8 @@ extension TacticalState {
 		guard player.prestige >= 0x200 else { return nil }
 		for xy in map.indices {
 			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] == .none else { continue }
-			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(),
+			var d20 = D20(seed: d20.seed ^ UInt64(xy.x) ^ UInt64(xy.y) << 8)
+			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(using: &d20),
 			   t.cost * 2 <= player.prestige {
 				return .purchase(i, xy)
 			}

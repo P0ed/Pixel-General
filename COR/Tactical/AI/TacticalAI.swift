@@ -19,12 +19,12 @@ public extension TacticalState {
 		public var enemySettlements: CArray<32, XY> = .init(tail: .zero)
 
 		@frozen public enum Role: UInt8 {
-			case idle      // no assignment (e.g. freshly built unit)
-			case retreat   // withdraw to a haven to heal / rearm
-			case defend    // garrison a threatened own settlement
-			case hunt      // artillery / AA / air seeking enemy units
-			case attack    // ground unit pushing to capture a settlement
-			case support   // supply trailing the main force
+			case idle		// no assignment (e.g. freshly built unit)
+			case retreat	// withdraw to a haven to heal / rearm
+			case defend		// garrison a threatened own settlement
+			case hunt		// artillery / AA / air seeking enemy units
+			case attack		// ground unit pushing to capture a settlement
+			case support	// supply trailing the main force
 		}
 	}
 

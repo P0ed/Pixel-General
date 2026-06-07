@@ -14,7 +14,6 @@
 		5F10D24A2FCEE19000E6B598 /* D20.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA0F0982EF2255B0022EC68 /* D20.swift */; };
 		5F10D24B2FCEE19000E6B598 /* Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F41DDD42EE32744008FBF17 /* Map.swift */; };
 		5F10D24C2FCEE19000E6B598 /* Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D822EF7016D00D7C1B0 /* Input.swift */; };
-		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5F10D24D2FCEE19000E6B598 /* CArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87CF592F7BD46900BC87CA /* CArray.swift */; };
 		5F10D24E2FCEE19000E6B598 /* Speicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F8E87302EB3BEEC0023B28F /* Speicher.swift */; };
 		5F10D24F2FCEE19000E6B598 /* SetXY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA0F0962EF21C3A0022EC68 /* SetXY.swift */; };
@@ -68,6 +67,7 @@
 		5F5561052EF5B89B00C08E14 /* HQEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5561042EF5B89B00C08E14 /* HQEvent.swift */; };
 		5F649EF22F952C6900F9CE89 /* HQNewGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F649EF12F952C6600F9CE89 /* HQNewGame.swift */; };
 		5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472D32FB347A300EBC354 /* TacticalTests.swift */; };
+		5F720FA02FBA636600A5E3FE /* TacticalPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */; };
 		5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */; };
 		5F919D532EA9595D0037A208 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33C42EA93AC3008A0A95 /* Scene.swift */; };
 		5F919D542EA959670037A208 /* HIDController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2A33BD2EA93AC3008A0A95 /* HIDController.swift */; };
@@ -83,6 +83,7 @@
 		5F919D6D2EA959FA0037A208 /* boom-s.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A62EA93AC3008A0A95 /* boom-s.wav */; };
 		5F919D6E2EA959FA0037A208 /* boom-m.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A52EA93AC3008A0A95 /* boom-m.wav */; };
 		5F919D6F2EA959FD0037A208 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */; };
+		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* RNGTests.swift */; };
 		5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */; };
 		5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AE2FAD10AA0017B672 /* EditorState.swift */; };
@@ -196,6 +197,7 @@
 		5F5A716C2F24FB790059B314 /* Terrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Terrain.swift; sourceTree = "<group>"; };
 		5F649EED2F94E54C00F9CE89 /* HQInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQInput.swift; sourceTree = "<group>"; };
 		5F649EF12F952C6600F9CE89 /* HQNewGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQNewGame.swift; sourceTree = "<group>"; };
+		5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalPerformanceTests.swift; sourceTree = "<group>"; };
 		5F7472C82FB10FF700EBC354 /* Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Roadmap.md; sourceTree = "<group>"; };
 		5F7472C92FB3276200EBC354 /* GameMechanics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GameMechanics.md; sourceTree = "<group>"; };
 		5F7472CB2FB327C200EBC354 /* Map.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Map.md; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 		5F919D702EA95ADF0037A208 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5FA0F0962EF21C3A0022EC68 /* SetXY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetXY.swift; sourceTree = "<group>"; };
 		5FA0F0982EF2255B0022EC68 /* D20.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = D20.swift; sourceTree = "<group>"; };
+		5FAAAA010000000000000002 /* Reaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reaction.swift; sourceTree = "<group>"; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalAttack.swift; sourceTree = "<group>"; };
 		5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTurns.swift; sourceTree = "<group>"; };
@@ -223,7 +226,6 @@
 		5FBA4D7D2EF6E26200D7C1B0 /* StrategicState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicState.swift; sourceTree = "<group>"; };
 		5FBA4D7F2EF6FD8800D7C1B0 /* Scenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenes.swift; sourceTree = "<group>"; };
 		5FBA4D822EF7016D00D7C1B0 /* Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Input.swift; sourceTree = "<group>"; };
-		5FAAAA010000000000000002 /* Reaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reaction.swift; sourceTree = "<group>"; };
 		5FCABBC72EAA701D008EE894 /* mov.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = mov.wav; sourceTree = "<group>"; };
 		5FCABBC92EAA787B008EE894 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
 		5FE1218A2F7FCFA1001C16A5 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
@@ -429,6 +431,7 @@
 			children = (
 				5FB524A82FACB2C20017B672 /* RNGTests.swift */,
 				5F7472D32FB347A300EBC354 /* TacticalTests.swift */,
+				5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */,
 				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
 			);
 			path = Tests;
@@ -797,6 +800,7 @@
 			files = (
 				5F7472D02FB346E900EBC354 /* MapGenerationTests.swift in Sources */,
 				5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */,
+				5F720FA02FBA636600A5E3FE /* TacticalPerformanceTests.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -981,6 +985,7 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
