@@ -409,7 +409,7 @@ extension TacticalState {
 		let here = position[id]
 		var best: XY? = nil
 		var bestScore = tileScore(at: here, for: id, toward: target, defensive: defensive)
-		for xy in mv.set where xy != here {
+		for xy in mv.ordered where xy != here {
 			let s = tileScore(at: xy, for: id, toward: target, defensive: defensive)
 			if s > bestScore { bestScore = s; best = xy }
 		}

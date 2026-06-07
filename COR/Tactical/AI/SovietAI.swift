@@ -106,7 +106,7 @@ extension TacticalState {
 
 	private func move(id: UID, to target: XY) -> TacticalAction? {
 		moves(for: id)
-			.set
+			.ordered
 			.max(by: { a, b in
 				(
 					max(0, Int(map[a].baseEntrenchment)) - target.stepDistance(to: a)

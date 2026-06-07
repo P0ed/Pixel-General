@@ -29,17 +29,6 @@ extension SetXY: Equatable {
 
 public extension SetXY {
 
-	var set: Set<XY> {
-		.make { set in
-			for y in storage.indices where storage[y] != 0 {
-				for x in storage.indices {
-					let xy = XY(x, y)
-					if self[xy] { set.insert(xy) }
-				}
-			}
-		}
-	}
-
 	init(_ xys: [XY]) {
 		self = .empty
 		for xy in xys { self[xy] = true }

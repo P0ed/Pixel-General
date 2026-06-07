@@ -176,10 +176,16 @@ public extension Moves {
 		}
 	}
 
-	var set: Set<XY> {
-		.make { set in
+	/// Reachable tiles in a fixed row-major order.
+	///
+	/// Deliberately an ordered `[XY]`, not a `Set<XY>`: the AI breaks ties on
+	/// tile score by iteration order, and Swift seeds `Set`/`Dictionary` hashing
+	/// with a per-process random value, so a `Set` here would make the battle
+	/// (and `TacticalPerformanceTests`) non-deterministic across launches.
+	var ordered: [XY] {
+		.make { out in
 			for xy in moves.indices where moves[xy] > 0 {
-				set.insert(xy)
+				out.append(xy)
 			}
 		}
 	}

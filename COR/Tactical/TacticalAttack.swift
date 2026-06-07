@@ -170,7 +170,7 @@ extension TacticalState {
 
 	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [TacticalEvent]) {
 		let p = position[id]
-		let pos = moves(for: id).set.min(by: (p + p - xy).manhattanComparator)
+		let pos = moves(for: id).ordered.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
 		unitsMap[position[id]] = .none
