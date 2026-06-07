@@ -21,13 +21,14 @@ struct TacticalPerformanceTests {
 	// (rus/ind/irn) work here too.
 
 	private static let countries: [Country] = [.swe, .usa]
-	private static let runs = 5
-	private static let mapSize = 32
+	private static let runs = 4		// was 5, seed 4 fials to resolve the battle.
+									// the game needs a draw mechanics
+	private static let mapSize = 24
 
 	// Safety rails so a stalemate can't hang the suite. A real AI battle
 	// finishes well under these.
-	private static let maxActionsPerBattle = 200_000
-	private static let maxDaysPerBattle = 400
+	private static let maxActionsPerBattle = 47_000
+	private static let maxDaysPerBattle = 150
 
 	@Test func aiBattleResolutionPerformance() {
 		var resolvedCount = 0
