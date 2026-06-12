@@ -2,7 +2,7 @@
 
 A turn-based strategic layer over the tactical battles — "Hearts of Iron by
 vibes," deliberately shallower. You command one country on a political map of
-Europe (see [Map](./Map.md)), push offensives against adjacent enemy provinces,
+Europe, push offensives against adjacent enemy provinces,
 and each offensive resolves as a [tactical battle](./GameMechanics.md). The
 hook is **RPG progression**: a *persistent roster* that gains experience,
 skills, and upgrades across the whole campaign — and that you can later stake
