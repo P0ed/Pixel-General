@@ -12,13 +12,14 @@ public extension StrategicState {
 
 	private mutating func moveCursor(_ direction: Direction) -> Reaction<StrategicAction, StrategicEvent> {
 		let xy = cursor.neighbor(direction)
-		if owner.contains(xy) { cursor = xy }
+		if owner.contains(xy) { cursor = xy; camera = xy }
 		return .none
 	}
 
 	private mutating func select(_ xy: XY) -> Reaction<StrategicAction, StrategicEvent> {
 		guard owner.contains(xy) else { return .none }
 		cursor = xy
+		camera = xy
 		return attack(at: xy)
 	}
 

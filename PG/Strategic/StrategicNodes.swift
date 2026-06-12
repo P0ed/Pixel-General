@@ -23,6 +23,7 @@ extension StrategicNodes {
 	private static func addCamera(root: SKNode, at center: CGPoint) -> SKCameraNode {
 		let camera = SKCameraNode()
 		camera.position = center
+		camera.setScale(2)
 		root.addChild(camera)
 		(root as? SKScene)?.camera = camera
 		return camera

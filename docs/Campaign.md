@@ -199,9 +199,13 @@ Separate **battle outcome** from **campaign outcome**:
 - **Abandon — two flavors:**
   - *Abandon a battle* (reuse the existing Tactical Retreat/Abandon path):
     resolves as a repulse or province loss; the campaign continues.
-  - *Abandon the campaign:* forfeit. Consistent with the high-stakes ethos,
-    forfeiting (or full defeat) **does not write the roster back to HQ** — the
-    army is lost. That permanence is what gives the RPG loop its weight.
+  - *Abandon the campaign:* there is no separate roster outside the slot, so
+    "abandoning" is just **deleting the slot** (or starting a New game over it).
+    Consistent with the high-stakes ethos, that discards the campaign and its
+    roster — the army is lost. Note you don't *have* to abandon to play
+    something else: Load a different slot and the campaign persists untouched
+    (see [Persistence & slots](#persistence--slots)). That permanence is what
+    gives the RPG loop its weight.
 
 ## Difficulty
 
@@ -270,6 +274,56 @@ writeback (prune/wipe instead of carry-forward). Keeping the roster format the
 single source of truth across HQ / campaign / MP makes this a small branch on
 machinery that already exists.
 
+## Persistence & slots
+
+**Four independent save slots, each a full `Core`** (its own HQ roster +
+campaign). This is what lets a campaign coexist with casual scenario / MP play
+without the campaign army leaking between them: a campaign lives in one slot; a
+fair, low-stakes MP or scenario is simply *another slot* with a different (or
+starting) roster. Because each slot is a separate `Core`, the battle writeback
+(`Core.complete`) needs no special-casing — it always evolves the *active*
+slot's roster. No per-battle "don't persist" flag, no roster-source picker.
+
+**Operations (deliberately just two):**
+
+- **Load** — a 4-slot picker; selecting a slot makes it active and resumes its
+  latest committed state. This is the non-destructive way to switch between a
+  campaign and other play, and it doubles as the path to an empty slot.
+- **New game** — a fresh start in the *active* slot (overwrite). You target
+  which slot a new game lands in by Load-selecting it first. With Load as the
+  escape hatch, overwriting is always a deliberate choice, never the only way
+  out of a campaign.
+
+**Autosave commits in place.** State is autosaved to the active slot at the
+existing transition points (today's `save(auto: true)` in the `*Mode` / `*Event`
+files). There is no manual save, no quicksave / quickload, and no working-buffer
+split — the legacy `auto` / `main` two-tier scheme
+(`PG/Extensions/UserDefaults.swift`) collapses to a single committed save per
+slot, and the Save / Load menu buttons (`PG/HQ/HQEvent.swift`,
+`PG/Tactical/TacticalMenu.swift`, `PG/Strategic/StrategicEvent.swift`) are
+removed. Net code delta in the menus is *negative*.
+
+This enforces the "permanent and precious" roster **structurally**, not by
+runtime checks:
+
+- **No "Save as"** → a roster can never be copied into another slot → no
+  duplicate armies.
+- **No quickload** → a lost battle can't be rolled back → the dead stay dead.
+- **Load only resumes** a slot's latest state, never an older snapshot.
+
+Autosave is the *enforcer* here, not a threat: it writes losses irreversibly.
+Manual saving would be the opposite — it hands the commit point to the player,
+who could decline to save after a defeat and relaunch on the old state. (One
+residual: force-quitting in the instant between a loss and its autosave. The
+save already fires synchronously right after `complete()`; fold the writeback
+into `complete()` itself if it ever needs to be airtight.)
+
+**Gating.** While a slot's campaign is active, the casual scenario / MP entries
+are hidden — you commit to the campaign in that slot, Diablo-style (*campaign
+**or** scenarios, never both at once*). To play a one-off, Load a different
+slot. This also removes the footgun where an off-hand scenario would silently
+mutate a campaign roster mid-run.
+
 ## State design
 
 `StrategicState` must obey the same constraints as the rest of the core: fully
@@ -314,6 +368,10 @@ every skirmish. The single biggest "keep it HoI-*lite*" lever.
   the larger HQ pool.
 - **Strategic AI** — a *new, much simpler* graph-walking AI (pick weak adjacent
   borders), not the tactical `TacticalAI`.
+- **Slot persistence** (see [Persistence & slots](#persistence--slots)) —
+  generalize `UserDefaults.Slot` from `{auto, main}` to a 4-way index, add the
+  Load slot-select screen, drop the manual Save / Load buttons, and gate
+  scenario / MP entry while a slot's campaign is active.
 
 ## Suggested phasing
 

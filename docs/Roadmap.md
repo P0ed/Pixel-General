@@ -217,3 +217,8 @@ missing today) — independent of the deferred dynamic-diplomacy redesign.
 
 ### Possible AI non-termination
 `TacticalAI.runAI` plus the outer driver in `TacticalMode` will loop forever if no team can be eliminated and no player runs out of meaningful actions. Add a stalemate detector (e.g. N consecutive `.end` actions with no state change → declare draw).
+
+## Game manual
+
+- **Controls** — list of actions with associated buttons for keyboard/gamepad.
+- **Rules** — `GameMechanics.md` but without referencing engine internals.
