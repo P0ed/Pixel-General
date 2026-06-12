@@ -85,6 +85,7 @@
 		5F919D6F2EA959FD0037A208 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */; };
 		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* RNGTests.swift */; };
+		5FCA9A010000000000000001 /* StrategicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9A020000000000000002 /* StrategicTests.swift */; };
 		5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */; };
 		5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AE2FAD10AA0017B672 /* EditorState.swift */; };
 		5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524B02FAD111E0017B672 /* EditorNodes.swift */; };
@@ -218,6 +219,7 @@
 		5FB4D1252EAFABCB0010E702 /* TacticalTurns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTurns.swift; sourceTree = "<group>"; };
 		5FB5249F2FACB2990017B672 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB524A82FACB2C20017B672 /* RNGTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNGTests.swift; sourceTree = "<group>"; };
+		5FCA9A020000000000000002 /* StrategicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicTests.swift; sourceTree = "<group>"; };
 		5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorMode.swift; sourceTree = "<group>"; };
 		5FB524AE2FAD10AA0017B672 /* EditorState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorState.swift; sourceTree = "<group>"; };
 		5FB524B02FAD111E0017B672 /* EditorNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorNodes.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 		5FE94DDA2F9B98FB00004EC8 /* StrategicNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicNodes.swift; sourceTree = "<group>"; };
 		5FF200762EF44FC500B659E7 /* SceneMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneMode.swift; sourceTree = "<group>"; };
 		5FF25F2F2FD19C2C002759A6 /* TacticalMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMenu.swift; sourceTree = "<group>"; };
+		5FF357512FD6094000BCE404 /* Campaign.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Campaign.md; sourceTree = "<group>"; };
 		5FF677AE2FD1E18E0004A35D /* AxisUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisUnits.swift; sourceTree = "<group>"; };
 		5FF677B02FD1E1C40004A35D /* SovietUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietUnits.swift; sourceTree = "<group>"; };
 		5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlliedUnits.swift; sourceTree = "<group>"; };
@@ -433,6 +436,7 @@
 				5F7472D32FB347A300EBC354 /* TacticalTests.swift */,
 				5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */,
 				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
+				5FCA9A020000000000000002 /* StrategicTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -454,6 +458,7 @@
 				5F7472C92FB3276200EBC354 /* GameMechanics.md */,
 				5F7472CB2FB327C200EBC354 /* Map.md */,
 				5F7472C82FB10FF700EBC354 /* Roadmap.md */,
+				5FF357512FD6094000BCE404 /* Campaign.md */,
 				5F7472CD2FB3452300EBC354 /* Map.png */,
 				5F7472CE2FB3452300EBC354 /* Map@32x.png */,
 			);
@@ -802,6 +807,7 @@
 				5F720F9B2FBA636600A5E3FD /* TacticalTests.swift in Sources */,
 				5F720FA02FBA636600A5E3FE /* TacticalPerformanceTests.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */,
+				5FCA9A010000000000000001 /* StrategicTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,7 +11,7 @@ extension HQNodes {
 			Player(country: .irn, type: .ai, prestige: .rich)
 		]
 		var countriesLeft: [Country] {
-			Country.allCases.filter { c in
+			Country.playable.filter { c in
 				players.firstMap { $0.alive && $0.country == c ? $0.country : nil } == nil
 			}
 		}

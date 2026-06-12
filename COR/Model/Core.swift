@@ -60,6 +60,30 @@ public extension Core {
 		location = .tactical
 	}
 
+	/// Launch a campaign offensive against the enemy province at `tile`. The
+	/// player's whole roster (up to 16) deploys against the defending country.
+	mutating func startCampaignBattle(at tile: XY) {
+		guard let human = hq?.player.country,
+			let prestige = hq?.player.prestige,
+			let defender = strategic?.owner[tile]
+		else { return }
+
+		let players = [
+			Player(country: human, type: .human, prestige: prestige),
+			Player(country: defender, type: .ai),
+		]
+		let units = hq?.units.compactMap { u in u.alive ? u : nil } ?? []
+
+		strategic?.battle = tile
+		tactical = TacticalState.make(
+			players: players,
+			units: units,
+			size: 24,
+			seed: .random(in: 0 ..< 128)
+		)
+		location = .tactical
+	}
+
 	mutating func startCampaign(_ hq: borrowing HQState, _ strategic: borrowing StrategicState) {
 		self.hq = clone(hq)
 		self.strategic = clone(strategic)
@@ -80,11 +104,20 @@ public extension Core {
 				}
 			}
 		hq?.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
-		hq?.cursor = .zero
 		hq?.player.prestige = state[c].prestige
 
 		tactical = nil
-		location = .hq
+
+		// Campaign battle: flip provinces around the contested tile and return to
+		// the strategic map. Otherwise this was a one-off scenario → return to HQ.
+		if let tile = strategic?.battle {
+			let won = state.teamAlive(c.team)
+			strategic?.resolveBattle(at: tile, won: won, by: c)
+			location = .strategic
+		} else {
+			hq?.cursor = .zero
+			location = .hq
+		}
 	}
 
 	mutating func goHQ() {

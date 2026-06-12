@@ -26,6 +26,11 @@ public struct Player {
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
 	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
+	// European nations for the campaign map (see docs/Map.md). Armies resolve by
+	// `team`, so these inherit a full roster without bespoke unit content.
+	case nor, fin, ger, est, lva, ltu, pol, bel, cze, svk, aut, rom, hun, mol
+	// Sentinel for unowned / water tiles on the strategic map. Never fights.
+	case sea
 }
 
 @frozen public enum Team: UInt8, Hashable, Sendable {
@@ -38,11 +43,15 @@ public extension Country {
 
 	var team: Team {
 		switch self {
-		case .den, .ned, .swe, .ukr: .axis
-		case .isr, .pak, .usa: .allies
-		case .ind, .irn, .rus: .soviet
+		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut: .axis
+		case .isr, .pak, .usa, .fin, .ltu, .svk, .hun: .allies
+		case .ind, .irn, .rus, .nor, .est, .lva, .bel, .rom, .mol: .soviet
+		case .sea: .axis // never used: sea tiles are excluded from combat
 		}
 	}
+
+	// Selectable nations, excluding the `.sea` strategic-map sentinel.
+	static var playable: [Country] { allCases.filter { $0 != .sea } }
 }
 
 extension Player {
