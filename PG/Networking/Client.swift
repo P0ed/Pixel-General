@@ -1,15 +1,13 @@
 import Network
 import Foundation
-
-//func connect(to host: String = "locaclhost") {
-//	let client = Client<Message>(handleMessage: ø)
-//	client.connect(host: host, port: 9899)
-//}
+import COR
 
 @MainActor
 final class Client<Message: MessageProtocol> {
 	private var connection: Connection<Message>?
 	private let handleMessage: (Message) -> Void
+	var onReady: () -> Void = ø
+	var onDisconnect: () -> Void = ø
 
 	init(handleMessage: @escaping (Message) -> Void) {
 		self.handleMessage = handleMessage
@@ -18,19 +16,25 @@ final class Client<Message: MessageProtocol> {
 	func connect(host: String, port: UInt16) {
 		guard connection == nil else { return print("Already connected") }
 
-		let con = Connection<Message>(
+		connection = Connection<Message>(
 			connection: NWConnection(
 				host: .init(host),
 				port: .init(integerLiteral: port),
 				using: .tcp
 			),
-			message: { [weak self] c, m in
+			ready: { [weak self] _ in
+				self?.onReady()
+			},
+			message: { [weak self] _, m in
 				print("Client received message: \(m)")
 				self?.handleMessage(m)
 			},
-			disconnect: { c in }
+			disconnect: { [weak self] _ in
+				guard let self, self.connection != nil else { return }
+				self.connection = nil
+				self.onDisconnect()
+			}
 		)
-		connection = con
 	}
 
 	func disconnect() {

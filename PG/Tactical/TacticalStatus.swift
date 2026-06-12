@@ -3,7 +3,9 @@ import COR
 extension TacticalState {
 
 	var status: Status {
-		if player.type != .human {
+		if player.type == .remote {
+			Status(text: "waiting for \(player.country)", action: "day \(day)")
+		} else if player.type != .human {
 			Status(text: "\(player.country) turn")
 		} else if selectedUnit != .none {
 			Status(

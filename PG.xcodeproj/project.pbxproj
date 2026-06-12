@@ -96,6 +96,9 @@
 		5FE1218D2F7FD6CD001C16A5 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE1218C2F7FD6CA001C16A5 /* Messages.swift */; };
 		5FE1218F2F7FE42F001C16A5 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE1218E2F7FE42F001C16A5 /* Server.swift */; };
 		5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE121902F7FF0B6001C16A5 /* Client.swift */; };
+		5FCA9B010000000000000001 /* NetSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B020000000000000002 /* NetSession.swift */; };
+		5FCA9B030000000000000003 /* HQLobby.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B040000000000000004 /* HQLobby.swift */; };
+		5FCA9B050000000000000005 /* MultiplayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B060000000000000006 /* MultiplayerTests.swift */; };
 		5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */; };
 		5FE44F132F9BB9F900A589F1 /* StrategicEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE44F122F9BB9F400A589F1 /* StrategicEvent.swift */; };
 		5FE44F1B2F9BC18300A589F1 /* HQCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE44F1A2F9BC17D00A589F1 /* HQCampaign.swift */; };
@@ -234,6 +237,9 @@
 		5FE1218C2F7FD6CA001C16A5 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
 		5FE1218E2F7FE42F001C16A5 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		5FE121902F7FF0B6001C16A5 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
+		5FCA9B020000000000000002 /* NetSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetSession.swift; sourceTree = "<group>"; };
+		5FCA9B040000000000000004 /* HQLobby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQLobby.swift; sourceTree = "<group>"; };
+		5FCA9B060000000000000006 /* MultiplayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiplayerTests.swift; sourceTree = "<group>"; };
 		5FE3C16B2F0C51EE00C522D3 /* MapNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNodes.swift; sourceTree = "<group>"; };
 		5FE44F122F9BB9F400A589F1 /* StrategicEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicEvent.swift; sourceTree = "<group>"; };
 		5FE44F142F9BBA1F00A589F1 /* StrategicAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicAction.swift; sourceTree = "<group>"; };
@@ -389,6 +395,7 @@
 				5F649EF12F952C6600F9CE89 /* HQNewGame.swift */,
 				5F26B9502F7EA89B002BBF38 /* HQScenario.swift */,
 				5FE44F1A2F9BC17D00A589F1 /* HQCampaign.swift */,
+				5FCA9B040000000000000004 /* HQLobby.swift */,
 			);
 			path = HQ;
 			sourceTree = "<group>";
@@ -437,6 +444,7 @@
 				5F720FA12FBA636600A5E3FF /* TacticalPerformanceTests.swift */,
 				5F7472CF2FB346E900EBC354 /* MapGenerationTests.swift */,
 				5FCA9A020000000000000002 /* StrategicTests.swift */,
+				5FCA9B060000000000000006 /* MultiplayerTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -548,6 +556,7 @@
 				5FE121902F7FF0B6001C16A5 /* Client.swift */,
 				5FE1218A2F7FCFA1001C16A5 /* Connection.swift */,
 				5FE1218C2F7FD6CA001C16A5 /* Messages.swift */,
+				5FCA9B020000000000000002 /* NetSession.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -771,6 +780,8 @@
 				5F24DC332EA95FE60085FDDC /* main.swift in Sources */,
 				5FE94DDB2F9B990500004EC8 /* StrategicNodes.swift in Sources */,
 				5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */,
+				5FCA9B010000000000000001 /* NetSession.swift in Sources */,
+				5FCA9B030000000000000003 /* HQLobby.swift in Sources */,
 				5F389F952FC84CB800F9B86F /* MenuNodes.swift in Sources */,
 				5F5560FC2EF5B0CF00C08E14 /* HQNodes.swift in Sources */,
 				5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */,
@@ -808,6 +819,7 @@
 				5F720FA02FBA636600A5E3FE /* TacticalPerformanceTests.swift in Sources */,
 				5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */,
 				5FCA9A010000000000000001 /* StrategicTests.swift in Sources */,
+				5FCA9B050000000000000005 /* MultiplayerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -927,6 +939,10 @@
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -965,6 +981,10 @@
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
 				PRODUCT_NAME = "$(TARGET_NAME)";
