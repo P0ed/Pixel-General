@@ -8,10 +8,15 @@ typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, Ta
 extension TacticalMode {
 
 	static var tactical: Self {
-		.init(
+		let ai = TacticalState.ai
+		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			ai: TacticalState.ai,
+			ai: { state in
+				if let net { return net.nextAction(state, ai) }
+				return ai(state)
+			},
+			relay: { state, action in net?.relay(state, action) ?? false },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },

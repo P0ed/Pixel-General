@@ -28,6 +28,7 @@ extension TacticalNodes {
 					}
 				},
 				.close(icon: "Load", status: "Load") { _ in
+					net?.leave()
 					core = .load(auto: false)
 					present(.auto)
 				},

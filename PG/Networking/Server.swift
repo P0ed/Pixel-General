@@ -1,11 +1,13 @@
 import Network
 import Foundation
+import COR
 
 @MainActor
 final class Server<Message: MessageProtocol> {
 	private var listener: NWListener?
-	private var connections: [Connection<Message>] = []
+	private(set) var connections: [Connection<Message>] = []
 	private let handleMessage: (Connection<Message>, Message) -> Void
+	var onDisconnect: (Connection<Message>) -> Void = ø
 
 	init(handleMessage: @escaping (Connection<Message>, Message) -> Void) {
 		self.handleMessage = handleMessage
@@ -25,7 +27,10 @@ final class Server<Message: MessageProtocol> {
 						self?.handleMessage(con, message)
 					},
 					disconnect: { con in
-						self?.connections.removeAll { $0 === con }
+						guard let self, self.connections.contains(where: { $0 === con })
+						else { return }
+						self.connections.removeAll { $0 === con }
+						self.onDisconnect(con)
 					}
 				))
 			}
@@ -34,7 +39,17 @@ final class Server<Message: MessageProtocol> {
 		print("Server started on port \(port)")
 	}
 
-	private func broadcast(_ message: Message) {
+	func stop() {
+		listener?.cancel()
+		listener = nil
+		connections = []
+	}
+
+	func drop(_ con: Connection<Message>) {
+		connections.removeAll { $0 === con }
+	}
+
+	func broadcast(_ message: Message) {
 		for conn in connections {
 			conn.send(message)
 		}

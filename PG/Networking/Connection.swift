@@ -10,19 +10,27 @@ protocol MessageProtocol {
 	init?(type: MessageType, payload: Data)
 }
 
+/// Length-prefixed TCP framing; reassembles multi-chunk payloads, so large
+/// blobs (`start`/`resync` states) arrive whole. Message payloads are the raw
+/// native bytes of `encode(_:)` — peers are assumed to run the same build on
+/// the same architecture/endianness (macOS arm64); there is no schema
+/// versioning beyond the `hello` handshake.
 @MainActor
 final class Connection<Message: MessageProtocol> {
 	private let connection: NWConnection
+	private let onReady: (Connection) -> Void
 	private let onMessage: (Connection, Message) -> Void
 	private let onDisconnect: (Connection) -> Void
 	private var buffer = Data()
 
 	init(
 		connection: NWConnection,
+		ready: @escaping (Connection) -> Void = { _ in },
 		message: @escaping (Connection, Message) -> Void,
 		disconnect: @escaping (Connection) -> Void
 	) {
 		self.connection = connection
+		self.onReady = ready
 		self.onMessage = message
 		self.onDisconnect = disconnect
 
@@ -30,7 +38,9 @@ final class Connection<Message: MessageProtocol> {
 			MainActor.assumeIsolated {
 				guard let self else { return }
 				switch state {
-				case .ready: self.receiveLoop()
+				case .ready:
+					self.onReady(self)
+					self.receiveLoop()
 				case .failed, .cancelled: self.onDisconnect(self)
 				default: break
 				}

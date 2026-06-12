@@ -68,6 +68,48 @@ Game mechanics are implemented using integer arithmetics. All game state is stor
 
 Strict concurrency is enabled project-wide.
 
+## Multiplayer (LAN)
+
+A Tactical battle can be played across machines as a **deterministic action
+relay**, coordinated by `NetSession` (`PG/Networking/NetSession.swift`, global
+`net`): the host generates the battle once and ships the whole encoded
+`TacticalState`; afterwards only `TacticalAction`s travel, and every peer
+applies the same action stream through `reduce`. Because `reduce` is a pure
+function of `(state, action)` — the only randomness is the in-state seeded
+`D20` — all peers stay identical, combat rolls included. The invariant is
+guarded by `Tests/MultiplayerTests.swift`.
+
+- **Topology** — star, host-authoritative. The game is strictly turn-rotated
+  (`playerIndex = turn % players.count`), so exactly one seat acts at a time.
+  The host drives its local seats and the AI for `.ai` seats, broadcasting
+  every applied action; a client sends its action as an intent and applies it
+  only when the host echoes it back (no optimistic apply). The host drops
+  out-of-turn intents.
+- **Peer-relative `PlayerType`** — after decoding the `start` state each peer
+  marks its own seat `.human` and every other seat `.remote`; only the host
+  keeps `.ai`. The existing `.human` guards in `TacticalInput` then stop a
+  peer from driving seats it doesn't own, and UI state (`cursor`,
+  `selectedUnit`, `camera`, …) may freely diverge — `reduce` never reads it
+  for game-relevant state.
+- **Pipeline hooks** — `SceneMode.relay` inspects every locally produced
+  `.action` before Reduce (host: broadcast + apply; client: send intent +
+  suppress). The `ai` hook becomes `NetSession.nextAction`, which drains
+  actions queued from the wire and falls back to the local AI driver on the
+  host. Presentation-only `.events` reactions are never networked.
+- **Protocol** (`PG/Networking/Messages.swift`) — `hello(version)` →
+  `joinRequest` → `joinAccept(seat)` + `lobby(snapshot)` → `start(state)` →
+  `action(…)` relay → `leave`. Payloads are `encode(_:)` native bytes; peers
+  must run the same build on the same architecture (see `Connection.swift`).
+- **Lobby** — HQ menu *Host LAN* / *Join LAN* (`PG/HQ/HQLobby.swift`). The
+  host configures four seats (country, human–AI–open cycle, prestige, map
+  size), sees joins live and starts; clients enter `ip:port` (default port
+  9899) and mirror the seat table.
+- **Failure handling** — a disconnected or leaving seat is handed to the host
+  AI through the relayed `.takeover` action; when the host vanishes, clients
+  degrade to local play by taking over every seat they don't own. Saved
+  multiplayer battles load standalone the same way (`.remote → .ai` in
+  `Scenes.swift`).
+
 ## Module Map
 
 ```
@@ -83,9 +125,9 @@ COR/                  Headless game core (import COR), no UI dependency
 PG/                   App & presentation layer
   Scene/              SpriteKit scenes, SceneMode, input, rendering, settings
   Extensions/         AppKit / SpriteKit / Colors / Images helpers
-  Networking/         Client, Connection, Server, Messages
+  Networking/         Client, Connection, Server, Messages, NetSession (LAN relay)
   Tactical/           Tactical nodes, mode, event rendering, status, unit sprites
-  HQ/                 HQ nodes, mode, campaign & scenario selection
+  HQ/                 HQ nodes, mode, campaign & scenario selection, LAN lobby
   Strategic/          Strategic nodes, mode, event rendering (in progress)
   Editor/             Map editor (in progress)
   Core.swift          Save/load, owns root State

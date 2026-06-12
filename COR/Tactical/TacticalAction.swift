@@ -1,5 +1,9 @@
 import CoreGraphics
 
+/// In a networked battle actions are the only thing relayed between peers:
+/// every peer applies the same action stream through `reduce`, which must
+/// stay a pure deterministic function of `(state, action)` — no `Date`, no
+/// RNG besides the in-state `D20`, no ambient I/O.
 @frozen public enum TacticalAction: Equatable {
 	case move(UID, XY)
 	case embark(UID, UID)
@@ -7,8 +11,18 @@ import CoreGraphics
 	case attack(UID, UID)
 	case resupply(UID)
 	case purchase(Int, XY)
+	/// Hands a seat to the AI driver — relayed when a networked player
+	/// disconnects so every peer applies the same conversion.
+	case takeover(Country)
 	case end
 }
+
+// Compile-time guard: actions travel over the wire and through
+// `encode`/`decode` as raw native bytes — every payload must stay
+// bitwise-copyable (no String, class, or heap-backed field).
+extension TacticalAction: BitwiseCopyable {}
+extension UID: BitwiseCopyable {}
+extension XY: BitwiseCopyable {}
 
 extension TacticalState {
 
@@ -21,9 +35,16 @@ extension TacticalState {
 		case .disembark(let t, let xy): disembark(unit: t, to: xy, into: &events)
 		case .resupply(let u): resupply(unit: u, into: &events)
 		case .purchase(let idx, let xy): buy(idx, at: xy, into: &events)
+		case .takeover(let c): takeover(country: c)
 		case .end: endTurn(into: &events)
 		}
 		return events
+	}
+
+	mutating func takeover(country: Country) {
+		players.modifyEach { _, p in
+			if p.country == country { p.type = .ai }
+		}
 	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {

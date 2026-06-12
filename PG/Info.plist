@@ -17,6 +17,8 @@
 			<string>ExtendedGamepad</string>
 		</dict>
 	</array>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.strategy-games</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

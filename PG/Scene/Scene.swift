@@ -54,6 +54,10 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		didSetState()
 
 		eventsMonitor = panHandler
+
+		// Kick automatic action sources (AI seats, queued network actions)
+		// that don't wait for local input.
+		advance()
 	}
 
 	isolated deinit {
@@ -91,7 +95,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		guard let nodes, !processing else { return }
 		processing = true
 		let events: [Event] = switch reaction {
-		case .action(let action): mode.reduce(&state, action)
+		case .action(let action): mode.relay(state, action) ? [] : mode.reduce(&state, action)
 		case .events(let events): events
 		}
 		Task {
@@ -104,7 +108,8 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		}
 	}
 
-	private func advance() {
+	/// Also poked by `NetSession` when actions arrive over the wire.
+	func advance() {
 		guard !processing, menuState == nil else { return }
 		if let input = pending {
 			pending = nil
@@ -119,6 +124,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	func saveAndExit() {
+		net?.leave()
 		mode.save(state)
 		exit(0)
 	}

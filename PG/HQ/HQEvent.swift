@@ -44,7 +44,14 @@ extension HQNodes {
 				guard let scene else { return nil }
 				return scenarioMenu(m, scene.state)
 			}),
-			.space, .space, .space,
+			.init(icon: "Remote", status: .init(text: "Host LAN"), update: { m in
+				guard let scene else { return nil }
+				return hostMenu(m, scene.state)
+			}),
+			.init(icon: "Remote", status: .init(text: "Join LAN"), update: { m in
+				joinMenu(m)
+			}),
+			.space,
 
 			.init(icon: "Start", status: .init(text: "Campaign"), update: { m in
 				guard let scene else { return nil }
