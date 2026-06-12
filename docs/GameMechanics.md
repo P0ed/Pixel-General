@@ -274,9 +274,9 @@ input event.
 
 ### Proposed skills:
 
-- `armor`: only takes dmg that is > 1 per round
-- `pillage`: prestige on dmg
+- `armor`: only takes dmg that is > 1 per round.
+- `pillage`: prestige on dmg.
 
 ### Proposed traits:
 
-- `atgm`, `aam`: boosts hard/air attack of the unit at the expence of higher ammo consumption
+- `atgm`, `aam`: boosts hard/air attack of the unit at the expence of higher ammo consumption.
