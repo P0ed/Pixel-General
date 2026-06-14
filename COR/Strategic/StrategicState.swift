@@ -38,7 +38,7 @@ public extension StrategicState {
 	func canAttack(_ xy: XY) -> Bool {
 		guard owner.contains(xy) else { return false }
 		let target = owner[xy]
-		guard target != .sea, target.team != human.team else { return false }
+		guard target != .none, target.team != human.team else { return false }
 		return xy.n8.firstMap { n in owner.contains(n) && owner[n] == human ? n : nil } != nil
 	}
 
@@ -49,7 +49,7 @@ public extension StrategicState {
 		guard won else { return }
 		let r = Self.captureRadius
 		for xy in owner.indices
-		where owner[xy] != .sea
+		where owner[xy] != .none
 			&& abs(xy.x - tile.x) <= r
 			&& abs(xy.y - tile.y) <= r {
 			owner[xy] = country
@@ -58,7 +58,7 @@ public extension StrategicState {
 
 	/// Build the European campaign map from the docs/Map.md legend.
 	static func europe(human: Country) -> StrategicState {
-		var owner = Map<32, Country>(size: 32, zero: .sea)
+		var owner = Map<32, Country>(size: 32, zero: .none)
 		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
 		for (row, line) in rows.enumerated() {
 			// Flip the row so north (top of the ASCII) maps to higher `y`.
@@ -104,7 +104,7 @@ extension Country {
 		case "U": self = .ukr
 		case "M": self = .mol
 		case "Z": self = .rus
-		case ".": self = .sea
+		case ".": self = .none
 		default: return nil
 		}
 	}

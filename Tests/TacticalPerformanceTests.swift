@@ -105,6 +105,7 @@ private extension TacticalState {
 		switch player.country.team {
 		case .soviet: soviet(ai: &ai)
 		case .axis, .allies: axis(ai: &ai)
+		case .none: .end
 		}
 	}
 }

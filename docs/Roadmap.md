@@ -10,6 +10,12 @@
 - Bonjour discovery (`NWListener` service + `NWBrowser`) so clients pick a host
   instead of typing `ip:port`.
 
+## Scenario
+
+- Better supply model for reinforcements and resupply.
+- Supply map mode.
+- Better way of assigning sprites/strings to units than a switch over stats.
+
 ## Campaign
 
 - Setup menu (two difficulty knobs: starting prestige + enemy base level).
@@ -17,6 +23,10 @@
 - `Objective` / `BattleOutcome` types and turn-limited win checks in Tactical.
 - Anti-snowball model (supply-distance budget, permanent casualties, defender
   consolidation, turn limits) and the loss/draw/abandon rules.
+
+## Map
+
+- Keep roads/buildings in political/supply map mode.
 
 ## Editor
 

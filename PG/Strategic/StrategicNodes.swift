@@ -65,15 +65,13 @@ extension StrategicNodes {
 		}
 	}
 
-	/// Colour a province by its owner's team (axis/allies/soviet); sea is gray.
+	/// Colour a province by its owner's team (axis/allies/soviet); .none is gray.
 	private static func political(_ country: Country) -> SKTileGroup {
-		let index: Int = switch country {
-		case .sea: -1
-		default: switch country.team {
-			case .axis: 0
-			case .allies: 1
-			case .soviet: 2
-			}
+		let index: Int = switch country.team {
+		case .axis: 0
+		case .allies: 1
+		case .soviet: 2
+		case .none: -1
 		}
 		return .political(playerIndex: index, elevation: 0, fog: false)
 	}

@@ -12,6 +12,7 @@ public extension Unit {
 		switch country.team {
 		case .axis, .allies: .regular
 		case .soviet: .militia
+		case .none: .empty
 		}
 	}
 
@@ -20,6 +21,7 @@ public extension Unit {
 		case .axis: .ksk.veteran
 		case .allies: .delta.veteran
 		case .soviet: .speznas
+		case .none: .empty
 		}
 	}
 
@@ -32,6 +34,7 @@ public extension Unit {
 		case .axis: .fennek
 		case .allies: nil
 		case .soviet: .brdm2
+		case .none: .empty
 		}
 	}
 
@@ -40,6 +43,7 @@ public extension Unit {
 		case .axis: .boxer
 		case .allies: .m2A2
 		case .soviet: .bmp
+		case .none: .empty
 		}
 	}
 
@@ -48,6 +52,7 @@ public extension Unit {
 		case .axis: .strf90
 		case .allies: nil
 		case .soviet: nil
+		case .none: .empty
 		}
 	}
 
@@ -63,6 +68,7 @@ public extension Unit {
 			case .axis: .leo1
 			case .allies: .m48
 			case .soviet: .t55
+			case .none: .empty
 			}
 		}
 	}
@@ -78,6 +84,7 @@ public extension Unit {
 			case .axis: .strv122
 			case .allies: .m1A1
 			case .soviet: .t72
+			case .none: .empty
 			}
 		}
 	}
@@ -93,6 +100,7 @@ public extension Unit {
 			case .axis: .strv122
 			case .allies: .m1A2
 			case .soviet: .t90m
+			case .none: .empty
 			}
 		}
 	}
@@ -102,6 +110,7 @@ public extension Unit {
 		case .axis: .art155
 		case .allies: .m777
 		case .soviet: .art105
+		case .none: .empty
 		}
 	}
 
@@ -110,6 +119,7 @@ public extension Unit {
 		case .axis: .pzh
 		case .allies: .m270
 		case .soviet: .art155
+		case .none: .empty
 		}
 	}
 
@@ -118,6 +128,7 @@ public extension Unit {
 		case .axis: .skeldar
 		case .allies: .mh6
 		case .soviet: .mi8
+		case .none: .empty
 		}
 	}
 
@@ -126,6 +137,7 @@ public extension Unit {
 		case .axis: .nh90
 		case .allies: .f16
 		case .soviet: .mi24
+		case .none: .empty
 		}
 	}
 
@@ -134,6 +146,7 @@ public extension Unit {
 		case .axis: .gripen
 		case .allies: .f35
 		case .soviet: .mig
+		case .none: .empty
 		}
 	}
 
@@ -142,6 +155,7 @@ public extension Unit {
 		case .axis: .skeldarm
 		case .allies: .mq9
 		case .soviet: .orlan
+		case .none: .empty
 		}
 	}
 
@@ -156,6 +170,7 @@ public extension Unit {
 		case .axis: .lvkv90
 		case .soviet: .tunguska
 		case .allies: nil
+		case .none: .empty
 		}
 	}
 
@@ -164,6 +179,7 @@ public extension Unit {
 		case .axis: .nasams
 		case .allies: .patriot
 		case .soviet: .neva
+		case .none: .empty
 		}
 	}
 

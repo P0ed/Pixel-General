@@ -39,6 +39,7 @@ public extension TacticalState {
 			switch player.country.team {
 			case .axis, .allies: axis(ai: &ai)
 			case .soviet: soviet(ai: &ai)
+			case .none: .none
 			}
 		default: .none
 		}

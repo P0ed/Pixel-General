@@ -76,6 +76,7 @@ public extension Unit {
 				case .axis: "KSK"
 				case .allies: "Delta Force"
 				case .soviet: "Speznas"
+				case .none: ""
 				}
 			} else {
 				"Infantry"
@@ -91,6 +92,7 @@ public extension Unit {
 			case .axis: "PzH 2000"
 			case .allies: "M270"
 			case .soviet: "2С3"
+			case .none: ""
 			}
 		case .aa:
 			switch country.team {
@@ -98,6 +100,7 @@ public extension Unit {
 			case .axis: "NASAMS"
 			case .allies: "Patriot"
 			case .soviet: "S300"
+			case .none: ""
 			}
 		case .wheelAA: "Neva"
 		case .trackAA:
@@ -105,6 +108,7 @@ public extension Unit {
 			case .axis: "Lvkv 90"
 			case .soviet: "Tunguska"
 			case .allies: ""
+			case .none: ""
 			}
 		case .lightWheel: "Boxer"
 		case .lightTrack:
@@ -112,24 +116,28 @@ public extension Unit {
 			case .axis: self[.elite] ? "KF41" : "Strf 90"
 			case .allies: hardAtk > 5 ? "M2A2" : "M113"
 			case .soviet: "BMP"
+			case .none: ""
 			}
 		case .heavyTrack:
 			switch country.team {
 			case .axis: hardAtk > 14 ? "KF51" : hardAtk > 12 ? "Strv 122" : "Leopard 1A5"
 			case .allies: hardAtk > 12 ? "M1A2" : "M48"
 			case .soviet: hardAtk > 12 ? "T-90M" : hardAtk > 10 ? "T-72B" : "T-55BVM"
+			case .none: ""
 			}
 		case .heli: 
 			switch country.team {
 			case .axis: self[.transport] ? "NH90" : "Skeldar"
 			case .allies: "MH6"
 			case .soviet: self[.transport] ? "Mi-8" : "Mi-24"
+			case .none: ""
 			}
 		case .jet:
 			switch country.team {
 			case .axis: "Gripen"
 			case .allies: "F16"
 			case .soviet: "Mig-29"
+			case .none: ""
 			}
 		}
 	}

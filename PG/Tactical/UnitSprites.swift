@@ -50,6 +50,7 @@ extension Unit {
 			case .axis: "PZH"
 			case .allies: "M270"
 			case .soviet: "2S3"
+			case .none: "<>"
 			}
 		case .wheelAA: "Neva"
 		case .trackAA: "SPAA"
@@ -60,7 +61,8 @@ extension Unit {
 			switch country.team {
 			case .allies: "M1A2"
 			case .axis: "Tank"
-			default: "leo1"
+			case .soviet: "leo1"
+			case .none: "<>"
 			}
 		case .heli:
 			rng == 0 ? "Skeldar" : "MH6"
@@ -88,10 +90,12 @@ extension Country {
 		case .ind: .orange
 		case .isr: .blue
 		// Placeholder: campaign nations are tinted by team until bespoke colors land.
-		default: switch team {
+		default:
+			switch team {
 			case .axis: .systemYellow
 			case .allies: .blue
 			case .soviet: .red
+			case .none: .gray
 			}
 		}
 	}
@@ -108,7 +112,21 @@ extension Country {
 		case .ind: .ind
 		case .den: .den
 		case .ned: .ned
-		default: .swe // placeholder flag for campaign nations
+		case .aut: .aut
+		case .nor: .nor
+		case .fin: .fin
+		case .ger: .ger
+		case .est: .est
+		case .lva: .lva
+		case .ltu: .ltu
+		case .pol: .pol
+		case .bel: .bel
+		case .cze: .cze
+		case .svk: .svk
+		case .rom: .rom
+		case .hun: .hun
+		case .mol: .mol
+		case .none: .clear
 		}
 	}
 }

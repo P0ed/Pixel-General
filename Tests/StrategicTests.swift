@@ -43,7 +43,7 @@ struct StrategicTests {
 			switch state.owner[xy] {
 			case .fin: fin += 1
 			case .rus: rus += 1
-			case .sea: sea += 1
+			case .none: sea += 1
 			default: break
 			}
 		}
@@ -68,7 +68,7 @@ struct StrategicTests {
 		var seaTile: XY?
 		for xy in state.owner.indices {
 			if state.owner[xy] == .fin, ownTile == nil { ownTile = xy }
-			if state.owner[xy] == .sea, seaTile == nil { seaTile = xy }
+			if state.owner[xy] == .none, seaTile == nil { seaTile = xy }
 		}
 		if let ownTile {
 			let attackable = state.canAttack(ownTile)
@@ -112,14 +112,14 @@ struct StrategicTests {
 		var state = StrategicState.europe(human: .fin)
 		// Pick a sea tile so the capture radius certainly overlaps water.
 		var seaTile: XY?
-		for xy in state.owner.indices where state.owner[xy] == .sea {
+		for xy in state.owner.indices where state.owner[xy] == .none {
 			seaTile = xy
 			break
 		}
 		guard let seaTile else { return }
 		state.resolveBattle(at: seaTile, won: true, by: .fin)
 		let owner = state.owner[seaTile]
-		#expect(owner == .sea, "sea was converted to land")
+		#expect(owner == .none, "sea was converted to land")
 	}
 
 	@Test func reduceEndTurnAdvancesDay() {

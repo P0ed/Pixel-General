@@ -31,13 +31,13 @@ public struct Player {
 }
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
+	case none
 	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
 	case nor, fin, ger, est, lva, ltu, pol, bel, cze, svk, aut, rom, hun, mol
-	case sea
 }
 
 @frozen public enum Team: UInt8, Hashable, Sendable {
-	case axis, allies, soviet
+	case none, axis, allies, soviet
 }
 
 public extension Country {
@@ -49,12 +49,12 @@ public extension Country {
 		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor: .axis
 		case .isr, .pak, .usa, .fin, .ltu, .svk, .hun: .allies
 		case .ind, .irn, .rus, .est, .lva, .bel, .rom, .mol: .soviet
-		case .sea: .axis // never used: sea tiles are excluded from combat
+		case .none: .none
 		}
 	}
 
-	// Selectable nations, excluding the `.sea` strategic-map sentinel.
-	static var playable: [Country] { allCases.filter { $0 != .sea } }
+	// Selectable nations
+	static var playable: [Country] { allCases.filter { $0 != .none } }
 }
 
 extension Player {
