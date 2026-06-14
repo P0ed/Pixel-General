@@ -27,6 +27,7 @@
 ## Map
 
 - Keep roads/buildings in political/supply map mode.
+- Fix city tile clipping it's top part.
 
 ## Editor
 
@@ -38,3 +39,7 @@
 
 - **Controls** — list of actions with associated buttons for keyboard/gamepad.
 - **Rules** — `GameMechanics.md` but without referencing engine internals.
+
+## iOS target
+
+- Migrate to UIKit/SwiftUI to make the App universal.
