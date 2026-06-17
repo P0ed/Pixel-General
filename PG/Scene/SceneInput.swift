@@ -1,33 +1,29 @@
 import SpriteKit
+import UIKit
 import COR
 
 extension Scene where State: ~Copyable {
 
-	func processKeyEvent(_ event: NSEvent) {
-		if let nodes, let input = mode.keyboard(nodes, event) {
-			apply(input)
-		}
-		let flags = event.modifierFlags.intersection([.shift, .command])
-
-		switch event.characters {
-		case "f" where flags == .command: window.toggleFullScreen(nil)
-		case "q" where flags == .command: saveAndExit()
-		default: break
-		}
+	@discardableResult
+	func handle(key: UIKey) -> Bool {
+		guard let nodes, let input = mode.keyboard(nodes, key) else { return false }
+		apply(input)
+		return true
 	}
 
-	func processMouseEvent(_ event: NSEvent) {
+	/// `scenePoint` is in scene coordinates.
+	func processTouch(at scenePoint: CGPoint) {
 		guard let nodes, let baseNodes else { return }
 		if menuState == nil {
-			if let input = mode.mouse(nodes, event) {
+			if let input = mode.mouse(nodes, scenePoint) {
 				apply(input)
 			}
 		} else {
-			guard self.nodes(at: event.location(in: self))
+			guard self.nodes(at: scenePoint)
 				.contains(where: { n in n == baseNodes.menu })
 			else { return apply(.action(.b)) }
 
-			baseNodes.menu.nodes(at: event.location(in: baseNodes.menu))
+			baseNodes.menu.nodes(at: baseNodes.menu.convert(scenePoint, from: self))
 				.compactMap { n in n as? SKShapeNode }.first
 				.flatMap { n in n.name == nil ? n : nil }
 				.flatMap(baseNodes.menu.children.firstIndex)
@@ -38,22 +34,21 @@ extension Scene where State: ~Copyable {
 
 extension Input {
 
-	init?(keyboardEvent event: NSEvent) {
-		let flags = event.modifierFlags.intersection([.shift, .command])
+	@MainActor
+	init?(key: UIKey) {
+		let shift = key.modifierFlags.contains(.shift)
 
-		switch event.keyCode {
-		case 36, 49: self = .action(.a)
-		case 51: self = .action(.b)
-		case 53: self = .menu
+		switch key.keyCode {
+		case .keyboardReturnOrEnter, .keyboardSpacebar: self = .action(.a)
+		case .keyboardDeleteOrBackspace: self = .action(.b)
+		case .keyboardEscape: self = .menu
+		case .keyboardTab: self = .target(shift ? .prev : .next)
+		case .keyboardLeftArrow: self = .direction(.left)
+		case .keyboardRightArrow: self = .direction(.right)
+		case .keyboardDownArrow: self = .direction(.down)
+		case .keyboardUpArrow: self = .direction(.up)
 
-		default: switch event.specialKey {
-		case .tab: self = .target(flags == .shift ? .prev : .next)
-		case .leftArrow: self = .direction(.left)
-		case .rightArrow: self = .direction(.right)
-		case .downArrow: self = .direction(.down)
-		case .upArrow: self = .direction(.up)
-
-		default: switch event.characters {
+		default: switch key.charactersIgnoringModifiers {
 		case "[": self = .target(.prev)
 		case "]": self = .target(.next)
 		case "a": self = .action(.a)
@@ -65,7 +60,6 @@ extension Input {
 		case "c": self = .scale(4)
 		case "§": self = .mode
 		default: return nil
-		}
 		}
 		}
 	}

@@ -3,7 +3,7 @@
 The codebase is split into two modules:
 
 - **COR** — the headless, deterministic game core (data structures, model, state, reducers, AI). Pure logic, no UI/SpriteKit dependency. Its public API is consumed via `import COR`.
-- **PG** — the app/presentation layer: SpriteKit scenes and nodes, rendering, input wiring, networking, editor, and save/load.
+- **PG** — the app/presentation layer: SpriteKit scenes and nodes, rendering, input wiring, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `GameViewController` (`PG/main.swift`) hosting one global `SKView`; the view controller forwards hardware-keyboard `UIPress` events to the active scene, while touches and trackpad/scroll panning are handled in `Scene` itself.
 
 Three game modes:
 - **HQ** (unit management),
@@ -124,7 +124,7 @@ COR/                  Headless game core (import COR), no UI dependency
 
 PG/                   App & presentation layer
   Scene/              SpriteKit scenes, SceneMode, input, rendering, settings
-  Extensions/         AppKit / SpriteKit / Colors / Images helpers
+  Extensions/         UIKit / SpriteKit / Colors / Images helpers
   Networking/         Client, Connection, Server, Messages, NetSession (LAN relay)
   Tactical/           Tactical nodes, mode, event rendering, status, unit sprites
   HQ/                 HQ nodes, mode, campaign & scenario selection, LAN lobby

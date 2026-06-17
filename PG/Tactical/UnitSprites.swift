@@ -1,4 +1,5 @@
 import SpriteKit
+import UIKit
 import COR
 
 extension Unit {
@@ -100,7 +101,7 @@ extension Country {
 		}
 	}
 
-	var flag: NSImage {
+	var flag: UIImage {
 		switch self {
 		case .usa: .usa
 		case .swe: .swe

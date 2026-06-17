@@ -1,4 +1,5 @@
 import SpriteKit
+import UIKit
 import COR
 
 // LAN lobby flows. The host edits four seats (country / human–AI–open type /
@@ -20,21 +21,22 @@ extension HQNodes {
 	}
 
 	func joinMenu(_ root: MenuState<HQAction>) -> MenuState<HQAction>? {
-		guard let (host, port) = Self.askForAddress() else { return nil }
-
-		let session = NetSession.join(host: host, port: port)
-		net = session
-		session.onLobby = { [weak scene] in
-			guard let scene, scene.menuState != nil else { return }
-			scene.show(modifying(lobby(root)) { m in
-				m.cursor = scene.menuState?.cursor ?? 0
-			})
+		Self.askForAddress { address in
+			let session = NetSession.join(address)
+			net = session
+			session.onLobby = { [weak scene] in
+				guard let scene, scene.menuState != nil else { return }
+				scene.show(modifying(lobby(root)) { m in
+					m.cursor = scene.menuState?.cursor ?? 0
+				})
+			}
+			session.onEnd = { [weak scene] in
+				guard let scene, scene.menuState != nil else { return }
+				scene.show(root)
+			}
+			scene?.show(lobby(root))
 		}
-		session.onEnd = { [weak scene] in
-			guard let scene, scene.menuState != nil else { return }
-			scene.show(root)
-		}
-		return lobby(root)
+		return root
 	}
 
 	private func lobby(_ root: MenuState<HQAction>) -> MenuState<HQAction> {
@@ -103,8 +105,8 @@ extension HQNodes {
 		}
 		let sizes = ["SizeS", "SizeM", "SizeL"]
 		let bottom: [MenuItem<HQAction>] = isHost ? [
+			.init(icon: "Empty", status: .init(text: Address.me.string), update: id),
 			.space,
-			.init(icon: "Empty", status: .init(text: session.address), update: id),
 			.init(
 				icon: sizes[(session.size - 16) / 8],
 				status: .init(text: "Size: \(session.size)"),
@@ -113,7 +115,7 @@ extension HQNodes {
 					return rebuilt(cursor: 14)
 				}
 			),
-			.init(icon: "Start", status: .init(text: "Start", action: .init(session.address)), update: { menu in
+			.init(icon: "Start", status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
 				guard let scene else { return nil }
 				session.start(units: scene.state.units.compactMap { u in u.alive ? u : nil })
 				return session.started ? nil : menu
@@ -145,24 +147,21 @@ extension HQNodes {
 	}
 
 	@MainActor
-	private static func askForAddress() -> (String, UInt16)? {
-		let alert = NSAlert()
-		alert.messageText = "Join LAN battle"
-		alert.informativeText = "Host address as ip:port"
-		alert.addButton(withTitle: "Join")
-		alert.addButton(withTitle: "Cancel")
-
-		let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-		field.stringValue = UserDefaults.standard.string(forKey: "lanHost")
-			?? "192.168.1.1:\(NetSession.defaultPort)"
-		alert.accessoryView = field
-		alert.window.initialFirstResponder = field
-
-		guard alert.runModal() == .alertFirstButtonReturn else { return nil }
-		UserDefaults.standard.set(field.stringValue, forKey: "lanHost")
-
-		let parts = field.stringValue.split(separator: ":")
-		guard let host = parts.first.map(String.init), !host.isEmpty else { return nil }
-		return (host, parts.count > 1 ? UInt16(parts[1]) ?? NetSession.defaultPort : NetSession.defaultPort)
+	private static func askForAddress(_ completion: @escaping @MainActor (Address) -> Void) {
+		controller.alert(
+			title: "Join LAN battle",
+			message: "Host address as ip:port",
+			fields: [
+				{ field in field.text = UserDefaults.standard.lanHost.string }
+			],
+			actions: [
+				.cancel(),
+				.action(title: "Join") { alert in
+					let address = Address(alert.textFields?.first?.text ?? "") ?? .default
+					UserDefaults.standard.lanHost = address
+					completion(address)
+				},
+			]
+		)
 	}
 }

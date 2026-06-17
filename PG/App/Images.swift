@@ -1,15 +1,13 @@
-import SpriteKit
+import UIKit
 
-extension NSImage {
+extension UIImage {
 
 	var cg: CGImage? {
-		unsafe cgImage(forProposedRect: nil, context: nil, hints: nil)!
+		cgImage
 	}
 
-	func tinted(_ color: NSColor) -> NSImage {
-		cg?.tinted(color.cgColor).map {
-			NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height))
-		} ?? self
+	func tinted(_ color: UIColor) -> UIImage {
+		cg?.tinted(color.cgColor).map { UIImage(cgImage: $0) } ?? self
 	}
 }
 

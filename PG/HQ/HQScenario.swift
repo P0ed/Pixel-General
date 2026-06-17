@@ -128,7 +128,6 @@ extension PlayerType {
 }
 
 private extension UInt16 {
-
 	static var poor: Self { 0x0B00 }
 	static var rich: Self { 0x1400 }
 }

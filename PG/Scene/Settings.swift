@@ -5,13 +5,6 @@ struct Settings {
 	var soundLevel: UInt8 = 1
 }
 
-@MainActor
-var settings: Settings = UserDefaults.standard.data(forKey: "settings").flatMap(decode) ?? Settings() {
-	didSet {
-		UserDefaults.standard.set(encode(settings), forKey: "settings")
-	}
-}
-
 extension Settings {
 
 	mutating func toggleSound() {

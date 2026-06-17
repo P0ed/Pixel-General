@@ -56,7 +56,7 @@
 		5F10D2822FCEFBCF00E6B598 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F10D2812FCEFBCF00E6B598 /* Core.swift */; };
 		5F10D2842FCF128B00E6B598 /* getcrew.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F10D2832FCF128B00E6B598 /* getcrew.wav */; };
 		5F10D2862FCF75AD00E6B598 /* UserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F10D2852FCF75AD00E6B598 /* UserDefaults.swift */; };
-		5F24DC332EA95FE60085FDDC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* main.swift */; };
+		5F24DC332EA95FE60085FDDC /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F24DC322EA95FE50085FDDC /* App.swift */; };
 		5F26B9512F7EA8A0002BBF38 /* HQScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F26B9502F7EA89B002BBF38 /* HQScenario.swift */; };
 		5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC52FC3441800EF7BA3 /* Colors.swift */; };
 		5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2E4CC72FC3443B00EF7BA3 /* Images.swift */; };
@@ -90,6 +90,9 @@
 		5FB524B12FAD111F0017B672 /* EditorNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524B02FAD111E0017B672 /* EditorNodes.swift */; };
 		5FBA4D7B2EF6DB7900D7C1B0 /* NotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D7A2EF6DB7700D7C1B0 /* NotificationCenter.swift */; };
 		5FBA4D802EF6FD8900D7C1B0 /* Scenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBA4D7F2EF6FD8800D7C1B0 /* Scenes.swift */; };
+		5FC91A082FE03D6D00803AC0 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A072FE03D6B00803AC0 /* ViewController.swift */; };
+		5FC91A0A2FE04B2C00803AC0 /* AlertController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A092FE04B2A00803AC0 /* AlertController.swift */; };
+		5FC91A0C2FE04C7700803AC0 /* Address.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A0B2FE04C7500803AC0 /* Address.swift */; };
 		5FCA9A010000000000000001 /* StrategicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9A020000000000000002 /* StrategicTests.swift */; };
 		5FCA9B010000000000000001 /* NetSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B020000000000000002 /* NetSession.swift */; };
 		5FCA9B030000000000000003 /* HQLobby.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B040000000000000004 /* HQLobby.swift */; };
@@ -157,7 +160,7 @@
 		5F168CF02FC0A572004AEFFA /* SovietAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietAI.swift; sourceTree = "<group>"; };
 		5F168CF42FC0AD45004AEFFA /* AxisAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisAI.swift; sourceTree = "<group>"; };
 		5F178BF72FC9A3D4003251A0 /* Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shapes.swift; sourceTree = "<group>"; };
-		5F24DC322EA95FE50085FDDC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		5F24DC322EA95FE50085FDDC /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		5F26B9502F7EA89B002BBF38 /* HQScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQScenario.swift; sourceTree = "<group>"; };
 		5F26B9522F7EE565002BBF38 /* TacticalTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalTransport.swift; sourceTree = "<group>"; };
 		5F2A33A42EA93AC3008A0A95 /* boom-l.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "boom-l.wav"; sourceTree = "<group>"; };
@@ -227,6 +230,9 @@
 		5FBA4D7D2EF6E26200D7C1B0 /* StrategicState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicState.swift; sourceTree = "<group>"; };
 		5FBA4D7F2EF6FD8800D7C1B0 /* Scenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenes.swift; sourceTree = "<group>"; };
 		5FBA4D822EF7016D00D7C1B0 /* Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Input.swift; sourceTree = "<group>"; };
+		5FC91A072FE03D6B00803AC0 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		5FC91A092FE04B2A00803AC0 /* AlertController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertController.swift; sourceTree = "<group>"; };
+		5FC91A0B2FE04C7500803AC0 /* Address.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Address.swift; sourceTree = "<group>"; };
 		5FCA9A020000000000000002 /* StrategicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicTests.swift; sourceTree = "<group>"; };
 		5FCA9B020000000000000002 /* NetSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetSession.swift; sourceTree = "<group>"; };
 		5FCA9B040000000000000004 /* HQLobby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQLobby.swift; sourceTree = "<group>"; };
@@ -417,9 +423,9 @@
 		5F919D4A2EA9579B0037A208 /* PG */ = {
 			isa = PBXGroup;
 			children = (
+				5FBA4D842EF7047600D7C1B0 /* App */,
 				5F5A71582F24F9590059B314 /* Scene */,
 				5FE121892F7FCF99001C16A5 /* Networking */,
-				5FBA4D842EF7047600D7C1B0 /* Extensions */,
 				5F5560F82EF5B04C00C08E14 /* HQ */,
 				5FBA4D7C2EF6E24F00D7C1B0 /* Strategic */,
 				5F5560F52EF5ADDB00C08E14 /* Tactical */,
@@ -427,7 +433,7 @@
 				5F2A33A72EA93AC3008A0A95 /* Sounds */,
 				5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */,
 				5FBA4D7F2EF6FD8800D7C1B0 /* Scenes.swift */,
-				5F24DC322EA95FE50085FDDC /* main.swift */,
+				5F24DC322EA95FE50085FDDC /* App.swift */,
 				5F919D702EA95ADF0037A208 /* Info.plist */,
 			);
 			path = PG;
@@ -488,16 +494,18 @@
 			path = Strategic;
 			sourceTree = "<group>";
 		};
-		5FBA4D842EF7047600D7C1B0 /* Extensions */ = {
+		5FBA4D842EF7047600D7C1B0 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				5FC91A072FE03D6B00803AC0 /* ViewController.swift */,
+				5FC91A092FE04B2A00803AC0 /* AlertController.swift */,
 				5F10D2852FCF75AD00E6B598 /* UserDefaults.swift */,
 				5FBA4D7A2EF6DB7700D7C1B0 /* NotificationCenter.swift */,
 				5F2A33BE2EA93AC3008A0A95 /* SpriteKit.swift */,
 				5F2E4CC52FC3441800EF7BA3 /* Colors.swift */,
 				5F2E4CC72FC3443B00EF7BA3 /* Images.swift */,
 			);
-			path = Extensions;
+			path = App;
 			sourceTree = "<group>";
 		};
 		5FBA4D852EF7048E00D7C1B0 /* Foundation */ = {
@@ -549,6 +557,7 @@
 				5FE1218E2F7FE42F001C16A5 /* Server.swift */,
 				5FE121902F7FF0B6001C16A5 /* Client.swift */,
 				5FE1218A2F7FCFA1001C16A5 /* Connection.swift */,
+				5FC91A0B2FE04C7500803AC0 /* Address.swift */,
 				5FE1218C2F7FD6CA001C16A5 /* Messages.swift */,
 				5FCA9B020000000000000002 /* NetSession.swift */,
 			);
@@ -637,7 +646,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					5F10D23A2FCEE14700E6B598 = {
 						CreatedOnToolsVersion = 26.2;
@@ -764,6 +773,7 @@
 				5F2E4CC62FC3441A00EF7BA3 /* Colors.swift in Sources */,
 				5FE3C16C2F0C51EE00C522D3 /* MapNodes.swift in Sources */,
 				5FF200772EF44FC500B659E7 /* SceneMode.swift in Sources */,
+				5FC91A082FE03D6D00803AC0 /* ViewController.swift in Sources */,
 				5F919D542EA959670037A208 /* HIDController.swift in Sources */,
 				5F5561052EF5B89B00C08E14 /* HQEvent.swift in Sources */,
 				5FE44F1B2F9BC18300A589F1 /* HQCampaign.swift in Sources */,
@@ -771,7 +781,7 @@
 				5F5560FA2EF5B05D00C08E14 /* HQMode.swift in Sources */,
 				5F649EF22F952C6900F9CE89 /* HQNewGame.swift in Sources */,
 				5FB524AF2FAD10AA0017B672 /* EditorState.swift in Sources */,
-				5F24DC332EA95FE60085FDDC /* main.swift in Sources */,
+				5F24DC332EA95FE60085FDDC /* App.swift in Sources */,
 				5FE94DDB2F9B990500004EC8 /* StrategicNodes.swift in Sources */,
 				5FE121912F7FF0B6001C16A5 /* Client.swift in Sources */,
 				5FCA9B010000000000000001 /* NetSession.swift in Sources */,
@@ -791,6 +801,7 @@
 				5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */,
 				5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */,
 				5FBA4D7B2EF6DB7900D7C1B0 /* NotificationCenter.swift in Sources */,
+				5FC91A0A2FE04B2C00803AC0 /* AlertController.swift in Sources */,
 				5F10D2712FCEF03000E6B598 /* TacticalStatus.swift in Sources */,
 				5F919D572EA959670037A208 /* TacticalNodes.swift in Sources */,
 				5F919D582EA959670037A208 /* SceneInput.swift in Sources */,
@@ -800,6 +811,7 @@
 				5F919D5B2EA959670037A208 /* TacticalEvent.swift in Sources */,
 				5F919D5C2EA959670037A208 /* SpriteKit.swift in Sources */,
 				5F919D5D2EA959670037A208 /* BaseNodes.swift in Sources */,
+				5FC91A0C2FE04C7700803AC0 /* Address.swift in Sources */,
 				5F919D532EA9595D0037A208 /* Scene.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -837,6 +849,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -875,6 +888,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -915,7 +929,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QD4KPKNULM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -932,21 +946,22 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Pixel General";
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_STRICT_MEMORY_SAFETY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -957,7 +972,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QD4KPKNULM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -974,21 +989,22 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Pixel General";
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_STRICT_MEMORY_SAFETY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -1089,7 +1105,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
-				SDKROOT = macosx;
+				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1153,7 +1169,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.pg;
-				SDKROOT = macosx;
+				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_STRICT_MEMORY_SAFETY = YES;

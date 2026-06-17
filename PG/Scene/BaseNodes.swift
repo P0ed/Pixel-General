@@ -1,4 +1,5 @@
 import SpriteKit
+import UIKit
 
 @MainActor
 struct BaseNodes {
@@ -11,7 +12,7 @@ struct BaseNodes {
 struct Status {
 	var text: String = ""
 	var action: String = ""
-	var flag: NSImage?
+	var flag: UIImage?
 }
 
 extension Scene where State: ~Copyable {

@@ -8,7 +8,7 @@ extension UserDefaults {
 	}
 
 	func load(slot: Slot) -> Core {
-		UserDefaults.standard.data(
+		data(
 			forKey: slot == .auto ? "auto" : "main"
 		).flatMap { data in
 			decode(data) as Core?
@@ -16,10 +16,20 @@ extension UserDefaults {
 	}
 
 	func save(_ state: borrowing Core, in slot: Slot) {
-		UserDefaults.standard.set(
+		set(
 			encode(state),
 			forKey: slot == .auto ? "auto" : "main"
 		)
+	}
+
+	var settings: Settings {
+		get { data(forKey: "settings").flatMap(decode) ?? Settings() }
+		set { set(encode(newValue), forKey: "settings") }
+	}
+
+	var lanHost: Address {
+		get { string(forKey: "lanHost").flatMap(Address.init) ?? .default }
+		set { set(newValue.string, forKey: "lanHost") }
 	}
 }
 

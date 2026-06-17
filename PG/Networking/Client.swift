@@ -13,13 +13,13 @@ final class Client<Message: MessageProtocol> {
 		self.handleMessage = handleMessage
 	}
 
-	func connect(host: String, port: UInt16) {
+	func connect(_ address: Address) {
 		guard connection == nil else { return print("Already connected") }
 
 		connection = Connection<Message>(
 			connection: NWConnection(
-				host: .init(host),
-				port: .init(integerLiteral: port),
+				host: .init(address.host),
+				port: .init(integerLiteral: address.port),
 				using: .tcp
 			),
 			ready: { [weak self] _ in

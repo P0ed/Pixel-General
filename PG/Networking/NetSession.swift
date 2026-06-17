@@ -4,11 +4,6 @@ import Darwin
 import SpriteKit
 import COR
 
-/// The active LAN session, if any. `nil` means fully local play — every
-/// multiplayer hook in the scene pipeline no-ops on `nil`.
-@MainActor
-var net: NetSession?
-
 /// Coordinator for a LAN battle: a deterministic action relay over the
 /// length-prefixed TCP `Connection`. The host generates the battle once and
 /// ships the whole encoded `TacticalState`; afterwards only `TacticalAction`s
@@ -23,7 +18,6 @@ final class NetSession {
 	enum Role { case host, client }
 
 	let role: Role
-	static let defaultPort: UInt16 = 9899
 
 	// Lobby: four seats, edited by the host, mirrored to clients via `lobby`
 	// snapshots. `Player.alive == false` means the seat is off; `.remote`
@@ -73,11 +67,11 @@ final class NetSession {
 		session.server?.onDisconnect = { [weak session] con in
 			session?.connectionLost(con)
 		}
-		session.server?.start(port: defaultPort)
+		session.server?.start(port: Address.defaultPort)
 		return session
 	}
 
-	static func join(host: String, port: UInt16) -> NetSession {
+	static func join(_ address: Address) -> NetSession {
 		let session = NetSession(role: .client, seats: .init(repeating: Player(alive: false)))
 		session.client = Client<Message> { [weak session] message in
 			session?.handle(message)
@@ -89,7 +83,7 @@ final class NetSession {
 		session.client?.onDisconnect = { [weak session] in
 			session?.hostLost()
 		}
-		session.client?.connect(host: host, port: port)
+		session.client?.connect(address)
 		return session
 	}
 
@@ -114,10 +108,6 @@ final class NetSession {
 
 	func claimed(_ seat: Int) -> Bool {
 		owners[seat] != nil
-	}
-
-	var address: String {
-		"\(lanAddress() ?? "?"):\(Self.defaultPort)"
 	}
 
 	func set(seat: Int, country: Country) {
@@ -369,35 +359,4 @@ final class NetSession {
 			return nil
 		}
 	}
-}
-
-/// First non-loopback IPv4 of this machine (preferring en0), for the lobby.
-private func lanAddress() -> String? {
-	var first: UnsafeMutablePointer<ifaddrs>?
-	guard unsafe getifaddrs(&first) == 0 else { return nil }
-	defer { unsafe freeifaddrs(first) }
-
-	var fallback: String?
-	var next = unsafe first
-	while let current = unsafe next {
-		let ifa = unsafe current.pointee
-		defer { unsafe next = ifa.ifa_next }
-
-		guard let sa = unsafe ifa.ifa_addr,
-			  unsafe sa.pointee.sa_family == UInt8(AF_INET),
-			  unsafe ifa.ifa_flags & UInt32(IFF_LOOPBACK) == 0
-		else { continue }
-
-		var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-		guard unsafe getnameinfo(
-			sa, socklen_t(sa.pointee.sa_len),
-			&host, socklen_t(host.count),
-			nil, 0, NI_NUMERICHOST
-		) == 0 else { continue }
-
-		let name = String(cString: host)
-		if unsafe String(cString: ifa.ifa_name) == "en0" { return name }
-		if fallback == nil { fallback = name }
-	}
-	return fallback
 }

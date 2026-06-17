@@ -1,5 +1,6 @@
 import SpriteKit
 import GameplayKit
+import UIKit
 import COR
 
 @MainActor
@@ -11,7 +12,7 @@ extension SKTileGroup {
 	static let green = make(color: .greenSurface)
 	static let red = make(color: .redSurface)
 
-	private static func make(_ image: NSImage) -> SKTileGroup {
+	private static func make(_ image: UIImage) -> SKTileGroup {
 		let texture = SKTexture(image: image)
 		texture.filteringMode = .nearest
 
@@ -49,10 +50,10 @@ extension SKTileGroup {
 		color: SKColor,
 		elevation: Int = 0,
 		fog: Bool = false,
-		decoration: NSImage? = nil
+		decoration: UIImage? = nil
 	) -> SKTileGroup {
-		let frame = NSImage.frame(elevation)
-		let surface = NSImage.surface(elevation)
+		let frame = UIImage.frame(elevation)
+		let surface = UIImage.surface(elevation)
 		let image = composite(
 			frame: frame,
 			surface: surface,
@@ -105,7 +106,7 @@ extension Terrain {
 		}
 	}
 
-	var decoration: NSImage? {
+	var decoration: UIImage? {
 		switch self {
 		case .none, .water, .field, .forest, .hill, .forestHill, .mountain: nil
 		case .city: .city
@@ -182,9 +183,9 @@ extension SKTileMapNode {
 	}
 }
 
-extension NSImage {
+extension UIImage {
 
-	static func frame(_ elevation: Int) -> NSImage {
+	static func frame(_ elevation: Int) -> UIImage {
 		switch elevation {
 		case 0: .frame0
 		case 1: .frame1
@@ -192,7 +193,7 @@ extension NSImage {
 		}
 	}
 
-	static func surface(_ elevation: Int) -> NSImage {
+	static func surface(_ elevation: Int) -> UIImage {
 		switch elevation {
 		case 0: .surface0
 		case 1: .surface1
@@ -203,10 +204,10 @@ extension NSImage {
 
 @MainActor
 private func composite(
-	frame: NSImage,
-	surface: NSImage,
+	frame: UIImage,
+	surface: UIImage,
 	tint: SKColor,
-	decoration: NSImage?,
+	decoration: UIImage?,
 	fog: Bool
 ) -> CGImage {
 	.draw(size: frame.size) { context in

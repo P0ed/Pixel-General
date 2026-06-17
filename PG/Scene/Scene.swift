@@ -1,5 +1,6 @@
 import SpriteKit
 import AVFAudio
+import UIKit
 import COR
 
 final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
@@ -9,12 +10,13 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private var processing = false
 	private var pending: Input?
 	private(set) var pan: CGPoint = .zero
+	private var lastPan: CGPoint = .zero
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
-	private var willCloseWindow: Any?
-	private var eventsMonitor: Any?
+	private var enterBackground: Any?
+	private var panRecognizer: UIPanGestureRecognizer?
 
 	init(mode: SceneMode<State, Action, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
 		self.state = state
@@ -24,21 +26,15 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	required init?(coder aDecoder: NSCoder) { fatalError() }
 
-	override func becomeFirstResponder() -> Bool {
-		super.becomeFirstResponder()
-		return true
-	}
-
 	override func sceneDidLoad() {
 		backgroundColor = .black
 		scaleMode = .aspectFit
 		audioEngine.mainMixerNode.outputVolume = settings.outputVolume
 
-		willCloseWindow = NotificationCenter.default.addMainActorObserver(
-			forName: NSWindow.willCloseNotification,
-			object: window,
+		enterBackground = NotificationCenter.default.addMainActorObserver(
+			forName: UIApplication.didEnterBackgroundNotification,
 			using: { [weak self] _ in
-				self?.saveAndExit()
+				self?.saveState()
 			}
 		)
 
@@ -52,16 +48,27 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		hid.send = { [weak self] input in self?.apply(input) }
 
 		didSetState()
-
-		eventsMonitor = panHandler
-
-		// Kick automatic action sources (AI seats, queued network actions)
-		// that don't wait for local input.
 		advance()
 	}
 
 	isolated deinit {
-		if let eventsMonitor { NSEvent.removeMonitor(eventsMonitor) }
+		if let enterBackground { NotificationCenter.default.removeObserver(enterBackground) }
+	}
+
+	override func didMove(to view: SKView) {
+		controller.keyHandler = { [weak self] key in self?.handle(key: key) ?? false }
+
+		let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+		pan.minimumNumberOfTouches = 2
+		pan.maximumNumberOfTouches = 2
+		pan.allowedScrollTypesMask = .all
+		view.addGestureRecognizer(pan)
+		panRecognizer = pan
+	}
+
+	override func willMove(from view: SKView) {
+		if let panRecognizer { view.removeGestureRecognizer(panRecognizer) }
+		panRecognizer = nil
 	}
 
 	override func didChangeSize(_ oldSize: CGSize) {
@@ -69,12 +76,9 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		baseNodes?.layout(size: size)
 	}
 
-	override func keyDown(with event: NSEvent) {
-		processKeyEvent(event)
-	}
-
-	override func mouseDown(with event: NSEvent) {
-		processMouseEvent(event)
+	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let touch = touches.first else { return }
+		processTouch(at: touch.location(in: self))
 	}
 
 	func apply(_ input: Input) {
@@ -123,10 +127,8 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		menuState = menu.flatMap { m in m.items.isEmpty ? .none : m }
 	}
 
-	func saveAndExit() {
-		net?.leave()
+	func saveState() {
 		mode.save(state)
-		exit(0)
 	}
 
 	private func didSetState() {
@@ -166,11 +168,18 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		)
 	}
 
-	private var panHandler: Any? {
-		NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] e in
-			guard let self, e.type == .scrollWheel else { return e }
-			let x = e.scrollingDeltaX
-			let y = e.scrollingDeltaY
+	/// Translates trackpad / mouse-wheel scrolling (and two-finger drags) into
+	/// discrete isometric `.pan` steps, mirroring the old AppKit scroll monitor.
+	@objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+		guard let view = gesture.view else { return }
+		switch gesture.state {
+		case .began:
+			lastPan = .zero
+		case .changed:
+			let translation = gesture.translation(in: view)
+			let x = translation.x - lastPan.x
+			let y = translation.y - lastPan.y
+			lastPan = translation
 			pan.x += x
 			pan.y += y
 
@@ -187,9 +196,11 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 				pan.y += 32
 				apply(.pan(.zero.neighbor(.down).neighbor(.right)))
 			}
-			if abs(x) < 0.1, abs(y) < 0.1 { pan = .zero }
-
-			return e
+		case .ended, .cancelled, .failed:
+			pan = .zero
+			lastPan = .zero
+		default:
+			break
 		}
 	}
 }
@@ -197,8 +208,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 extension MenuState {
 
 	var status: Status {
-		let item = cursor < items.count ? items[cursor] : nil
-		return item?.status ?? Status()
+		cursor < items.count ? items[cursor].status : Status()
 	}
 }
 

@@ -11,11 +11,11 @@ struct MapNodes {
 
 extension MapNodes {
 
-	func tile(at event: NSEvent) -> Input? {
-		guard !layers.isEmpty else { return .none }
+	/// `point` is in scene coordinates.
+	func tile(at point: CGPoint) -> Input? {
+		guard let map = layers.first, let scene = map.scene else { return .none }
 
-		let map = layers[0]
-		let location = event.location(in: map)
+		let location = map.convert(point, from: scene)
 		return .tile(
 			XY(
 				map.tileColumnIndex(fromPosition: location),

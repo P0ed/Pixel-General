@@ -1,4 +1,4 @@
-import AppKit
+import UIKit
 import COR
 
 @MainActor
@@ -14,8 +14,9 @@ struct SceneMode<State: ~Copyable, Action, Event, Nodes> {
 	var process: @MainActor (Event, Nodes, borrowing State) async -> Void
 	var update: @MainActor (Nodes, borrowing State) -> Void
 	var status: @MainActor (borrowing State) -> Status
-	var keyboard: @MainActor (Nodes, NSEvent) -> Input? = { _, e in Input(keyboardEvent: e) }
-	var mouse: @MainActor (Nodes, NSEvent) -> Input? = { _, _ in .none }
+	var keyboard: @MainActor (Nodes, UIKey) -> Input? = { _, k in Input(key: k) }
+	/// The point is in scene coordinates.
+	var mouse: @MainActor (Nodes, CGPoint) -> Input? = { _, _ in .none }
 	var save: @MainActor (borrowing State) -> Void = { _ in }
 	var layout: @MainActor (CGSize, Nodes) -> Void = { _, _ in }
 }

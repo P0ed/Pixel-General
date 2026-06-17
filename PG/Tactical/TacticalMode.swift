@@ -21,7 +21,7 @@ extension TacticalMode {
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
-			mouse: { nodes, event in nodes.map.tile(at: event) },
+			mouse: { nodes, point in nodes.map.tile(at: point) },
 			save: { state in core.store(state); core.save(auto: true) }
 		)
 	}
