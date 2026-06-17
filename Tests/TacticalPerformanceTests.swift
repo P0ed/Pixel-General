@@ -17,8 +17,6 @@ struct TacticalPerformanceTests {
 	private static let runs = 4
 	private static let mapSize = 24
 
-	// Safety rails so a stalemate can't hang the suite. A real AI battle
-	// finishes well under these.
 	private static let maxActionsPerBattle = 65_000
 	private static let maxDaysPerBattle = 256
 
@@ -34,7 +32,6 @@ struct TacticalPerformanceTests {
 				players: Self.countries.map { c in
 					Player(country: c, type: .ai, prestige: 0xF00)
 				},
-				objective: .ffa,
 				units: .small(Self.countries[0]) + .small(Self.countries[1]),
 				size: Self.mapSize,
 				seed: seed

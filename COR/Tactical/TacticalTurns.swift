@@ -11,7 +11,7 @@ extension TacticalSim {
 	}
 
 	func teamAlive(_ team: Team) -> Bool {
-		aliveTeams & 1 << country.team.rawValue != 0
+		aliveTeams & 1 << team.rawValue != 0
 	}
 
 	mutating func endTurn(into events: inout [TacticalEvent]) {
@@ -31,6 +31,9 @@ extension TacticalSim {
 
 		for _ in 0..<players.count {
 			turn += 1
+			if case let .survive(_, day: deadline) = objective, day > deadline {
+				return false
+			}
 			if player.alive {
 				player.visible = vision(for: player.country)
 				return true
@@ -42,7 +45,7 @@ extension TacticalSim {
 	var winner: Team? {
 		let teams = aliveTeams
 		return switch objective {
-		case .ffa:
+		case .none:
 			teams.nonzeroBitCount == 1
 			? Team(rawValue: UInt8(teams.trailingZeroBitCount))
 			: nil

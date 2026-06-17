@@ -17,7 +17,6 @@ struct MultiplayerTests {
 	private static func make(seed: Int = 7) -> TacticalState {
 		TacticalState(
 			players: players(),
-			objective: .ffa,
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 24,
 			seed: seed

@@ -1,5 +1,5 @@
 @frozen public enum Objective: Equatable, BitwiseCopyable {
-	case ffa
+	case none
 	case survive(Team, day: UInt16)
 }
 
@@ -18,7 +18,7 @@ public struct TacticalSim: ~Copyable {
 	public var turn: UInt32 = 0
 	public var d20: D20 = D20()
 
-	public var objective: Objective = .ffa
+	public var objective: Objective = .none
 }
 
 public struct TacticalUI {

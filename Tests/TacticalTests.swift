@@ -17,7 +17,6 @@ struct TacticalTests {
 		let units = Array<Unit>.small(.swe)
 		let state = TacticalState(
 			players: players,
-			objective: .ffa,
 			units: units,
 			size: 32,
 			seed: 0
@@ -65,7 +64,6 @@ struct TacticalTests {
 	@Test func cursorMovementStaysInBounds() {
 		var state = TacticalState(
 			players: Self.players(),
-			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -88,7 +86,6 @@ struct TacticalTests {
 	@Test func selectingOwnUnitSetsSelectableMoves() {
 		var state = TacticalState(
 			players: Self.players(),
-			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -118,7 +115,6 @@ struct TacticalTests {
 
 		var state = TacticalState(
 			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
-			objective: .ffa,
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 32,
 			seed: 0
@@ -146,7 +142,6 @@ struct TacticalTests {
 	@Test func endTurnIncrementsTurnCounter() {
 		var state = TacticalState(
 			players: Self.players(types: [.ai, .ai, .ai, .ai]),
-			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -321,7 +316,6 @@ struct TacticalTests {
 	@Test func movesForOwnUnitNotIncludeStartTile() {
 		let state = TacticalState(
 			players: Self.players(),
-			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -342,8 +336,8 @@ struct TacticalTests {
 
 	// MARK: - Objectives
 
-	/// Build a unitless 1v1 sim with a single city at `cityXY` owned by `owner`,
-	/// for exercising `decided()` in isolation. swe = axis (attacker),
+	/// Build a unitless 1v1 sim with a single city at `cityXY` owned by
+	/// `controller`, for exercising `winner` in isolation. fin = axis (attacker),
 	/// rus = soviet (defender).
 	private static func objectiveSim(cityXY: XY, controller: Country) -> TacticalSim {
 		var map = Map<32, Terrain>(size: 32, zero: .field)
@@ -362,6 +356,17 @@ struct TacticalTests {
 
 		sim.turn = 6
 		#expect(sim.winner == .soviet)
+	}
+
+	@Test func annihilatingSurvivorBeforeDeadlineWinsForAttacker() {
+		var sim = Self.objectiveSim(cityXY: XY(5, 5), controller: .rus)
+		sim.objective = .survive(.soviet, day: 20)
+
+		// Defender (rus = soviet) wiped out at day 3, well before the deadline.
+		sim.turn = 4
+		sim.players.modifyEach { _, p in if p.country == .rus { p.alive = false } }
+
+		#expect(sim.winner == .axis, "Eliminating the survivor before its deadline wins")
 	}
 
 	@Test func ffaObjectiveResolvesOnLastTeamStanding() {

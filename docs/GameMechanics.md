@@ -14,14 +14,16 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
 - `endTurn()` for the acting player runs in this order:
   1. **captureCities** — reflag settlements under the acting player's
      ground units; players with no remaining settlements are marked dead.
-  2. **Per living unit** of the acting player: resupply (ammo top-up if
+  2. **Prestige income** — the acting player is paid income from the
+     settlements it controls (so each player earns once per day, on its turn).
+  3. **Per living unit** of the acting player: resupply (ammo top-up if
      adjacent to a friendly `type == .supply` unit and no enemy nearby) →
      regen (`regen` skill, +1 HP) → entrench (ground only, towards terrain
      base) → rest (refresh `ap`/`mp` to max).
-  3. **Player upkeep**: vision is recomputed and prestige income is paid.
-  4. Advance `turn` to the next living player.
-- The battle ends when the active `Objective` is decided — by default when only
-  one team remains alive (`.end` event). See [Objectives & victory](#objectives--victory).
+  4. Advance `turn` to the next living player and recompute its vision.
+- If no more than one team is alive, no turn is advanced and the battle ends
+  (`.end` event); `TacticalSim.winner` then interprets the result against the
+  active `Objective`. See [Objectives & victory](#objectives--victory).
 
 ## Units
 
@@ -261,22 +263,25 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 Every battle carries an `Objective` on `TacticalSim`:
 
-- `ffa` — last team standing (the default; scenarios and multiplayer use
+- `none` — last team standing (the default; scenarios and multiplayer use
   it, so they behave exactly as before).
-- `capture(SetXY, by: Team, day: UInt16)` — the named team must control every
-  settlement in the set by the end of `day`. If it does, that team wins
-  immediately; if `day` passes without it, the opposing team wins (a repulse).
-  Annihilation still resolves instantly for either side.
+- `survive(Team, day: UInt16)` — the named team wins by staying alive until the
+  day count passes the deadline. If that team is annihilated first, the opposing
+  team wins immediately; otherwise, once `day` exceeds the deadline, the surviving
+  team is the winner. (`day` is `Int(turn) / players.count + 1`.)
 
-Campaign battles are 1v1, so a single attacker-framed objective covers both
-sides: `capture` is the attacker's goal and, from the defender's view, its
-hold/survive goal. `decided() -> Team?` (`TacticalTurns.swift`) is evaluated in
-the end-of-turn pass after `captureCities` — so the attacker can clinch on its
-own turn — and again after the turn advances, where a `capture` deadline expires
-into a repulse. The winning team is stored in `TacticalSim.winner` and `.end` is
-emitted; `winner` stays `.none` while the battle runs and on a player-driven
-abandon/draw (which therefore resolves as a repulse). `Core.complete` reads
-`won = sim.winner == humanTeam`.
+Campaign battles are 1v1, so a single objective covers both sides: `survive` is
+the defender's goal and, from the attacker's view, the deadline it must beat by
+annihilating the defender (capturing every settlement eliminates a player). The
+result is the computed property `TacticalSim.winner` (`TacticalTurns.swift`),
+returning `Team?`; it stays `nil` while the battle is undecided. `Core.complete`
+reads `won = sim.winner == humanTeam`, so a repulse is `winner` being the
+surviving defender or `nil` (a player-driven abandon/draw).
+
+> **Not yet wired:** `winner` is read only by `Core.complete`, not by the
+> end-of-turn pass. `endTurn` still emits `.end` purely on last-team-standing,
+> so a `survive` deadline does not by itself end a live battle — it is decided
+> when the battle ends by annihilation or a manual Retreat/Abandon/Draw.
 
 ### Map mode
 

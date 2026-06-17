@@ -2,7 +2,7 @@ public extension TacticalState {
 
 	init(
 		players: [Player],
-		objective: Objective,
+		objective: Objective = .none,
 		units: [Unit],
 		size: Int,
 		seed: Int

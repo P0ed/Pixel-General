@@ -8,13 +8,18 @@
 
 ## Campaign
 
-Phase 1 (province conquest) and the Phase 2 Tactical `Objective` layer are in:
+Phase 1 (province conquest) and a first Tactical `Objective` are in:
 `StrategicSim` Europe map, `canAttack` / `resolveBattle`, the HQ → battle →
-annex loop (`Core.startCampaignBattle` / `Core.complete`), and turn-limited
-`capture` objectives that resolve to `TacticalSim.winner` — a campaign offensive
-must take the province by `TacticalSim.captureDeadline` or be repulsed.
+annex loop (`Core.startCampaignBattle` / `Core.complete`), and a
+`survive(Team, day:)` objective that `TacticalSim.winner` resolves to a winning
+team — a campaign offensive deploys against `survive(defender.team, day: 20)`.
 Remaining:
 
+- Auto-end on the objective: `winner` is read only by `Core.complete`; `endTurn`
+  still emits `.end` solely on last-team-standing, so the deadline doesn't yet
+  end a live battle on its own.
+- A settlement-`capture` objective (take named settlements by day N), so an
+  offensive can be framed by the attacker's goal rather than only the defender's.
 - Setup menu (two difficulty knobs: prestige, experience).
 - A new graph-walking strategic AI (the AI offensives are not wired yet — the
   reducer's `endTurn` just advances the turn; wiring them also unlocks the

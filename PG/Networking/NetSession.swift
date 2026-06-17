@@ -175,7 +175,6 @@ final class NetSession {
 
 		let state = TacticalState(
 			players: players,
-			objective: .ffa,
 			units: units,
 			size: size,
 			seed: .random(in: 0 ..< 128)
