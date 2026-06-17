@@ -64,10 +64,11 @@ public extension StrategicSim {
 		battle = nil
 		guard won else { return }
 		let r = Self.captureRadius
-		for xy in owner.indices
-		where owner[xy] != .none
+		for xy in owner.indices where owner[xy] != .none
+			&& owner[xy].team == owner[tile].team
 			&& abs(xy.x - tile.x) <= r
-			&& abs(xy.y - tile.y) <= r {
+			&& abs(xy.y - tile.y) <= r
+		{
 			owner[xy] = country
 		}
 	}

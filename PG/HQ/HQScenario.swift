@@ -90,8 +90,9 @@ extension HQNodes {
 			}),
 			.close(icon: "Start", status: "Start", update: { _ in
 				guard let scene else { return }
-				core.startScenario(TacticalState.make(
+				core.startScenario(TacticalState(
 					players: players.compactMap { $0.alive ? $0 : nil },
+					objective: .ffa,
 					units: scene.state.sim.units.compactMap { u in u.alive ? u : nil },
 					size: 16 + size * 8,
 					seed: .random(in: 0..<128)

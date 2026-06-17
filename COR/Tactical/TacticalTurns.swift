@@ -10,8 +10,14 @@ extension TacticalSim {
 		}
 	}
 
+	func teamAlive(_ team: Team) -> Bool {
+		aliveTeams & 1 << country.team.rawValue != 0
+	}
+
 	mutating func endTurn(into events: inout [TacticalEvent]) {
 		captureCities()
+
+		player.prestige.increment(by: income(for: player.country))
 
 		for i in units.indices where units[i].alive && units[i].country == player.country {
 			resupply(unit: i.uid, endOfTurn: true, into: &events)
@@ -21,19 +27,30 @@ extension TacticalSim {
 	}
 
 	private mutating func nextTurn() -> Bool {
+		if aliveTeams.nonzeroBitCount <= 1 { return false }
+
 		for _ in 0..<players.count {
 			turn += 1
-
-			player.visible = vision(for: player.country)
-
-			if playerIndex == 0 {
-				player.prestige.increment(by: income(for: player.country))
-			}
 			if player.alive {
-				return aliveTeams.nonzeroBitCount > 1
+				player.visible = vision(for: player.country)
+				return true
 			}
 		}
 		return false
+	}
+
+	var winner: Team? {
+		let teams = aliveTeams
+		return switch objective {
+		case .ffa:
+			teams.nonzeroBitCount == 1
+			? Team(rawValue: UInt8(teams.trailingZeroBitCount))
+			: nil
+		case let .survive(team, day: deadline):
+			teamAlive(team)
+			? (day > deadline ? team : nil)
+			: Team(rawValue: UInt8(teams.trailingZeroBitCount))
+		}
 	}
 
 	private func income(for country: Country) -> UInt16 {
@@ -57,9 +74,29 @@ extension TacticalSim {
 		}
 	}
 
+	mutating func assignControl() {
+		var anchors: [XY] = []
+		var owners: [Country] = []
+		for xy in map.indices where map[xy].isSettlement {
+			anchors.append(xy)
+			owners.append(control[xy])
+		}
+		guard !anchors.isEmpty else { return }
+
+		for xy in map.indices where !map[xy].isSettlement {
+			var best = 0
+			var bestD = xy.manhattanDistance(to: anchors[0])
+			for k in 1 ..< anchors.count {
+				let d = xy.manhattanDistance(to: anchors[k])
+				if d < bestD { bestD = d; best = k }
+			}
+			control[xy] = owners[best]
+		}
+	}
+
 	private mutating func eliminatePlayers() {
 		let alive = players.map { i, p in p.alive && countryHasSettlements(p.country) }
-		players.modifyEach { i, player in player.alive = alive[i] }
+		players.modifyEach { i, p in p.alive = alive[i] }
 	}
 
 	private func countryHasSettlements(_ country: Country) -> Bool {

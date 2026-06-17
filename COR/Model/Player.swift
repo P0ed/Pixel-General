@@ -46,9 +46,9 @@ public extension Country {
 
 	var team: Team {
 		switch self {
-		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor: .axis
-		case .isr, .pak, .usa, .fin, .ltu, .svk, .hun: .allies
-		case .ind, .irn, .rus, .est, .lva, .bel, .rom, .mol: .soviet
+		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor, .fin, .est, .lva, .ltu: .axis
+		case .isr, .pak, .usa: .allies
+		case .ind, .irn, .rus, .bel, .rom, .mol, .svk, .hun: .soviet
 		case .none: .none
 		}
 	}

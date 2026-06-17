@@ -20,7 +20,8 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
      base) → rest (refresh `ap`/`mp` to max).
   3. **Player upkeep**: vision is recomputed and prestige income is paid.
   4. Advance `turn` to the next living player.
-- The battle ends when only one team remains alive (`.end` event).
+- The battle ends when the active `Objective` is decided — by default when only
+  one team remains alive (`.end` event). See [Objectives & victory](#objectives--victory).
 
 ## Units
 
@@ -251,7 +252,31 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
   reflags it to the unit's country. A player with no remaining
-  settlements is eliminated (`alive = false`). Last team standing wins.
+  settlements is eliminated (`alive = false`). Last team standing wins,
+  unless an `Objective` decides the battle first.
+
+### Objectives & victory
+
+`COR/Tactical/TacticalState.swift`, `COR/Tactical/TacticalTurns.swift`
+
+Every battle carries an `Objective` on `TacticalSim`:
+
+- `ffa` — last team standing (the default; scenarios and multiplayer use
+  it, so they behave exactly as before).
+- `capture(SetXY, by: Team, day: UInt16)` — the named team must control every
+  settlement in the set by the end of `day`. If it does, that team wins
+  immediately; if `day` passes without it, the opposing team wins (a repulse).
+  Annihilation still resolves instantly for either side.
+
+Campaign battles are 1v1, so a single attacker-framed objective covers both
+sides: `capture` is the attacker's goal and, from the defender's view, its
+hold/survive goal. `decided() -> Team?` (`TacticalTurns.swift`) is evaluated in
+the end-of-turn pass after `captureCities` — so the attacker can clinch on its
+own turn — and again after the turn advances, where a `capture` deadline expires
+into a repulse. The winning team is stored in `TacticalSim.winner` and `.end` is
+emitted; `winner` stays `.none` while the battle runs and on a player-driven
+abandon/draw (which therefore resolves as a repulse). `Core.complete` reads
+`won = sim.winner == humanTeam`.
 
 ### Map mode
 

@@ -1,3 +1,8 @@
+@frozen public enum Objective: Equatable, BitwiseCopyable {
+	case ffa
+	case survive(Team, day: UInt16)
+}
+
 public struct TacticalSim: ~Copyable {
 	public var map: Map<32, Terrain>
 	public var control: Map<32, Country>
@@ -12,6 +17,8 @@ public struct TacticalSim: ~Copyable {
 
 	public var turn: UInt32 = 0
 	public var d20: D20 = D20()
+
+	public var objective: Objective = .ffa
 }
 
 public struct TacticalUI {
@@ -212,26 +219,6 @@ public extension TacticalSim {
 }
 
 extension TacticalSim {
-
-	mutating func assignControl() {
-		var anchors: [XY] = []
-		var owners: [Country] = []
-		for xy in map.indices where map[xy].isSettlement {
-			anchors.append(xy)
-			owners.append(control[xy])
-		}
-		guard !anchors.isEmpty else { return }
-
-		for xy in map.indices where !map[xy].isSettlement {
-			var best = 0
-			var bestD = xy.manhattanDistance(to: anchors[0])
-			for k in 1 ..< anchors.count {
-				let d = xy.manhattanDistance(to: anchors[k])
-				if d < bestD { bestD = d; best = k }
-			}
-			control[xy] = owners[best]
-		}
-	}
 }
 
 public extension TacticalSim {

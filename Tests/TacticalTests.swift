@@ -15,8 +15,9 @@ struct TacticalTests {
 	@Test func factoryProducesValidState() {
 		let players = Self.players()
 		let units = Array<Unit>.small(.swe)
-		let state = TacticalState.make(
+		let state = TacticalState(
 			players: players,
+			objective: .ffa,
 			units: units,
 			size: 32,
 			seed: 0
@@ -62,8 +63,9 @@ struct TacticalTests {
 	}
 
 	@Test func cursorMovementStaysInBounds() {
-		var state = TacticalState.make(
+		var state = TacticalState(
 			players: Self.players(),
+			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -84,8 +86,9 @@ struct TacticalTests {
 	}
 
 	@Test func selectingOwnUnitSetsSelectableMoves() {
-		var state = TacticalState.make(
+		var state = TacticalState(
 			players: Self.players(),
+			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -113,8 +116,9 @@ struct TacticalTests {
 
 		var ai = TacticalSim.AI()
 
-		var state = TacticalState.make(
+		var state = TacticalState(
 			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
+			objective: .ffa,
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 32,
 			seed: 0
@@ -140,8 +144,9 @@ struct TacticalTests {
 	}
 
 	@Test func endTurnIncrementsTurnCounter() {
-		var state = TacticalState.make(
+		var state = TacticalState(
 			players: Self.players(types: [.ai, .ai, .ai, .ai]),
+			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -314,8 +319,9 @@ struct TacticalTests {
 	}
 
 	@Test func movesForOwnUnitNotIncludeStartTile() {
-		let state = TacticalState.make(
+		let state = TacticalState(
 			players: Self.players(),
+			objective: .ffa,
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
@@ -332,5 +338,37 @@ struct TacticalTests {
 			!state.sim.moves(for: uid)[state.sim.position[uid]],
 			"Movable unit's own tile must not be reachable"
 		)
+	}
+
+	// MARK: - Objectives
+
+	/// Build a unitless 1v1 sim with a single city at `cityXY` owned by `owner`,
+	/// for exercising `decided()` in isolation. swe = axis (attacker),
+	/// rus = soviet (defender).
+	private static func objectiveSim(cityXY: XY, controller: Country) -> TacticalSim {
+		var map = Map<32, Terrain>(size: 32, zero: .field)
+		map[cityXY] = .city
+		let players = [
+			Player(country: .fin, type: .human, prestige: 0xF00),
+			Player(country: .rus, type: .ai, prestige: 0xF00),
+		]
+		return TacticalSim(map: consume map, players: players, cities: [(cityXY, controller)], units: [])
+	}
+
+	@Test func captureDeadlineExpiresToDefender() {
+		let target = XY(5, 5)
+		var sim = Self.objectiveSim(cityXY: target, controller: .rus)
+		sim.objective = .survive(.soviet, day: 3)
+
+		sim.turn = 6
+		#expect(sim.winner == .soviet)
+	}
+
+	@Test func ffaObjectiveResolvesOnLastTeamStanding() {
+		var sim = Self.objectiveSim(cityXY: XY(5, 5), controller: .rus)
+		#expect(sim.winner == nil, "Both teams alive → battle continues")
+
+		sim.players.modifyEach { _, p in if p.country == .rus { p.alive = false } }
+		#expect(sim.winner == .axis, "Last team standing wins")
 	}
 }

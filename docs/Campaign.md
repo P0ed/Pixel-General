@@ -13,17 +13,21 @@ This lives in the `Strategic` module (`COR/Strategic/`, `PG/Strategic/`). See
 split, the `~Copyable` / `BitwiseCopyable` constraints, and the `Core` root
 state these build on.
 
-**Implementation status (Phase 1, province conquest — largely wired):**
+**Implementation status (Phase 1 province conquest + Phase 2 objectives — wired):**
 `StrategicSim` holds the Europe political map (`owner: Map<32, Country>`), the
 player country, a turn counter, and the contested `battle` tile.
 `StrategicSim.canAttack` gates offensives to bordering enemy provinces;
-`Core.startCampaignBattle(at:)` deploys the HQ roster into a `make()` battle and
-`Core.complete` → `StrategicSim.resolveBattle(at:won:by:)` flips ownership of
-land tiles within `captureRadius` (Chebyshev 2) on a win. `Country` has been
-expanded to the European nations (so `fin` exists). Still **proposed** below:
-`Objective`/`BattleOutcome` types (current resolution is a simple last-team
-win bool), battle-budget plumbing, the two-pool economy, supply-distance
-budget, enemy retreat/consolidation, the strategic AI, and slot persistence.
+`Core.startCampaignBattle(at:)` deploys the HQ roster into a `make()` battle —
+arming it with a `capture` `Objective` (take the defender's settlements by
+`TacticalSim.captureDeadline`) — and `Core.complete` →
+`StrategicSim.resolveBattle(at:won:by:)` flips ownership of land tiles within
+`captureRadius` (Chebyshev 2) on a win, where `won = sim.winner == humanTeam`.
+`Country` has been expanded to the European nations (so `fin` exists). Tactical
+`Objective` + turn-limited win checks are **implemented** (see
+[Battles](#battles-the-bridge-to-tactical)). Still **proposed** below:
+battle-budget plumbing, the two-pool economy, supply-distance budget, enemy
+retreat/consolidation, the strategic AI (whose offensives unlock the "enemy
+attacks you" outcome), and slot persistence.
 
 ## Design pillars (locked decisions)
 
@@ -70,8 +74,9 @@ HQ  ──manage roster──┐
   carrying an `Objective` and a fixed prestige budget.
 - **`complete()`** already does the load-bearing writeback: it returns the
   surviving non-`aux` core units (reset) and the player's prestige to HQ
-  (`Core.complete` filters `u[.aux]`). The campaign extends this to also apply
-  the `BattleOutcome` to the strategic map (annex / repulse / province loss).
+  (`Core.complete` filters `u[.aux]`), and applies the result to the strategic
+  map via `resolveBattle(at:won:by:)` with `won = sim.winner == humanTeam`
+  (annex on a win, otherwise repulse).
 
 The persistent-army half of the loop is therefore **already wired**; the
 campaign mostly adds the strategic map, the battle bridge (objectives +
@@ -85,7 +90,7 @@ used by Tactical's `MapMode.political`, which recolors tiles by `control`. See
 [Map](./Map.md) for the reference layout.
 
 - **Adjacency** is free via `XY.n4` / `XY.n8` (as used for ZoC in Tactical).
-- **Ownership** changes by flipping province tiles on a `BattleOutcome`.
+- **Ownership** changes by flipping province tiles when `resolveBattle` records a win.
 - **No fog** — the entire map and every country's holdings are visible.
 
 ## Roster & fronts
@@ -130,31 +135,33 @@ from battle duration:
 ## Battles: the bridge to Tactical
 
 A campaign battle is a normal `TacticalState` with two additions: an
-**objective** and a **fixed budget**. Today victory is hardcoded to "last team
-standing" in `COR/Tactical/TacticalTurns.swift`; the campaign needs explicit,
-asymmetric goals.
+**objective** (implemented) and a **fixed budget** (still proposed). The
+objective lives on `TacticalSim` (`COR/Tactical/TacticalState.swift`,
+`COR/Tactical/TacticalTurns.swift`):
 
 ```swift
-// Proposed — COR/Tactical
-@frozen public enum Objective {            // per player / per team
-    case annihilate                        // current behavior (default)
-    case capture(SetXY, by: UInt16)        // take these settlements by day N
-    case hold(SetXY, until: UInt16)        // hold these through day N
-    case survive(UInt16)                   // stay alive N days
-}
-
-@frozen public enum BattleOutcome {
-    case attackerWins   // objective captured in time → annex province
-    case defenderHolds  // timer expired / attacker wiped/withdrew → repulse ("draw")
-    case defenderFalls  // (AI offensive vs you) you lose the province
+@frozen public enum Objective: Equatable, BitwiseCopyable {
+    case ffa									// for more than 2 teams
+    case capture(SetXY, by: Team, day: UInt16)	// `by` team controls all of SetXY by `day`
 }
 ```
 
-`SetXY` and `UInt16` day-counts are already inline-friendly. The objective is
-checked in the end-of-turn pass alongside `captureCities`. An offensive is
-typically `capture(provinceCities, by: dayN)` for the attacker mirrored by
-`hold(...)` / `survive(dayN)` for the defender — your "hold the cities for 16
-days to win" is the defender's side of exactly this.
+Because every campaign battle is **1v1**, a single *attacker-framed* objective
+is enough: `capture` *is* the attacker's goal and, viewed from the other side,
+the defender's hold/survive goal — the defender wins exactly when the attacker
+fails by the deadline. So there are no separate `hold`/`survive` cases to keep
+in sync, and no multi-valued `BattleOutcome`: the sim records the decided team
+in `TacticalSim.winner`, and `Core.complete` computes `won = sim.winner ==
+humanTeam`. A repulse is simply `winner` being the defending team (deadline
+expired) or `.none` (you abandoned/drew).
+
+`SetXY`, `Team`, and the `UInt16` day-count are all inline-friendly, so
+`Objective` keeps `TacticalSim` `clone`/`encode`-able. `decided() -> Team?` is
+checked in the end-of-turn pass alongside `captureCities` — so the attacker can
+clinch the instant it takes the last settlement — and again after the turn
+advances, where a `capture` deadline expires into a repulse. An offensive sets
+`capture(defenderSettlements, by: human.team, day: TacticalSim.captureDeadline)`
+(16, aligned with the `canRetreat` / `canDraw` gate).
 
 Turn-limited objectives do double duty: they **kill turtling** (no time to milk
 income) and **stop the overwhelming-force grind** (you must *achieve* the
@@ -201,16 +208,18 @@ middle.
 
 Separate **battle outcome** from **campaign outcome**:
 
-- **You attack and lose / time out → repulse (`defenderHolds`).** The province
-  stays enemy, your survivors retreat to your border, the dead stay dead. *The
-  campaign continues.* This is the common "draw" — a failed offensive, not a
-  game-over.
-- **The enemy attacks and you lose → `defenderFalls`.** You lose that province;
-  survivors fall back inward. Losing your **capital / last province** ends the
-  campaign in defeat.
+- **You attack and lose / time out → repulse.** `sim.winner` is the defending
+  team (deadline expired) or `.none` (you withdrew), so `Core.complete` leaves
+  the province enemy. Your survivors return to the roster, the dead stay dead.
+  *The campaign continues.* This is the common "draw" — a failed offensive, not
+  a game-over.
+- **The enemy attacks and you lose.** *(Not yet wired — needs the strategic AI
+  to launch offensives.)* You would lose that province; survivors fall back
+  inward, and losing your **capital / last province** ends the campaign in
+  defeat.
 - **Abandon — two flavors:**
-  - *Abandon a battle* (reuse the existing Tactical Retreat/Abandon path):
-    resolves as a repulse or province loss; the campaign continues.
+  - *Abandon a battle* (the existing Tactical Retreat/Abandon path): leaves
+    `winner == .none`, so it resolves as a repulse; the campaign continues.
   - *Abandon the campaign:* there is no separate roster outside the slot, so
     "abandoning" is just **deleting the slot** (or starting a New game over it).
     Consistent with the high-stakes ethos, that discards the campaign and its

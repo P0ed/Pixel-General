@@ -76,8 +76,9 @@ public extension Core {
 		let units = hq?.sim.units.compactMap { u in u.alive ? u : nil } ?? []
 
 		strategic?.sim.battle = tile
-		tactical = TacticalState.make(
+		tactical = TacticalState(
 			players: players,
+			objective: .survive(defender.team, day: 20),
 			units: units,
 			size: 24,
 			seed: .random(in: 0 ..< 128)
@@ -109,10 +110,8 @@ public extension Core {
 
 		tactical = nil
 
-		// Campaign battle: flip provinces around the contested tile and return to
-		// the strategic map. Otherwise this was a one-off scenario → return to HQ.
 		if let tile = strategic?.sim.battle {
-			let won = state.sim.teamAlive(c.team)
+			let won = state.sim.winner == c.team
 			strategic?.sim.resolveBattle(at: tile, won: won, by: c)
 			location = .strategic
 		} else {

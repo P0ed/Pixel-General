@@ -1,14 +1,15 @@
 public extension TacticalState {
 
-	static func make(
+	init(
 		players: [Player],
+		objective: Objective,
 		units: [Unit],
 		size: Int,
 		seed: Int
-	) -> TacticalState {
+	) {
 		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
 		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count)
-		let cities: [(XY, Country)] = cities(
+		let cities: [(XY, Country)] = Self.cities(
 			countries: players.map { p in p.country },
 			map: map
 		)
@@ -21,7 +22,7 @@ public extension TacticalState {
 		.mapInPlace { u in u.reset() }
 
 		print("Map gen done. Seed: \(seed) size: \(size)")
-		return TacticalState(
+		self = TacticalState(
 			map: map,
 			players: players,
 			cities: cities,
@@ -48,14 +49,5 @@ public extension TacticalState {
 			}
 			return (xy, c)
 		}
-	}
-}
-
-public extension TacticalSim {
-
-	/// Whether any player of `team` is still alive — used to decide the victor of
-	/// a campaign battle once the `.end` condition (one team remaining) is met.
-	func teamAlive(_ team: Team) -> Bool {
-		players.firstMap { _, p in p.alive && p.country.team == team ? true : nil } ?? false
 	}
 }

@@ -8,17 +8,22 @@
 
 ## Campaign
 
-Phase 1 (province conquest) is in: `StrategicSim` Europe map, `canAttack` /
-`resolveBattle`, and the HQ → battle → annex loop (`Core.startCampaignBattle` /
-`Core.complete`). Remaining:
+Phase 1 (province conquest) and the Phase 2 Tactical `Objective` layer are in:
+`StrategicSim` Europe map, `canAttack` / `resolveBattle`, the HQ → battle →
+annex loop (`Core.startCampaignBattle` / `Core.complete`), and turn-limited
+`capture` objectives that resolve to `TacticalSim.winner` — a campaign offensive
+must take the province by `TacticalSim.captureDeadline` or be repulsed.
+Remaining:
 
 - Setup menu (two difficulty knobs: prestige, experience).
 - A new graph-walking strategic AI (the AI offensives are not wired yet — the
-  reducer's `endTurn` just advances the turn).
-- `Objective` / `BattleOutcome` types and turn-limited win checks in Tactical
-  (current resolution is a simple last-team-standing win bool).
+  reducer's `endTurn` just advances the turn; wiring them also unlocks the
+  "enemy attacks you / you lose a province" outcome).
 - Anti-snowball model (supply-distance budget, permanent casualties, defender
-  consolidation, turn limits) and the loss/draw/abandon rules.
+  consolidation) and the remaining loss/abandon rules.
+- Surface the objective and result in Tactical: an in-battle objective indicator
+  and a victory/defeat screen (today the result is shown only by returning to
+  the strategic map).
 
 ## General
 

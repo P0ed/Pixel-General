@@ -30,10 +30,11 @@ struct TacticalPerformanceTests {
 		let clock = ContinuousClock()
 
 		for seed in 0..<Self.runs {
-			var state = TacticalState.make(
+			var state = TacticalState(
 				players: Self.countries.map { c in
 					Player(country: c, type: .ai, prestige: 0xF00)
 				},
+				objective: .ffa,
 				units: .small(Self.countries[0]) + .small(Self.countries[1]),
 				size: Self.mapSize,
 				seed: seed
