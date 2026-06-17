@@ -2,7 +2,7 @@ import UIKit
 import SpriteKit
 import COR
 
-@MainActor var core: Core = .load(auto: true)
+@MainActor var core: Core = .load()
 @MainActor var settings: Settings = UserDefaults.standard.settings {
 	didSet { UserDefaults.standard.settings = settings }
 }

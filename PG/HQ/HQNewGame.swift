@@ -11,7 +11,7 @@ extension HQNodes {
 					status: "\(c)",
 					update: { _ in
 						core = .new(country: c)
-						core.save(auto: true)
+						core.save()
 						present(.auto)
 					}
 				)

@@ -96,7 +96,7 @@ extension HQNodes {
 					size: 16 + size * 8,
 					seed: .random(in: 0..<128)
 				))
-				core.save(auto: true)
+				core.save()
 				present(.auto)
 			})
 		]

@@ -21,17 +21,8 @@ extension TacticalNodes {
 		scene.show(MenuState(
 			items: [
 				.close(icon: "Start", status: "End turn", action: .end),
-				.close(icon: "Save", status: "Save") { [weak scene] _ in
-					if let scene {
-						core.store(scene.state)
-						core.save(auto: false)
-					}
-				},
-				.close(icon: "Load", status: "Load") { _ in
-					net?.leave()
-					core = .load(auto: false)
-					present(.auto)
-				},
+				.space,
+				.load { [weak scene] in scene?.saveState() },
 				(
 					state.canRetreat
 					? .close(icon: "HQ", status: "Retreat") { [weak scene] _ in

@@ -19,7 +19,7 @@ extension TacticalNodes {
 	func endGame(_ state: borrowing TacticalState) {
 		net?.leave()
 		core.complete(state)
-		core.save(auto: true)
+		core.save()
 		present(.auto)
 	}
 }

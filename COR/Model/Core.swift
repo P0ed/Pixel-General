@@ -29,7 +29,6 @@ public extension Core {
 				player: Player(country: country, type: .human),
 				units: .init(
 					head: modifying(.base(country)) { base in
-						base[15] = .kf41.lvl(3).skills([.crit, .evasion]).country(country)
 						base.modifyEach { u in u.reset() }
 					},
 					tail: .empty

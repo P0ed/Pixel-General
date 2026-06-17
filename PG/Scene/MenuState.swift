@@ -62,3 +62,25 @@ extension MenuState {
 		}
 	}
 }
+
+import Foundation
+
+extension MenuItem {
+
+	static func load(save: @escaping () -> Void) -> MenuItem {
+		MenuItem(icon: "Load", status: .init(text: "Load \(UserDefaults.standard.slot + 1)"), update: { state in
+			MenuState(
+				items: (0...3).map { slot in
+						.close(icon: "Load", status: .init(text: "Slot \(slot + 1)"), update: { _ in
+							save()
+							core = .load(slot: slot)
+							present(.auto)
+						})
+				},
+				close: { _ in
+					state
+				}
+			)
+		})
+	}
+}

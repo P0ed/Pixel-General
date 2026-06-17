@@ -182,7 +182,7 @@ final class NetSession {
 		started = true
 		server?.broadcast(.start(encode(state)))
 		core.startScenario(state)
-		core.save(auto: true)
+		core.save()
 		present(.auto)
 	}
 
@@ -259,7 +259,7 @@ final class NetSession {
 			localize(&state)
 			started = true
 			core.startScenario(state)
-			core.save(auto: true)
+			core.save()
 			present(.auto)
 		case .action(let data):
 			guard started, let action: TacticalAction = decode(data) else { return }

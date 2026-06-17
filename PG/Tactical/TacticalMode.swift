@@ -22,7 +22,7 @@ extension TacticalMode {
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			mouse: { nodes, point in nodes.map.tile(at: point) },
-			save: { state in core.store(state); core.save(auto: true) }
+			save: { state in core.store(state); core.save() }
 		)
 	}
 }

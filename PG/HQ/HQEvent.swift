@@ -69,16 +69,8 @@ extension HQNodes {
 				guard let scene else { return nil }
 				return newGameMenu(scene.state)
 			},
-			.close(icon: "Save", status: .init(text: "Save")) { _ in
-				if let scene {
-					core.store(scene.state)
-					core.save(auto: false)
-				}
-			},
-			.close(icon: "Load", status: .init(text: "Load")) { _ in
-				core = .load(auto: false)
-				present(.auto)
-			},
+			.load { scene?.saveState() },
+			.space,
 			.close(icon: "Chess", status: .init(text: "Editor")) { _ in
 				guard let scene else { return }
 				core.store(scene.state)

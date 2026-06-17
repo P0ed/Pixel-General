@@ -3,22 +3,24 @@ import COR
 
 extension UserDefaults {
 
-	enum Slot {
-		case auto, main
+	var slot: Int {
+		get { integer(forKey: "slot") }
+		set { set(newValue, forKey: "slot") }
 	}
 
-	func load(slot: Slot) -> Core {
-		data(
-			forKey: slot == .auto ? "auto" : "main"
+	func load(slot: Int) -> Core {
+		self.slot = slot
+		return data(
+			forKey: "slot-\(slot)"
 		).flatMap { data in
 			decode(data) as Core?
 		} ?? .new(country: .default)
 	}
 
-	func save(_ state: borrowing Core, in slot: Slot) {
+	func save(_ state: borrowing Core) {
 		set(
 			encode(state),
-			forKey: slot == .auto ? "auto" : "main"
+			forKey: "slot-\(slot)"
 		)
 	}
 
@@ -35,11 +37,11 @@ extension UserDefaults {
 
 extension Core {
 
-	static func load(auto: Bool) -> Core {
-		UserDefaults.standard.load(slot: auto ? .auto : .main)
+	static func load(slot: Int = UserDefaults.standard.slot) -> Core {
+		UserDefaults.standard.load(slot: slot)
 	}
 
-	func save(auto: Bool) {
-		UserDefaults.standard.save(self, in: auto ? .auto : .main)
+	func save() {
+		UserDefaults.standard.save(self)
 	}
 }

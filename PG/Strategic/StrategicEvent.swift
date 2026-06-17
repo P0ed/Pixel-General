@@ -14,7 +14,7 @@ extension StrategicNodes {
 		guard let scene else { return }
 		core.store(scene.state) // persist the strategic map before the battle
 		core.startCampaignBattle(at: xy)
-		core.save(auto: true)
+		core.save()
 		present(.auto)
 	}
 
@@ -25,19 +25,12 @@ extension StrategicNodes {
 
 		scene.show(MenuState(
 			items: [
+				.space,
+				.space,
+				.load { [weak scene] in scene?.saveState() },
 				.close(icon: "HQ", status: "HQ") { /*[weak scene]*/ _ in
 					core.goHQ()
-					core.save(auto: true)
-					present(.auto)
-				},
-				.close(icon: "Save", status: "Save") { [weak scene] _ in
-					if let scene {
-						core.store(scene.state)
-						core.save(auto: false)
-					}
-				},
-				.close(icon: "Load", status: "Load") { _ in
-					core = .load(auto: false)
+					core.save()
 					present(.auto)
 				},
 			]
