@@ -1,29 +1,29 @@
 public extension StrategicState {
 
-	mutating func apply(_ input: Input) -> Reaction<StrategicAction, StrategicEvent> {
+	mutating func apply(_ input: Input) -> StrategicReaction {
 		switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .tile(let xy): select(xy)
-		case .action(.a): attack(at: cursor)
+		case .action(.a): attack(at: ui.cursor)
 		case .menu: .events([.menu])
 		default: .none
 		}
 	}
 
-	private mutating func moveCursor(_ direction: Direction) -> Reaction<StrategicAction, StrategicEvent> {
-		let xy = cursor.neighbor(direction)
-		if owner.contains(xy) { cursor = xy; camera = xy }
+	private mutating func moveCursor(_ direction: Direction) -> StrategicReaction {
+		let xy = ui.cursor.neighbor(direction)
+		if sim.owner.contains(xy) { ui.cursor = xy; ui.camera = xy }
 		return .none
 	}
 
-	private mutating func select(_ xy: XY) -> Reaction<StrategicAction, StrategicEvent> {
-		guard owner.contains(xy) else { return .none }
-		cursor = xy
-		camera = xy
+	private mutating func select(_ xy: XY) -> StrategicReaction {
+		guard sim.owner.contains(xy) else { return .none }
+		ui.cursor = xy
+		ui.camera = xy
 		return attack(at: xy)
 	}
 
-	private func attack(at xy: XY) -> Reaction<StrategicAction, StrategicEvent> {
-		canAttack(xy) ? .action(.attack(xy)) : .none
+	private func attack(at xy: XY) -> StrategicReaction {
+		sim.canAttack(xy) ? .action(.attack(xy)) : .none
 	}
 }

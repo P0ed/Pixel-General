@@ -1,4 +1,4 @@
-public extension TacticalState {
+public extension TacticalSim {
 
 	func uidAt(_ xy: XY) -> UID? {
 		let id = unitsMap[xy]
@@ -111,21 +111,20 @@ public extension TacticalState {
 		}
 		units[uid].mp.decrement()
 		units[uid].ent = 0
-		if units[uid].type == .art {
+		if !units[uid].canAttackAfterMove {
 			units[uid].ap = 0
 		}
 
-		if player.type == .human {
-			selectUnit(units[uid].hasActions ? uid : .none)
-		}
-		var path = CArray<16, XY>(head: moves.start, tail: .zero)
-		for xy in route.reversed() {
-			path.add(xy)
-			if xy == pos { break }
-		}
-		events.append(.move(uid, Path(count: path.count, path: path.mem)))
-		if cargo[uid.index] != .none {
-			events.append(.move(cargo[uid.index], Path(count: path.count, path: path.mem)))
+		if pos != moves.start {
+			var path = CArray<16, XY>(head: moves.start, tail: .zero)
+			for xy in route.reversed() {
+				path.add(xy)
+				if xy == pos { break }
+			}
+			events.append(.move(uid, Path(count: path.count, path: path.mem)))
+			if cargo[uid.index] != .none {
+				events.append(.move(cargo[uid.index], Path(count: path.count, path: path.mem)))
+			}
 		}
 
 		if let interruptor, units[interruptor].country.team != units[uid].country.team {

@@ -1,4 +1,4 @@
-extension TacticalState {
+extension TacticalSim {
 
 	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
 		let su = units[src]
@@ -61,13 +61,6 @@ extension TacticalState {
 			return dmg
 		}
 		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
-
-		///# Logs
-//		let srcStr = "\(source.country) \(source.type)"
-//		let dstStr = "\(destination.country) \(destination.type)"
-//		let dmgLine = "ts: \([t1, t2, t3]) ds: \(ds) dmg: \(dmg) \(dmgs)"
-//		print("fire \(source.country) \(source.type) -> \(destination.country) \(destination.type)\natk: \(atk) def: \(def)\n\(dmgLine)")
-		///# Logs
 
 		source.ammo.decrement()
 		destination.hp.decrement(by: dmg)
@@ -162,9 +155,6 @@ extension TacticalState {
 		}
 		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
 			retreat(unit: dst, from: position[si], into: &events)
-		}
-		if player.type == .human {
-			selectUnit(units[si].alive && units[si].hasActions ? src : .none)
 		}
 	}
 

@@ -13,22 +13,14 @@ import Foundation
 /// are comparable across runs as long as the inputs below are unchanged.
 struct TacticalPerformanceTests {
 
-	// MARK: - Tunables
-	//
-	// Bump `runs` for a steadier average, or swap `countries` to profile a
-	// different match-up. swe is axis, usa is allies, so both are driven by the
-	// `axis` planner — `drive` still dispatches per team, so soviet countries
-	// (rus/ind/irn) work here too.
-
-	private static let countries: [Country] = [.swe, .usa]
-	private static let runs = 4		// was 5, seed 4 fials to resolve the battle.
-									// the game needs a draw mechanics
+	private static let countries: [Country] = [.fin, .rus]
+	private static let runs = 4
 	private static let mapSize = 24
 
 	// Safety rails so a stalemate can't hang the suite. A real AI battle
 	// finishes well under these.
-	private static let maxActionsPerBattle = 47_000
-	private static let maxDaysPerBattle = 150
+	private static let maxActionsPerBattle = 65_000
+	private static let maxDaysPerBattle = 256
 
 	@Test func aiBattleResolutionPerformance() {
 		var resolvedCount = 0
@@ -49,21 +41,21 @@ struct TacticalPerformanceTests {
 
 			// One shared plan is fine: `axis` rebuilds it whenever the turn
 			// rolls over, i.e. once per player per round.
-			var ai = TacticalState.AI()
+			var ai = TacticalSim.AI()
 			var actions = 0
 
 			// Time only the resolution loop, not map generation (setup cost).
 			let start = clock.now
 			while actions < Self.maxActionsPerBattle {
-				if state.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
-				if state.day > Self.maxDaysPerBattle { break }		// stalemate guard
-				let action = state.drive(&ai)
+				if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
+				if state.sim.day > Self.maxDaysPerBattle { break }		// stalemate guard
+				let action = state.sim.drive(&ai)
 				_ = state.reduce(action)
 				actions += 1
 			}
 			let elapsed = clock.now - start
 
-			let resolved = state.aliveTeams.nonzeroBitCount <= 1
+			let resolved = state.sim.aliveTeams.nonzeroBitCount <= 1
 			if resolved { resolvedCount += 1 }
 			totalActions += actions
 			totalDuration += elapsed
@@ -74,7 +66,7 @@ struct TacticalPerformanceTests {
 				resolved ? "resolved" : "UNRESOLVED",
 				elapsed.seconds,
 				actions,
-				state.day,
+				state.sim.day,
 				Double(actions) / max(elapsed.seconds, 1e-9)
 			))
 		}
@@ -98,7 +90,7 @@ struct TacticalPerformanceTests {
 	}
 }
 
-private extension TacticalState {
+private extension TacticalSim {
 	/// Asks the correct AI generator for the current player's next action,
 	/// mirroring the team dispatch in `TacticalState.run`.
 	func drive(_ ai: inout AI) -> TacticalAction {

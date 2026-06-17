@@ -8,10 +8,22 @@ hook is **RPG progression**: a *persistent roster* that gains experience,
 skills, and upgrades across the whole campaign — and that you can later stake
 in multiplayer, where you can lose all of it.
 
-This sits in the (currently scaffold-only) `Strategic` module
-(`COR/Strategic/`, `PG/Strategic/`). See [Architecture](./Architecture.md) for
-the `SceneMode` pipeline, the `~Copyable` / `BitwiseCopyable` constraints, and
-the `Core` root state these build on.
+This lives in the `Strategic` module (`COR/Strategic/`, `PG/Strategic/`). See
+[Architecture](./Architecture.md) for the `SceneMode` pipeline, the `Sim`/`UI`
+split, the `~Copyable` / `BitwiseCopyable` constraints, and the `Core` root
+state these build on.
+
+**Implementation status (Phase 1, province conquest — largely wired):**
+`StrategicSim` holds the Europe political map (`owner: Map<32, Country>`), the
+player country, a turn counter, and the contested `battle` tile.
+`StrategicSim.canAttack` gates offensives to bordering enemy provinces;
+`Core.startCampaignBattle(at:)` deploys the HQ roster into a `make()` battle and
+`Core.complete` → `StrategicSim.resolveBattle(at:won:by:)` flips ownership of
+land tiles within `captureRadius` (Chebyshev 2) on a win. `Country` has been
+expanded to the European nations (so `fin` exists). Still **proposed** below:
+`Objective`/`BattleOutcome` types (current resolution is a simple last-team
+win bool), battle-budget plumbing, the two-pool economy, supply-distance
+budget, enemy retreat/consolidation, the strategic AI, and slot persistence.
 
 ## Design pillars (locked decisions)
 
@@ -246,7 +258,7 @@ battle budget.)
 ## Healing
 
 Both modes you want already exist in the engine
-(`COR/Tactical/TacticalAction.swift`) — they only need exposing:
+(`COR/Tactical/UnitResupply.swift`) — they only need exposing:
 
 - **Slow regen, no exp loss** — the end-of-turn / `regen`-style heal (+1 HP near
   supply). In-battle, with a supply truck adjacent, over a couple of days. The
@@ -326,27 +338,31 @@ mutate a campaign roster mid-run.
 
 ## State design
 
-`StrategicState` must obey the same constraints as the rest of the core: fully
+`StrategicSim` obeys the same constraints as the rest of the core: fully
 inline, `BitwiseCopyable`, no heap/`String`/class fields (so `clone` / `encode`
-/ `decode` stay valid — see [Architecture](./Architecture.md)). Sketch:
+/ `decode` stay valid — see [Architecture](./Architecture.md)). Following the
+[Sim / UI split](./Architecture.md#sim--ui-split), presentation-only fields live
+in a separate `StrategicUI`. The current implementation is deliberately lean:
 
 ```swift
-// Proposed — COR/Strategic/StrategicState.swift
-public struct StrategicState: ~Copyable {
-    public var owner: Map<32, Country>        // province ownership (political map)
-    public var players: CArray<N, Player>     // per-country status: alive, prestige, type
-    public var capitals: CArray<N, XY>        // each country's capital province
-    public var turn: UInt32 = 0
-    public var d20: D20 = D20()               // strategic rolls (auto-resolve, AI)
-    // + the engaged-front linkage / pending Objective when an offensive launches
-    // UI-only cursor/camera fields, never read by reduce (cf. Reaction split)
+// COR/Strategic/StrategicState.swift (implemented)
+public struct StrategicSim: ~Copyable {
+    public var owner: Map<32, Country>   // province ownership (political map)
+    public var human: Country            // the country the player commands
+    public var turn: UInt32
+    public var battle: XY?               // contested tile while a battle runs; nil otherwise
+}
+public struct StrategicUI {              // never read by reduce; may diverge per peer
+    public var cursor: XY
+    public var camera: XY
 }
 ```
 
-`StrategicAction` (currently empty) gains roughly:
-`select(XY)` / `commit([UID])` / `attack(from: XY, to: XY)` /
-`heal(...)` / `endTurn`. The persistent roster itself stays in `HQState`, not
-duplicated here.
+`StrategicAction` is `attack(XY)` / `endTurn` today; the design envisions it
+growing `commit([UID])` (hand-picked per-front deployment), `heal(...)`, and a
+strategic `d20` for auto-resolve. The persistent roster itself stays in
+`HQState`, not duplicated here. Per-country status (alive/prestige) and
+capitals are not yet modeled.
 
 **Optional — auto-resolve.** A deterministic strength comparison (using the
 in-state `d20`) for trivial/lopsided fronts, so the player isn't forced to play
@@ -354,12 +370,12 @@ every skirmish. The single biggest "keep it HoI-*lite*" lever.
 
 ## Open items / prerequisites
 
-- **Expand `Country` to the European nations.** `Map.md` names 19 countries;
-  `COR/Model/Player.swift`'s `Country` enum has only 10, and they are a
-  modern/fictional mix — `rus` exists but **`fin` does not**, so the
-  Finland-vs-Russia campaign can't even be expressed today. Add the missing
-  `Map.md` cases (a `UInt8` enum — cheap) and extend the `Country.team` switch.
-  This is independent of the deferred diplomacy redesign.
+- **~~Expand `Country` to the European nations.~~** *Done.*
+  `COR/Model/Player.swift`'s `Country` enum now carries `.none` plus 23 nations
+  — the original modern set plus the European cases (`nor`, `fin`, `ger`, `est`,
+  `lva`, `ltu`, `pol`, `bel`, `cze`, `svk`, `aut`, `rom`, `hun`, `mol`) — and
+  `Country.team` covers them all. `StrategicState.europe(human:)` builds the
+  political map from an ASCII legend.
 - **`Objective` + win-condition check** in `TacticalTurns` (today: last team
   standing only).
 - **Battle-budget plumbing** through `TacticalState.make` and the in-battle

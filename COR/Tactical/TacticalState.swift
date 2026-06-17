@@ -1,4 +1,4 @@
-public struct TacticalState: ~Copyable {
+public struct TacticalSim: ~Copyable {
 	public var map: Map<32, Terrain>
 	public var control: Map<32, Country>
 	public var unitsMap: Map<32, UID>
@@ -12,20 +12,51 @@ public struct TacticalState: ~Copyable {
 
 	public var turn: UInt32 = 0
 	public var d20: D20 = D20()
+}
 
+public struct TacticalUI {
 	public var cursor: XY = .zero
 	public var camera: XY = .zero
 	public var selectedUnit: UID = .none
 	public var selectable: SetXY?
 	public var scale: Int = 1
 	public var mapMode: MapMode = .terrain
+
+	public init() {}
+}
+
+public extension TacticalUI {
+
+	mutating func select(_ uid: UID, in sim: borrowing TacticalSim) {
+		selectedUnit = uid
+		if uid != .none {
+			cursor = sim.position[uid]
+			selectable = sim.units[uid].canMove ? sim.moves(for: uid).setXY : .none
+		} else {
+			selectable = .none
+		}
+	}
+}
+
+public struct TacticalState: ~Copyable {
+	public var sim: TacticalSim
+	public var ui: TacticalUI
+
+	public init(sim: consuming TacticalSim, ui: TacticalUI = TacticalUI()) {
+		self.sim = sim
+		self.ui = ui
+	}
+
+	public init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
+		self.init(sim: TacticalSim(map: map, players: players, cities: cities, units: units))
+	}
 }
 
 @frozen public enum MapMode: UInt8, Hashable {
 	case terrain, political
 }
 
-public extension TacticalState {
+public extension TacticalSim {
 
 	init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
 		self.map = map
@@ -180,7 +211,7 @@ public extension TacticalState {
 	}
 }
 
-extension TacticalState {
+extension TacticalSim {
 
 	mutating func assignControl() {
 		var anchors: [XY] = []
@@ -203,7 +234,7 @@ extension TacticalState {
 	}
 }
 
-public extension TacticalState {
+public extension TacticalSim {
 
 	var playerIndex: Int {
 		Int(turn) % players.count
@@ -245,9 +276,9 @@ public extension Terrain {
 
 	var income: UInt16 {
 		switch self {
-		case .city: 0xF
-		case .villageE, .villageN, .villageS, .villageW: 0x7
-		case .airfield: 0x3
+		case .city: 24
+		case .villageE, .villageN, .villageS, .villageW: 8
+		case .airfield: 4
 		default: 0
 		}
 	}

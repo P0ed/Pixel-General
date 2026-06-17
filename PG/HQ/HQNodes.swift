@@ -16,13 +16,13 @@ extension HQNodes {
 			scene: scene,
 			camera: Self.addCamera(
 				root: scene,
-				at: XY(scene.state.map.size - 1, scene.state.map.size - 1).point * 0.5
+				at: XY(scene.state.sim.map.size - 1, scene.state.sim.map.size - 1).point * 0.5
 			),
 			map: Self.addMap(root: scene, state: scene.state),
 			units: .init(repeating: nil)
 		)
 		units = .init { i in
-			let u = scene.state.units[i]
+			let u = scene.state.sim.units[i]
 			let node = unitSprite(uid: i.uid, unit: u)
 			node.isHidden = !u.alive
 			scene.addChild(node)
@@ -32,8 +32,8 @@ extension HQNodes {
 
 	private static func addMap(root: SKNode, state: borrowing HQState) -> MapNodes {
 
-		let layers = (0 ..< state.map.size * 2 - 1).map { idx in
-			SKTileMapNode(tiles: .colors, size: state.map.size)
+		let layers = (0 ..< state.sim.map.size * 2 - 1).map { idx in
+			SKTileMapNode(tiles: .colors, size: state.sim.map.size)
 		}
 		layers.enumerated().forEach { idx, layer in
 			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
@@ -44,12 +44,12 @@ extension HQNodes {
 
 		let nodes = MapNodes(
 			layers: layers,
-			size: state.map.size,
+			size: state.sim.map.size,
 			cursor: MapNodes.addCursor(root: root),
 			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
 		)
 
-		state.map.indices.forEach { xy in
+		state.sim.map.indices.forEach { xy in
 			nodes.setTileGroup(.gray, at: xy)
 		}
 
@@ -83,10 +83,10 @@ extension HQNodes {
 
 	func update(_ state: borrowing HQState) {
 		map.update(
-			map: state.map,
-			cursor: state.cursor,
-			selected: state.selected != .none
-				? XY(state.selected.index % 4, state.selected.index / 4)
+			map: state.sim.map,
+			cursor: state.ui.cursor,
+			selected: state.ui.selected != .none
+				? XY(state.ui.selected.index % 4, state.ui.selected.index / 4)
 				: nil
 		)
 	}

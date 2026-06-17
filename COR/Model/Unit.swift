@@ -67,6 +67,7 @@ public extension Unit {
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { mp > 0 }
 	var canAttack: Bool { ap > 0 }
+
 	var spot: UInt8 { self[.radar] ? 3 : 2 }
 
 	var maxHP: UInt8 { 0xF }
@@ -98,6 +99,13 @@ public extension Unit {
 		switch type {
 		case .lightWheel, .lightTrack, .heavyTrack: true;
 		default: false
+		}
+	}
+
+	var canAttackAfterMove: Bool {
+		switch type {
+		case .art, .aa: false
+		default: true
 		}
 	}
 
@@ -256,7 +264,7 @@ extension Unit: DeadOrAlive {
 	public var alive: Bool { hp > 0 }
 }
 
-public struct UID: Equatable {
+public struct UID: Equatable, BitwiseCopyable {
 	public var rawValue: Int8
 
 	public init(_ value: Int8) { rawValue = value }

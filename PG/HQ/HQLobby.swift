@@ -9,7 +9,7 @@ import COR
 extension HQNodes {
 
 	func hostMenu(_ root: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction>? {
-		let session = NetSession.host(player: state.player)
+		let session = NetSession.host(player: state.sim.player)
 		net = session
 		session.onLobby = { [weak scene] in
 			guard let scene, scene.menuState != nil else { return }
@@ -117,7 +117,7 @@ extension HQNodes {
 			),
 			.init(icon: "Start", status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
 				guard let scene else { return nil }
-				session.start(units: scene.state.units.compactMap { u in u.alive ? u : nil })
+				session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })
 				return session.started ? nil : menu
 			}),
 		] : [

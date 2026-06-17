@@ -19,7 +19,7 @@ extension HQNodes {
 	}
 
 	private func processSpawn(_ uid: UID, _ state: borrowing HQState) {
-		let sprite = state.units[uid.index].hqSprite
+		let sprite = state.sim.units[uid.index].hqSprite
 		let xy = XY(uid.index % 4, uid.index / 4)
 		sprite.position = xy.point
 		sprite.zPosition = map.zPosition(at: xy)
@@ -28,11 +28,11 @@ extension HQNodes {
 
 	private func processShop(_ state: borrowing HQState) {
 		scene?.show(.init(
-			items: Shop(country: state.country).units.enumerated().map { i, u in
+			items: Shop(country: state.sim.country).units.enumerated().map { i, u in
 				.close(
 					icon: u.imageName,
-					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.player.prestige)")),
-					action: .purchase(i, state.cursor.x + state.cursor.y * 4)
+					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
+					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
 				)
 			}
 		))

@@ -1,4 +1,4 @@
-public extension TacticalState {
+public extension TacticalSim {
 
 	/// Per-turn plan for an AI player. Computed once at the start of the
 	/// player's turn (`plan`) and then consulted by the action generators on
@@ -7,8 +7,8 @@ public extension TacticalState {
 	/// The plan assigns every controllable unit a `Role` plus a target tile.
 	/// Roles encode *intent* (defend a town, push the front, fall back).
 	struct AI: ~Copyable {
-		/// Game `turn` this plan was built for. `.max` means "no plan yet".
-		public var turn: UInt32 = .max
+		/// Game `turn` this plan was built for.
+		public var turn: UInt32?
 		public var role: [128 of Role] = .init(repeating: .idle)
 		public var target: [128 of XY] = .init(repeating: .zero)
 
@@ -27,13 +27,20 @@ public extension TacticalState {
 			case support	// supply trailing the main force
 		}
 	}
+}
 
+public extension TacticalState {
+
+	/// The AI hook drives the composite seat but only reads simulation state.
 	static var ai: (borrowing TacticalState) -> TacticalAction? {
-		var ai = TacticalState.AI()
-		return { state in state.run(&ai) }
+		var ai = TacticalSim.AI()
+		return { state in state.sim.run(&ai) }
 	}
+}
 
-	private func run(_ ai: inout AI) -> TacticalAction? {
+extension TacticalSim {
+
+	func run(_ ai: inout AI) -> TacticalAction? {
 		switch player.type {
 		case .ai:
 			switch player.country.team {

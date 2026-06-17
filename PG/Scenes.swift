@@ -25,7 +25,7 @@ extension SKScene {
 		// (e.g. a saved multiplayer battle loaded standalone) — hand it to
 		// the AI so the game doesn't stall waiting for the wire.
 		if net == nil {
-			state.players.modifyEach { _, p in
+			state.sim.players.modifyEach { _, p in
 				if p.type == .remote { p.type = .ai }
 			}
 		}

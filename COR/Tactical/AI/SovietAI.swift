@@ -1,4 +1,4 @@
-extension TacticalState {
+extension TacticalSim {
 
 	func soviet(ai: inout AI) -> TacticalAction {
 		guard let target else { return .end }

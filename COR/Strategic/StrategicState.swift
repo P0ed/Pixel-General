@@ -1,4 +1,6 @@
-public struct StrategicState: ~Copyable {
+/// Deterministic strategic simulation state — province ownership, the turn
+/// counter, and the reducer. Owns everything `reduce` may touch.
+public struct StrategicSim: ~Copyable {
 	/// Per-tile province ownership — the political map (see docs/Map.md).
 	public var owner: Map<32, Country>
 	/// The country the player commands this campaign.
@@ -7,28 +9,42 @@ public struct StrategicState: ~Copyable {
 	/// The contested tile while a campaign battle is running; `nil` otherwise.
 	/// Set when an offensive launches, read on battle completion to flip control.
 	public var battle: XY?
-	/// UI-only — never read by `reduce`.
-	public var cursor: XY
-	public var camera: XY
 
 	public init(
 		owner: consuming Map<32, Country>,
 		human: Country = .default,
 		turn: UInt32 = 0,
-		battle: XY? = nil,
-		cursor: XY = .zero,
-		camera: XY = .zero
+		battle: XY? = nil
 	) {
 		self.owner = owner
 		self.human = human
 		self.turn = turn
 		self.battle = battle
+	}
+}
+
+/// Presentation-only strategic state. Never read by `reduce`; may diverge per peer.
+public struct StrategicUI {
+	public var cursor: XY
+	public var camera: XY
+
+	public init(cursor: XY = .zero, camera: XY = .zero) {
 		self.cursor = cursor
 		self.camera = camera
 	}
 }
 
-public extension StrategicState {
+public struct StrategicState: ~Copyable {
+	public var sim: StrategicSim
+	public var ui: StrategicUI
+
+	public init(sim: consuming StrategicSim, ui: StrategicUI = StrategicUI()) {
+		self.sim = sim
+		self.ui = ui
+	}
+}
+
+public extension StrategicSim {
 
 	/// Tiles within this Chebyshev radius of the attacked tile flip on a win.
 	static var captureRadius: Int { 2 }
@@ -55,6 +71,9 @@ public extension StrategicState {
 			owner[xy] = country
 		}
 	}
+}
+
+public extension StrategicState {
 
 	/// Build the European campaign map from the docs/Map.md legend.
 	static func europe(human: Country) -> StrategicState {
@@ -76,7 +95,10 @@ public extension StrategicState {
 			count += 1
 		}
 		let cursor = count > 0 ? XY(sx / count, sy / count) : XY(16, 16)
-		return StrategicState(owner: owner, human: human, cursor: cursor, camera: cursor)
+		return StrategicState(
+			sim: StrategicSim(owner: owner, human: human),
+			ui: StrategicUI(cursor: cursor, camera: cursor)
+		)
 	}
 }
 

@@ -89,7 +89,7 @@ to add a random combat skill. Healing costs `exp`.
   triggers a **surprise attack** on the blocker.
 - Movement reveals fog of war along the route (vision disc each step).
 
-**Vision / fog of war** (`COR/Tactical/TacticalAction.swift`): each player sees the union
+**Vision / fog of war** (`COR/Tactical/TacticalState.swift`): each player sees the union
 of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
 `spot = 3`) plus the tile and 8-neighbourhood of every owned settlement.
 
@@ -183,9 +183,9 @@ combat is reproducible.
 
 ## Supply, Repair, Entrench
 
-`COR/Tactical/TacticalAction.swift`
+`COR/Tactical/UnitResupply.swift`
 
-The `resupply(unit:endOfTurn:)` routine drives both the player-initiated
+The `resupply(unit:endOfTurn:into:)` routine drives both the player-initiated
 `.resupply` action *and* the per-unit end-of-turn pass. Behavior differs:
 
 - **Ammo**. Player-initiated (untouched only) restores
@@ -220,7 +220,8 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Tactical/TacticalShop.swift`, `COR/Model/Templates.swift`
 
 - Each player has **prestige** (starts `0xF00`). Income per day = sum of
-  owned settlements' income (city `0xF`, village `0x7`, airfield `0x3`).
+  owned settlements' income (`Terrain.income` in `COR/Tactical/TacticalState.swift`:
+  city 24, village 8, airfield 4).
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
   unit if prestige ≥ `unit.cost`. Airfields sell air units; cities (and
   villages) sell ground.
@@ -241,9 +242,12 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 `COR/Model/Player.swift`, `COR/Tactical/TacticalTurns.swift`
 
-- `Country` maps to one of three `Team`s: **axis** (swe/den/ned/ukr),
-  **allies** (isr/pak/usa), **soviet** (ind/irn/rus). Friendly fire is
-  impossible within a team; combat requires cross-team.
+- `Country` (a `UInt8` enum: `.none` plus 23 playable nations) maps to one of
+  three `Team`s via `Country.team`: **axis** (swe/den/ned/ukr/ger/pol/cze/aut/nor),
+  **allies** (isr/pak/usa/fin/ltu/svk/hun), **soviet** (ind/irn/rus/est/lva/bel/rom/mol).
+  `.none` maps to `Team.none`. Friendly fire is impossible within a team; combat
+  requires cross-team. The European nations back the campaign map (see
+  [Campaign](./Campaign.md)).
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
   reflags it to the unit's country. A player with no remaining
@@ -251,10 +255,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 ### Map mode
 
-`TacticalState.mapMode` toggles between `.terrain` and `.political` —
-the political view recolors tiles by `control` (country/team), the
-terrain view shows the underlying tile sprite. Bound to the `.mode`
-input event.
+`TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) toggles between
+`.terrain` and `.political` — the political view recolors tiles by `control`
+(country/team), the terrain view shows the underlying tile sprite. Bound to the
+`.mode` input event.
 
 ### Skills:
 

@@ -213,7 +213,7 @@ final class NetSession {
 			guard started,
 				  let action: TacticalAction = decode(data),
 				  let seat = playerOf[ObjectIdentifier(con)],
-				  let scene, seat == scene.state.playerIndex
+				  let scene, seat == scene.state.sim.playerIndex
 			else { return }
 			queue.append((seat, action))
 			scene.advance()
@@ -277,13 +277,13 @@ final class NetSession {
 	/// by `reduce` and may freely diverge between peers.
 	private func localize(_ state: inout TacticalState) {
 		let mySeat = mySeat
-		state.players.modifyEach { i, p in
+		state.sim.players.modifyEach { i, p in
 			p.type = i == mySeat ? .human : .remote
 		}
-		state.cursor = .zero
-		state.camera = .zero
-		state.selectedUnit = .none
-		state.selectable = .none
+		state.ui.cursor = .zero
+		state.ui.camera = .zero
+		state.ui.selectedUnit = .none
+		state.ui.selectable = .none
 	}
 
 	/// The host is gone. Mid-battle the game degrades to local play: every
@@ -295,8 +295,8 @@ final class NetSession {
 			return onEnd()
 		}
 		hostless = true
-		for i in 0 ..< scene.state.players.count where i != mySeat {
-			let player = scene.state.players[i]
+		for i in 0 ..< scene.state.sim.players.count where i != mySeat {
+			let player = scene.state.sim.players[i]
 			if player.alive { queue.append((-1, .takeover(player.country))) }
 		}
 		scene.advance()
@@ -314,14 +314,14 @@ final class NetSession {
 			// Drop local actions for seats the host doesn't drive; everything
 			// applied here (own input, AI, drained client intents) is the
 			// authoritative stream and is echoed to every client.
-			guard draining || state.player.type != .remote else { return true }
+			guard draining || state.sim.player.type != .remote else { return true }
 			server?.broadcast(.action(encode(action)))
 			return false
 		case .client:
 			// Confirmed actions drained from the queue apply as-is; our own
 			// actions travel to the host and apply on the echo.
 			if draining { return false }
-			guard state.player.type == .human else { return true }
+			guard state.sim.player.type == .human else { return true }
 			client?.send(.action(encode(action)))
 			return true
 		}
@@ -341,11 +341,11 @@ final class NetSession {
 				queue.removeFirst()
 				// Client intents were validated on arrival; drop the ones the
 				// turn rolled past (e.g. a duplicate `.end`).
-				guard first.seat == -1 || first.seat == state.playerIndex else { continue }
+				guard first.seat == -1 || first.seat == state.sim.playerIndex else { continue }
 				draining = true
 				return first.action
 			}
-			return state.player.type == .ai ? ai(state) : nil
+			return state.sim.player.type == .ai ? ai(state) : nil
 		case .client:
 			if !queue.isEmpty {
 				draining = true

@@ -26,12 +26,14 @@ public extension Core {
 	static func new(country: Country) -> Core {
 		Core(
 			hq: HQState(
-				player: Player(country: country, type: .human),
-				units: .init(
-					head: modifying(.base(country)) { base in
-						base.modifyEach { u in u.reset() }
-					},
-					tail: .empty
+				sim: HQSim(
+					player: Player(country: country, type: .human),
+					units: .init(
+						head: modifying(.base(country)) { base in
+							base.modifyEach { u in u.reset() }
+						},
+						tail: .empty
+					)
 				)
 			)
 		)
@@ -62,18 +64,18 @@ public extension Core {
 	/// Launch a campaign offensive against the enemy province at `tile`. The
 	/// player's whole roster (up to 16) deploys against the defending country.
 	mutating func startCampaignBattle(at tile: XY) {
-		guard let human = hq?.player.country,
-			let prestige = hq?.player.prestige,
-			let defender = strategic?.owner[tile]
+		guard let human = hq?.sim.player.country,
+			let prestige = hq?.sim.player.prestige,
+			let defender = strategic?.sim.owner[tile]
 		else { return }
 
 		let players = [
 			Player(country: human, type: .human, prestige: prestige),
 			Player(country: defender, type: .ai),
 		]
-		let units = hq?.units.compactMap { u in u.alive ? u : nil } ?? []
+		let units = hq?.sim.units.compactMap { u in u.alive ? u : nil } ?? []
 
-		strategic?.battle = tile
+		strategic?.sim.battle = tile
 		tactical = TacticalState.make(
 			players: players,
 			units: units,
@@ -90,31 +92,31 @@ public extension Core {
 	}
 
 	mutating func complete(_ state: borrowing TacticalState) {
-		guard let c = hq?.player.country else {
+		guard let c = hq?.sim.player.country else {
 			tactical = nil
 			location = .hq
 			return
 		}
 
-		let units: [Unit] = state.units
+		let units: [Unit] = state.sim.units
 			.compactMapAlive { i, u in
 				u.country != c || u[.aux] ? nil : modifying(u) { u in
 					u.reset()
 				}
 			}
-		hq?.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
-		hq?.player.prestige = state[c].prestige
+		hq?.sim.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
+		hq?.sim.player.prestige = state.sim[c].prestige
 
 		tactical = nil
 
 		// Campaign battle: flip provinces around the contested tile and return to
 		// the strategic map. Otherwise this was a one-off scenario → return to HQ.
-		if let tile = strategic?.battle {
-			let won = state.teamAlive(c.team)
-			strategic?.resolveBattle(at: tile, won: won, by: c)
+		if let tile = strategic?.sim.battle {
+			let won = state.sim.teamAlive(c.team)
+			strategic?.sim.resolveBattle(at: tile, won: won, by: c)
 			location = .strategic
 		} else {
-			hq?.cursor = .zero
+			hq?.ui.cursor = .zero
 			location = .hq
 		}
 	}

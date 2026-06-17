@@ -5,7 +5,7 @@ extension HQNodes {
 
 	func scenarioMenu(_ menu: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction> {
 		var players: [4 of Player] = [
-			state.player,
+			state.sim.player,
 			Player(country: .isr, type: .ai, prestige: .rich),
 			Player(country: .usa, type: .ai, prestige: .rich),
 			Player(country: .irn, type: .ai, prestige: .rich)
@@ -92,7 +92,7 @@ extension HQNodes {
 				guard let scene else { return }
 				core.startScenario(TacticalState.make(
 					players: players.compactMap { $0.alive ? $0 : nil },
-					units: scene.state.units.compactMap { u in u.alive ? u : nil },
+					units: scene.state.sim.units.compactMap { u in u.alive ? u : nil },
 					size: 16 + size * 8,
 					seed: .random(in: 0..<128)
 				))

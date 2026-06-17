@@ -13,7 +13,7 @@ extension StrategicNodes {
 	init(scene: StrategicScene) {
 		self = StrategicNodes(
 			scene: scene,
-			camera: Self.addCamera(root: scene, at: scene.state.camera.point),
+			camera: Self.addCamera(root: scene, at: scene.state.ui.camera.point),
 			map: Self.addMap(root: scene, state: scene.state)
 		)
 		map.selection.isHidden = true
@@ -30,7 +30,7 @@ extension StrategicNodes {
 	}
 
 	private static func addMap(root: SKNode, state: borrowing StrategicState) -> MapNodes {
-		let size = state.owner.size
+		let size = state.sim.owner.size
 		let layers = (0 ..< size * 2 - 1).map { _ in
 			SKTileMapNode(tiles: .terrain, size: size)
 		}
@@ -52,16 +52,16 @@ extension StrategicNodes {
 extension StrategicNodes {
 
 	func update(_ state: borrowing StrategicState) {
-		let cameraPosition = state.camera.point
+		let cameraPosition = state.ui.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
 
-		map.cursor.position = state.cursor.point
-		map.cursor.zPosition = map.zPosition(at: state.cursor)
+		map.cursor.position = state.ui.cursor.point
+		map.cursor.zPosition = map.zPosition(at: state.ui.cursor)
 
-		state.owner.indices.forEach { xy in
-			map.setTileGroup(Self.political(state.owner[xy]), at: xy)
+		state.sim.owner.indices.forEach { xy in
+			map.setTileGroup(Self.political(state.sim.owner[xy]), at: xy)
 		}
 	}
 

@@ -54,7 +54,7 @@ public extension TacticalState {
 			}.map { $0.1 } ?? .default
 		}
 
-		var state = TacticalState(
+		var sim = TacticalSim(
 			map: map,
 			control: control,
 			unitsMap: unitsMap,
@@ -64,9 +64,9 @@ public extension TacticalState {
 			position: position,
 			cargo: .init(repeating: .none)
 		)
-		state.players[0].visible = state.vision(for: state.players[0].country)
-		state.players[1].visible = state.vision(for: state.players[1].country)
+		sim.players[0].visible = sim.vision(for: sim.players[0].country)
+		sim.players[1].visible = sim.vision(for: sim.players[1].country)
 
-		return state
+		return TacticalState(sim: sim)
 	}
 }

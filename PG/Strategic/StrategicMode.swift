@@ -24,10 +24,10 @@ extension StrategicState {
 	var status: Status {
 		Status(
 			text: .makeStatus { add in
-				add("\(owner[cursor])")
-				add("day: \(turn + 1)")
+				add("\(sim.owner[ui.cursor])")
+				add("day: \(sim.turn + 1)")
 			},
-			action: canAttack(cursor) ? "A: attack" : ""
+			action: sim.canAttack(ui.cursor) ? "A: attack" : ""
 		)
 	}
 }

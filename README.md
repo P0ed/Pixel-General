@@ -15,7 +15,7 @@ xcodebuild -scheme PG -configuration Release -destination 'platform=macOS,varian
 xcodebuild -scheme PG -configuration Release -destination 'generic/platform=iOS' build
 
 # Run tests (any iOS Simulator)
-xcodebuild -scheme PG test -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild -scheme PG test -destination 'platform=macOS,variant=Mac Catalyst'
 ```
 
 ## Docs

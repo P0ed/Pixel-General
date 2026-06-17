@@ -1,4 +1,4 @@
-extension TacticalState {
+extension TacticalSim {
 
 	// MARK: - Entry point
 

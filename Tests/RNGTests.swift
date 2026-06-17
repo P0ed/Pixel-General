@@ -41,19 +41,19 @@ struct RNGTests {
 			let u0 = inf.country(.den)
 			let u1 = inf.country(.usa)
 
-			state.units.insert(u0)
-			state.units.insert(u1)
-			state.position[0] = XY(1, 1)
-			state.position[1] = XY(2, 2)
+			state.sim.units.insert(u0)
+			state.sim.units.insert(u1)
+			state.sim.position[0] = XY(1, 1)
+			state.sim.position[1] = XY(2, 2)
 
 			let dmg: [512 of [2 of UInt8]] = .init { i in
-				state.units[0] = u0
-				state.units[1] = u1
+				state.sim.units[0] = u0
+				state.sim.units[1] = u1
 				_ = state.reduce(.attack(UID(0), UID(1)))
 
 				return [
-					state.units[1].maxHP - state.units[1].hp,
-					state.units[0].maxHP - state.units[0].hp,
+					state.sim.units[1].maxHP - state.sim.units[1].hp,
+					state.sim.units[0].maxHP - state.sim.units[0].hp,
 				]
 			}
 

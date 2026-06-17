@@ -27,11 +27,11 @@ extension TacticalNodes {
 private extension TacticalNodes {
 
 	func processSpawn(_ uid: UID, _ state: borrowing TacticalState) {
-		let sprite = state.units[uid].sprite
-		let xy = state.position[uid]
-		sprite.position = state.map.point(at: xy)
+		let sprite = state.sim.units[uid].sprite
+		let xy = state.sim.position[uid]
+		sprite.position = state.sim.map.point(at: xy)
 		sprite.zPosition = map.zPosition(at: xy)
-		sprite.isHidden = !state.isVisibleToHuman(uid)
+		sprite.isHidden = !state.sim.isVisibleToHuman(uid)
 		addUnit(uid, node: sprite)
 	}
 
@@ -43,27 +43,27 @@ private extension TacticalNodes {
 			z = max(z, map.zPosition(at: xy))
 		}
 
-		let onMap = state.unitsMap[state.position[uid]] == uid || !node.isHidden
-		let anyVisible = onMap && path.contains { xy in state.isVisibleToHuman(xy) }
+		let onMap = state.sim.unitsMap[state.sim.position[uid]] == uid || !node.isHidden
+		let anyVisible = onMap && path.contains { xy in state.sim.isVisibleToHuman(xy) }
 		guard anyVisible else {
-			node.position = state.map.point(at: dst)
+			node.position = state.sim.map.point(at: dst)
 			node.zPosition = map.zPosition(at: dst)
 			node.isHidden = true
 			return
 		}
 
 		sounds.mov.play()
-		node.isHidden = !state.isVisibleToHuman(path[0])
+		node.isHidden = !state.sim.isVisibleToHuman(path[0])
 
 		var actions: [SKAction] = []
 		for i in 1 ..< path.count {
 			let xy = path[i]
-			let point = state.map.point(at: xy)
-			let prev = state.map.point(at: path[i - 1])
+			let point = state.sim.map.point(at: xy)
+			let prev = state.sim.map.point(at: path[i - 1])
 			let duration = (prev - point).length / 480.0
 			let hidden = i == path.count - 1
-				? !state.isVisibleToHuman(uid)
-				: !state.isVisibleToHuman(xy)
+				? !state.sim.isVisibleToHuman(uid)
+				: !state.sim.isVisibleToHuman(xy)
 			actions.append(.move(to: point, duration: duration))
 			actions.append(.run { node.isHidden = hidden })
 		}
@@ -80,7 +80,7 @@ private extension TacticalNodes {
 			}
 		}
 
-		guard state.isVisibleToHuman(src) || state.isVisibleToHuman(dst) else { return }
+		guard state.sim.isVisibleToHuman(src) || state.sim.isVisibleToHuman(dst) else { return }
 
 		units[src]?.showSight(for: 0.47)
 		await scene?.run(.wait(forDuration: 0.22))
@@ -97,26 +97,26 @@ private extension TacticalNodes {
 	}
 
 	func update(_ id: UID, _ state: borrowing TacticalState) {
-		if state.units[id].alive {
-			units[id]?.update(hp: state.units[id].hp)
+		if state.sim.units[id].alive {
+			units[id]?.update(hp: state.sim.units[id].hp)
 		} else {
 			removeUnit(id)
 		}
 	}
 
 	func processShop(_ state: borrowing TacticalState) {
-		guard state.map[state.cursor].isSettlement,
-			  state.control[state.cursor] == state.country,
-			  state.unitAt(state.cursor) == nil
+		guard state.sim.map[state.ui.cursor].isSettlement,
+			  state.sim.control[state.ui.cursor] == state.sim.country,
+			  state.sim.unitAt(state.ui.cursor) == nil
 		else { return }
 
-		let xy = state.cursor
-		let items = state.shopUnits(at: xy).enumerated().map { i, template in
+		let xy = state.ui.cursor
+		let items = state.sim.shopUnits(at: xy).enumerated().map { i, template in
 			MenuItem<TacticalAction>.close(
 				icon: template.imageName,
 				status: .init(
 					text: template.status(),
-					action: .init("\(template.cost) / \(state.player.prestige)")
+					action: .init("\(template.cost) / \(state.sim.player.prestige)")
 				),
 				action: .purchase(i, xy)
 			)

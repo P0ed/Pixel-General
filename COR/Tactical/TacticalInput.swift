@@ -1,123 +1,124 @@
 public extension TacticalState {
 
-	mutating func apply(_ input: Input) -> Reaction<TacticalAction, TacticalEvent> {
-		var events: [TacticalEvent] = []
-		let action: TacticalAction? = switch input {
+	mutating func apply(_ input: Input) -> TacticalReaction {
+		switch input {
 		case .direction(let direction?): moveCursor(direction)
-		case .menu: { events.append(.menu); return nil }()
-		case .mode: { mapMode = mapMode == .terrain ? .political : .terrain; return nil }()
-		case .action(.a): primaryAction(into: &events)
+		case .menu: .events([.menu])
+		case .mode: toggleMapMode()
+		case .action(.a): primaryAction()
 		case .action(.b): secondaryAction()
 		case .action(.c): squareAction()
 		case .action(.d): triangleAction()
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
-		case .tile(let xy): select(xy, into: &events)
-		case .scale(let value): { scale = value; return nil }()
+		case .tile(let xy): select(xy)
+		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let dxy): handlePan(dxy)
-		default: nil
+		default: .none
 		}
-		if !events.isEmpty { return .events(events) }
-		guard let action else { return .none }
-		return .action(action)
 	}
 }
 
 private extension TacticalState {
 
-	mutating func select(_ xy: XY, into events: inout [TacticalEvent]) -> TacticalAction? {
-		guard map.contains(xy) else { return nil }
-
-		cursor = xy
-		if player.type == .human { return primaryAction(into: &events) }
-		return nil
+	mutating func toggleMapMode() -> TacticalReaction {
+		ui.mapMode = ui.mapMode == .terrain ? .political : .terrain
+		return .none
 	}
 
-	mutating func moveCursor(_ direction: Direction) -> TacticalAction? {
-		let xy = cursor.neighbor(direction)
-		if map.contains(xy) { cursor = xy }
-		return nil
+	mutating func select(_ xy: XY) -> TacticalReaction {
+		guard sim.map.contains(xy) else { return .none }
+
+		ui.cursor = xy
+		if sim.player.type == .human { return primaryAction() }
+		return .none
 	}
 
-	mutating func primaryAction(into events: inout [TacticalEvent]) -> TacticalAction? {
-		if selectedUnit != .none {
-			let unit = units[selectedUnit]
+	mutating func moveCursor(_ direction: Direction) -> TacticalReaction {
+		let xy = ui.cursor.neighbor(direction)
+		if sim.map.contains(xy) { ui.cursor = xy }
+		return .none
+	}
 
-			if let dst = unitAt(cursor), player.visible[cursor] {
-				if dst.country.team != unit.country.team, self[country].type == .human {
-					return .attack(selectedUnit, unitsMap[cursor])
-				} else if canEmbark(unit: selectedUnit, transport: unitsMap[cursor]), self[country].type == .human {
-					return .embark(selectedUnit, unitsMap[cursor])
+	mutating func primaryAction() -> TacticalReaction {
+		if ui.selectedUnit != .none {
+			let unit = sim.units[ui.selectedUnit]
+
+			if let dst = sim.unitAt(ui.cursor), sim.player.visible[ui.cursor] {
+				if dst.country.team != unit.country.team, sim[sim.country].type == .human {
+					return .action(.attack(ui.selectedUnit, sim.unitsMap[ui.cursor]))
+				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), sim[sim.country].type == .human {
+					return .action(.embark(ui.selectedUnit, sim.unitsMap[ui.cursor]))
 				} else {
-					selectUnit(dst == unit ? .none : unitsMap[cursor])
+					ui.select(dst == unit ? .none : sim.unitsMap[ui.cursor], in: sim)
 				}
-			} else if unit.country == country, unit.canMove, self[country].type == .human {
-				return .move(selectedUnit, cursor)
-			} else if map[cursor].isSettlement, control[cursor] == country, player.type == .human {
-				events.append(.shop)
+			} else if unit.country == sim.country, unit.canMove, sim[sim.country].type == .human {
+				return .action(.move(ui.selectedUnit, ui.cursor))
+			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
+				return .events([.shop])
 			} else {
-				selectUnit(.none)
+				ui.select(.none, in: sim)
 			}
 		} else {
-			if player.visible[cursor], unitAt(cursor) != nil {
-				selectUnit(unitsMap[cursor])
-			} else if map[cursor].isSettlement, control[cursor] == country, player.type == .human {
-				events.append(.shop)
+			if sim.player.visible[ui.cursor], sim.unitAt(ui.cursor) != nil {
+				ui.select(sim.unitsMap[ui.cursor], in: sim)
+			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
+				return .events([.shop])
 			}
 		}
-		return nil
+		return .none
 	}
 
-	mutating func secondaryAction() -> TacticalAction? {
-		selectUnit(.none)
-		return nil
+	mutating func secondaryAction() -> TacticalReaction {
+		ui.select(.none, in: sim)
+		return .none
 	}
 
-	mutating func squareAction() -> TacticalAction? {
-		guard selectedUnit != .none,
-			  canDisembark(unit: selectedUnit, to: cursor),
-			  self[country].type == .human
-		else { return nil }
-		return .disembark(selectedUnit, cursor)
+	mutating func squareAction() -> TacticalReaction {
+		guard ui.selectedUnit != .none,
+			  sim.canDisembark(unit: ui.selectedUnit, to: ui.cursor),
+			  sim[sim.country].type == .human
+		else { return .none }
+		return .action(.disembark(ui.selectedUnit, ui.cursor))
 	}
 
-	mutating func triangleAction() -> TacticalAction? {
-		guard selectedUnit != .none,
-			  units[selectedUnit].country == country,
-			  units[selectedUnit].untouched,
-			  self[country].type == .human
-		else { return nil }
+	mutating func triangleAction() -> TacticalReaction {
+		guard ui.selectedUnit != .none,
+			  sim.units[ui.selectedUnit].country == sim.country,
+			  sim.units[ui.selectedUnit].untouched,
+			  sim[sim.country].type == .human
+		else { return .none }
 
-		defer { selectUnit(.none) }
-		return .resupply(selectedUnit)
+		defer { ui.select(.none, in: sim) }
+		return .action(.resupply(ui.selectedUnit))
 	}
 
-	mutating func prevUnit() -> TacticalAction? {
+	mutating func prevUnit() -> TacticalReaction {
 		nextUnit(reversed: true)
 	}
 
-	mutating func nextUnit(reversed: Bool = false) -> TacticalAction? {
-		let cnt = units.count
-		var idx = selectedUnit != .none ? selectedUnit.index : (reversed ? cnt - 1 : 0)
-		let country = country
+	mutating func nextUnit(reversed: Bool = false) -> TacticalReaction {
+		let cnt = sim.units.count
+		var idx = ui.selectedUnit != .none ? ui.selectedUnit.index : (reversed ? cnt - 1 : 0)
+		let country = sim.country
 
-		for _ in units.indices {
+		for _ in sim.units.indices {
 			idx += reversed ? -1 : 1
 			let i = (cnt + idx) % cnt
-			let u = units[i]
+			let u = sim.units[i]
 
-			if u.alive, !offMap(unit: i.uid), u.country == country, u.hasActions {
-				selectUnit(i.uid)
-				return nil
+			if u.alive, !sim.offMap(unit: i.uid), u.country == country, u.hasActions {
+				ui.select(i.uid, in: sim)
+				return .none
 			}
 		}
-		selectUnit(.none)
-		return nil
+		ui.select(.none, in: sim)
+		return .none
 	}
 
-	mutating func handlePan(_ dxy: XY) -> TacticalAction? {
-		cursor = (cursor + dxy).clamped(map.size)
-		camera = (camera + dxy).clamped(map.size)
-		return nil
+	mutating func handlePan(_ dxy: XY) -> TacticalReaction {
+		ui.cursor = (ui.cursor + dxy).clamped(sim.map.size)
+		ui.camera = (ui.camera + dxy).clamped(sim.map.size)
+		return .none
 	}
 }

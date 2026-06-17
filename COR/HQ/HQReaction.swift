@@ -1,10 +1,20 @@
+public typealias HQReaction = Reaction<HQAction, HQEvent>
+
 @frozen public enum HQAction {
 	case swap(Int, Int)
 	case purchase(Int, Int)
 	case sell(Int)
 }
 
-public extension HQState {
+@frozen public enum HQEvent {
+	case move(UID, XY)
+	case spawn(UID)
+	case remove(UID)
+	case shop
+	case menu
+}
+
+public extension HQSim {
 
 	mutating func reduce(_ action: HQAction) -> [HQEvent] {
 		var events: [HQEvent] = []
@@ -43,5 +53,15 @@ public extension HQState {
 
 		if units[src].alive { events.append(.spawn(src.uid)) }
 		if units[dst].alive { events.append(.spawn(dst.uid)) }
+	}
+}
+
+extension HQState {
+
+	/// Mirrors `TacticalState.reduce`: the mode always reduces through `State`,
+	/// which delegates the deterministic mutation to `sim`. HQ has no UI to
+	/// reconcile afterwards.
+	public mutating func reduce(_ action: HQAction) -> [HQEvent] {
+		sim.reduce(action)
 	}
 }

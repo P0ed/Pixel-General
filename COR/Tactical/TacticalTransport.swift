@@ -1,4 +1,4 @@
-extension TacticalState {
+extension TacticalSim {
 
 	func canEmbark(unit: UID, transport: UID) -> Bool {
 		let u = units[unit]
@@ -28,9 +28,6 @@ extension TacticalState {
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(tp)
 		events.append(.move(unit, Path(count: path.count, path: path.mem)))
-		if player.type == .human {
-			selectUnit(transport)
-		}
 	}
 
 	func canDisembark(unit: UID, to xy: XY) -> Bool {
@@ -51,7 +48,7 @@ extension TacticalState {
 		position[idx] = xy
 		units[idx].mp = 0
 		units[idx].ent = 0
-		if units[idx].isArt { units[idx].ap = 0 }
+		if !units[idx].canAttackAfterMove { units[idx].ap = 0 }
 		unitsMap[xy] = idx.uid
 		player.visible.formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)

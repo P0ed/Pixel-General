@@ -23,13 +23,13 @@ extension HQState {
 
 	var status: Status {
 		Status(
-			text: selected != .none ? units[selected.index].status() : .makeStatus { add in
-				add("prestige: \(player.prestige)")
+			text: ui.selected != .none ? sim.units[ui.selected.index].status() : .makeStatus { add in
+				add("prestige: \(sim.player.prestige)")
 			},
 			action: {
-				if selected != .none {
+				if ui.selected != .none {
 					"C: sell"
-				} else if units[cursor] == nil {
+				} else if sim.units[ui.cursor] == nil {
 					"C: shop"
 				} else {
 					""

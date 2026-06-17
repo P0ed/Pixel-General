@@ -8,7 +8,7 @@ extension HQNodes {
 			items: [
 				.close(icon: "Start", status: .init(text: "Start")) { m in
 					guard let scene else { return }
-					core.startCampaign(scene.state, .europe(human: scene.state.country))
+					core.startCampaign(scene.state, .europe(human: scene.state.sim.country))
 					core.save()
 					present(.auto)
 				}

@@ -31,14 +31,14 @@ extension TacticalNodes {
 			sounds: Self.addSounds(root: scene)
 		)
 		units = .init(
-			head: scene.state.units.map { i, u in
+			head: scene.state.sim.units.map { i, u in
 				guard u.alive else { return nil }
 				let sprite = u.sprite
-				let xy = scene.state.position[i]
-				sprite.position = scene.state.map.point(at: xy)
+				let xy = scene.state.sim.position[i]
+				sprite.position = scene.state.sim.map.point(at: xy)
 				sprite.zPosition = map.zPosition(at: xy)
-				sprite.isHidden = !scene.state.isVisibleToHuman(i.uid)
-					|| scene.state.unitsMap[xy] != i.uid
+				sprite.isHidden = !scene.state.sim.isVisibleToHuman(i.uid)
+					|| scene.state.sim.unitsMap[xy] != i.uid
 				scene.addChild(sprite)
 				return sprite
 			},
@@ -71,8 +71,8 @@ extension TacticalNodes {
 	}
 
 	private static func addMap(root: SKNode, state: borrowing TacticalState) -> MapNodes {
-		let layers = (0 ..< state.map.size * 2 - 1).map { idx in
-			SKTileMapNode(tiles: .terrain, size: state.map.size)
+		let layers = (0 ..< state.sim.map.size * 2 - 1).map { idx in
+			SKTileMapNode(tiles: .terrain, size: state.sim.map.size)
 		}
 		layers.enumerated().forEach { idx, layer in
 			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
@@ -83,13 +83,13 @@ extension TacticalNodes {
 
 		let map = MapNodes(
 			layers: layers,
-			size: state.map.size,
+			size: state.sim.map.size,
 			cursor: MapNodes.addCursor(root: root),
 			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
 		)
 
-		state.map.indices.forEach { xy in
-			map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
+		state.sim.map.indices.forEach { xy in
+			map.setTileGroup(.tileGroup(terrain: state.sim.map[xy], fog: false), at: xy)
 		}
 
 		return map
@@ -103,7 +103,7 @@ extension TacticalNodes {
 	}
 
 	func updateUnits(_ state: borrowing TacticalState) {
-		state.units.forEachAlive { i, u in
+		state.sim.units.forEachAlive { i, u in
 			units[i]?.update(hp: u.hp)
 		}
 	}
@@ -114,46 +114,46 @@ extension TacticalNodes {
 	}
 
 	private func updateView(_ state: borrowing TacticalState) {
-		let cameraPosition = state.camera.point
+		let cameraPosition = state.ui.camera.point
 		if camera.position != cameraPosition {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
-		let cameraScale = CGFloat(state.scale)
+		let cameraScale = CGFloat(state.ui.scale)
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}
 		map.update(
-			map: state.map,
-			cursor: state.cursor,
-			selected: state.selectedUnit == .none ? nil : state.position[state.selectedUnit]
+			map: state.sim.map,
+			cursor: state.ui.cursor,
+			selected: state.ui.selectedUnit == .none ? nil : state.sim.position[state.ui.selectedUnit]
 		)
 	}
 
 	private func updateFogIfNeeded(state: borrowing TacticalState) {
-		let lit = state.selectable ?? state.visibleToHuman
-		let mode = state.mapMode
+		let lit = state.ui.selectable ?? state.sim.visibleToHuman
+		let mode = state.ui.mapMode
 
 		guard self.lit != lit || self.mapMode != mode else { return }
 		defer { self.lit = lit; self.mapMode = mode }
 
-		state.map.indices.forEach { xy in
+		state.sim.map.indices.forEach { xy in
 			map.setTileGroup(tileGroup(for: state, at: xy, fog: !lit[xy]), at: xy)
 		}
-		state.units.forEachAlive { i, u in
-			units[i]?.isHidden = !state.isVisibleToHuman(i.uid)
+		state.sim.units.forEachAlive { i, u in
+			units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
 		}
 	}
 
 	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup {
-		switch state.mapMode {
+		switch state.ui.mapMode {
 		case .terrain:
-			return .tileGroup(terrain: state.map[xy], fog: fog)
+			return .tileGroup(terrain: state.sim.map[xy], fog: fog)
 		case .political:
-			let country = state.control[xy]
-			let idx = state.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
+			let country = state.sim.control[xy]
+			let idx = state.sim.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
 			return .political(
 				playerIndex: idx,
-				elevation: state.map[xy].elevationLevel,
+				elevation: state.sim.map[xy].elevationLevel,
 				fog: fog
 			)
 		}

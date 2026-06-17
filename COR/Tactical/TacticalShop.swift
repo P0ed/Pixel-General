@@ -1,4 +1,4 @@
-extension TacticalState {
+extension TacticalSim {
 
 	public func shopUnits(at xy: XY) -> [Unit] {
 		let country = country

@@ -24,7 +24,7 @@ extension TacticalNodes {
 				.space,
 				.load { [weak scene] in scene?.saveState() },
 				(
-					state.canRetreat
+					state.sim.canRetreat
 					? .close(icon: "HQ", status: "Retreat") { [weak scene] _ in
 						if let scene { endGame(scene.state) }
 					}
@@ -35,13 +35,13 @@ extension TacticalNodes {
 
 				MenuItem(
 					icon: "Prestige1",
-					status: .init(text: "Prestige: \(state.player.prestige)"),
+					status: .init(text: "Prestige: \(state.sim.player.prestige)"),
 					update: id
 				),
 				.space,
 				.space,
 				(
-					state.canDraw
+					state.sim.canDraw
 					? .close(icon: "HQ", status: "Draw") { [weak scene] _ in
 						if let scene { endGame(scene.state) }
 					}

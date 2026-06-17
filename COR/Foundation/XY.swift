@@ -1,6 +1,6 @@
 import CoreGraphics
 
-public struct XY: Hashable, Codable {
+public struct XY: Hashable, Codable, BitwiseCopyable {
 	private var _x: Int8
 	private var _y: Int8
 

@@ -3,22 +3,22 @@ import COR
 extension TacticalState {
 
 	var status: Status {
-		if player.type == .remote {
-			Status(text: "waiting for \(player.country)", action: "day \(day)")
-		} else if player.type != .human {
-			Status(text: "\(player.country) turn")
-		} else if selectedUnit != .none {
+		if sim.player.type == .remote {
+			Status(text: "waiting for \(sim.player.country)", action: "day \(sim.day)")
+		} else if sim.player.type != .human {
+			Status(text: "\(sim.player.country) turn")
+		} else if ui.selectedUnit != .none {
 			Status(
-				text: units[selectedUnit].status(cargo: cargo[selectedUnit] != .none),
-				flag: units[selectedUnit].country.flag
+				text: sim.units[ui.selectedUnit].status(cargo: sim.cargo[ui.selectedUnit] != .none),
+				flag: sim.units[ui.selectedUnit].country.flag
 			)
-		} else if map[cursor].isSettlement {
+		} else if sim.map[ui.cursor].isSettlement {
 			Status(
-				text: "\(cursor) \(map[cursor])",
-				flag: control[cursor].flag
+				text: "\(ui.cursor) \(sim.map[ui.cursor])",
+				flag: sim.control[ui.cursor].flag
 			)
 		} else {
-			Status(text: "\(cursor) \(map[cursor])", action: "day \(day)")
+			Status(text: "\(ui.cursor) \(sim.map[ui.cursor])", action: "day \(sim.day)")
 		}
 	}
 }
