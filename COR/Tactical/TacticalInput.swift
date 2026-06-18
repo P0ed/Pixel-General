@@ -1,7 +1,13 @@
 public extension TacticalState {
 
 	mutating func apply(_ input: Input) -> TacticalReaction {
-		switch input {
+
+		defer {
+			ui.selectable = ui.selectedUnit != .none && sim.units[ui.selectedUnit].canMove
+			? sim.moves(for: ui.selectedUnit).setXY : nil
+		}
+
+		return switch input {
 		case .direction(let direction?): moveCursor(direction)
 		case .menu: .events([.menu])
 		case .mode: toggleMapMode()
@@ -50,18 +56,18 @@ private extension TacticalState {
 				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), sim[sim.country].type == .human {
 					return .action(.embark(ui.selectedUnit, sim.unitsMap[ui.cursor]))
 				} else {
-					ui.select(dst == unit ? .none : sim.unitsMap[ui.cursor], in: sim)
+					ui.selectedUnit = dst == unit ? .none : sim.unitsMap[ui.cursor]
 				}
 			} else if unit.country == sim.country, unit.canMove, sim[sim.country].type == .human {
 				return .action(.move(ui.selectedUnit, ui.cursor))
 			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
 				return .events([.shop])
 			} else {
-				ui.select(.none, in: sim)
+				ui.selectedUnit = .none
 			}
 		} else {
 			if sim.player.visible[ui.cursor], sim.unitAt(ui.cursor) != nil {
-				ui.select(sim.unitsMap[ui.cursor], in: sim)
+				ui.selectedUnit = sim.unitsMap[ui.cursor]
 			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
 				return .events([.shop])
 			}
@@ -70,7 +76,7 @@ private extension TacticalState {
 	}
 
 	mutating func secondaryAction() -> TacticalReaction {
-		ui.select(.none, in: sim)
+		ui.selectedUnit = .none
 		return .none
 	}
 
@@ -89,7 +95,7 @@ private extension TacticalState {
 			  sim[sim.country].type == .human
 		else { return .none }
 
-		defer { ui.select(.none, in: sim) }
+		defer { ui.selectedUnit = .none }
 		return .action(.resupply(ui.selectedUnit))
 	}
 
@@ -108,11 +114,12 @@ private extension TacticalState {
 			let u = sim.units[i]
 
 			if u.alive, !sim.offMap(unit: i.uid), u.country == country, u.hasActions {
-				ui.select(i.uid, in: sim)
+				ui.selectedUnit = i.uid
+				ui.cursor = sim.position[i]
 				return .none
 			}
 		}
-		ui.select(.none, in: sim)
+		ui.selectedUnit = .none
 		return .none
 	}
 

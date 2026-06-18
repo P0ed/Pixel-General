@@ -15,7 +15,7 @@ extension StrategicNodes {
 		core.store(scene.state) // persist the strategic map before the battle
 		core.startCampaignBattle(at: xy)
 		core.save()
-		present(.auto)
+		view.present(.auto)
 	}
 
 	private func processMenu(_ state: borrowing StrategicState) {
@@ -28,10 +28,10 @@ extension StrategicNodes {
 				.space,
 				.space,
 				.load { [weak scene] in scene?.saveState() },
-				.close(icon: "HQ", status: "HQ") { /*[weak scene]*/ _ in
+				.close(icon: .HQ, status: "HQ") { _ in
 					core.goHQ()
 					core.save()
-					present(.auto)
+					view.present(.auto)
 				},
 			]
 		))

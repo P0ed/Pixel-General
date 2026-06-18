@@ -7,12 +7,12 @@ extension HQNodes {
 		MenuState<HQAction>(
 			items: Country.playable.map { c in
 				.close(
-					icon: "\(c)",
+					icon: c.flag,
 					status: "\(c)",
 					update: { _ in
 						core = .new(country: c)
 						core.save()
-						present(.auto)
+						view.present(.auto)
 					}
 				)
 			}

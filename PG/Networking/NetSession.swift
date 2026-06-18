@@ -183,7 +183,7 @@ final class NetSession {
 		server?.broadcast(.start(encode(state)))
 		core.startScenario(state)
 		core.save()
-		present(.auto)
+		view.present(.auto)
 	}
 
 	private func broadcastLobby() {
@@ -260,7 +260,7 @@ final class NetSession {
 			started = true
 			core.startScenario(state)
 			core.save()
-			present(.auto)
+			view.present(.auto)
 		case .action(let data):
 			guard started, let action: TacticalAction = decode(data) else { return }
 			queue.append((0, action))

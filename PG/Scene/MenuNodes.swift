@@ -36,7 +36,7 @@ extension BaseNodes {
 				y: Self.menuSize.height / 2.0 - Self.itemSize.height / 2.0 - y
 			)
 
-			let sprite = SKSpriteNode(imageNamed: item.icon)
+			let sprite = SKSpriteNode(texture: SKTexture(image: item.icon))
 			sprite.texture?.filteringMode = .nearest
 			frame.addChild(sprite)
 

@@ -91,6 +91,7 @@
 		5FC91A0A2FE04B2C00803AC0 /* AlertController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A092FE04B2A00803AC0 /* AlertController.swift */; };
 		5FC91A0C2FE04C7700803AC0 /* Address.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A0B2FE04C7500803AC0 /* Address.swift */; };
 		5FC91A0E2FE2D48100803AC0 /* UnitResupply.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A0D2FE2D47A00803AC0 /* UnitResupply.swift */; };
+		5FC91A102FE424A600803AC0 /* View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC91A0F2FE424A400803AC0 /* View.swift */; };
 		5FCA9A010000000000000001 /* StrategicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9A020000000000000002 /* StrategicTests.swift */; };
 		5FCA9B010000000000000001 /* NetSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B020000000000000002 /* NetSession.swift */; };
 		5FCA9B030000000000000003 /* HQLobby.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FCA9B040000000000000004 /* HQLobby.swift */; };
@@ -229,6 +230,7 @@
 		5FC91A092FE04B2A00803AC0 /* AlertController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertController.swift; sourceTree = "<group>"; };
 		5FC91A0B2FE04C7500803AC0 /* Address.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Address.swift; sourceTree = "<group>"; };
 		5FC91A0D2FE2D47A00803AC0 /* UnitResupply.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitResupply.swift; sourceTree = "<group>"; };
+		5FC91A0F2FE424A400803AC0 /* View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View.swift; sourceTree = "<group>"; };
 		5FCA9A020000000000000002 /* StrategicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicTests.swift; sourceTree = "<group>"; };
 		5FCA9B020000000000000002 /* NetSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetSession.swift; sourceTree = "<group>"; };
 		5FCA9B040000000000000004 /* HQLobby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HQLobby.swift; sourceTree = "<group>"; };
@@ -491,6 +493,7 @@
 		5FBA4D842EF7047600D7C1B0 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				5FC91A0F2FE424A400803AC0 /* View.swift */,
 				5FC91A072FE03D6B00803AC0 /* ViewController.swift */,
 				5FC91A092FE04B2A00803AC0 /* AlertController.swift */,
 				5F10D2852FCF75AD00E6B598 /* UserDefaults.swift */,
@@ -793,6 +796,7 @@
 				5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */,
 				5F2E4CC82FC3443D00EF7BA3 /* Images.swift in Sources */,
 				5FBA4D7B2EF6DB7900D7C1B0 /* NotificationCenter.swift in Sources */,
+				5FC91A102FE424A600803AC0 /* View.swift in Sources */,
 				5FC91A0A2FE04B2C00803AC0 /* AlertController.swift in Sources */,
 				5F10D2712FCEF03000E6B598 /* TacticalStatus.swift in Sources */,
 				5F919D572EA959670037A208 /* TacticalNodes.swift in Sources */,
@@ -947,13 +951,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_STRICT_MEMORY_SAFETY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Debug;
 		};
@@ -990,13 +996,15 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_STRICT_MEMORY_SAFETY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Release;
 		};

@@ -209,31 +209,4 @@ extension Terrain {
 		default: return nil
 		}
 	}
-
-	var imageName: String {
-		switch self {
-		case .field: "Field"
-		case .forest: "Forest"
-		case .hill: "Hill"
-		case .forestHill: "ForestHill"
-		case .mountain: "Mountain"
-		case .water: "Water"
-		case .bridgeWE: "Bridge-WE"
-		case .bridgeSN: "Bridge-SN"
-		case .city: "City"
-		case .airfield: "Airfield"
-		case .roadNW: "Road-nw"
-		case .roadNE: "Road-ne"
-		case .roadWE: "Road-we"
-		case .roadSN: "Road-sn"
-		case .roadSW: "Road-sw"
-		case .roadSE: "Road-se"
-		case .villageE: "Village-E"
-		case .villageN: "Village-N"
-		case .villageW: "Village-W"
-		case .villageS: "Village-S"
-		case .roadX: "Road-nwse"
-		case .none: "Clear"
-		}
-	}
 }

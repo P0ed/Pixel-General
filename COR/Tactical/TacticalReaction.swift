@@ -54,16 +54,19 @@ extension TacticalState {
 		switch action {
 		case .move(let uid, _), .attack(let uid, _):
 			if sim.player.type == .human {
-				let keep = sim.units[uid].alive && sim.units[uid].hasActions
-				ui.select(keep ? uid : .none, in: sim)
+				let keep = sim.units[uid].alive && sim.units[uid].hasActions || sim.cargo[uid] != .none
+				ui.selectedUnit = keep ? uid : .none
 			}
 		case .embark(_, let transport) where sim.player.type == .human:
-			ui.select(transport, in: sim)
+			ui.selectedUnit = transport
 		case .end:
-			ui.select(.none, in: sim)
+			ui.selectedUnit = .none
 		default:
 			break
 		}
+
+		ui.selectable = ui.selectedUnit != .none && sim.units[ui.selectedUnit].canMove
+		? sim.moves(for: ui.selectedUnit).setXY : nil
 
 		return events
 	}

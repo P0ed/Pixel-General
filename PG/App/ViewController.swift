@@ -1,14 +1,11 @@
 import UIKit
-import SpriteKit
 
 final class ViewController: UIViewController {
 
 	var keyHandler: @MainActor (UIKey) -> Bool = { _ in false }
 
 	override func loadView() {
-		let view = SKView()
-		view.ignoresSiblingOrder = true
-		self.view = view
+		self.view = PG.view
 	}
 
 	override var prefersStatusBarHidden: Bool { true }

@@ -66,7 +66,7 @@ extension SKTileGroup {
 		return SKTileGroup(
 			tileDefinition: SKTileDefinition(
 				texture: texture,
-				size: frame.size
+				size: .tile3D
 			)
 		)
 	}
@@ -185,6 +185,21 @@ extension SKTileMapNode {
 
 extension UIImage {
 
+	@MainActor
+	static func tile(_ terrain: Terrain, fog: Bool = false) -> UIImage {
+		let elevation = terrain.elevationLevel
+		let frame = UIImage.frame(elevation)
+		let surface = UIImage.surface(elevation)
+		let image = composite(
+			frame: frame,
+			surface: surface,
+			tint: terrain.surfaceColor,
+			decoration: terrain.decoration,
+			fog: fog
+		)
+		return UIImage(cgImage: image)
+	}
+
 	static func frame(_ elevation: Int) -> UIImage {
 		switch elevation {
 		case 0: .frame0
@@ -210,19 +225,19 @@ private func composite(
 	decoration: UIImage?,
 	fog: Bool
 ) -> CGImage {
-	.draw(size: frame.size) { context in
-		if let cg = frame.cg {
-			context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+	ImageBuffer.tile.draw { ctx in
+		if let img = frame.cg {
+			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
 		}
-		if let cg = surface.cg?.tinted(tint.cgColor) {
-			context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+		if let img = surface.cg?.tinted(tint.cgColor) {
+			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
 		}
-		if let cg = decoration?.cg {
-			context.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+		if let img = decoration?.cg {
+			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
 		}
 		if fog {
-			let count = context.bytesPerRow * context.height
-			let px = unsafe context.data?.bindMemory(to: UInt8.self, capacity: count)
+			let count = ctx.bytesPerRow * ctx.height
+			let px = unsafe ctx.data?.bindMemory(to: UInt8.self, capacity: count)
 			for i in stride(from: 0, to: count, by: 4) {
 				unsafe px?[i + 0] >>= 1
 				unsafe px?[i + 1] >>= 1

@@ -1,4 +1,5 @@
 import COR
+import SpriteKit
 
 @MainActor
 struct MenuState<Action> {
@@ -12,7 +13,7 @@ enum MenuAction { case close, action(Int) }
 
 @MainActor
 struct MenuItem<Action> {
-	var icon: String
+	var icon: UIImage
 	var status: Status
 	var action: Action?
 	var update: (MenuState<Action>) -> MenuState<Action>?
@@ -21,14 +22,14 @@ struct MenuItem<Action> {
 extension MenuItem {
 
 	static var space: Self {
-		.init(icon: "Clear", status: .init(), update: id)
+		.init(icon: .clear, status: .init(), update: id)
 	}
 
-	static func close(icon: String, status: String, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
+	static func close(icon: UIImage, status: String, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		.close(icon: icon, status: .init(text: status), action: action, update: update)
 	}
 
-	static func close(icon: String, status: Status, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
+	static func close(icon: UIImage, status: Status, action: Action? = nil, update: @MainActor @escaping (MenuState<Action>) -> Void = ø) -> Self {
 		MenuItem(
 			icon: icon,
 			status: status,
@@ -68,13 +69,13 @@ import Foundation
 extension MenuItem {
 
 	static func load(save: @escaping () -> Void) -> MenuItem {
-		MenuItem(icon: "Load", status: .init(text: "Load \(UserDefaults.standard.slot + 1)"), update: { state in
+		MenuItem(icon: .load, status: .init(text: "Load \(UserDefaults.standard.slot + 1)"), update: { state in
 			MenuState(
 				items: (0...3).map { slot in
-						.close(icon: "Load", status: .init(text: "Slot \(slot + 1)"), update: { _ in
+						.close(icon: .load, status: .init(text: "Slot \(slot + 1)"), update: { _ in
 							save()
 							core = .load(slot: slot)
-							present(.auto)
+							view.present(.auto)
 						})
 				},
 				close: { _ in

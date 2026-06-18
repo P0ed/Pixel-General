@@ -33,28 +33,43 @@ extension CGImage {
 extension CGImage {
 
 	static func draw(size: CGSize, body: (CGContext) -> Void) -> CGImage {
+		let buf = ImageBuffer(size: size)
+		return buf.draw(body)
+	}
+}
+
+@safe struct ImageBuffer: ~Copyable {
+	private let context: CGContext
+	private let pixels: UnsafeMutablePointer<UInt8>
+
+	init(size: CGSize) {
 		let width = Int(size.width)
 		let height = Int(size.height)
-		let bytesPerRow = width * 4
-		let byteCount = height * bytesPerRow
 
-		let pixels = UnsafeMutablePointer<UInt8>.allocate(capacity: byteCount)
-		defer { unsafe pixels.deallocate() }
-		unsafe pixels.initialize(repeating: 0, count: byteCount)
+		unsafe pixels = UnsafeMutablePointer<UInt8>.allocate(capacity: width * height * 4)
 
-		let context = unsafe CGContext(
+		context = unsafe CGContext(
 			data: pixels,
 			width: width,
 			height: height,
 			bitsPerComponent: 8,
-			bytesPerRow: bytesPerRow,
+			bytesPerRow: width * 4,
 			space: CGColorSpaceCreateDeviceRGB(),
 			bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
 		)!
 		context.interpolationQuality = .none
+	}
 
+	deinit { unsafe pixels.deallocate() }
+
+	func draw(_ body: (CGContext) -> Void) -> CGImage {
+		unsafe pixels.initialize(repeating: 0, count: context.width * context.height * 4)
 		body(context)
-
 		return context.makeImage()!
 	}
+}
+
+@MainActor
+extension ImageBuffer {
+	static let tile = ImageBuffer(size: .tile3D)
 }

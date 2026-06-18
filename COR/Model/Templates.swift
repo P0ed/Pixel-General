@@ -48,19 +48,19 @@ public extension [Unit] {
 			.inf1(country),
 
 			.inf2(country),
-			.ifv1(country),
-			.tank1(country),
-			.tank1(country),
-
 			.inf2(country),
+			.ifv1(country),
 			.ifv2(country),
+
+			.tank1(country),
+			.tank2(country),
 			.air1(country),
 			.air2(country),
 
 			.art1(country),
-			.art1(country),
+			.art2(country),
 			.aa1(country),
-			.aa1(country),
+			.aa2(country),
 		]
 
 		return units.compactMap { u in u?.country(country).traits(.aux) }

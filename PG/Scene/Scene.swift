@@ -168,8 +168,6 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		)
 	}
 
-	/// Translates trackpad / mouse-wheel scrolling (and two-finger drags) into
-	/// discrete isometric `.pan` steps, mirroring the old AppKit scroll monitor.
 	@objc func handlePan(_ gesture: UIPanGestureRecognizer) {
 		guard let view = gesture.view else { return }
 		switch gesture.state {
@@ -210,9 +208,4 @@ extension MenuState {
 	var status: Status {
 		cursor < items.count ? items[cursor].status : Status()
 	}
-}
-
-@MainActor
-func present(_ scene: SKScene) {
-	view.presentScene(scene, transition: .moveIn(with: .up, duration: 0.47))
 }

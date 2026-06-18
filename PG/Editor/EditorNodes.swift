@@ -74,7 +74,7 @@ extension EditorNodes {
 		case .menu:
 			processMenu(state)
 		case .hq:
-			present(.auto)
+			view.present(.auto)
 		}
 	}
 }
@@ -90,17 +90,48 @@ private extension EditorNodes {
 		scene.show(MenuState(
 			items: Terrain.palette.map { terrain in
 				.close(
-					icon: terrain.imageName,
+					icon: terrain.image,
 					status: .init(text: "Brush: \(terrain)"),
 					action: .setBrush(terrain)
 				)
 			} + [
-				.close(icon: "New", status: "Randomize", action: .randomize),
-				.close(icon: "Empty", status: "Clear map", action: .clear),
-				.close(icon: "Save", status: "Save map", action: .save),
-				.close(icon: "Load", status: "Load map", action: .load),
-				.close(icon: "HQ", status: "HQ", action: .hq),
+				.close(icon: .new, status: "Randomize", action: .randomize),
+				.close(icon: .empty, status: "Clear map", action: .clear),
+				.close(icon: .save, status: "Save map", action: .save),
+				.close(icon: .load, status: "Load map", action: .load),
+				.close(icon: .HQ, status: "HQ", action: .hq),
 			]
 		))
+	}
+}
+
+extension Terrain {
+
+	@MainActor
+	var image: UIImage {
+		switch self {
+		case .field: .tile(.field)
+		case .forest: .tile(.forest)
+		case .hill: .tile(.hill)
+		case .forestHill: .tile(.forestHill)
+		case .mountain: .tile(.mountain)
+		case .water: .tile(.water)
+		case .bridgeWE: .bridgeWE
+		case .bridgeSN: .bridgeSN
+		case .city: .city
+		case .airfield: .airfield
+		case .roadNW: .roadNW
+		case .roadNE: .roadNE
+		case .roadWE: .roadWE
+		case .roadSN: .roadSN
+		case .roadSW: .roadSW
+		case .roadSE: .roadSE
+		case .villageE: .villageE
+		case .villageN: .villageN
+		case .villageW: .villageW
+		case .villageS: .villageS
+		case .roadX: .roadX
+		case .none: .clear
+		}
 	}
 }

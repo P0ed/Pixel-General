@@ -6,7 +6,7 @@ import COR
 @MainActor var settings: Settings = UserDefaults.standard.settings {
 	didSet { UserDefaults.standard.settings = settings }
 }
-@MainActor var view: SKView { controller.view as! SKView }
+@MainActor let view = View()
 @MainActor let controller = ViewController()
 @MainActor var net: NetSession?
 
@@ -41,6 +41,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		win.makeKeyAndVisible()
 		window = win
 
-		present(.auto)
+		view.present(.auto)
 	}
 }

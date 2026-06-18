@@ -8,7 +8,7 @@ extension Unit {
 	var hqSprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(imageNamed: imageName)
+		let sprite = SKSpriteNode(texture: SKTexture(image: image))
 		sprite.zPosition = 0.2
 		sprite.texture?.filteringMode = .nearest
 		node.addChild(sprite)
@@ -20,7 +20,7 @@ extension Unit {
 	var sprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(imageNamed: imageName)
+		let sprite = SKSpriteNode(texture: SKTexture(image: image))
 		sprite.blendMode = .alpha
 		sprite.colorBlendFactor = 0.1
 		sprite.color = country.color
@@ -39,38 +39,38 @@ extension Unit {
 		return node
 	}
 
-	var imageName: String {
+	var image: UIImage {
 		switch type {
-		case .aa: "Flak"
-		case .wheelArt: "<>"
-		case .supply: "Truck"
-		case .inf: if self[.elite] { "SF" } else { "Reg" }
-		case .art: "Art"
+		case .aa: rng > 1 ? .NASAMS : .flak
+		case .wheelArt: .clear
+		case .supply: .truck
+		case .inf: if self[.elite] { .SF } else { .reg }
+		case .art: .art
 		case .trackArt:
 			switch country.team {
-			case .axis: "PZH"
-			case .allies: "M270"
-			case .soviet: "2S3"
-			case .none: "<>"
+			case .axis: .PZH
+			case .allies: .m270
+			case .soviet: .akatsiya
+			case .none: .clear
 			}
-		case .wheelAA: "Neva"
-		case .trackAA: "SPAA"
-		case .lightWheel: "boxer"
-		case .lightTrack: 
-			self[.elite] ? "Puma" : "Recon"
+		case .wheelAA: .neva
+		case .trackAA: .SPAA
+		case .lightWheel: .boxer
+		case .lightTrack:
+			self[.elite] ? .puma : .recon
 		case .heavyTrack:
 			switch country.team {
-			case .allies: "M1A2"
-			case .axis: "Tank"
-			case .soviet: "leo1"
-			case .none: "<>"
+			case .allies: .M_1_A_2
+			case .axis: .tank
+			case .soviet: .T_72
+			case .none: .clear
 			}
 		case .heli:
-			rng == 0 ? "Skeldar" : "MH6"
+			rng == 0 ? .skeldar : .MH_6
 		case .jet:
 			switch country.team {
-			case .allies: "F16"
-			default: "F64"
+			case .allies: .F_16
+			default: .F_64
 			}
 		}
 	}

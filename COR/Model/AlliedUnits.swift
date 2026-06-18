@@ -48,8 +48,8 @@ extension Unit {
 		rng: 1,
 		ini: 7,
 		softAtk: 8,
-		hardAtk: 10,
-		groundDef: 10,
+		hardAtk: 11,
+		groundDef: 11,
 		airDef: 6
 	)
 
@@ -59,8 +59,8 @@ extension Unit {
 		rng: 1,
 		ini: 8,
 		softAtk: 10,
-		hardAtk: 12,
-		groundDef: 11,
+		hardAtk: 13,
+		groundDef: 12,
 		airDef: 7
 	)
 
@@ -70,8 +70,8 @@ extension Unit {
 		rng: 1,
 		ini: 9,
 		softAtk: 10,
-		hardAtk: 14,
-		groundDef: 12,
+		hardAtk: 15,
+		groundDef: 13,
 		airDef: 7,
 		traits: .elite
 	)

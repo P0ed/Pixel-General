@@ -102,12 +102,12 @@ extension TacticalSim {
 
 	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
 		let (si, di) = (src.index, dst.index)
-		guard units[si].country == country,
-			  units[si].country.team != units[di].country.team,
-			  units[si].canAttack, units[si].ammo > 0, unitCanHit(src, dst)
+		let (su, du) = (units[si], units[di])
+
+		guard su.country == country, su.country.team != du.country.team,
+			  su.ammo > 0, unitCanHit(src, dst), su.canAttack || surprise
 		else { return }
 
-		let (su, du) = (units[si], units[di])
 		let (sp, dp) = (position[si], position[di])
 		let dxy = dp - sp
 		let dt = map[dp]

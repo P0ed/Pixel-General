@@ -16,32 +16,32 @@ extension HQNodes {
 			}
 		}
 		var size = 0
-		let sizes = ["SizeS", "SizeM", "SizeL"]
+		let sizes: [UIImage] = [.sizeS, .sizeM, .sizeL]
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
-				icon: "\(players[idx].country)",
+				icon: players[idx].country.flag,
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
 					idx == 0 ? menu : MenuState<HQAction>(
 						items: countriesLeft.map { c in
 							MenuItem<HQAction>(
-								icon: "\(c)",
+								icon: c.flag,
 								status: .init(text: "\(c)"),
 								update: { _ in
 									modifying(menu) { menu in
 										players[idx].alive = true
 										players[idx].country = c
-										menu.items[idx].icon = "\(c)"
+										menu.items[idx].icon = c.flag
 										menu.cursor = idx
 									}
 								}
 							)
 						} + [
-							.init(icon: "neutral", status: .init(text: "Open"), update: { _ in
+							.init(icon: .neutral, status: .init(text: "Open"), update: { _ in
 								modifying(menu) { menu in
 									players[idx].alive = false
-									menu.items[idx].icon = "neutral"
+									menu.items[idx].icon = .neutral
 									menu.cursor = idx
 								}
 							})
@@ -68,12 +68,12 @@ extension HQNodes {
 		}
 		let prestige = (0..<4).map { idx in
 			MenuItem<HQAction>(
-				icon: "\(players[idx].prestige < .rich ? "Prestige1" : "Prestige2")",
+				icon: players[idx].prestige < .rich ? .prestige1 : .prestige2,
 				status: .init(text: "Player \(idx)"),
 				update: { menu in
 					modifying(menu) { menu in
 						players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
-						menu.items[8 + idx].icon = players[idx].prestige < .rich ? "Prestige1" : "Prestige2"
+						menu.items[8 + idx].icon = players[idx].prestige < .rich ? .prestige1 : .prestige2
 						menu.cursor = 8 + idx
 					}
 				}
@@ -88,7 +88,7 @@ extension HQNodes {
 					m.items[14].status.text = "Size: \(16 + size * 8)"
 				}
 			}),
-			.close(icon: "Start", status: "Start", update: { _ in
+			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 				core.startScenario(TacticalState(
 					players: players.compactMap { $0.alive ? $0 : nil },
@@ -97,7 +97,7 @@ extension HQNodes {
 					seed: .random(in: 0..<128)
 				))
 				core.save()
-				present(.auto)
+				view.present(.auto)
 			})
 		]
 
@@ -118,11 +118,11 @@ extension PlayerType {
 		}
 	}
 
-	var icon: String {
+	var icon: UIImage {
 		switch self {
-		case .human: "Human"
-		case .ai: "AI"
-		case .remote: "Remote"
+		case .human: .human
+		case .ai: .AI
+		case .remote: .remote
 		}
 	}
 }

@@ -18,15 +18,20 @@ public extension Unit {
 
 	static func inf2(_ country: Country) -> Self {
 		switch country.team {
-		case .axis: .ksk.veteran
-		case .allies: .delta.veteran
-		case .soviet: .speznas
+		case .axis: .engineer
+		case .allies: .engineer
+		case .soviet: .regular
 		case .none: .empty
 		}
 	}
 
 	static func inf3(_ country: Country) -> Self {
-		.engineer
+		switch country.team {
+		case .axis: .ksk.veteran
+		case .allies: .delta.veteran
+		case .soviet: .speznas
+		case .none: .empty
+		}
 	}
 
 	static func recon1(_ country: Country) -> Self? {

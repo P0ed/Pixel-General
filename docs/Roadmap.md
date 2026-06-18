@@ -6,30 +6,6 @@
 - Supply map mode.
 - Better way of assigning sprites/strings to units than a switch over stats.
 
-## Campaign
-
-Phase 1 (province conquest) and a first Tactical `Objective` are in:
-`StrategicSim` Europe map, `canAttack` / `resolveBattle`, the HQ → battle →
-annex loop (`Core.startCampaignBattle` / `Core.complete`), and a
-`survive(Team, day:)` objective that `TacticalSim.winner` resolves to a winning
-team — a campaign offensive deploys against `survive(defender.team, day: 20)`.
-Remaining:
-
-- Auto-end on the objective: `winner` is read only by `Core.complete`; `endTurn`
-  still emits `.end` solely on last-team-standing, so the deadline doesn't yet
-  end a live battle on its own.
-- A settlement-`capture` objective (take named settlements by day N), so an
-  offensive can be framed by the attacker's goal rather than only the defender's.
-- Setup menu (two difficulty knobs: prestige, experience).
-- A new graph-walking strategic AI (the AI offensives are not wired yet — the
-  reducer's `endTurn` just advances the turn; wiring them also unlocks the
-  "enemy attacks you / you lose a province" outcome).
-- Anti-snowball model (supply-distance budget, permanent casualties, defender
-  consolidation) and the remaining loss/abandon rules.
-- Surface the objective and result in Tactical: an in-battle objective indicator
-  and a victory/defeat screen (today the result is shown only by returning to
-  the strategic map).
-
 ## General
 
 - Native alerts with proper focus.
@@ -37,7 +13,6 @@ Remaining:
 ## Map
 
 - Keep roads/buildings in political/supply map mode.
-- Fix city tile clipping it's top part.
 
 ## Multiplayer
 
@@ -62,6 +37,4 @@ Remaining:
 
 ## iOS
 
-- On-screen touch controls: a touch-only iPhone/iPad has no way to send the
-  action buttons (a/b/c/d), target cycling, menu, or scale — add on-screen
-  buttons (or gestures) for devices without a keyboard/gamepad.
+- On-screen touch controls.

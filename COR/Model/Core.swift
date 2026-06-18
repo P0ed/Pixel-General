@@ -61,8 +61,6 @@ public extension Core {
 		location = .tactical
 	}
 
-	/// Launch a campaign offensive against the enemy province at `tile`. The
-	/// player's whole roster (up to 16) deploys against the defending country.
 	mutating func startCampaignBattle(at tile: XY) {
 		guard let human = hq?.sim.player.country,
 			let prestige = hq?.sim.player.prestige,
@@ -81,7 +79,7 @@ public extension Core {
 			objective: .survive(defender.team, day: 20),
 			units: units,
 			size: 24,
-			seed: .random(in: 0 ..< 128)
+			seed: tile.x + tile.y * 32
 		)
 		location = .tactical
 	}

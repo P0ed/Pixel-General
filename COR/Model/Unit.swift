@@ -200,21 +200,21 @@ public extension Unit {
 	private var typeCost: UInt16 {
 		switch type {
 		case .inf, .aa, .art: 10
-		case .supply, .wheelAA, .wheelArt, .lightWheel: 150
-		case .trackAA, .lightTrack: 220
-		case .trackArt, .heavyTrack: 270
-		case .heli: 330
-		case .jet: 470
+		case .supply, .wheelAA, .wheelArt, .lightWheel: 100
+		case .trackAA, .lightTrack: 150
+		case .trackArt, .heavyTrack: 220
+		case .heli: 270
+		case .jet: 330
 		}
 	}
 
 	private var weightedStats: UInt16 {
 		UInt16(lvl + 4) * (
-			UInt16(softAtk * 3)
-			+ UInt16(hardAtk * 4)
-			+ UInt16(airAtk * 4)
-			+ UInt16(groundDef * 3)
-			+ UInt16(airDef * 3)
+			UInt16(softAtk * 4)
+			+ UInt16(hardAtk * 5)
+			+ UInt16(airAtk * 6)
+			+ UInt16(groundDef * 4)
+			+ UInt16(airDef * 4)
 			+ UInt16(ini * 4)
 			+ UInt16(mov * 4)
 			+ UInt16(rng * 7)

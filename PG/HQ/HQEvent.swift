@@ -30,7 +30,7 @@ extension HQNodes {
 		scene?.show(.init(
 			items: Shop(country: state.sim.country).units.enumerated().map { i, u in
 				.close(
-					icon: u.imageName,
+					icon: u.image,
 					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
 					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
 				)
@@ -40,41 +40,41 @@ extension HQNodes {
 
 	private func processMenu() {
 		scene?.show(MenuState(items: [
-			.init(icon: "Start", status: .init(text: "Scenario"), update: { m in
+			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
 				guard let scene else { return nil }
 				return scenarioMenu(m, scene.state)
 			}),
-			.init(icon: "Remote", status: .init(text: "Host LAN"), update: { m in
+			.init(icon: .remote, status: .init(text: "Host LAN"), update: { m in
 				guard let scene else { return nil }
 				return hostMenu(m, scene.state)
 			}),
-			.init(icon: "Remote", status: .init(text: "Join LAN"), update: { m in
+			.init(icon: .remote, status: .init(text: "Join LAN"), update: { m in
 				joinMenu(m)
 			}),
 			.space,
 
-			.init(icon: "Start", status: .init(text: "Campaign"), update: { m in
+			.init(icon: .start, status: .init(text: "Campaign"), update: { m in
 				guard let scene else { return nil }
 				return campaignMenu(m, scene.state)
 			}),
 			.space, .space, .space,
 
-			.close(icon: "Chess", status: .init(text: "Chess"), update: { _ in
+			.close(icon: .chess, status: .init(text: "Chess"), update: { _ in
 				core.startScenario(TacticalState.chess())
-				present(.auto)
+				view.present(.auto)
 			}),
 			.space, .space, .space,
 
-			.init(icon: "New", status: .init(text: "New")) { _ in
+			.init(icon: .new, status: .init(text: "New")) { _ in
 				guard let scene else { return nil }
 				return newGameMenu(scene.state)
 			},
 			.load { scene?.saveState() },
 			.space,
-			.close(icon: "Chess", status: .init(text: "Editor")) { _ in
+			.close(icon: .chess, status: .init(text: "Editor")) { _ in
 				guard let scene else { return }
 				core.store(scene.state)
-				present(.editor)
+				view.present(.editor)
 			},
 		]))
 	}

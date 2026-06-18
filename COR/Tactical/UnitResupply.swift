@@ -1,11 +1,14 @@
 extension TacticalSim {
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
-		guard units[id].country == country && units[id].untouched || endOfTurn,
-			  cargo[id] == .none || units[id][.transport]
+		var unit = units[id]
+		let hasBuildings = hasBuildings(near: id)
+
+		guard unit.country == country, unit.untouched || endOfTurn,
+			  cargo[id] == .none || unit[.transport],
+			  !unit.isAir || hasBuildings || endOfTurn
 		else { return }
 
-		var unit = units[id]
 		let country = unit.country
 		let position = position[id.index]
 		let neighbors = neighbors(at: position)
@@ -17,7 +20,6 @@ extension TacticalSim {
 			units[n].country.team == country.team
 			&& units[n].type == .supply
 		}
-		let hasBuildings = hasBuildings(near: id)
 		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)
 
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {

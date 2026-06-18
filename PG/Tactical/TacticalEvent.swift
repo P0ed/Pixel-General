@@ -20,7 +20,7 @@ extension TacticalNodes {
 		net?.leave()
 		core.complete(state)
 		core.save()
-		present(.auto)
+		view.present(.auto)
 	}
 }
 
@@ -113,7 +113,7 @@ private extension TacticalNodes {
 		let xy = state.ui.cursor
 		let items = state.sim.shopUnits(at: xy).enumerated().map { i, template in
 			MenuItem<TacticalAction>.close(
-				icon: template.imageName,
+				icon: template.image,
 				status: .init(
 					text: template.status(),
 					action: .init("\(template.cost) / \(state.sim.player.prestige)")

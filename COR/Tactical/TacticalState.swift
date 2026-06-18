@@ -1,8 +1,3 @@
-@frozen public enum Objective: Equatable, BitwiseCopyable {
-	case none
-	case survive(Team, day: UInt16)
-}
-
 public struct TacticalSim: ~Copyable {
 	public var map: Map<32, Terrain>
 	public var control: Map<32, Country>
@@ -21,7 +16,7 @@ public struct TacticalSim: ~Copyable {
 	public var objective: Objective = .none
 }
 
-public struct TacticalUI {
+public struct TacticalUI: ~Copyable {
 	public var cursor: XY = .zero
 	public var camera: XY = .zero
 	public var selectedUnit: UID = .none
@@ -32,24 +27,11 @@ public struct TacticalUI {
 	public init() {}
 }
 
-public extension TacticalUI {
-
-	mutating func select(_ uid: UID, in sim: borrowing TacticalSim) {
-		selectedUnit = uid
-		if uid != .none {
-			cursor = sim.position[uid]
-			selectable = sim.units[uid].canMove ? sim.moves(for: uid).setXY : .none
-		} else {
-			selectable = .none
-		}
-	}
-}
-
 public struct TacticalState: ~Copyable {
 	public var sim: TacticalSim
 	public var ui: TacticalUI
 
-	public init(sim: consuming TacticalSim, ui: TacticalUI = TacticalUI()) {
+	public init(sim: consuming TacticalSim, ui: consuming TacticalUI = TacticalUI()) {
 		self.sim = sim
 		self.ui = ui
 	}
@@ -57,6 +39,11 @@ public struct TacticalState: ~Copyable {
 	public init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
 		self.init(sim: TacticalSim(map: map, players: players, cities: cities, units: units))
 	}
+}
+
+@frozen public enum Objective: Equatable, BitwiseCopyable {
+	case none
+	case survive(Team, day: UInt16)
 }
 
 @frozen public enum MapMode: UInt8, Hashable {
@@ -216,9 +203,6 @@ public extension TacticalSim {
 		}
 		return result
 	}
-}
-
-extension TacticalSim {
 }
 
 public extension TacticalSim {

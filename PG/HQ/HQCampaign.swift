@@ -6,11 +6,11 @@ extension HQNodes {
 	func campaignMenu(_ menu: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction> {
 		MenuState(
 			items: [
-				.close(icon: "Start", status: .init(text: "Start")) { m in
+				.close(icon: .start, status: .init(text: "Start")) { m in
 					guard let scene else { return }
 					core.startCampaign(scene.state, .europe(human: scene.state.sim.country))
 					core.save()
-					present(.auto)
+					view.present(.auto)
 				}
 			],
 			close: { _ in menu }

@@ -56,14 +56,14 @@ extension HQNodes {
 
 		let countries = (0 ..< 4).map { idx in
 			MenuItem<HQAction>(
-				icon: session.seats[idx].alive ? "\(session.seats[idx].country)" : "neutral",
+				icon: session.seats[idx].alive ? session.seats[idx].country.flag : .neutral,
 				status: .init(text: seatText(idx, session)),
 				update: { menu in
 					guard isHost, idx > 0 else { return menu }
 					return MenuState<HQAction>(
 						items: countriesLeft.map { c in
 							MenuItem<HQAction>(
-								icon: "\(c)",
+								icon: c.flag,
 								status: .init(text: "\(c)"),
 								update: { _ in
 									session.set(seat: idx, country: c)
@@ -71,7 +71,7 @@ extension HQNodes {
 								}
 							)
 						} + [
-							.init(icon: "neutral", status: .init(text: "Off"), update: { _ in
+							.init(icon: .neutral, status: .init(text: "Off"), update: { _ in
 								session.close(seat: idx)
 								return rebuilt(cursor: idx)
 							})
@@ -83,7 +83,7 @@ extension HQNodes {
 		}
 		let types = (0 ..< 4).map { idx in
 			MenuItem<HQAction>(
-				icon: session.seats[idx].alive ? session.seats[idx].type.icon : "Clear",
+				icon: session.seats[idx].alive ? session.seats[idx].type.icon : .clear,
 				status: .init(text: seatText(idx, session)),
 				update: { menu in
 					guard isHost, idx > 0, session.seats[idx].alive else { return menu }
@@ -94,7 +94,7 @@ extension HQNodes {
 		}
 		let prestige = (0 ..< 4).map { idx in
 			MenuItem<HQAction>(
-				icon: session.seats[idx].prestige < 0x1400 ? "Prestige1" : "Prestige2",
+				icon: session.seats[idx].prestige < 0x1400 ? .prestige1 : .prestige2,
 				status: .init(text: seatText(idx, session)),
 				update: { menu in
 					guard isHost, session.seats[idx].alive else { return menu }
@@ -103,9 +103,9 @@ extension HQNodes {
 				}
 			)
 		}
-		let sizes = ["SizeS", "SizeM", "SizeL"]
+		let sizes: [UIImage] = [.sizeS, .sizeM, .sizeL]
 		let bottom: [MenuItem<HQAction>] = isHost ? [
-			.init(icon: "Empty", status: .init(text: Address.me.string), update: id),
+			.init(icon: .empty, status: .init(text: Address.me.string), update: id),
 			.space,
 			.init(
 				icon: sizes[(session.size - 16) / 8],
@@ -115,14 +115,14 @@ extension HQNodes {
 					return rebuilt(cursor: 14)
 				}
 			),
-			.init(icon: "Start", status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
+			.init(icon: .start, status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
 				guard let scene else { return nil }
 				session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })
 				return session.started ? nil : menu
 			}),
 		] : [
 			.space, .space, .space,
-			.init(icon: "Empty", status: .init(text: "waiting for host"), update: id),
+			.init(icon: .empty, status: .init(text: "waiting for host"), update: id),
 		]
 
 		return MenuState(

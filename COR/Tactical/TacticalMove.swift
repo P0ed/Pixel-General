@@ -48,7 +48,7 @@ public extension TacticalSim {
 						if mp - moveCost != 1 { next.add(xy) }
 					}
 				}
-				if enemies < 2 {
+				if enemies == 0 {
 					let x4 = from.x4
 					for i in x4.indices {
 						let xy = x4[i]
@@ -86,7 +86,7 @@ public extension TacticalSim {
 		guard !route.isEmpty else { return }
 
 		var pos = moves.start
-		var interruptor: UID?
+		var interruptor: UID = .none
 		for xy in route.reversed() {
 			if let tid = uidAt(xy) {
 				let u = units[tid]
@@ -127,7 +127,7 @@ public extension TacticalSim {
 			}
 		}
 
-		if let interruptor, units[interruptor].country.team != units[uid].country.team {
+		if interruptor != .none, units[interruptor].country.team != units[uid].country.team {
 			attack(src: uid, dst: interruptor, surprise: true, into: &events)
 		}
 	}
