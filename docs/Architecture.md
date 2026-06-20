@@ -71,7 +71,7 @@ The root `Core` struct (`COR/Model/Core.swift`) holds optional `.hq`, `.strategi
 
 App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
 
-Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`.
+Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.
 
 ### Concurrency
 
@@ -125,7 +125,8 @@ guarded by `Tests/MultiplayerTests.swift`.
 COR/                  Headless game core (import COR), no UI dependency
   Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20, Input, Reaction;
                       Swift.swift = clone / encode / decode for ~Copyable state
-  Model/              Shared game data: Core, Unit/Units, Player, Terrain, Templates, Shop, Strings
+  Model/              Shared game data: Core, Unit/Units, UnitStats (model → static stats table),
+                      {Allied,Axis,Soviet}Units (per-team catalogue), Player, Terrain, Templates, Shop, Strings
   Tactical/           Combat sim + UI: state (TacticalSim/TacticalUI), reaction (action+event+reduce),
                       AI, attacks, movement, resupply, transport, turns, shop, map generation
   HQ/                 Roster management: state (HQSim/HQUI), reaction (action+event+reduce), input

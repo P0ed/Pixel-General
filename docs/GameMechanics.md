@@ -27,50 +27,89 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
 
 ## Units
 
-`COR/Model/Unit.swift`, `COR/Model/Units.swift`
+`COR/Model/Unit.swift`, `COR/Model/Units.swift`, `COR/Model/UnitStats.swift`
 
-A `Unit` is a value struct of `UInt8` stats:
+A `Unit` is a small value struct holding only **per-instance runtime state**
+plus a `model` index; the model's fixed *stats* live in a static table:
 
-| Field | Meaning |
-|-------|---------|
-| `hp` | Health, 0–15. 0 = dead. |
-| `mp` | Movement points this turn (`maxMP` = 1, air = 2). |
-| `ap` | Attack points this turn (`maxAP` = 1). |
-| `ammo` | Shots remaining; `maxAmmo` depends on type/traits. |
-| `ent` | Entrenchment in quarter-units. Effective bonus `entDef = ent/4`. Capped at `terrain.baseEntrenchment*4 + 20`. |
-| `exp` | Experience, drives `lvl` (0–8). |
+```swift
+public struct Unit: Equatable {
+    public var model: UnitModel    // index into UnitStats.table
+    public var country: Country
+    public var hp, mp, ap, ammo, ent: UInt8
+    public var exp, kills: UInt16
+    public var skills: Skills       // earned on promotion
+    public var bits: Bits           // per-instance flags (aux)
+}
+```
+
+`unit.stats` is `UnitStats.table[model.rawValue]`, a 256-entry table built once
+at load. Each `UnitModel` names a real platform (`.ranger`, `.leo2a6`, `.t90m`,
+`.f35`, …) and maps to one `UnitStats` row; the stat accessors on `Unit`
+(`type`, `tier`, `mov`, `rng`, `ini`, `softAtk`, `hardAtk`, `airAtk`,
+`groundDef`, `airDef`, `traits`) just forward to that row. So all units of a
+model share identical stats and differ only in runtime fields. The catalogue is
+organised by team in `COR/Model/{Allied,Axis,Soviet}Units.swift`.
+
+| Runtime field | Meaning |
+|---------------|---------|
+| `hp` | Health 0–15 (`maxHP = 0xF`). 0 = dead. |
+| `mp` | Movement points this turn (`maxMP` = 2 air, else 1). |
+| `ap` | Attack points this turn (`maxAP` = 1, or 0 if `rng == 0`). |
+| `ammo` | Shots remaining; `maxAmmo` depends on type and `rng`. |
+| `ent` | Entrenchment in quarter-units. Bonus `entDef = ent/4`, capped at `terrain.baseEntrenchment*4 + 20`. |
+| `exp` | Experience; drives `lvl` (0–8) and `subLvl` (0–9 progress to next level). |
 | `kills` | Lifetime kill count. |
+| `skills` | `Skills` earned on promotion (see [Skills](#skills)). |
+| `bits` | Per-instance flags; only `aux` today. |
+
+| Model stat (`UnitStats`) | Meaning |
+|--------------------------|---------|
+| `type` | `UnitType` (drives most branching). |
+| `tier` | Tech tier; gates the shop against `player.tier`. |
 | `mov` | Move range. |
-| `rng` | Attack range (tiles reachable = grid distance ≤ `rng*2+1`). |
+| `rng` | Attack range (reachable iff grid distance ≤ `rng*2+1`); `rng == 0` ⇒ no attack. |
 | `ini` | Initiative — extra fire round + rugged-defence rolls. |
 | `softAtk`/`hardAtk`/`airAtk` | Attack vs soft / armored / air targets. |
 | `groundDef`/`airDef` | Defense vs ground / air attackers. |
+| `traits` | Fixed `Traits` of the platform. |
 
 **Unit types** (`UnitType`): `supply`, `inf`, `art`/`wheelArt`/`trackArt`,
-`aa`/`wheelAA`/`trackAA`, `lightWheel`, `lightTrack`, `heavyTrack`, `heli`,
-`jet`. `heli`/`jet` are air units (`isAir`). Computed groupings: `isArt`
-(any artillery type), `isAA` (any AA type plus `jet`), `isArmor` (any
-light/heavy wheeled or tracked combat vehicle). `atk(_:)` picks softAtk
-for `inf`/`supply`/`art`/`aa`/`wheelArt`/`wheelAA` targets, hardAtk for
-`trackArt`/`trackAA` and any `lightWheel`/`lightTrack`/`heavyTrack`
-target, airAtk for `heli`/`jet`, then adds the attacker's experience
-`lvl`: full `lvl` vs soft targets; vs hard targets full `lvl` if the
-attacker `isArmor` else `lvl/2`; vs air targets full `lvl` if the
-attacker `isAA` else `lvl/2`. `def(src:)` is `groundDef` vs ground
-attackers or `airDef` vs air attackers, plus the defender's full `lvl`;
-all terrain modifiers live on `Terrain`.
+`aa`/`wheelAA`/`trackAA`, `lightWheel`/`lightTrack`/`heavyTrack`, and three air
+types `heli`/`fighter`/`cas`. Computed groupings: `isAir` (heli/fighter/cas),
+`isArt` (any artillery type), `isAA` (any AA type plus `fighter`), `isArmor`
+(any light/heavy wheeled or tracked vehicle), `transportable` (inf/art/aa).
+`canAttackAfterMove` is false for foot `art`/`aa`.
 
-**Traits** (`Traits` option set):
-- `aux` — auxiliary unit, half cost; bought from a fixed pool.
-- `optics`, `atgm`, `aam` — reserved trait bits (see [Roadmap](./Roadmap.md)).
-- `engineer` — faster entrenchment and increased damage to enemy fortifications.
-- `elite` — flag for premium templates; also required cargo for air transports.
+`atk(_:)` picks the attack stat by the *target's* type: softAtk vs
+`inf`/`supply`/`art`/`aa`/`wheelAA`/`wheelArt`; hardAtk vs
+`trackArt`/`trackAA`/`lightWheel`/`lightTrack`/`heavyTrack`; airAtk vs
+`heli`/`fighter`/`cas`. It then adds experience `lvl`: full `lvl` vs soft; vs
+hard full `lvl` if the attacker `isArmor` else `lvl/2`; vs air full `lvl` if the
+attacker `isAA` else `lvl/2`. A zero base stat means the attacker cannot damage
+that class at all (returns 0). `def(src:)` is `groundDef` vs ground attackers or
+`airDef` vs air attackers, plus `lvl/2`; all terrain modifiers live on
+`Terrain`.
+
+**Traits** (`Traits`, fixed per model in `UnitStats`):
 - `transport` — can carry one transportable cargo (see Transport).
-- `radar` — `spot = 3` (vision uses the precomputed n36 disc) instead of 2.
+- `elite` — premium flag; also the required cargo type for *air* transports.
+- `engineer` — faster entrenchment (higher `entRate`) and more fortification
+  damage (`entDamage` 8 vs 4).
+- `optics` — `spot = 3` (vision uses the precomputed n36 disc) instead of 2.
+- `radar` — when firing on an air target, a friendly radar aura (self or
+  8-neighbour) adds +2 attack.
+- `atgm`, `aam` — reserved trait bits (see [Roadmap](./Roadmap.md)).
 
-**Experience & promotion.** `lvl = 8 - leadingZeroBitCount(exp)`, capping at
-8. Killing/damaging enemies grants `exp`; on a kill `promote(using:)` may roll
-to add a random combat skill. Healing costs `exp`.
+**Bits** (`Bits`, per-instance): only `aux` today — marks an auxiliary unit
+(cheaper, drawn from a fixed pool, filtered out of campaign writeback).
+
+**Experience & promotion.** `lvl = 8 - leadingZeroBitCount(exp)`, capping at 8;
+`subLvl` (0–9) is the progress toward the next level. Damaging/killing enemies
+grants `exp`; on a kill `promote(using:)` may roll to add one random `Skills`
+bit — likelier the fewer skills the unit holds and the higher its level (a unit
+can hold at most `lvl` skills). Healing costs `exp`. `Skills` are a separate
+option set from the model's `Traits`.
 
 ## Movement
 
@@ -86,15 +125,16 @@ to add a random combat skill. Healing costs `exp`.
   (one tile and done); mountains block wheeled types entirely.
 - Air units pay 1 per tile and are blocked from no-fly zones (city,
   villages). Air and ground units cannot share tiles.
-- Moving resets `ent` to 0 and spends 1 `mp`. The foot `art` type loses
-  `ap` after moving; wheeled and tracked artillery do not.
+- Moving resets `ent` to 0 and spends 1 `mp`. Foot `art`/`aa` lose `ap` after
+  moving (`!canAttackAfterMove`); wheeled and tracked variants do not.
 - Walking onto a tile occupied by a hidden enemy interrupts the move and
   triggers a **surprise attack** on the blocker.
 - Movement reveals fog of war along the route (vision disc each step).
 
 **Vision / fog of war** (`COR/Tactical/TacticalState.swift`): each player sees the union
-of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
-`spot = 3`) plus the tile and 8-neighbourhood of every owned settlement.
+of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `optics`'s
+`spot = 3`) plus the tile and 8-neighbourhood of every owned settlement. Per-player
+vision lives in `TacticalSim.vision: [4 of SetXY]`, recomputed on each turn change.
 
 ## Combat
 
@@ -126,10 +166,11 @@ of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
 
 **`fire(src:dst:defMod:)`** — the damage core:
 
-- `atk = atk(target) + leadershipAura + reconAura` (each aura = +1 if the
-  firing unit or a friendly neighbour has the skill). `lvl` is already
-  folded into `atk(target)`.
-- `def = def(attacker) + defMod + leadershipAura + reconAura`, with `lvl`
+- `atk = atk(target) + leadershipAura + reconAura + radarAura` (leadership /
+  recon auras = +1 if the firing unit or a friendly neighbour has the skill;
+  `radarAura` = +2 when the target is air and the firing side has the `radar`
+  trait nearby). `lvl` is already folded into `atk(target)`.
+- `def = def(attacker) + defMod + leadershipAura + reconAura`, with `lvl/2`
   folded into `def(attacker)` and `defMod = entDef + terrain.def(defType)
   + mountaineer + mhtn + diag − encirclement`.
   `entDef = ent/4`; `terrain.def(_:)` is a per-type bonus/penalty
@@ -137,8 +178,8 @@ of unit vision discs (precomputed `n20` for `spot = 2`, `n36` for `radar`'s
   arty/AA; negative for wheels and tracks in cover, worst for heavy
   tracks); `encirclement` = `max(0, enemiesAround − 1)` so the first
   surrounder is free.
-- `dif = atk − def`. Four thresholds `t1=max(0,9−dif)`, `t2=max(1,15−dif)`,
-  `t3=max(2,21−dif)`, `t4=max(3,27−dif)`.
+- `dif = atk − def`. Four thresholds `t1=max(0,7−dif)`, `t2=max(1,13−dif)`,
+  `t3=max(2,19−dif)`, `t4=max(3,26−dif)`.
 - Rounds = `(hp+2)/3 + (ini + lvl/2 > d20(max of 2) ? 1 : 0)`. Each round
   rolls `d20` (0–19): `>t4`→4, `>t3`→3, `>t2`→2, `>t1`→1, else 0 damage.
   `crit` may double a round (`d20>16`); `evasion` may zero it (`d20>16`).
@@ -171,7 +212,8 @@ combat is reproducible.
   field 0; hill/airfield 1; forest/forestHill/mountain/villages 2;
   city 3. Standing still, ground units gain `entRate` per turn
   (supply/inf 4; foot art/aa, wheeled vehicles, light tracks 3;
-  heavy/track variants 2; air 0) up to `base*4 + 20`.
+  heavy/track variants 2; air 0 — all doubled by `engineer`) up to
+  `base*4 + 20`.
 - **`terrain.def(unitType)`** is a per-tile defensive modifier applied
   to whoever sits on the tile. Roads -1, bridges -2, rivers -2 to -5
   by type, hill/airfield +1 / -1 / -2 (foot-ish / light / heavy track),
@@ -220,26 +262,31 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 ## Economy & Shop
 
-`COR/Tactical/TacticalShop.swift`, `COR/Model/Templates.swift`
+`COR/Tactical/TacticalShop.swift`, `COR/Model/Shop.swift`, `COR/Model/Templates.swift`
 
-- Each player has **prestige** (starts `0xF00`). Income per day = sum of
-  owned settlements' income (`Terrain.income` in `COR/Tactical/TacticalState.swift`:
-  city 24, village 8, airfield 4).
+- Each player has **prestige** (default `0xF00`; campaigns set `.poor` = `0x0A00`
+  / `.rich` = `0x1F00`). Income per day = sum of owned settlements' income
+  (`Terrain.income` in `COR/Tactical/TacticalState.swift`: city 24, village 8,
+  airfield 4).
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
   unit if prestige ≥ `unit.cost`. Airfields sell air units; cities (and
-  villages) sell ground.
-- **Slots**: up to 16 core + 16 auxiliary units per player. Core units come
-  from `[Unit].shop`; auxiliary units are drawn from a fixed `aux` pool and
-  cost less (consumed from the pool when bought).
+  villages) sell ground. Bought units start at `lvl += player.baseLevel`.
+- **Catalogue**: the core list is `Shop(country:air:tier:).units` — the full
+  per-country roster (`COR/Model/Shop.swift`) filtered by the building's
+  air/ground kind and by `player.tier` (units above the player's tech tier are
+  hidden). Auxiliary units come from the per-player `auxilia` pool (seeded from
+  `[Unit].aux(country)`), filtered by air/ground; an aux unit is consumed from
+  the pool when bought.
+- **Slots**: up to 16 core + 16 auxiliary units per player.
 - **Unit `cost`** =
-  `(lvl + 3) * (typeCost + traitCost + statSum * sumMult) / (aux ? 6 : 3)`
-  where `sumMult = 4` if the unit `isArt`, `isAA`, or `isAir`; `3` otherwise.
-  - `typeCost`: supply 22, inf 33, art 47, aa 68, wheelArt 100, wheelAA 120,
-    trackArt 150, trackAA 180, lightWheel 100, lightTrack 120, heavyTrack 150,
-    heli 180, jet 220.
-  - `traitCost = traitsCount * 15`.
-  - `statSum = softAtk + hardAtk + airAtk + groundDef + airDef + ini + mov + rng`.
-  - `lvl + 3` makes veterans linearly pricier; `aux` halves the result.
+  `(typeCost + traitCost + skillCost + weightedStats) / (aux ? 7 : 4)`:
+  - `typeCost`: inf/aa/art 10; supply/wheelAA/wheelArt/lightWheel 100;
+    trackAA/lightTrack 150; trackArt/heavyTrack 220; heli 270; fighter/cas 330.
+  - `traitCost = traitsCount * 15`; `skillCost = skillsCount * 15`.
+  - `weightedStats = (lvl + 4) * (softAtk*4 + hardAtk*5 + airAtk*6 + groundDef*4
+    + airDef*4 + ini*4 + mov*4 + rng*7)`.
+  - `lvl + 4` makes veterans (and the skills they earn) linearly pricier; `aux`
+    divides by 7 instead of 4.
 
 ## Players & Victory
 

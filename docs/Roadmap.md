@@ -3,8 +3,6 @@
 ## Scenario
 
 - Better supply model for reinforcements and resupply.
-- Supply map mode.
-- Better way of assigning sprites/strings to units than a switch over stats.
 
 ## General
 
@@ -12,6 +10,7 @@
 
 ## Map
 
+- Supply map mode (gray gradient 8 values).
 - Keep roads/buildings in political/supply map mode.
 
 ## Multiplayer

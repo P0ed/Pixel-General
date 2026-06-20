@@ -15,4 +15,5 @@ xcodebuild -scheme PG test -destination 'platform=macOS,variant=Mac Catalyst'
 ## Docs
 - [Architecture](./docs/Architecture.md)
 - [Mechanics](./docs/GameMechanics.md)
+- [Campaign](./docs/Campaign.md)
 - [Roadmap](./docs/Roadmap.md)
