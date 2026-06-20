@@ -66,7 +66,7 @@ public extension [Unit] {
 		]
 
 		return units.compactMap { u in
-			u?.country(country).traits(.aux)
+			u?.country(country).aux
 		}
 	}
 }

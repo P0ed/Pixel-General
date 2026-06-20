@@ -1,11 +1,11 @@
 public extension Unit {
 
 	func country(_ country: Country) -> Self {
-		modifying(self, { u in u.country = country })
+		modifying(self) { u in u.country = country }
 	}
 
-	func traits(_ traits: Traits) -> Self {
-		modifying(self, { u in u.traits.formUnion(traits) })
+	var aux: Self {
+		modifying(self) { u in u[.aux] = true }
 	}
 
 	static func inf1(_ country: Country) -> Self {

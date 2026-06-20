@@ -1,4 +1,5 @@
 public struct Unit: Equatable {
+	public var model: UnitModel = .none
 	public var country: Country = .default
 	public var hp: UInt8 = 0
 	public var mp: UInt8 = 0
@@ -6,22 +7,34 @@ public struct Unit: Equatable {
 	public var ammo: UInt8 = 0
 	public var ent: UInt8 = 0
 	public var exp: UInt16 = 0
-
 	public var kills: UInt16 = 0
-	public var model: UnitModel = .none
+
 	public var type: UnitType = .supply
 	public var tier: UInt8 = 0
 	public var mov: UInt8 = 0
 	public var rng: UInt8 = 0
 	public var ini: UInt8 = 0
 	public var softAtk: UInt8 = 0
-
 	public var hardAtk: UInt8 = 0
 	public var airAtk: UInt8 = 0
 	public var groundDef: UInt8 = 0
 	public var airDef: UInt8 = 0
 	public var traits: Traits = []
+
+	public var bits: Bits = []
 	public var skills: Skills = []
+}
+
+public struct Bits: OptionSet, Equatable {
+	public var rawValue: UInt8
+
+	public init(rawValue: UInt8) {
+		self.rawValue = rawValue
+	}
+}
+
+public extension Bits {
+	static var aux: Self { .init(rawValue: 1 << 0) }
 }
 
 public struct Traits: OptionSet, Equatable {
@@ -33,14 +46,13 @@ public struct Traits: OptionSet, Equatable {
 }
 
 public extension Traits {
-	static var aux: Self { .init(rawValue: 1 << 0) }
-	static var engineer: Self { .init(rawValue: 1 << 1) }
-	static var optics: Self { .init(rawValue: 1 << 2) }
-	static var atgm: Self { .init(rawValue: 1 << 3) }
-	static var aam: Self { .init(rawValue: 1 << 4) }
-	static var elite: Self { .init(rawValue: 1 << 5) }
-	static var transport: Self { .init(rawValue: 1 << 6) }
-	static var radar: Self { .init(rawValue: 1 << 7) }
+	static var transport: Self { .init(rawValue: 1 << 0) }
+	static var elite: Self { .init(rawValue: 1 << 1) }
+	static var engineer: Self { .init(rawValue: 1 << 2) }
+	static var optics: Self { .init(rawValue: 1 << 3) }
+	static var radar: Self { .init(rawValue: 1 << 4) }
+	static var atgm: Self { .init(rawValue: 1 << 5) }
+	static var aam: Self { .init(rawValue: 1 << 6) }
 }
 
 public struct Skills: OptionSet, Equatable {
@@ -149,6 +161,11 @@ public extension Unit {
 
 	var entDamage: UInt8 {
 		self[.engineer] ? 8 : 4
+	}
+
+	subscript(_ bs: Bits) -> Bool {
+		get { !bits.intersection(bs).isEmpty }
+		set { newValue ? bits.formUnion(bs) : bits.subtract(bs) }
 	}
 
 	subscript(_ ts: Traits) -> Bool {
