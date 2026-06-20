@@ -32,7 +32,7 @@ struct MultiplayerTests {
 			guard a.sim.players[i].country == b.sim.players[i].country,
 				  a.sim.players[i].prestige == b.sim.players[i].prestige,
 				  a.sim.players[i].alive == b.sim.players[i].alive,
-				  a.sim.players[i].visible == b.sim.players[i].visible
+				  a.sim.vision[i] == b.sim.vision[i]
 			else { return false }
 		}
 		for i in 0 ..< 128 {

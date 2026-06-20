@@ -175,7 +175,7 @@ struct TacticalTests {
 		sim.position[infUID.index] = XY(18, 10)
 		sim.unitsMap[XY(15, 10)] = heliUID
 		sim.unitsMap[XY(18, 10)] = infUID
-		sim.players.modifyEach { _, p in p.visible = .full }
+		sim.vision.modifyEach { v in v = .full }
 
 		#expect(sim.units[heliUID].mp == 2, "Helicopter should start with 2 MP")
 
@@ -231,7 +231,7 @@ struct TacticalTests {
 		sim.position[infUID.index] = XY(17, 10)
 		sim.unitsMap[XY(15, 10)] = heliUID
 		sim.unitsMap[XY(17, 10)] = infUID
-		sim.players.modifyEach { _, p in p.visible = .full }
+		sim.vision.modifyEach { v in v = .full }
 
 		var state = TacticalState(sim: consume sim)
 
@@ -285,7 +285,7 @@ struct TacticalTests {
 		sim.unitsMap[XY(15, 10)] = heliUID
 		sim.unitsMap[XY(16, 10)] = enemyUID
 		// The mover can't see the enemy, so it walks into the ambush tile.
-		sim.players.modifyEach { _, p in p.visible = .empty }
+		sim.vision.modifyEach { v in v = .empty }
 
 		// Move toward the fogged tile that (unknown to the mover) holds the enemy
 		// on the very first step.
