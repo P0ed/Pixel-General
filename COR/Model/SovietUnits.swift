@@ -2,6 +2,7 @@ extension Unit {
 
 	// MARK: Infantry
 	static let militia = Unit(
+		model: .militia,
 		type: .inf,
 		mov: 3,
 		rng: 1,
@@ -13,6 +14,7 @@ extension Unit {
 	)
 
 	static let speznas = Unit(
+		model: .speznas,
 		type: .inf,
 		tier: 2,
 		mov: 4,
@@ -28,6 +30,7 @@ extension Unit {
 
 	// MARK: IFV
 	static let brdm2 = Unit(
+		model: .brdm2,
 		type: .lightWheel,
 		mov: 8,
 		rng: 1,
@@ -40,6 +43,7 @@ extension Unit {
 	)
 
 	static let bmp = Unit(
+		model: .bmp,
 		type: .lightTrack,
 		mov: 6,
 		rng: 1,
@@ -54,6 +58,7 @@ extension Unit {
 
 	// MARK: Tanks
 	static let t55 = Unit(
+		model: .t55,
 		type: .heavyTrack,
 		mov: 5,
 		rng: 1,
@@ -65,6 +70,7 @@ extension Unit {
 	)
 	
 	static let t72 = Unit(
+		model: .t72,
 		type: .heavyTrack,
 		tier: 1,
 		mov: 6,
@@ -77,6 +83,7 @@ extension Unit {
 	)
 	
 	static let t90m = Unit(
+		model: .t90m,
 		type: .heavyTrack,
 		tier: 2,
 		mov: 6,
@@ -90,6 +97,7 @@ extension Unit {
 
 	// MARK: Art
 	static let art105 = Unit(
+		model: .art105,
 		type: .art,
 		mov: 2,
 		rng: 2,
@@ -102,6 +110,7 @@ extension Unit {
 
 	// MARK: Anti-Air
 	static let neva = Unit(
+		model: .neva,
 		type: .wheelAA,
 		mov: 7,
 		rng: 3,
@@ -112,6 +121,7 @@ extension Unit {
 	)
 
 	static let s300 = Unit(
+		model: .s300,
 		type: .wheelAA,
 		tier: 1,
 		mov: 7,
@@ -124,6 +134,7 @@ extension Unit {
 	)
 
 	static let tunguska = Unit(
+		model: .tunguska,
 		type: .trackAA,
 		mov: 7,
 		rng: 1,
@@ -137,6 +148,7 @@ extension Unit {
 
 	// MARK: Air
 	static let mi8 = Unit(
+		model: .mi8,
 		type: .heli,
 		mov: 9,
 		rng: 1,
@@ -150,6 +162,7 @@ extension Unit {
 	)
 
 	static let mi24 = Unit(
+		model: .mi24,
 		type: .heli,
 		tier: 1,
 		mov: 9,
@@ -164,6 +177,7 @@ extension Unit {
 	)
 
 	static let orlan = Unit(
+		model: .orlan,
 		type: .heli,
 		tier: 2,
 		mov: 9,
@@ -174,6 +188,7 @@ extension Unit {
 	)
 
 	static let mig29 = Unit(
+		model: .mig29,
 		type: .fighter,
 		mov: 12,
 		rng: 2,
@@ -187,6 +202,7 @@ extension Unit {
 	)
 
 	static let su57 = Unit(
+		model: .su57,
 		type: .fighter,
 		tier: 2,
 		mov: 12,
@@ -201,6 +217,7 @@ extension Unit {
 	)
 
 	static let su27 = Unit(
+		model: .su27,
 		type: .cas,
 		mov: 11,
 		rng: 2,

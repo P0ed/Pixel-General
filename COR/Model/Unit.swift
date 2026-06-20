@@ -8,6 +8,7 @@ public struct Unit: Equatable {
 	public var exp: UInt16 = 0
 
 	public var kills: UInt16 = 0
+	public var model: UnitModel = .none
 	public var type: UnitType = .supply
 	public var tier: UInt8 = 0
 	public var mov: UInt8 = 0
@@ -266,6 +267,25 @@ extension Unit {
 		 aa, wheelAA, trackAA,
 		 lightWheel, lightTrack, heavyTrack,
 		 heli, fighter, cas
+}
+
+@frozen public enum UnitModel: UInt8, Hashable {
+	case none
+
+	// Common
+	case truck, regular, engineer, art155
+
+	// Allies
+	case ranger, delta, m2A2, m113, m48, m1A1, m1A2,
+		 m777, m270, patriot, mh6, f16, f35, mq9
+
+	// Axis
+	case ksk, fennek, boxer, cv9035, strf90, kf41, pzh, leo1, leo2a6, strv103, strv122,
+		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
+
+	// Soviet
+	case militia, speznas, brdm2, bmp, t55, t72, t90m, art105, neva, s300,
+		 tunguska, mi8, mi24, orlan, mig29, su57, su27
 }
 
 extension Unit: DeadOrAlive {

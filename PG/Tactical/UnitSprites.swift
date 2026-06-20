@@ -40,44 +40,41 @@ extension Unit {
 	}
 
 	var image: UIImage {
-		switch type {
-		case .aa: rng > 1 ? .NASAMS : .flak
-		case .wheelArt: .clear
-		case .supply: .truck
-		case .inf: if self[.elite] { .SF } else { .reg }
-		case .art: .art
-		case .trackArt:
-			switch country.team {
-			case .axis: .PZH
-			case .allies: .m270
-			case .soviet: .akatsiya
-			case .none: .clear
-			}
-		case .wheelAA: .neva
-		case .trackAA: .SPAA
-		case .lightWheel: .boxer
-		case .lightTrack:
-			self[.elite] ? .puma : .recon
-		case .heavyTrack:
-			switch country.team {
-			case .allies: .M_1_A_2
-			case .axis: .tank
-			case .soviet: .T_72
-			case .none: .clear
-			}
-		case .heli:
-			switch country.team {
-			case .axis:
-				if tier == 0 { .MH_6 } else { .skeldar }
-			default: .MH_6
-			}
+		switch model {
+		case .none: .clear
+		case .truck: .truck
 
-		case .fighter:
-			switch country.team {
-			case .allies: .F_16
-			default: .F_64
-			}
-		case .cas: .F_64
+		// Infantry
+		case .regular, .engineer, .ranger, .militia: .reg
+		case .delta, .ksk, .speznas: .SF
+
+		// Artillery
+		case .art155, .m777, .art105: .art
+		case .m270: .m270
+		case .pzh: .PZH
+
+		// Anti-air
+		case .patriot, .nasams: .NASAMS
+		case .bofors: .flak
+		case .neva, .s300: .neva
+		case .lvkv90, .tunguska: .SPAA
+
+		// IFV / recon
+		case .fennek, .boxer, .brdm2: .boxer
+		case .kf41: .puma
+		case .m2A2, .m113, .strf90, .cv9035, .bmp: .recon
+
+		// Tanks
+		case .m48, .m1A1, .m1A2: .M_1_A_2
+		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
+		case .t55, .t72, .t90m: .T_72
+
+		// Air
+		case .skeldar, .skeldarm: .skeldar
+		case .mh6, .mq9, .nh90, .mi8, .mi24: .MH_6
+		case .orlan: .fixedWing
+		case .f16, .f35: .F_16
+		case .gripen, .mig29, .su57, .su27: .F_64
 		}
 	}
 }

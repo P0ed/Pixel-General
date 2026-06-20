@@ -54,11 +54,15 @@ public extension Unit {
 	}
 
 	static func ifv2(_ country: Country) -> Self? {
-		switch country.team {
-		case .axis: .strf90
-		case .allies: nil
-		case .soviet: nil
-		case .none: .empty
+		switch country {
+		case .swe: .strf90
+		case .ger: .kf41
+		default: switch country.team {
+			case .axis: .cv9035
+			case .allies: nil
+			case .soviet: nil
+			case .none: .empty
+			}
 		}
 	}
 
@@ -81,13 +85,14 @@ public extension Unit {
 
 	static func tank2(_ country: Country) -> Self {
 		switch country {
-		case .ned, .den, .swe, .ukr: .strv122
+		case .swe: .strv122
+		case .ger: .kf51
 		case .usa, .isr: .m1A1
 		case .pak: .m1A1
 		case .rus: .t72
 		case .irn, .ind: .t72
 		default: switch country.team {
-			case .axis: .strv122
+			case .axis: .leo2a6
 			case .allies: .m1A1
 			case .soviet: .t72
 			case .none: .empty
@@ -97,13 +102,14 @@ public extension Unit {
 
 	static func tank3(_ country: Country) -> Self? {
 		switch country {
-		case .ned, .den, .swe, .ukr: .strv122
+		case .swe: .strv122
+		case .ger: .kf51
 		case .usa, .isr: .m1A2
 		case .pak: nil
 		case .rus: .t90m
 		case .irn, .ind: nil
 		default: switch country.team {
-			case .axis: .strv122
+			case .axis: .leo2a6
 			case .allies: .m1A2
 			case .soviet: .t90m
 			case .none: .empty
@@ -200,6 +206,7 @@ public extension Unit {
 	}
 
 	static let truck = Unit(
+		model: .truck,
 		type: .supply,
 		mov: 8,
 		groundDef: 3,
@@ -208,6 +215,7 @@ public extension Unit {
 	)
 
 	static let regular = Unit(
+		model: .regular,
 		type: .inf,
 		tier: 1,
 		mov: 3,
@@ -220,6 +228,7 @@ public extension Unit {
 	)
 
 	static let engineer = Unit(
+		model: .engineer,
 		type: .inf,
 		tier: 2,
 		mov: 3,
@@ -234,6 +243,7 @@ public extension Unit {
 	)
 
 	static let art155 = Unit(
+		model: .art155,
 		type: .art,
 		tier: 1,
 		mov: 2,

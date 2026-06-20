@@ -2,6 +2,7 @@ extension Unit {
 
 	// MARK: Infantry
 	static let ksk = Unit(
+		model: .ksk,
 		type: .inf,
 		tier: 3,
 		mov: 4,
@@ -17,6 +18,7 @@ extension Unit {
 
 	// MARK: IFV
 	static let fennek = Unit(
+		model: .fennek,
 		type: .lightWheel,
 		mov: 8,
 		rng: 1,
@@ -30,6 +32,7 @@ extension Unit {
 	)
 
 	static let boxer = Unit(
+		model: .boxer,
 		type: .lightWheel,
 		tier: 1,
 		mov: 8,
@@ -44,6 +47,7 @@ extension Unit {
 	)
 
 	static let strf90 = Unit(
+		model: .strf90,
 		type: .lightTrack,
 		tier: 1,
 		mov: 7,
@@ -58,6 +62,7 @@ extension Unit {
 	)
 
 	static let kf41 = Unit(
+		model: .kf41,
 		type: .lightTrack,
 		tier: 1,
 		mov: 7,
@@ -71,8 +76,24 @@ extension Unit {
 		traits: .elite
 	)
 
+	static let cv9035 = Unit(
+		model: .cv9035,
+		type: .lightTrack,
+		tier: 1,
+		mov: 7,
+		rng: 1,
+		ini: 9,
+		softAtk: 10,
+		hardAtk: 10,
+		airAtk: 4,
+		groundDef: 11,
+		airDef: 8,
+		traits: .transport
+	)
+
 	// MARK: Art
 	static let pzh = Unit(
+		model: .pzh,
 		type: .trackArt,
 		tier: 1,
 		mov: 5,
@@ -86,6 +107,7 @@ extension Unit {
 
 	// MARK: Tanks
 	static let leo1 = Unit(
+		model: .leo1,
 		type: .heavyTrack,
 		mov: 6,
 		rng: 1,
@@ -97,6 +119,7 @@ extension Unit {
 	)
 
 	static let strv103 = Unit(
+		model: .strv103,
 		type: .heavyTrack,
 		mov: 6,
 		rng: 1,
@@ -108,6 +131,7 @@ extension Unit {
 	)
 
 	static let strv122 = Unit(
+		model: .strv122,
 		type: .heavyTrack,
 		tier: 1,
 		mov: 6,
@@ -121,6 +145,7 @@ extension Unit {
 	)
 
 	static let kf51 = Unit(
+		model: .kf51,
 		type: .heavyTrack,
 		tier: 1,
 		mov: 6,
@@ -133,8 +158,23 @@ extension Unit {
 		traits: .elite
 	)
 
+	static let leo2a6 = Unit(
+		model: .leo2a6,
+		type: .heavyTrack,
+		tier: 1,
+		mov: 6,
+		rng: 1,
+		ini: 9,
+		softAtk: 10,
+		hardAtk: 15,
+		groundDef: 13,
+		airDef: 8,
+		traits: .elite
+	)
+
 	// MARK: AA
 	static let bofors = Unit(
+		model: .bofors,
 		type: .aa,
 		mov: 2,
 		rng: 1,
@@ -147,6 +187,7 @@ extension Unit {
 	)
 
 	static let nasams = Unit(
+		model: .nasams,
 		type: .aa,
 		tier: 1,
 		mov: 2,
@@ -159,6 +200,7 @@ extension Unit {
 	)
 
 	static let lvkv90 = Unit(
+		model: .lvkv90,
 		type: .trackAA,
 		tier: 1,
 		mov: 7,
@@ -174,6 +216,7 @@ extension Unit {
 
 	// MARK: Air
 	static let skeldar = Unit(
+		model: .skeldar,
 		type: .heli,
 		tier: 1,
 		mov: 9,
@@ -184,6 +227,7 @@ extension Unit {
 	)
 
 	static let skeldarm = Unit(
+		model: .skeldarm,
 		type: .heli,
 		tier: 2,
 		mov: 8,
@@ -195,6 +239,7 @@ extension Unit {
 	)
 
 	static let nh90 = Unit(
+		model: .nh90,
 		type: .heli,
 		mov: 9,
 		rng: 1,
@@ -208,6 +253,7 @@ extension Unit {
 	)
 
 	static let gripen = Unit(
+		model: .gripen,
 		type: .fighter,
 		tier: 1,
 		mov: 12,
