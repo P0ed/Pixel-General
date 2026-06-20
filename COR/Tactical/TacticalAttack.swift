@@ -13,7 +13,7 @@ extension TacticalSim {
 	func artSupport(defender: UID, attacker: UID) -> UID? {
 		position[defender].n8.firstMap { hx in
 			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isArt
+				u.country.team == units[defender].country.team && u.isArt && u.ammo > 0
 				? unitsMap[hx] : nil
 			}
 		}
@@ -22,7 +22,7 @@ extension TacticalSim {
 	func aaSupport(defender: UID, attacker: UID) -> UID? {
 		position[defender].n8.firstMap { hx in
 			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isAA
+				u.country.team == units[defender].country.team && u.isAA && u.ammo > 0
 				? unitsMap[hx] : nil
 			}
 		}

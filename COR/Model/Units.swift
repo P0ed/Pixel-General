@@ -205,53 +205,8 @@ public extension Unit {
 		modifying(self) { u in u.skills.formUnion(skills) }
 	}
 
-	static let truck = Unit(
-		model: .truck,
-		type: .supply,
-		mov: 8,
-		groundDef: 3,
-		airDef: 1,
-		traits: .transport
-	)
-
-	static let regular = Unit(
-		model: .regular,
-		type: .inf,
-		tier: 1,
-		mov: 3,
-		rng: 1,
-		ini: 4,
-		softAtk: 7,
-		hardAtk: 2,
-		groundDef: 6,
-		airDef: 4
-	)
-
-	static let engineer = Unit(
-		model: .engineer,
-		type: .inf,
-		tier: 2,
-		mov: 3,
-		rng: 1,
-		ini: 5,
-		softAtk: 8,
-		hardAtk: 6,
-		airAtk: 2,
-		groundDef: 7,
-		airDef: 5,
-		traits: .engineer
-	)
-
-	static let art155 = Unit(
-		model: .art155,
-		type: .art,
-		tier: 1,
-		mov: 2,
-		rng: 3,
-		ini: 1,
-		softAtk: 11,
-		hardAtk: 7,
-		groundDef: 5,
-		airDef: 4
-	)
+	static let truck = Unit(model: .truck)
+	static let regular = Unit(model: .regular)
+	static let engineer = Unit(model: .engineer)
+	static let art155 = Unit(model: .art155)
 }

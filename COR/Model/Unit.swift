@@ -9,20 +9,8 @@ public struct Unit: Equatable {
 	public var exp: UInt16 = 0
 	public var kills: UInt16 = 0
 
-	public var type: UnitType = .supply
-	public var tier: UInt8 = 0
-	public var mov: UInt8 = 0
-	public var rng: UInt8 = 0
-	public var ini: UInt8 = 0
-	public var softAtk: UInt8 = 0
-	public var hardAtk: UInt8 = 0
-	public var airAtk: UInt8 = 0
-	public var groundDef: UInt8 = 0
-	public var airDef: UInt8 = 0
-	public var traits: Traits = []
-
-	public var bits: Bits = []
 	public var skills: Skills = []
+	public var bits: Bits = []
 }
 
 public struct Bits: OptionSet, Equatable {
@@ -77,6 +65,22 @@ public extension Skills {
 public extension Unit {
 
 	static var empty: Self { .init() }
+
+	/// Static, per-model stats. Read through ``UnitStats/table`` so live table
+	/// edits apply to every instance of the model.
+	var stats: UnitStats { UnitStats.table[model] ?? .init() }
+
+	var type: UnitType { stats.type }
+	var tier: UInt8 { stats.tier }
+	var mov: UInt8 { stats.mov }
+	var rng: UInt8 { stats.rng }
+	var ini: UInt8 { stats.ini }
+	var softAtk: UInt8 { stats.softAtk }
+	var hardAtk: UInt8 { stats.hardAtk }
+	var airAtk: UInt8 { stats.airAtk }
+	var groundDef: UInt8 { stats.groundDef }
+	var airDef: UInt8 { stats.airDef }
+	var traits: Traits { stats.traits }
 
 	var isAir: Bool { switch type { case .heli, .fighter, .cas: true; default: false } }
 	var untouched: Bool { fullAP && fullMP }
@@ -169,8 +173,7 @@ public extension Unit {
 	}
 
 	subscript(_ ts: Traits) -> Bool {
-		get { !traits.intersection(ts).isEmpty }
-		set { newValue ? traits.formUnion(ts) : traits.subtract(ts) }
+		!traits.intersection(ts).isEmpty
 	}
 
 	subscript(_ ss: Skills) -> Bool {

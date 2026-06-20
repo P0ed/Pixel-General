@@ -36,49 +36,42 @@ struct RNGTests {
 	@Test func damageCalculation() {
 		var report = "Damage table:"
 		var state = TacticalState.xs
-		for atk in UInt8.min...30 {
-			let inf = Unit.make(atk: 1 + atk, def: 11)
-			let u0 = inf.country(.den)
-			let u1 = inf.country(.usa)
 
-			state.sim.units.insert(u0)
-			state.sim.units.insert(u1)
-			state.sim.position[0] = XY(1, 1)
-			state.sim.position[1] = XY(2, 2)
+		var u0 = Unit.regular.country(.den)
+		var u1 = Unit.regular.country(.usa)
+		u0.reset()
+		u1.reset()
 
-			let dmg: [512 of [2 of UInt8]] = .init { i in
+		state.sim.units.insert(u0)
+		state.sim.units.insert(u1)
+		state.sim.position[0] = XY(1, 1)
+		state.sim.position[1] = XY(2, 2)
+
+		// Walk the attack-defence differential by sweeping the defender's
+		// defence modifier, rather than synthesising per-unit stats (stats now
+		// live in the shared, model-keyed table).
+		let baseDif = Int(u0.atk(u1)) - Int(u1.def(u0))
+		var avgs: [Float] = []
+
+		for defMod in Int8(-8)...20 {
+			var events: [TacticalEvent] = []
+			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
 				state.sim.units[0] = u0
 				state.sim.units[1] = u1
-				_ = state.reduce(.attack(UID(0), UID(1)))
-
-				return [
-					state.sim.units[1].maxHP - state.sim.units[1].hp,
-					state.sim.units[0].maxHP - state.sim.units[0].hp,
-				]
+				state.sim.fire(src: UID(0), dst: UID(1), defMod: defMod, into: &events)
+				return acc + UInt32(state.sim.units[1].maxHP - state.sim.units[1].hp)
 			}
 
-			let sum: [2 of UInt32] = dmg.reduce(into: .init(repeating: 0)) { r, dmg in
-				r[0] += UInt32(dmg[0])
-				r[1] += UInt32(dmg[1])
-			}
-			let avg0 = Float(sum[0]) / Float(dmg.count)
-			let avg1 = Float(sum[1]) / Float(dmg.count)
-			let dif = Int(u0.atk(u1)) - Int(u1.def(u0))
-
-			if dif >= 0 { #expect(sum[0] > sum[1]) }
-
-			report += "\natk - def: \(dif) dmg: \(avg0), retaliation: \(avg1)"
+			let avg = Float(sum) / 512
+			let dif = baseDif - Int(defMod)
+			if dif >= 0 { #expect(avg > 0) }
+			avgs.append(avg)
+			report += "\ndif: \(dif) dmg: \(avg)"
 		}
+
+		// More defence must mean less damage across the swept range.
+		#expect(avgs.first! > avgs.last!)
 		print(report)
-	}
-}
-
-extension Unit {
-
-	static func make(atk: UInt8, def: UInt8) -> Unit {
-		var u = Unit(type: .inf, rng: 1, ini: 5, softAtk: atk, groundDef: def)
-		u.reset()
-		return u
 	}
 }
 
