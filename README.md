@@ -6,10 +6,10 @@
 
 ```bash
 # Build
-xcodebuild -scheme PG -configuration Release -destination 'platform=macOS,variant=Mac Catalyst' build
+xcodebuild build -scheme PG -configuration Release -destination 'platform=macOS,variant=Mac Catalyst'
 
 # Run tests
-xcodebuild -scheme PG test -destination 'platform=macOS,variant=Mac Catalyst'
+xcodebuild test -scheme PG -destination 'platform=macOS'
 ```
 
 ## Docs

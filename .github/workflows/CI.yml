@@ -12,6 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: xcodebuild -scheme PG build
+        run: xcodebuild build -scheme PG -destination 'platform=macOS'
       - name: Test
-        run: xcodebuild -scheme PG test
+        run: xcodebuild test -scheme PG -destination 'platform=macOS'
