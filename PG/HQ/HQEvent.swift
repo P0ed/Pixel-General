@@ -28,7 +28,7 @@ extension HQNodes {
 
 	private func processShop(_ state: borrowing HQState) {
 		scene?.show(.init(
-			items: Shop(country: state.sim.country).units.enumerated().map { i, u in
+			items: Shop(country: state.sim.country, tier: state.sim.player.tier).units.enumerated().map { i, u in
 				.close(
 					icon: u.image,
 					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),

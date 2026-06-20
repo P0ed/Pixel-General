@@ -4,6 +4,7 @@ public struct TacticalSim: ~Copyable {
 	public var unitsMap: Map<32, UID>
 
 	public var players: CArray<4, Player>
+	public var vision: [4 of SetXY]
 	public var auxilia: [4 of CArray<16, Unit>]
 
 	public var units: Speicher<128, Unit>
@@ -57,6 +58,7 @@ public extension TacticalSim {
 		self.players = .init(head: players, tail: .none)
 		self.units = .init(head: units, tail: .empty)
 		self.position = .init(repeating: .zero)
+		vision = .init(repeating: .empty)
 		cargo = .init(repeating: .none)
 		unitsMap = .init(size: self.map.size, zero: .none)
 		control = .init(size: self.map.size, zero: .default)
@@ -116,7 +118,7 @@ public extension TacticalSim {
 		}
 
 		let v = self.players.map { i, p in vision(for: p.country) }
-		self.players.modifyEach { i, p in p.visible = v[i] }
+		self.players.modifyEach { i, p in vision[i] = v[i] }
 	}
 
 	subscript(_ xy: XY) -> Unit? {
@@ -225,7 +227,7 @@ public extension TacticalSim {
 	}
 
 	func isVisible(_ id: UID) -> Bool {
-		!offMap(unit: id) && player.visible[position[id]]
+		!offMap(unit: id) && vision[playerIndex][position[id]]
 	}
 
 	func isVisibleToHuman(_ id: UID) -> Bool {
@@ -233,12 +235,12 @@ public extension TacticalSim {
 	}
 
 	func isVisibleToHuman(_ xy: XY) -> Bool {
-		players.contains { p in p.type == .human && p.visible[xy] }
+		players.indices.contains { i in players[i].type == .human && vision[i][xy] }
 	}
 
 	var visibleToHuman: SetXY {
-		players.reduce(into: .empty) { r, _, p in
-			p.type == .human ? r.combine(p.visible) : ()
+		players.reduce(into: .empty) { r, i, p in
+			p.type == .human ? r.combine(vision[i]) : ()
 		}
 	}
 }

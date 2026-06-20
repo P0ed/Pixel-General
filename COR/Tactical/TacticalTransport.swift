@@ -50,7 +50,7 @@ extension TacticalSim {
 		units[idx].ent = 0
 		if !units[idx].canAttackAfterMove { units[idx].ap = 0 }
 		unitsMap[xy] = idx.uid
-		player.visible.formUnion(vision(for: idx.uid))
+		vision[playerIndex].formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)
 		path.add(xy)
 		events.append(.move(idx.uid, Path(count: path.count, path: path.mem)))

@@ -158,9 +158,9 @@ struct TacticalTests {
 		// animates to).
 		let map = Map<32, Terrain>(size: 32, zero: .field)
 		let players = [Player(country: .usa, type: .human, prestige: 0xF00)]
-		var heli = Unit.mh6.country(.usa)
+		var heli = Unit(model: .mh6, country: .usa)
 		heli.reset()
-		var inf = Unit.delta.country(.usa)
+		var inf = Unit(model: .delta, country: .usa)
 		inf.reset()
 
 		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, inf])
@@ -217,9 +217,9 @@ struct TacticalTests {
 		// (apply -> reduce, with selection reconciliation) to mirror the UI.
 		let map = Map<32, Terrain>(size: 32, zero: .field)
 		let players = [Player(country: .usa, type: .human, prestige: 0xF00)]
-		var heli = Unit.mh6.country(.usa)
+		var heli = Unit(model: .mh6, country: .usa)
 		heli.reset()
-		var inf = Unit.delta.country(.usa)
+		var inf = Unit(model: .delta, country: .usa)
 		inf.reset()
 
 		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, inf])
@@ -270,9 +270,9 @@ struct TacticalTests {
 			Player(country: .usa, type: .human, prestige: 0xF00),
 			Player(country: .rus, type: .ai, prestige: 0xF00),
 		]
-		var heli = Unit.mh6.country(.usa)
+		var heli = Unit(model: .mh6, country: .usa)
 		heli.reset()
-		var enemy = Unit.regular.country(.rus)
+		var enemy = Unit(model: .regular, country: .rus)
 		enemy.reset()
 
 		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, enemy])

@@ -6,9 +6,9 @@ extension HQNodes {
 	func scenarioMenu(_ menu: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction> {
 		var players: [4 of Player] = [
 			state.sim.player,
-			Player(country: .isr, type: .ai, prestige: .rich),
-			Player(country: .usa, type: .ai, prestige: .rich),
-			Player(country: .irn, type: .ai, prestige: .rich)
+			Player(country: .isr, type: .ai, prestige: .rich, tier: 3),
+			Player(country: .usa, type: .ai, prestige: .rich, tier: 3),
+			Player(country: .irn, type: .ai, prestige: .rich, tier: 3)
 		]
 		var countriesLeft: [Country] {
 			Country.playable.filter { c in

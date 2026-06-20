@@ -80,6 +80,7 @@
 		5F919D6D2EA959FA0037A208 /* boom-s.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A62EA93AC3008A0A95 /* boom-s.wav */; };
 		5F919D6E2EA959FA0037A208 /* boom-m.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33A52EA93AC3008A0A95 /* boom-m.wav */; };
 		5F919D6F2EA959FD0037A208 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F2A33C32EA93AC3008A0A95 /* Assets.xcassets */; };
+		5FA15700000000000000B001 /* UnitStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA15700000000000000F001 /* UnitStats.swift */; };
 		5FAAAA010000000000000001 /* Reaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAA010000000000000002 /* Reaction.swift */; };
 		5FB524AA2FACB2C20017B672 /* RNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524A82FACB2C20017B672 /* RNGTests.swift */; };
 		5FB524AD2FAD0EE10017B672 /* EditorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB524AC2FAD0EDE0017B672 /* EditorMode.swift */; };
@@ -111,7 +112,6 @@
 		5FF677AF2FD1E1910004A35D /* AxisUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF677AE2FD1E18E0004A35D /* AxisUnits.swift */; };
 		5FF677B12FD1E1C70004A35D /* SovietUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF677B02FD1E1C40004A35D /* SovietUnits.swift */; };
 		5FF677B32FD1F5E50004A35D /* AlliedUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */; };
-		5FA15700000000000000B001 /* UnitStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA15700000000000000F001 /* UnitStats.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -213,6 +213,7 @@
 		5F919D702EA95ADF0037A208 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5FA0F0962EF21C3A0022EC68 /* SetXY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetXY.swift; sourceTree = "<group>"; };
 		5FA0F0982EF2255B0022EC68 /* D20.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = D20.swift; sourceTree = "<group>"; };
+		5FA15700000000000000F001 /* UnitStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitStats.swift; sourceTree = "<group>"; };
 		5FAAAA010000000000000002 /* Reaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reaction.swift; sourceTree = "<group>"; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5FB4D0D42EAE261E0010E702 /* TacticalAttack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalAttack.swift; sourceTree = "<group>"; };
@@ -255,7 +256,6 @@
 		5FF677AE2FD1E18E0004A35D /* AxisUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AxisUnits.swift; sourceTree = "<group>"; };
 		5FF677B02FD1E1C40004A35D /* SovietUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SovietUnits.swift; sourceTree = "<group>"; };
 		5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlliedUnits.swift; sourceTree = "<group>"; };
-		5FA15700000000000000F001 /* UnitStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitStats.swift; sourceTree = "<group>"; };
 		5FF679762F06FB0D00586323 /* TacticalMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TacticalMove.swift; sourceTree = "<group>"; };
 		5FF7EB3C2EB6428B00E287FF /* MapGeneration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapGeneration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -312,8 +312,8 @@
 				5F5A716C2F24FB790059B314 /* Terrain.swift */,
 				5F43D4A42EF051A80046AD2A /* Player.swift */,
 				5F2A33B42EA93AC3008A0A95 /* Unit.swift */,
-				5F2A33B52EA93AC3008A0A95 /* Units.swift */,
 				5FA15700000000000000F001 /* UnitStats.swift */,
+				5F2A33B52EA93AC3008A0A95 /* Units.swift */,
 				5FF677AE2FD1E18E0004A35D /* AxisUnits.swift */,
 				5FF677B22FD1F5E20004A35D /* AlliedUnits.swift */,
 				5FF677B02FD1E1C40004A35D /* SovietUnits.swift */,

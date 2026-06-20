@@ -1,21 +1,21 @@
 public struct Shop {
 	var country: Country
-	var filter: UnitsFilter = .none
+	var air: Bool?
+	var tier: UInt8
 
-	public init(country: Country, filter: UnitsFilter = .none) {
+	public init(country: Country, air: Bool? = nil, tier: UInt8) {
 		self.country = country
-		self.filter = filter
+		self.air = air
+		self.tier = tier
 	}
 }
 
-public struct UnitsFilter {
-	var air: Bool?
-	var tier: UInt8?
+extension Shop {
 
 	func predicate(_ unit: Unit) -> Bool {
 		if let air, unit.isAir != air {
 			false
-		} else if let tier, unit.tier > tier {
+		} else if unit.tier > tier {
 			false
 		} else {
 			true
@@ -23,17 +23,11 @@ public struct UnitsFilter {
 	}
 }
 
-public extension UnitsFilter {
-	static var none: UnitsFilter { .init() }
-	static var air: UnitsFilter { .init(air: true) }
-	static var land: UnitsFilter { .init(air: false) }
-}
-
 public extension Shop {
 
 	var units: [Unit] {
 		[
-			.truck,
+			Unit(model: .truck, country: country),
 
 			.inf1(country),
 			.inf2(country),
@@ -61,7 +55,7 @@ public extension Shop {
 			.air4(country),
 		]
 		.compactMap { (u: Unit?) -> Unit? in
-			u.flatMap { filter.predicate($0) ? $0.country(country) : nil }
+			u.flatMap { predicate($0) ? $0 : nil }
 		}
 	}
 }

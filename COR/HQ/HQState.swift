@@ -20,7 +20,7 @@ public extension HQSim {
 
 	var country: Country { player.country }
 
-	var shop: [Unit] { Shop(country: country).units }
+	var shop: [Unit] { Shop(country: country, tier: player.tier).units }
 }
 
 /// Presentation-only HQ state. Never read by `reduce`; may diverge per peer.

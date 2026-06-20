@@ -27,7 +27,7 @@ public extension Core {
 		Core(
 			hq: HQState(
 				sim: HQSim(
-					player: Player(country: country, type: .human),
+					player: Player(country: country, type: .human, tier: 3),
 					units: .init(
 						head: modifying(.base(country)) { base in
 							base.modifyEach { u in u.reset() }

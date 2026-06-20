@@ -35,7 +35,7 @@ extension TacticalSim {
 				return false
 			}
 			if player.alive {
-				player.visible = vision(for: player.country)
+				vision[playerIndex] = vision(for: player.country)
 				return true
 			}
 		}

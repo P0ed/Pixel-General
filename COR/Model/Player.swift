@@ -3,7 +3,7 @@ public struct Player {
 	public var type: PlayerType
 	public var prestige: UInt16
 	public var baseLevel: UInt8
-	public var visible: SetXY
+	public var tier: UInt8
 	public var alive: Bool
 
 	public init(
@@ -11,14 +11,14 @@ public struct Player {
 		type: PlayerType = .human,
 		prestige: UInt16 = 0xF00,
 		baseLevel: UInt8 = 0,
-		visible: SetXY = .empty,
+		tier: UInt8 = 0,
 		alive: Bool = true
 	) {
 		self.country = country
 		self.type = type
 		self.prestige = prestige
 		self.baseLevel = baseLevel
-		self.visible = visible
+		self.tier = tier
 		self.alive = alive
 	}
 }

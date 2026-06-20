@@ -50,7 +50,7 @@ private extension TacticalState {
 		if ui.selectedUnit != .none {
 			let unit = sim.units[ui.selectedUnit]
 
-			if let dst = sim.unitAt(ui.cursor), sim.player.visible[ui.cursor] {
+			if let dst = sim.unitAt(ui.cursor), sim.vision[sim.playerIndex][ui.cursor] {
 				if dst.country.team != unit.country.team, sim[sim.country].type == .human {
 					return .action(.attack(ui.selectedUnit, sim.unitsMap[ui.cursor]))
 				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), sim[sim.country].type == .human {
@@ -66,7 +66,7 @@ private extension TacticalState {
 				ui.selectedUnit = .none
 			}
 		} else {
-			if sim.player.visible[ui.cursor], sim.unitAt(ui.cursor) != nil {
+			if sim.vision[sim.playerIndex][ui.cursor], sim.unitAt(ui.cursor) != nil {
 				ui.selectedUnit = sim.unitsMap[ui.cursor]
 			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
 				return .events([.shop])

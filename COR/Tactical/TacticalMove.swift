@@ -16,7 +16,7 @@ public extension TacticalSim {
 
 		let team = unit.country.team
 		let air = unit.isAir
-		let visible = player.visible
+		let visible = vision[playerIndex]
 
 		func enemy(at xy: XY) -> Bool {
 			!visible[xy] ? false : unitAt(xy).map { u in
@@ -90,7 +90,7 @@ public extension TacticalSim {
 		for xy in route.reversed() {
 			if let tid = uidAt(xy) {
 				let u = units[tid]
-				if u.country.team != units[uid].country.team, !player.visible[position[tid.index]] {
+				if u.country.team != units[uid].country.team, !vision[playerIndex][position[tid.index]] {
 					interruptor = unitsMap[xy]
 					break
 				}
@@ -99,7 +99,7 @@ public extension TacticalSim {
 			}
 		}
 		for xy in route.reversed() {
-			player.visible.formUnion(vision(at: xy, spot: units[uid].spot))
+			vision[playerIndex].formUnion(vision(at: xy, spot: units[uid].spot))
 			if xy == pos { break }
 		}
 

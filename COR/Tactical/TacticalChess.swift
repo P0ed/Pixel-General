@@ -17,27 +17,27 @@ public extension TacticalState {
 
 		var units: [Unit] = []
 		+ [
-			.strv122,
-			.boxer,
-			.strf90,
-			.pzh,
-			.truck,
-			.strf90,
-			.boxer,
-			.strv122,
-		].map { (u: Unit) -> Unit in u.country(.swe) }
-		+ (0..<8).map { i in .regular.country(.swe) }
+			Unit(model: .strv122, country: .swe),
+			Unit(model: .boxer, country: .swe),
+			Unit(model: .strf90, country: .swe),
+			Unit(model: .pzh, country: .swe),
+			Unit(model: .truck, country: .swe),
+			Unit(model: .strf90, country: .swe),
+			Unit(model: .boxer, country: .swe),
+			Unit(model: .strv122, country: .swe),
+		]
+		+ (0..<8).map { i in Unit(model: .regular, country: .swe) }
 		+ [
-			.strv122,
-			.boxer,
-			.strf90,
-			.truck,
-			.pzh,
-			.strf90,
-			.boxer,
-			.strv122,
-		].map { (u: Unit) -> Unit in u.country(.isr) }
-		+ (0..<8).map { i in .regular.country(.isr) }
+			Unit(model: .strv122, country: .isr),
+			Unit(model: .boxer, country: .isr),
+			Unit(model: .strf90, country: .isr),
+			Unit(model: .truck, country: .isr),
+			Unit(model: .pzh, country: .isr),
+			Unit(model: .strf90, country: .isr),
+			Unit(model: .boxer, country: .isr),
+			Unit(model: .strv122, country: .isr),
+		]
+		+ (0..<8).map { i in Unit(model: .regular, country: .isr) }
 		let position: [128 of XY] = .init { i in
 			XY(i % 8, i < 16 ? i / 8 : 4 + i / 8)
 		}
@@ -59,13 +59,14 @@ public extension TacticalState {
 			control: control,
 			unitsMap: unitsMap,
 			players: .init(head: [players[0], players[1]], tail: .none),
+			vision: .init(repeating: .empty),
 			auxilia: .init { i in .init(tail: .empty) },
 			units: .init(head: units, tail: .empty),
 			position: position,
 			cargo: .init(repeating: .none)
 		)
-		sim.players[0].visible = sim.vision(for: sim.players[0].country)
-		sim.players[1].visible = sim.vision(for: sim.players[1].country)
+		sim.vision[0] = sim.vision(for: sim.players[0].country)
+		sim.vision[1] = sim.vision(for: sim.players[1].country)
 
 		return TacticalState(sim: sim)
 	}

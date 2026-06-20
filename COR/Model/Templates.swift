@@ -2,50 +2,50 @@ public extension [Unit] {
 
 	static func base(_ country: Country, lvl: UInt8 = 0) -> [Unit] {
 		let units: [Unit?] = [
-			.truck,
-			.regular,
-			.regular,
-			.regular.veteran,
+			Unit(model: .truck, country: country),
+			.inf1(country),
+			.inf1(country),
+			.inf1(country)?.veteran,
 
-			.regular.veteran,
+			.inf1(country)?.veteran,
 			.tank1(country),
-			.tank1(country).veteran,
-			.tank2(country).veteran,
+			.tank1(country)?.veteran,
+			.tank2(country)?.veteran,
 
 			.recon1(country),
-			.ifv1(country).veteran,
-			.art1(country).veteran,
-			.art1(country).veteran,
+			.ifv1(country)?.veteran,
+			.art1(country),
+			.art1(country)?.veteran,
 
-			.art2(country).veteran,
-			.art2(country).veteran,
-			.aa1(country).veteran,
-			.aa1(country).veteran,
+			.art2(country),
+			.art2(country)?.veteran,
+			.aa1(country),
+			.aa1(country)?.veteran,
 		]
 
 		return units.compactMap { u in
-			u?.country(country).lvl(lvl + (u?.lvl ?? 0))
+			u?.lvl(lvl + (u?.lvl ?? 0))
 		}
 	}
 
 	static func small(_ country: Country) -> [Unit] {
 		let units: [Unit?] = [
-			.truck,
-			.regular.veteran,
-			.regular.veteran,
-			.tank1(country).veteran,
-			.ifv1(country).veteran,
-			.art1(country).veteran,
-			.aa1(country).veteran,
+			Unit(model: .truck, country: country),
+			.inf1(country),
+			.inf1(country)?.veteran,
+			.tank1(country),
+			.ifv1(country)?.veteran,
+			.art1(country)?.veteran,
+			.aa2(country)?.veteran,
 		]
 
-		return units.compactMap { u in u?.country(country) }
+		return units.compactMap { u in u }
 	}
 
 	static func aux(_ country: Country) -> [Unit] {
 		let units: [Unit?] = [
-			.truck,
-			.truck,
+			Unit(model: .truck, country: country),
+			Unit(model: .truck, country: country),
 			.inf1(country),
 			.inf1(country),
 
@@ -65,8 +65,6 @@ public extension [Unit] {
 			.aa2(country),
 		]
 
-		return units.compactMap { u in
-			u?.country(country).aux
-		}
+		return units.compactMap { u in u?.aux }
 	}
 }

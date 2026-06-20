@@ -37,8 +37,8 @@ struct RNGTests {
 		var report = "Damage table:"
 		var state = TacticalState.xs
 
-		var u0 = Unit.regular.country(.den)
-		var u1 = Unit.regular.country(.usa)
+		var u0 = Unit(model: .regular, country: .den)
+		var u1 = Unit(model: .regular, country: .usa)
 		u0.reset()
 		u1.reset()
 
@@ -47,30 +47,26 @@ struct RNGTests {
 		state.sim.position[0] = XY(1, 1)
 		state.sim.position[1] = XY(2, 2)
 
-		// Walk the attack-defence differential by sweeping the defender's
-		// defence modifier, rather than synthesising per-unit stats (stats now
-		// live in the shared, model-keyed table).
 		let baseDif = Int(u0.atk(u1)) - Int(u1.def(u0))
 		var avgs: [Float] = []
 
-		for defMod in Int8(-8)...20 {
+		for atkMod in Int8(-15)...25 {
 			var events: [TacticalEvent] = []
 			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
 				state.sim.units[0] = u0
 				state.sim.units[1] = u1
-				state.sim.fire(src: UID(0), dst: UID(1), defMod: defMod, into: &events)
+				state.sim.fire(src: UID(0), dst: UID(1), defMod: -atkMod, into: &events)
 				return acc + UInt32(state.sim.units[1].maxHP - state.sim.units[1].hp)
 			}
 
 			let avg = Float(sum) / 512
-			let dif = baseDif - Int(defMod)
+			let dif = baseDif + Int(atkMod)
 			if dif >= 0 { #expect(avg > 0) }
 			avgs.append(avg)
 			report += "\ndif: \(dif) dmg: \(avg)"
 		}
 
-		// More defence must mean less damage across the swept range.
-		#expect(avgs.first! > avgs.last!)
+		#expect(avgs.first! < avgs.last!)
 		print(report)
 	}
 }
