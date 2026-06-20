@@ -15,10 +15,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
 	func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
 
-		let cfg = UISceneConfiguration(
-			name: "Main",
-			sessionRole: connectingSceneSession.role
-		)
+		let cfg = UISceneConfiguration(name: "Main", sessionRole: connectingSceneSession.role)
 		cfg.sceneClass = UIWindowScene.self
 		cfg.delegateClass = SceneDelegate.self
 
