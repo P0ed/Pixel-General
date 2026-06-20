@@ -23,20 +23,15 @@ public struct Player {
 	}
 }
 
-/// In a networked battle `PlayerType` is peer-relative: every peer marks the
-/// seats it drives `.human`, every seat driven elsewhere `.remote`, and only
-/// the host keeps `.ai` seats. `.remote` uniformly means "someone else drives
-/// this — wait for the wire". Reduce never branches on it for game-relevant
-/// state (only for UI selection), so peers stay deterministic while
-/// disagreeing about seat types.
 @frozen public enum PlayerType: UInt8, Sendable {
 	case human, remote, ai
 }
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
 	case none
-	case swe, den, ned, ukr, rus, irn, pak, ind, usa, isr
-	case nor, fin, ger, est, lva, ltu, pol, bel, cze, svk, aut, rom, hun, mol
+	case swe, den, ned, nor, fin, ger, est, lva, ltu, pol, cze, aut, ukr
+	case rus, irn, bel, svk, rom, hun, mol, ind
+	case usa, isr, pak
 }
 
 @frozen public enum Team: UInt8, Hashable, Sendable {
@@ -56,7 +51,6 @@ public extension Country {
 		}
 	}
 
-	// Selectable nations
 	static var playable: [Country] { allCases.filter { $0 != .none } }
 }
 
