@@ -9,13 +9,24 @@ public struct Shop {
 }
 
 public struct UnitsFilter {
-	var predicate: (Unit) -> Bool
+	var air: Bool?
+	var tier: UInt8?
+
+	func predicate(_ unit: Unit) -> Bool {
+		if let air, unit.isAir != air {
+			false
+		} else if let tier, unit.tier > tier {
+			false
+		} else {
+			true
+		}
+	}
 }
 
 public extension UnitsFilter {
-	static var none: UnitsFilter { .init { _ in true } }
-	static var air: UnitsFilter { .init { u in u.isAir } }
-	static var land: UnitsFilter { .init { u in !u.isAir } }
+	static var none: UnitsFilter { .init() }
+	static var air: UnitsFilter { .init(air: true) }
+	static var land: UnitsFilter { .init(air: false) }
 }
 
 public extension Shop {

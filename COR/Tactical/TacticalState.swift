@@ -62,7 +62,7 @@ public extension TacticalSim {
 		control = .init(size: self.map.size, zero: .default)
 		auxilia = .init { i in
 			CArray(
-				head: i < players.count ? .aux(country: players[i].country) : [],
+				head: i < players.count ? .aux(players[i].country) : [],
 				tail: .empty
 			)
 		}

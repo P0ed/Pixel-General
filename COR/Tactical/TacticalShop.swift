@@ -37,6 +37,7 @@ extension TacticalSim {
 			u.reset()
 			u.mp = 0
 			u.ap = 0
+			u.lvl += player.baseLevel
 		}
 		let idx = units.insert(unit)
 		let id = idx.uid

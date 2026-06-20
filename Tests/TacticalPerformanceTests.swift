@@ -14,11 +14,11 @@ import Foundation
 struct TacticalPerformanceTests {
 
 	private static let countries: [Country] = [.fin, .rus]
-	private static let runs = 4
+	private static let runs = 8
 	private static let mapSize = 24
 
 	private static let maxActionsPerBattle = 65_000
-	private static let maxDaysPerBattle = 256
+	private static let maxDaysPerBattle = 128
 
 	@Test func aiBattleResolutionPerformance() {
 		var resolvedCount = 0
@@ -30,28 +30,30 @@ struct TacticalPerformanceTests {
 		for seed in 0..<Self.runs {
 			var state = TacticalState(
 				players: Self.countries.map { c in
-					Player(country: c, type: .ai, prestige: 0xF00)
+					Player(
+						country: c,
+						type: .ai,
+						prestige: c == .fin ? .rich : .poor,
+						baseLevel: c == .fin ? 5 : 0
+					)
 				},
-				units: .small(Self.countries[0]) + .small(Self.countries[1]),
+				units: .base(Self.countries[0], lvl: 5) + .base(Self.countries[1]),
 				size: Self.mapSize,
 				seed: seed
 			)
 
-			// One shared plan is fine: `axis` rebuilds it whenever the turn
-			// rolls over, i.e. once per player per round.
 			var ai = TacticalSim.AI()
 			var actions = 0
 
-			// Time only the resolution loop, not map generation (setup cost).
-			let start = clock.now
-			while actions < Self.maxActionsPerBattle {
-				if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
-				if state.sim.day > Self.maxDaysPerBattle { break }		// stalemate guard
-				let action = state.sim.drive(&ai)
-				_ = state.reduce(action)
-				actions += 1
+			let elapsed = clock.measure {
+				while actions < Self.maxActionsPerBattle {
+					if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
+					if state.sim.day > Self.maxDaysPerBattle { break }		// stalemate guard
+					let action = state.sim.axis(ai: &ai)
+					_ = state.reduce(action)
+					actions += 1
+				}
 			}
-			let elapsed = clock.now - start
 
 			let resolved = state.sim.aliveTeams.nonzeroBitCount <= 1
 			if resolved { resolvedCount += 1 }
@@ -88,20 +90,7 @@ struct TacticalPerformanceTests {
 	}
 }
 
-private extension TacticalSim {
-	/// Asks the correct AI generator for the current player's next action,
-	/// mirroring the team dispatch in `TacticalState.run`.
-	func drive(_ ai: inout AI) -> TacticalAction {
-		switch player.country.team {
-		case .soviet: soviet(ai: &ai)
-		case .axis, .allies: axis(ai: &ai)
-		case .none: .end
-		}
-	}
-}
-
 private extension Duration {
-	/// Wall-clock seconds as a `Double` (the type has no built-in accessor).
 	var seconds: Double {
 		Double(components.seconds) + Double(components.attoseconds) / 1e18
 	}

@@ -28,9 +28,15 @@ extension TacticalSim {
 		}
 	}
 
-	func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
+	private func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
 		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
 			units[$0].country == country && units[$0][skills]
+		}
+	}
+
+	private func aura(_ traits: Traits, country: Country, at xy: XY) -> Bool {
+		(unitAt(xy)?[traits] ?? false) || neighbors(at: xy).contains {
+			units[$0].country == country && units[$0][traits]
 		}
 	}
 
@@ -40,14 +46,15 @@ extension TacticalSim {
 		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
 		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
 		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
-		let atk = Int8(source.atk(destination)) + aRC + aLR
+		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src]) ? 2 : 0
+		let atk = Int8(source.atk(destination)) + aRC + aLR + radar
 		let def = Int8(destination.def(source)) + defMod + dRC + dLR
 
 		let dif = atk - def
-		let t1 = max(0, 9 - dif)
-		let t2 = max(1, 15 - dif)
-		let t3 = max(2, 21 - dif)
-		let t4 = max(3, 27 - dif)
+		let t1 = max(0, 7 - dif)
+		let t2 = max(1, 13 - dif)
+		let t3 = max(2, 19 - dif)
+		let t4 = max(3, 25 - dif)
 		let iniRound = source.ini + source.lvl / 2 > d20(.max, 2)
 		let rounds: UInt8 = (source.hp + 2) / 3 + (iniRound ? 1 : 0)
 		let crit = source[.crit]

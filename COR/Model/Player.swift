@@ -2,6 +2,7 @@ public struct Player {
 	public var country: Country
 	public var type: PlayerType
 	public var prestige: UInt16
+	public var baseLevel: UInt8
 	public var visible: SetXY
 	public var alive: Bool
 
@@ -9,12 +10,14 @@ public struct Player {
 		country: Country = .default,
 		type: PlayerType = .human,
 		prestige: UInt16 = 0xF00,
+		baseLevel: UInt8 = 0,
 		visible: SetXY = .empty,
 		alive: Bool = true
 	) {
 		self.country = country
 		self.type = type
 		self.prestige = prestige
+		self.baseLevel = baseLevel
 		self.visible = visible
 		self.alive = alive
 	}
@@ -59,4 +62,9 @@ public extension Country {
 
 extension Player {
 	static var none: Self { .init(alive: false) }
+}
+
+public extension UInt16 {
+	static var poor: Self { 0x0A00 }
+	static var rich: Self { 0x1F00 }
 }

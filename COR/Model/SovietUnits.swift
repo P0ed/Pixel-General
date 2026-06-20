@@ -14,6 +14,7 @@ extension Unit {
 
 	static let speznas = Unit(
 		type: .inf,
+		tier: 2,
 		mov: 4,
 		rng: 1,
 		ini: 8,
@@ -65,6 +66,7 @@ extension Unit {
 	
 	static let t72 = Unit(
 		type: .heavyTrack,
+		tier: 1,
 		mov: 6,
 		rng: 1,
 		ini: 7,
@@ -76,6 +78,7 @@ extension Unit {
 	
 	static let t90m = Unit(
 		type: .heavyTrack,
+		tier: 2,
 		mov: 6,
 		rng: 1,
 		ini: 8,
@@ -102,10 +105,22 @@ extension Unit {
 		type: .wheelAA,
 		mov: 7,
 		rng: 3,
+		ini: 8,
+		airAtk: 12,
+		groundDef: 4,
+		airDef: 7
+	)
+
+	static let s300 = Unit(
+		type: .wheelAA,
+		tier: 1,
+		mov: 7,
+		rng: 3,
 		ini: 9,
 		airAtk: 13,
 		groundDef: 4,
-		airDef: 7
+		airDef: 8,
+		traits: .radar
 	)
 
 	static let tunguska = Unit(
@@ -136,6 +151,7 @@ extension Unit {
 
 	static let mi24 = Unit(
 		type: .heli,
+		tier: 1,
 		mov: 9,
 		rng: 1,
 		ini: 8,
@@ -147,24 +163,53 @@ extension Unit {
 		traits: .transport
 	)
 
-	static let mig = Unit(
-		type: .jet,
+	static let orlan = Unit(
+		type: .heli,
+		tier: 2,
+		mov: 9,
+		ini: 5,
+		groundDef: 7,
+		airDef: 6,
+		traits: .optics
+	)
+
+	static let mig29 = Unit(
+		type: .fighter,
 		mov: 12,
 		rng: 2,
-		ini: 10,
+		ini: 8,
+		softAtk: 7,
+		hardAtk: 8,
+		airAtk: 10,
+		groundDef: 9,
+		airDef: 8,
+		traits: .radar
+	)
+
+	static let su57 = Unit(
+		type: .fighter,
+		tier: 2,
+		mov: 12,
+		rng: 2,
+		ini: 9,
 		softAtk: 8,
 		hardAtk: 10,
-		airAtk: 11,
+		airAtk: 12,
 		groundDef: 9,
 		airDef: 9,
 		traits: .radar
 	)
 
-	static let orlan = Unit(
-		type: .heli,
-		mov: 9,
-		ini: 5,
-		groundDef: 7,
-		airDef: 6
+	static let su27 = Unit(
+		type: .cas,
+		mov: 11,
+		rng: 2,
+		ini: 10,
+		softAtk: 9,
+		hardAtk: 12,
+		airAtk: 7,
+		groundDef: 10,
+		airDef: 7,
+		traits: .radar
 	)
 }

@@ -66,12 +66,18 @@ extension Unit {
 			case .none: .clear
 			}
 		case .heli:
-			rng == 0 ? .skeldar : .MH_6
-		case .jet:
+			switch country.team {
+			case .axis:
+				if tier == 0 { .MH_6 } else { .skeldar }
+			default: .MH_6
+			}
+
+		case .fighter:
 			switch country.team {
 			case .allies: .F_16
 			default: .F_64
 			}
+		case .cas: .F_64
 		}
 	}
 }

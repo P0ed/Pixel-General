@@ -50,15 +50,11 @@ extension TacticalSim {
 		units.firstMapAlive { [country] i, u in
 			(
 				u.country == country && needsReinforcements(i, u)
-				&& u.untouched && (!u.isAir || hasAirfield(position[i]))
+				&& u.untouched && (!u.isAir || hasBuildings(near: i.uid))
 			)
 			? .resupply(i.uid)
 			: nil
 		}
-	}
-
-	private func hasAirfield(_ xy: XY) -> Bool {
-		xy.n4.firstMap { xy in map[xy] == .airfield ? xy : nil } != nil
 	}
 
 	private var nextRetreat: TacticalAction? {

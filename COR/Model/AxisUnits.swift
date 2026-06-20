@@ -3,6 +3,7 @@ extension Unit {
 	// MARK: Infantry
 	static let ksk = Unit(
 		type: .inf,
+		tier: 3,
 		mov: 4,
 		rng: 1,
 		ini: 10,
@@ -20,16 +21,17 @@ extension Unit {
 		mov: 8,
 		rng: 1,
 		ini: 7,
-		softAtk: 5,
+		softAtk: 6,
 		hardAtk: 3,
 		airAtk: 2,
 		groundDef: 6,
 		airDef: 6,
-		traits: .radar
+		traits: .optics
 	)
 
 	static let boxer = Unit(
 		type: .lightWheel,
+		tier: 1,
 		mov: 8,
 		rng: 1,
 		ini: 8,
@@ -43,11 +45,12 @@ extension Unit {
 
 	static let strf90 = Unit(
 		type: .lightTrack,
+		tier: 1,
 		mov: 7,
 		rng: 1,
 		ini: 9,
 		softAtk: 10,
-		hardAtk: 9,
+		hardAtk: 10,
 		airAtk: 3,
 		groundDef: 11,
 		airDef: 8,
@@ -56,6 +59,7 @@ extension Unit {
 
 	static let kf41 = Unit(
 		type: .lightTrack,
+		tier: 1,
 		mov: 7,
 		rng: 1,
 		ini: 10,
@@ -70,6 +74,7 @@ extension Unit {
 	// MARK: Art
 	static let pzh = Unit(
 		type: .trackArt,
+		tier: 1,
 		mov: 5,
 		rng: 3,
 		ini: 4,
@@ -104,6 +109,7 @@ extension Unit {
 
 	static let strv122 = Unit(
 		type: .heavyTrack,
+		tier: 1,
 		mov: 6,
 		rng: 1,
 		ini: 9,
@@ -116,6 +122,7 @@ extension Unit {
 
 	static let kf51 = Unit(
 		type: .heavyTrack,
+		tier: 1,
 		mov: 6,
 		rng: 1,
 		ini: 10,
@@ -141,6 +148,7 @@ extension Unit {
 
 	static let nasams = Unit(
 		type: .aa,
+		tier: 1,
 		mov: 2,
 		rng: 3,
 		ini: 9,
@@ -152,6 +160,7 @@ extension Unit {
 
 	static let lvkv90 = Unit(
 		type: .trackAA,
+		tier: 1,
 		mov: 7,
 		rng: 1,
 		ini: 9,
@@ -166,15 +175,17 @@ extension Unit {
 	// MARK: Air
 	static let skeldar = Unit(
 		type: .heli,
+		tier: 1,
 		mov: 9,
 		ini: 6,
 		groundDef: 7,
 		airDef: 6,
-		traits: .radar
+		traits: [.radar, .optics]
 	)
 
 	static let skeldarm = Unit(
 		type: .heli,
+		tier: 2,
 		mov: 8,
 		ini: 6,
 		softAtk: 5,
@@ -197,7 +208,8 @@ extension Unit {
 	)
 
 	static let gripen = Unit(
-		type: .jet,
+		type: .fighter,
+		tier: 1,
 		mov: 12,
 		rng: 2,
 		ini: 12,
@@ -205,7 +217,7 @@ extension Unit {
 		hardAtk: 11,
 		airAtk: 12,
 		groundDef: 10,
-		airDef: 11,
+		airDef: 10,
 		traits: .radar
 	)
 }

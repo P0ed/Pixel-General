@@ -1,23 +1,26 @@
 public struct Unit: Equatable {
-	public internal(set) var country: Country = .default
-	public internal(set) var hp: UInt8 = 0
-	public internal(set) var mp: UInt8 = 0
-	public internal(set) var ap: UInt8 = 0
-	public internal(set) var ammo: UInt8 = 0
-	public internal(set) var ent: UInt8 = 0
-	public internal(set) var exp: UInt16 = 0
-	public internal(set) var kills: UInt16 = 0
-	public internal(set) var type: UnitType = .supply
-	public internal(set) var mov: UInt8 = 0
-	public internal(set) var rng: UInt8 = 0
-	public internal(set) var ini: UInt8 = 0
-	public internal(set) var softAtk: UInt8 = 0
-	public internal(set) var hardAtk: UInt8 = 0
-	public internal(set) var airAtk: UInt8 = 0
-	public internal(set) var groundDef: UInt8 = 0
-	public internal(set) var airDef: UInt8 = 0
-	public internal(set) var traits: Traits = []
-	public internal(set) var skills: Skills = []
+	public var country: Country = .default
+	public var hp: UInt8 = 0
+	public var mp: UInt8 = 0
+	public var ap: UInt8 = 0
+	public var ammo: UInt8 = 0
+	public var ent: UInt8 = 0
+	public var exp: UInt16 = 0
+
+	public var kills: UInt16 = 0
+	public var type: UnitType = .supply
+	public var tier: UInt8 = 0
+	public var mov: UInt8 = 0
+	public var rng: UInt8 = 0
+	public var ini: UInt8 = 0
+	public var softAtk: UInt8 = 0
+
+	public var hardAtk: UInt8 = 0
+	public var airAtk: UInt8 = 0
+	public var groundDef: UInt8 = 0
+	public var airDef: UInt8 = 0
+	public var traits: Traits = []
+	public var skills: Skills = []
 }
 
 public struct Traits: OptionSet, Equatable {
@@ -62,13 +65,13 @@ public extension Unit {
 
 	static var empty: Self { .init() }
 
-	var isAir: Bool { switch type { case .heli, .jet: true; default: false } }
+	var isAir: Bool { switch type { case .heli, .fighter, .cas: true; default: false } }
 	var untouched: Bool { fullAP && fullMP }
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { mp > 0 }
 	var canAttack: Bool { ap > 0 }
 
-	var spot: UInt8 { self[.radar] ? 3 : 2 }
+	var spot: UInt8 { self[.optics] ? 3 : 2 }
 
 	var maxHP: UInt8 { 0xF }
 	var maxAP: UInt8 { rng == 0 ? 0 : 1 }
@@ -82,7 +85,7 @@ public extension Unit {
 	var maxAmmo: UInt8 {
 		switch type {
 		case .supply: 0
-		case .jet: rng > 1 ? 2 : 3
+		case .fighter, .cas: rng > 1 ? 2 : 3
 		case .heli: rng > 0 ? 3 : 0
 		case .art: 6
 		case .wheelArt, .trackArt: 5
@@ -118,7 +121,7 @@ public extension Unit {
 
 	var isAA: Bool {
 		switch type {
-		case .aa, .wheelAA, .trackAA, .jet: true;
+		case .aa, .wheelAA, .trackAA, .fighter: true;
 		default: false
 		}
 	}
@@ -139,7 +142,7 @@ public extension Unit {
 		case .supply, .inf: self[.engineer] ? 8 : 4
 		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: self[.engineer] ? 6 : 3
 		case .heavyTrack, .trackAA, .trackArt: self[.engineer] ? 4 : 2
-		case .heli, .jet: 0
+		case .heli, .fighter, .cas: 0
 		}
 	}
 
@@ -158,7 +161,12 @@ public extension Unit {
 	}
 
 	var lvl: UInt8 {
-		modifying(8) { lvl in lvl.decrement(by: UInt8(exp.leadingZeroBitCount)) }
+		get {
+			modifying(8) { lvl in lvl.decrement(by: UInt8(exp.leadingZeroBitCount)) }
+		}
+		set {
+			exp = newValue == 0 ? 0 : 1 << (7 + newValue)
+		}
 	}
 
 	var subLvl: UInt8 {
@@ -176,13 +184,13 @@ public extension Unit {
 			softAtk > 0 ? softAtk + lvl : 0
 		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack:
 			hardAtk > 0 ? hardAtk + (isArmor ? lvl : (lvl / 2)) : 0
-		case .heli, .jet:
+		case .heli, .fighter, .cas:
 			airAtk > 0 ? airAtk + (isAA ? lvl : (lvl / 2)) : 0
 		}
 	}
 
 	func def(_ src: Unit) -> UInt8 {
-		(src.isAir ? airDef : groundDef) + lvl
+		(src.isAir ? airDef : groundDef) + lvl / 2
 	}
 
 	var cost: UInt16 {
@@ -204,7 +212,7 @@ public extension Unit {
 		case .trackAA, .lightTrack: 150
 		case .trackArt, .heavyTrack: 220
 		case .heli: 270
-		case .jet: 330
+		case .fighter, .cas: 330
 		}
 	}
 
@@ -257,7 +265,7 @@ extension Unit {
 		 art, wheelArt, trackArt,
 		 aa, wheelAA, trackAA,
 		 lightWheel, lightTrack, heavyTrack,
-		 heli, jet
+		 heli, fighter, cas
 }
 
 extension Unit: DeadOrAlive {

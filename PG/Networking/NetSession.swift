@@ -139,7 +139,7 @@ final class NetSession {
 
 	func togglePrestige(seat: Int) {
 		update(seat: seat) { p in
-			p.prestige = p.prestige < 0x1400 ? 0x1400 : 0x0B00
+			p.prestige = p.prestige < .rich ? .rich : .poor
 		}
 	}
 

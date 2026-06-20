@@ -110,7 +110,7 @@ public extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .heli, .jet:
+		case .heli, .fighter, .cas:
 			self.isNoFlyZone ? 0x10 : 1
 		}
 	}
@@ -141,7 +141,7 @@ public extension Terrain {
 
 	func def(_ type: UnitType) -> Int8 {
 		switch self {
-		case _ where type == .heli || type == .jet: 0
+		case _ where type == .heli || type == .fighter || type == .cas: 0
 		case _ where isRoad: -1
 		case _ where isBridge: -2
 		case _ where isRiver:

@@ -1,8 +1,20 @@
 extension Unit {
 
 	// MARK: Infantry
+	static let ranger = Unit(
+		type: .inf,
+		tier: 1,
+		mov: 3,
+		rng: 1,
+		ini: 5,
+		softAtk: 8,
+		hardAtk: 3,
+		groundDef: 7,
+		airDef: 4
+	)
 	static let delta = Unit(
 		type: .inf,
+		tier: 3,
 		mov: 4,
 		rng: 1,
 		ini: 9,
@@ -17,6 +29,7 @@ extension Unit {
 	// MARK: IFV
 	static let m2A2 = Unit(
 		type: .lightTrack,
+		tier: 1,
 		mov: 7,
 		rng: 1,
 		ini: 9,
@@ -55,6 +68,7 @@ extension Unit {
 
 	static let m1A1 = Unit(
 		type: .heavyTrack,
+		tier: 1,
 		mov: 7,
 		rng: 1,
 		ini: 8,
@@ -66,6 +80,7 @@ extension Unit {
 
 	static let m1A2 = Unit(
 		type: .heavyTrack,
+		tier: 2,
 		mov: 7,
 		rng: 1,
 		ini: 9,
@@ -79,6 +94,7 @@ extension Unit {
 	// MARK: Art
 	static let m777 = Unit(
 		type: .art,
+		tier: 1,
 		mov: 2,
 		rng: 3,
 		ini: 1,
@@ -90,6 +106,7 @@ extension Unit {
 
 	static let m270 = Unit(
 		type: .trackArt,
+		tier: 1,
 		mov: 5,
 		rng: 3,
 		ini: 4,
@@ -102,6 +119,7 @@ extension Unit {
 	// MARK: AA
 	static let patriot = Unit(
 		type: .aa,
+		tier: 1,
 		mov: 2,
 		rng: 3,
 		ini: 9,
@@ -114,6 +132,7 @@ extension Unit {
 	// MARK: Air
 	static let mh6 = Unit(
 		type: .heli,
+		tier: 1,
 		mov: 10,
 		rng: 1,
 		ini: 9,
@@ -126,20 +145,22 @@ extension Unit {
 	)
 
 	static let f16 = Unit(
-		type: .jet,
+		type: .fighter,
+		tier: 1,
 		mov: 12,
 		rng: 2,
 		ini: 11,
 		softAtk: 9,
 		hardAtk: 11,
 		airAtk: 13,
-		groundDef: 10,
-		airDef: 10,
+		groundDef: 9,
+		airDef: 9,
 		traits: .radar
 	)
 
 	static let f35 = Unit(
-		type: .jet,
+		type: .fighter,
+		tier: 2,
 		mov: 12,
 		rng: 2,
 		ini: 12,
@@ -147,17 +168,19 @@ extension Unit {
 		hardAtk: 13,
 		airAtk: 15,
 		groundDef: 11,
-		airDef: 13,
+		airDef: 11,
 		traits: .radar
 	)
 
 	static let mq9 = Unit(
 		type: .heli,
+		tier: 2,
 		mov: 9,
 		ini: 5,
 		softAtk: 7,
 		hardAtk: 9,
 		groundDef: 7,
-		airDef: 6
+		airDef: 6,
+		traits: .optics
 	)
 }

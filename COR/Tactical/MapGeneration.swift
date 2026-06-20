@@ -137,9 +137,9 @@ public extension Map<32, Terrain> {
 
 		var airfieldCount = placed.count - cities.count
 		for city in cities where airfieldCount < players {
-			let hasAirfield = city.n4.firstMap { ap in
-				contains(ap) && self[ap] == .airfield ? ap : nil
-			} != nil
+			let hasAirfield = city.n4.contains { ap in
+				contains(ap) && self[ap] == .airfield
+			}
 			if !hasAirfield, placeAirfield(near: city, placed: &placed, d20: &d20) {
 				airfieldCount += 1
 			}

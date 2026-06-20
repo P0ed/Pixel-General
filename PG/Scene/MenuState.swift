@@ -85,3 +85,7 @@ extension MenuItem {
 		})
 	}
 }
+
+extension UInt8 {
+	mutating func toggle4() { self = (self + 1) % 4 }
+}

@@ -71,22 +71,29 @@ public extension Unit {
 		switch type {
 		case .supply: "Truck"
 		case .inf:
-			if self[.elite] {
+			switch tier {
+			case 0: "Militia"
+			case 1: country == .usa ? "Rangers" : "Infantry"
+			case 2: "Engineer"
+			default:
 				switch country.team {
 				case .axis: "KSK"
 				case .allies: "Delta Force"
 				case .soviet: "Speznas"
 				case .none: ""
 				}
-			} else {
-				"Infantry"
 			}
 		case .art:
-			switch country.team {
-			case .allies: "M777"
-			default: hardAtk > 6 ? "155mm" : "105mm"
+			if tier == 0 {
+				"105mm"
+			} else {
+				switch country.team {
+				case .allies: "M777"
+				default: "155mm"
+				}
 			}
-		case .wheelArt: "Bohdana"
+		case .wheelArt:
+			"Bohdana"
 		case .trackArt:
 			switch country.team {
 			case .axis: "PzH 2000"
@@ -96,13 +103,14 @@ public extension Unit {
 			}
 		case .aa:
 			switch country.team {
-			case _ where rng == 1: "40mm L/70"
+			case _ where tier == 0: "40mm L/70"
 			case .axis: "NASAMS"
 			case .allies: "Patriot"
 			case .soviet: "S300"
 			case .none: ""
 			}
-		case .wheelAA: "Neva"
+		case .wheelAA: 
+			"Neva"
 		case .trackAA:
 			switch country.team {
 			case .axis: "Lvkv 90"
@@ -110,33 +118,62 @@ public extension Unit {
 			case .allies: ""
 			case .none: ""
 			}
-		case .lightWheel: "Boxer"
+		case .lightWheel:
+			switch country.team {
+			case .axis, .allies: tier == 0 ? "Fennek" : "Boxer"
+			case .soviet: "BRDM"
+			case .none: ""
+			}
 		case .lightTrack:
 			switch country.team {
-			case .axis: self[.elite] ? "KF41" : "Strf 90"
-			case .allies: hardAtk > 5 ? "M2A2" : "M113"
+			case .axis: country == .ger ? "KF41" : "Strf 90"
+			case .allies: tier == 0 ? "M113" : "M2A2"
 			case .soviet: "BMP"
 			case .none: ""
 			}
 		case .heavyTrack:
-			switch country.team {
-			case .axis: hardAtk > 14 ? "KF51" : hardAtk > 12 ? "Strv 122" : "Leopard 1A5"
-			case .allies: hardAtk > 12 ? "M1A2" : "M48"
-			case .soviet: hardAtk > 12 ? "T-90M" : hardAtk > 10 ? "T-72B" : "T-55BVM"
-			case .none: ""
+			switch tier {
+			case 0: 
+				switch country.team {
+				case .axis: country == .swe ? "Strv 103" : "Leopard 1A5"
+				case .allies: "M48"
+				case .soviet: "T-55BVM"
+				case .none: ""
+				}
+			case 1: 
+				switch country.team {
+				case .axis: country == .ger ? "KF51" : "Strv 122"
+				case .allies: "M1A1"
+				case .soviet: "T-72B"
+				case .none: ""
+				}
+			default:
+				switch country.team {
+				case .axis: country == .ger ? "KF51" : "Strv 122"
+				case .allies: "M1A2"
+				case .soviet: "T-90M"
+				case .none: ""
+				}
 			}
-		case .heli: 
+		case .heli:
 			switch country.team {
 			case .axis: self[.transport] ? "NH90" : "Skeldar"
 			case .allies: "MH6"
 			case .soviet: self[.transport] ? "Mi-8" : "Mi-24"
 			case .none: ""
 			}
-		case .jet:
+		case .fighter:
 			switch country.team {
 			case .axis: "Gripen"
 			case .allies: "F16"
 			case .soviet: "Mig-29"
+			case .none: ""
+			}
+		case .cas:
+			switch country.team {
+			case .axis: ""
+			case .allies: "A-10"
+			case .soviet: "Su-25"
 			case .none: ""
 			}
 		}

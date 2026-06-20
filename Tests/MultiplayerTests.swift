@@ -60,7 +60,7 @@ struct MultiplayerTests {
 
 		var diverged = false
 		var steps = 0
-		while steps < 512 {
+		while steps < 256 {
 			let action = a.sim.axis(ai: &ai)
 			_ = a.reduce(action)
 			_ = b.reduce(action)

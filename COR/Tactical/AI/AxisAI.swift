@@ -172,10 +172,21 @@ extension TacticalSim {
 	}
 
 	private func hasAirfield(_ xy: XY) -> Bool {
-		map.indices.contains { [country] p in
+		xy.c5.contains { p in
 			map[p] == .airfield && control[p] == country
 			&& p.manhattanDistance(to: xy) <= 1
 		}
+	}
+
+	private func nearestOwnAirfield(to p: XY, _ ai: borrowing AI) -> XY? {
+		var best: XY? = nil
+		var bd = Int.max
+		ai.ownSettlements.forEach { _, xy in
+			guard map[xy] == .airfield else { return }
+			let d = p.stepDistance(to: xy)
+			if d < bd { bd = d; best = xy }
+		}
+		return best
 	}
 
 	private var ownSupplyCount: Int {
@@ -390,6 +401,10 @@ extension TacticalSim {
 			let anchor = nearestFriendlyCombat(to: p, exclude: uid) ?? ai.target[uid.index]
 			return pick(uid, toward: anchor, defensive: true)
 		case .hunt:
+			if u.isAir, u.ammo == 0 {
+				guard let field = nearestOwnAirfield(to: p, ai) else { return nil }
+				return pick(uid, toward: field, defensive: true)
+			}
 			guard let goal = frontObjective(from: p, ai) else { return nil }
 			return pick(uid, toward: goal, defensive: u.isArt || u.hp <= 6)
 		case .attack:
@@ -452,9 +467,11 @@ extension TacticalSim {
 		if u.isAir, map[xy] == .airfield, control[xy].team == team {
 			score += 6
 		}
-		// Standing on an enemy settlement captures it — the whole point of the game.
-		if !u.isAir, map[xy].isSettlement, control[xy].team != team {
-			score += 60
+		if map[xy].isSettlement, control[xy].team != team {
+			// Standing on an enemy settlement captures it — the whole point of the
+			// game — but air can't capture, so parking there only blocks our own
+			// ground units from ever taking it (a permanent stalemate). Keep air off.
+			score += u.isAir ? -60 : 60
 		}
 
 		var threat = 0

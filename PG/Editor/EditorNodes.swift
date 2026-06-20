@@ -95,7 +95,9 @@ private extension EditorNodes {
 					action: .setBrush(terrain)
 				)
 			} + [
+				.space,
 				.close(icon: .new, status: "Randomize", action: .randomize),
+
 				.close(icon: .empty, status: "Clear map", action: .clear),
 				.close(icon: .save, status: "Save map", action: .save),
 				.close(icon: .load, status: "Load map", action: .load),
@@ -116,21 +118,21 @@ extension Terrain {
 		case .forestHill: .tile(.forestHill)
 		case .mountain: .tile(.mountain)
 		case .water: .tile(.water)
-		case .bridgeWE: .bridgeWE
-		case .bridgeSN: .bridgeSN
-		case .city: .city
-		case .airfield: .airfield
-		case .roadNW: .roadNW
-		case .roadNE: .roadNE
-		case .roadWE: .roadWE
-		case .roadSN: .roadSN
-		case .roadSW: .roadSW
-		case .roadSE: .roadSE
-		case .villageE: .villageE
-		case .villageN: .villageN
-		case .villageW: .villageW
-		case .villageS: .villageS
-		case .roadX: .roadX
+		case .bridgeWE: .tile(.bridgeWE)
+		case .bridgeSN: .tile(.bridgeSN)
+		case .city: .tile(.city)
+		case .airfield: .tile(.airfield)
+		case .roadNW: .tile(.roadNW)
+		case .roadNE: .tile(.roadNE)
+		case .roadWE: .tile(.roadWE)
+		case .roadSN: .tile(.roadSN)
+		case .roadSW: .tile(.roadSW)
+		case .roadSE: .tile(.roadSE)
+		case .villageE: .tile(.villageE)
+		case .villageN: .tile(.villageN)
+		case .villageW: .tile(.villageW)
+		case .villageS: .tile(.villageS)
+		case .roadX: .tile(.roadX)
 		case .none: .clear
 		}
 	}

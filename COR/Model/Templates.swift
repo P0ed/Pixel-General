@@ -1,6 +1,6 @@
 public extension [Unit] {
 
-	static func base(_ country: Country) -> [Unit] {
+	static func base(_ country: Country, lvl: UInt8 = 0) -> [Unit] {
 		let units: [Unit?] = [
 			.truck,
 			.regular,
@@ -23,7 +23,9 @@ public extension [Unit] {
 			.aa1(country).veteran,
 		]
 
-		return units.compactMap { u in u?.country(country) }
+		return units.compactMap { u in
+			u?.country(country).lvl(lvl + (u?.lvl ?? 0))
+		}
 	}
 
 	static func small(_ country: Country) -> [Unit] {
@@ -40,7 +42,7 @@ public extension [Unit] {
 		return units.compactMap { u in u?.country(country) }
 	}
 
-	static func aux(country: Country) -> [Unit] {
+	static func aux(_ country: Country) -> [Unit] {
 		let units: [Unit?] = [
 			.truck,
 			.truck,
@@ -63,6 +65,8 @@ public extension [Unit] {
 			.aa2(country),
 		]
 
-		return units.compactMap { u in u?.country(country).traits(.aux) }
+		return units.compactMap { u in
+			u?.country(country).traits(.aux)
+		}
 	}
 }

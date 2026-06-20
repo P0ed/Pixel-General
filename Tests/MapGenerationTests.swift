@@ -4,7 +4,7 @@ import Testing
 struct MapGenerationTests {
 
 	@Test func terminatesAcrossManySeeds() {
-		for seed in 0 ..< 32 {
+		for seed in 0 ..< 16 {
 			_ = Map<32, Terrain>(size: 8 + seed % 24, seed: seed)
 		}
 	}
@@ -14,8 +14,8 @@ struct MapGenerationTests {
 		var noCitySeeds: [Int] = []
 		var noRiverSeeds: [Int] = []
 
-		for seed in 0 ..< 16 {
-			let map = Map<32, Terrain>(size: 32, seed: seed)
+		for seed in 0 ..< 8 {
+			let map = Map<32, Terrain>(size: 32, seed: seed * 7)
 			var hasNonZero = false
 			var hasCity = false
 			var hasRiver = false

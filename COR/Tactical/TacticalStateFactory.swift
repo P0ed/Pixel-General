@@ -15,9 +15,9 @@ public extension TacticalState {
 		)
 		let units: [Unit] = (
 			units
-			+ (players.count > 1 ? .base(players[1].country) : [])
-			+ (players.count > 2 ? .base(players[2].country) : [])
-			+ (players.count > 3 ? .base(players[3].country) : [])
+			+ (players.count > 1 ? .base(players[1].country, lvl: players[1].baseLevel) : [])
+			+ (players.count > 2 ? .base(players[2].country, lvl: players[2].baseLevel) : [])
+			+ (players.count > 3 ? .base(players[3].country, lvl: players[3].baseLevel) : [])
 		)
 		.mapInPlace { u in u.reset() }
 

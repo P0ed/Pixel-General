@@ -12,7 +12,7 @@ extension HQNodes {
 		]
 		var countriesLeft: [Country] {
 			Country.playable.filter { c in
-				players.firstMap { $0.alive && $0.country == c ? $0.country : nil } == nil
+				!players.contains { $0.alive && $0.country == c }
 			}
 		}
 		var size = 0
@@ -79,15 +79,28 @@ extension HQNodes {
 				}
 			)
 		}
+		let exp = (0..<4).map { idx in
+			MenuItem<HQAction>(
+				icon: .toggle4(players[idx].baseLevel),
+				status: .init(text: "Player \(idx)"),
+				update: { menu in
+					idx == 0 ? menu : modifying(menu) { menu in
+						players[idx].baseLevel.toggle4()
+						menu.items[12 + idx].icon = .toggle4(players[idx].baseLevel)
+						menu.cursor = 12 + idx
+					}
+				}
+			)
+		}
 		let start: [MenuItem<HQAction>] = [
-			.space, .space,
 			.init(icon: sizes[size], status: .init(text: "Size: \(16 + size * 8)"), update: { m in
 				modifying(m) { m in
 					size = (size + 1) % 3
-					m.items[14].icon = sizes[size]
-					m.items[14].status.text = "Size: \(16 + size * 8)"
+					m.items[16].icon = sizes[size]
+					m.items[16].status.text = "Size: \(16 + size * 8)"
 				}
 			}),
+			.space, .space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 				core.startScenario(TacticalState(
@@ -102,7 +115,7 @@ extension HQNodes {
 		]
 
 		return MenuState(
-			items: countries + types + prestige + start,
+			items: countries + types + prestige + exp + start,
 			close: { _ in menu }
 		)
 	}
@@ -125,9 +138,4 @@ extension PlayerType {
 		case .remote: .remote
 		}
 	}
-}
-
-private extension UInt16 {
-	static var poor: Self { 0x0B00 }
-	static var rich: Self { 0x1400 }
 }

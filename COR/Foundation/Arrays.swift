@@ -48,6 +48,11 @@ public extension InlineArray {
 		return arr
 	}
 
+	func contains(_ predicate: (Element) -> Bool) -> Bool {
+		for i in indices where predicate(self[i]) { return true }
+		return false
+	}
+
 	func reduce<R>(into result: R, _ fold: (inout R, Element) -> Void) -> R {
 		var result = result
 		for i in indices {

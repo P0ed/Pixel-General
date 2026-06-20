@@ -9,6 +9,15 @@ extension UIImage {
 	func tinted(_ color: UIColor) -> UIImage {
 		cg?.tinted(color.cgColor).map { UIImage(cgImage: $0) } ?? self
 	}
+
+	static func toggle4(_ value: UInt8) -> UIImage {
+		switch value {
+		case 0: .value0
+		case 1: .value1
+		case 2: .value2
+		default: .value3
+		}
+	}
 }
 
 extension CGImage {

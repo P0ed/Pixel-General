@@ -10,7 +10,8 @@ public extension Unit {
 
 	static func inf1(_ country: Country) -> Self {
 		switch country.team {
-		case .axis, .allies: .regular
+		case .axis: .regular
+		case .allies: .ranger
 		case .soviet: .militia
 		case .none: .empty
 		}
@@ -150,7 +151,7 @@ public extension Unit {
 		switch country.team {
 		case .axis: .gripen
 		case .allies: .f35
-		case .soviet: .mig
+		case .soviet: .mig29
 		case .none: .empty
 		}
 	}
@@ -190,8 +191,8 @@ public extension Unit {
 
 	var veteran: Self { lvl(2) }
 
-	func lvl(_ lvl: Int) -> Self {
-		modifying(self) { u in u.exp = 1 << (7 + lvl) }
+	func lvl(_ lvl: UInt8) -> Self {
+		modifying(self) { u in u.lvl = lvl }
 	}
 
 	func skills(_ skills: Skills) -> Self {
@@ -208,6 +209,7 @@ public extension Unit {
 
 	static let regular = Unit(
 		type: .inf,
+		tier: 1,
 		mov: 3,
 		rng: 1,
 		ini: 4,
@@ -219,6 +221,7 @@ public extension Unit {
 
 	static let engineer = Unit(
 		type: .inf,
+		tier: 2,
 		mov: 3,
 		rng: 1,
 		ini: 5,
@@ -232,6 +235,7 @@ public extension Unit {
 
 	static let art155 = Unit(
 		type: .art,
+		tier: 1,
 		mov: 2,
 		rng: 3,
 		ini: 1,
