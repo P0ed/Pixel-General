@@ -205,9 +205,6 @@ public extension TacticalSim {
 		}
 		return result
 	}
-}
-
-public extension TacticalSim {
 
 	var playerIndex: Int {
 		Int(turn) % players.count
@@ -241,18 +238,6 @@ public extension TacticalSim {
 	var visibleToHuman: SetXY {
 		players.reduce(into: .empty) { r, i, p in
 			p.type == .human ? r.combine(vision[i]) : ()
-		}
-	}
-}
-
-public extension Terrain {
-
-	var income: UInt16 {
-		switch self {
-		case .city: 24
-		case .villageE, .villageN, .villageS, .villageW: 8
-		case .airfield: 4
-		default: 0
 		}
 	}
 }

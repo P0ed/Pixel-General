@@ -106,3 +106,15 @@ extension TacticalSim {
 		map.indices.contains { xy in map[xy].isSettlement && control[xy] == country }
 	}
 }
+
+extension Terrain {
+
+	var income: UInt16 {
+		switch self {
+		case .city: 24
+		case .villageE, .villageN, .villageS, .villageW: 8
+		case .airfield: 4
+		default: 0
+		}
+	}
+}

@@ -1,5 +1,3 @@
-/// Deterministic HQ simulation state — the roster, economy, and the reducer.
-/// Owns everything `reduce` may touch; by construction it cannot reference UI.
 public struct HQSim: ~Copyable {
 	public var map: Map<4, Terrain>
 	public var player: Player
@@ -23,7 +21,6 @@ public extension HQSim {
 	var shop: [Unit] { Shop(country: country, tier: player.tier).units }
 }
 
-/// Presentation-only HQ state. Never read by `reduce`; may diverge per peer.
 public struct HQUI {
 	public var cursor: XY
 	public var selected: UID
