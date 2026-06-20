@@ -25,24 +25,6 @@ public extension Bits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
 }
 
-public struct Traits: OptionSet, Equatable {
-	public var rawValue: UInt16
-
-	public init(rawValue: UInt16) {
-		self.rawValue = rawValue
-	}
-}
-
-public extension Traits {
-	static var transport: Self { .init(rawValue: 1 << 0) }
-	static var elite: Self { .init(rawValue: 1 << 1) }
-	static var engineer: Self { .init(rawValue: 1 << 2) }
-	static var optics: Self { .init(rawValue: 1 << 3) }
-	static var radar: Self { .init(rawValue: 1 << 4) }
-	static var atgm: Self { .init(rawValue: 1 << 5) }
-	static var aam: Self { .init(rawValue: 1 << 6) }
-}
-
 public struct Skills: OptionSet, Equatable {
 	public var rawValue: UInt16
 
@@ -66,9 +48,7 @@ public extension Unit {
 
 	static var empty: Self { .init() }
 
-	/// Static, per-model stats. Read through ``UnitStats/table`` so live table
-	/// edits apply to every instance of the model.
-	var stats: UnitStats { UnitStats.table[model] ?? .init() }
+	var stats: UnitStats { UnitStats.table[Int(model.rawValue)] }
 
 	var type: UnitType { stats.type }
 	var tier: UInt8 { stats.tier }
