@@ -12,7 +12,7 @@ public extension [Unit] {
 			.tank1(country).veteran,
 			.tank2(country).veteran,
 
-			.ifv1(country),
+			.recon1(country),
 			.ifv1(country).veteran,
 			.art1(country).veteran,
 			.art1(country).veteran,

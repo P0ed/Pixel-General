@@ -54,7 +54,7 @@ extension TacticalSim {
 		let t1 = max(0, 7 - dif)
 		let t2 = max(1, 13 - dif)
 		let t3 = max(2, 19 - dif)
-		let t4 = max(3, 25 - dif)
+		let t4 = max(3, 26 - dif)
 		let iniRound = source.ini + source.lvl / 2 > d20(.max, 2)
 		let rounds: UInt8 = (source.hp + 2) / 3 + (iniRound ? 1 : 0)
 		let crit = source[.crit]
