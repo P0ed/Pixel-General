@@ -39,7 +39,7 @@ extension TacticalSim {
 		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {
 			let healCap: UInt8 = (noEnemy ? 3 : 2) * (supply + 1)
 			let healed = unit.heal(healCap)
-			unit.exp.decrement(by: UInt16(healed) * 3 << unit.lvl)
+			unit.exp.decrement(by: UInt16(healed) * 4 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}
 		if endOfTurn, unit[.regen], !unit.isAir || hasBuildings {
