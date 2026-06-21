@@ -23,15 +23,9 @@ extension TacticalNodes {
 				.close(icon: .start, status: "End turn", action: .end),
 				.space,
 				.load { [weak scene] in scene?.saveState() },
-				(
-					state.sim.canRetreat
-					? .close(icon: .HQ, status: "Retreat") { [weak scene] _ in
-						if let scene { endGame(scene.state) }
-					}
-					: .close(icon: .HQ, status: "Abandon") { [weak scene] _ in
-						if let scene { endGame(scene.state) }
-					}
-				),
+				.close(icon: .HQ, status: "Abandon") { [weak scene] _ in
+					if let scene { endGame(scene.state) }
+				},
 
 				MenuItem(
 					icon: .prestige1,
@@ -40,13 +34,7 @@ extension TacticalNodes {
 				),
 				.space,
 				.space,
-				(
-					state.sim.canDraw
-					? .close(icon: .HQ, status: "Draw") { [weak scene] _ in
-						if let scene { endGame(scene.state) }
-					}
-					: .space
-				),
+				.space,
 
 				MenuItem(icon: UIImage(named: "Sound\(vol)") ?? .clear, status: .init(text: "Volume"), update: { menu in
 					modifying(menu) { menu in

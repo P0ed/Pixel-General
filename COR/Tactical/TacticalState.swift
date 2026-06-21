@@ -145,21 +145,6 @@ public extension TacticalSim {
 		}
 	}
 
-	var canRetreat: Bool {
-		day > 16
-	}
-
-	var canDraw: Bool {
-		guard canRetreat, aliveTeams.nonzeroBitCount == 2 else { return false }
-
-		let settelements = map.indices.reduce(into: [2 of Int](repeating: 0)) { [country] r, xy in
-			if map[xy].isSettlement {
-				r[control[xy].team == country.team ? 0 : 1] += 1
-			}
-		}
-		return abs(settelements[0] - settelements[1]) < map.size / 8
-	}
-
 	func hasBuildings(near id: UID) -> Bool {
 		let u = units[id]
 		let p = position[id.index]

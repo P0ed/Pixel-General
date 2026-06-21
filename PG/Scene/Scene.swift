@@ -124,7 +124,10 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	func show(_ menu: MenuState<Action>?) {
-		menuState = menu.flatMap { m in m.items.isEmpty ? .none : m }
+		menuState = modifying(menu) { m in
+			m = m.flatMap { m in m.items.isEmpty ? nil : m }
+			m?.padItems()
+		}
 	}
 
 	func saveState() {
@@ -143,11 +146,14 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 				if let action = menuState.items[idx].action {
 					react(.action(action))
 				}
-				self.menuState = menuState.items[idx].update(
-					modifying(menuState) { m in m.action = nil }
-				)
+				show(menuState.items[idx].update(
+					modifying(menuState) { m in
+						m.action = nil
+						m.padItems()
+					}
+				))
 			} else {
-				self.menuState = menuState.close(modifying(menuState) { m in m.action = nil })
+				show(menuState.close(modifying(menuState) { m in m.action = nil }))
 			}
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
@@ -207,5 +213,14 @@ extension MenuState {
 
 	var status: Status {
 		cursor < items.count ? items[cursor].status : Status()
+	}
+
+	mutating func padItems() {
+		let cnt = items.count
+		if cnt % 16 != 0 {
+			items.append(contentsOf: [MenuItem<Action>](
+				repeatElement(.space, count: 16 - cnt % 16)
+			))
+		}
 	}
 }

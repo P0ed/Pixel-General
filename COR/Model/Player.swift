@@ -9,7 +9,7 @@ public struct Player {
 	public init(
 		country: Country = .default,
 		type: PlayerType = .human,
-		prestige: UInt16 = 0xF00,
+		prestige: UInt16 = .poor,
 		baseLevel: UInt8 = 0,
 		tier: UInt8 = 0,
 		alive: Bool = true
@@ -44,10 +44,10 @@ public extension Country {
 
 	var team: Team {
 		switch self {
-		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor, .fin, .est, .lva, .ltu: .axis
-		case .isr, .pak, .usa: .allies
-		case .ind, .irn, .rus, .bel, .rom, .mol, .svk, .hun: .soviet
 		case .none: .none
+		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor, .fin, .est, .lva, .ltu: .axis
+		case .ind, .irn, .rus, .bel, .rom, .mol, .svk, .hun: .soviet
+		case .isr, .pak, .usa: .allies
 		}
 	}
 
@@ -59,6 +59,6 @@ extension Player {
 }
 
 public extension UInt16 {
-	static var poor: Self { 0x0A00 }
-	static var rich: Self { 0x1F00 }
+	static var poor: Self { 1200 }
+	static var rich: Self { 3200 }
 }

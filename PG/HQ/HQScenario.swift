@@ -69,7 +69,7 @@ extension HQNodes {
 		let prestige = (0..<4).map { idx in
 			MenuItem<HQAction>(
 				icon: players[idx].prestige < .rich ? .prestige1 : .prestige2,
-				status: .init(text: "Player \(idx)"),
+				status: .init(text: "Prestige"),
 				update: { menu in
 					modifying(menu) { menu in
 						players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
@@ -82,7 +82,7 @@ extension HQNodes {
 		let exp = (0..<4).map { idx in
 			MenuItem<HQAction>(
 				icon: .toggle4(players[idx].baseLevel),
-				status: .init(text: "Player \(idx)"),
+				status: .init(text: "Experience"),
 				update: { menu in
 					idx == 0 ? menu : modifying(menu) { menu in
 						players[idx].baseLevel.toggle4()
@@ -92,12 +92,28 @@ extension HQNodes {
 				}
 			)
 		}
+		let tier = (0..<4).map { idx in
+			MenuItem<HQAction>(
+				icon: .toggle4(players[idx].tier),
+				status: .init(text: "Tier"),
+				update: { menu in
+					idx == 0 ? menu : modifying(menu) { menu in
+						players[idx].tier.toggle4()
+						menu.items[16 + idx].icon = .toggle4(players[idx].tier)
+						menu.cursor = 16 + idx
+					}
+				}
+			)
+		}
 		let start: [MenuItem<HQAction>] = [
+			.space, .space,.space, .space,
+			.space, .space,.space, .space,
+
 			.init(icon: sizes[size], status: .init(text: "Size: \(16 + size * 8)"), update: { m in
 				modifying(m) { m in
 					size = (size + 1) % 3
-					m.items[16].icon = sizes[size]
-					m.items[16].status.text = "Size: \(16 + size * 8)"
+					m.items[28].icon = sizes[size]
+					m.items[28].status.text = "Size: \(16 + size * 8)"
 				}
 			}),
 			.space, .space,
@@ -115,7 +131,7 @@ extension HQNodes {
 		]
 
 		return MenuState(
-			items: countries + types + prestige + exp + start,
+			items: countries + types + prestige + exp + tier + start,
 			close: { _ in menu }
 		)
 	}
