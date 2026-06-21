@@ -12,7 +12,7 @@ public struct Shop {
 
 extension Shop {
 
-	func predicate(_ unit: Unit) -> Bool {
+	func filter(_ unit: Unit) -> Bool {
 		if let air, unit.isAir != air {
 			false
 		} else if unit.tier > tier {
@@ -34,6 +34,7 @@ public extension Shop {
 			inf3,
 
 			recon1,
+			recon2,
 
 			ifv1,
 			ifv2,
@@ -55,7 +56,9 @@ public extension Shop {
 			air4,
 		]
 		.compactMap { (u: Unit?) -> Unit? in
-			u.flatMap { predicate($0) ? $0 : nil }
+			u.flatMap {
+				!filter($0) ? nil : modifying($0) { u in u.ammo = u.maxAmmo }
+			}
 		}
 	}
 }

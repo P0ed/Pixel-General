@@ -23,6 +23,7 @@ public struct Bits: OptionSet, Equatable {
 
 public extension Bits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
+	static var hardAtkUpgrade: Self { .init(rawValue: 1 << 1) }
 }
 
 public struct Skills: OptionSet, Equatable {
@@ -62,7 +63,7 @@ public extension Unit {
 	var airDef: UInt8 { stats.airDef }
 	var traits: Traits { stats.traits }
 
-	var isAir: Bool { switch type { case .heli, .fighter, .cas: true; default: false } }
+	var isAir: Bool { type.isAir }
 	var untouched: Bool { fullAP && fullMP }
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { mp > 0 }
@@ -135,12 +136,13 @@ public extension Unit {
 	}
 
 	var entRate: UInt8 {
-		switch type {
-		case .supply, .inf: self[.engineer] ? 8 : 4
-		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: self[.engineer] ? 6 : 3
-		case .heavyTrack, .trackAA, .trackArt: self[.engineer] ? 4 : 2
+		let rate: UInt8 = switch type {
+		case .supply, .inf: 4
+		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3
+		case .heavyTrack, .trackAA, .trackArt: 2
 		case .heli, .fighter, .cas: 0
 		}
+		return rate * (self[.engineer] ? 2 : 1)
 	}
 
 	var entDamage: UInt8 {
@@ -269,6 +271,16 @@ extension Unit {
 		 heli, fighter, cas
 }
 
+extension UnitType {
+
+	var isAir: Bool {
+		switch self {
+		case .heli, .fighter, .cas: true
+		default: false
+		}
+	}
+}
+
 @frozen public enum UnitModel: UInt8, Hashable {
 	case none
 
@@ -280,12 +292,12 @@ extension Unit {
 		 m777, m270, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, fennek, boxer, cv9035, strf90, kf41, pzh, leo1, leo2a6, strv103, strv122,
+	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, leo1, leo2a6, strv103, strv122,
 		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet
 	case militia, speznas, brdm2, bmp, t55, t72, t90m, art105, neva, s300,
-		 tunguska, mi8, mi24, orlan, mig29, su57, su27
+		 tunguska, mi8, mi24, orlan, mig29, su57, su25, su27
 }
 
 extension Unit: DeadOrAlive {

@@ -112,6 +112,7 @@ public extension UnitStats {
 		case .fennek: .fennek
 		case .boxer: .boxer
 		case .strf90: .strf90
+		case .strf90v: .strf90v
 		case .kf41: .kf41
 		case .cv9035: .cv9035
 		case .pzh: .pzh
@@ -145,6 +146,7 @@ public extension UnitStats {
 		case .orlan: .orlan
 		case .mig29: .mig29
 		case .su57: .su57
+		case .su25: .su25
 		case .su27: .su27
 		}
 	}

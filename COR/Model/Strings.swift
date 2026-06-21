@@ -104,6 +104,7 @@ public extension Unit {
 		case .m113: "M113"
 		case .m2A2: "M2A2"
 		case .strf90: "Strf 90"
+		case .strf90v: "Strf 90 mkV"
 		case .kf41: "KF41"
 		case .cv9035: "CV9035"
 		case .bmp: "BMP"
@@ -135,7 +136,8 @@ public extension Unit {
 		case .f35: "F35"
 		case .mig29: "Mig-29"
 		case .su57: "Su-57"
-		case .su27: "Su-25"
+		case .su25: "Su-25"
+		case .su27: "Su-27"
 		}
 	}
 }

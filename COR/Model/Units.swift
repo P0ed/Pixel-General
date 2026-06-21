@@ -21,7 +21,7 @@ extension Shop {
 		switch country.team {
 		case .axis: Unit(model: .regular, country: country)
 		case .allies: Unit(model: .ranger, country: country)
-		case .soviet: Unit(model: .militia, country: country)
+		case .soviet: Unit(model: tier < 3 ? .militia : .regular, country: country)
 		case .none: nil
 		}
 	}
@@ -30,7 +30,7 @@ extension Shop {
 		switch country.team {
 		case .axis: Unit(model: .engineer, country: country)
 		case .allies: Unit(model: .engineer, country: country)
-		case .soviet: Unit(model: .regular, country: country)
+		case .soviet: Unit(model: tier < 3 ? .regular : .engineer, country: country)
 		case .none: nil
 		}
 	}
@@ -50,6 +50,13 @@ extension Shop {
 		case .allies: nil
 		case .soviet: Unit(model: .brdm2, country: country)
 		case .none: nil
+		}
+	}
+
+	var recon2: Unit? {
+		switch country {
+		case .swe: Unit(model: .strf90v, country: country)
+		default: nil
 		}
 	}
 

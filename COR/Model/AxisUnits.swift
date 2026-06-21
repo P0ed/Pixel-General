@@ -3,7 +3,7 @@ extension UnitStats {
 	// MARK: Infantry
 	static let ksk = UnitStats(
 		type: .inf,
-		tier: 3,
+		tier: 2,
 		mov: 4,
 		rng: 1,
 		ini: 10,
@@ -54,9 +54,22 @@ extension UnitStats {
 		airDef: 8,
 		traits: .transport
 	)
+	static let strf90v = UnitStats(
+		type: .lightTrack,
+		tier: 2,
+		mov: 7,
+		rng: 1,
+		ini: 10,
+		softAtk: 11,
+		hardAtk: 11,
+		airAtk: 4,
+		groundDef: 12,
+		airDef: 8,
+		traits: .elite
+	)
 	static let kf41 = UnitStats(
 		type: .lightTrack,
-		tier: 1,
+		tier: 2,
 		mov: 7,
 		rng: 1,
 		ini: 10,
@@ -141,7 +154,7 @@ extension UnitStats {
 	)
 	static let kf51 = UnitStats(
 		type: .heavyTrack,
-		tier: 1,
+		tier: 2,
 		mov: 6,
 		rng: 1,
 		ini: 10,
@@ -192,22 +205,22 @@ extension UnitStats {
 	// MARK: Air
 	static let skeldar = UnitStats(
 		type: .heli,
-		tier: 1,
+		tier: 2,
 		mov: 9,
 		ini: 6,
 		groundDef: 7,
-		airDef: 6,
+		airDef: 5,
 		traits: [.radar, .optics]
 	)
 	static let skeldarm = UnitStats(
 		type: .heli,
-		tier: 2,
+		tier: 3,
 		mov: 8,
 		ini: 6,
 		softAtk: 5,
 		hardAtk: 5,
 		groundDef: 7,
-		airDef: 6
+		airDef: 5
 	)
 	static let nh90 = UnitStats(
 		type: .heli,
@@ -233,5 +246,16 @@ extension UnitStats {
 		groundDef: 10,
 		airDef: 10,
 		traits: .radar
+	)
+	static let su25 = UnitStats(
+		type: .cas,
+		mov: 11,
+		rng: 2,
+		ini: 10,
+		softAtk: 8,
+		hardAtk: 11,
+		airAtk: 6,
+		groundDef: 10,
+		airDef: 7
 	)
 }

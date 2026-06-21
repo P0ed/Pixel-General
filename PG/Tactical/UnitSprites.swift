@@ -62,7 +62,7 @@ extension Unit {
 		// IFV / recon
 		case .fennek, .boxer, .brdm2: .boxer
 		case .kf41: .puma
-		case .m2A2, .m113, .strf90, .cv9035, .bmp: .recon
+		case .m2A2, .m113, .strf90, .strf90v, .cv9035, .bmp: .recon
 
 		// Tanks
 		case .m48, .m1A1, .m1A2: .M_1_A_2
@@ -74,7 +74,7 @@ extension Unit {
 		case .mh6, .mq9, .nh90, .mi8, .mi24: .MH_6
 		case .orlan: .fixedWing
 		case .f16, .f35: .F_16
-		case .gripen, .mig29, .su57, .su27: .F_64
+		case .gripen, .mig29, .su57, .su25, .su27: .F_64
 		}
 	}
 }

@@ -132,7 +132,7 @@ extension UnitStats {
 	// MARK: Air
 	static let mi8 = UnitStats(
 		type: .heli,
-		mov: 9,
+		mov: 8,
 		rng: 1,
 		ini: 7,
 		softAtk: 6,
@@ -161,11 +161,12 @@ extension UnitStats {
 		mov: 9,
 		ini: 5,
 		groundDef: 7,
-		airDef: 6,
+		airDef: 5,
 		traits: .optics
 	)
 	static let mig29 = UnitStats(
 		type: .fighter,
+		tier: 1,
 		mov: 12,
 		rng: 2,
 		ini: 8,
@@ -191,6 +192,7 @@ extension UnitStats {
 	)
 	static let su27 = UnitStats(
 		type: .cas,
+		tier: 1,
 		mov: 11,
 		rng: 2,
 		ini: 10,
