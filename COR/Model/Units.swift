@@ -118,14 +118,14 @@ extension Shop {
 
 	var tank3: Unit? {
 		switch country {
-		case .swe: Unit(model: .strv122, country: country)
-		case .ger: Unit(model: .kf51, country: country)
+		case .swe: nil
+		case .ger: nil
 		case .usa, .isr: Unit(model: .m1A2, country: country)
 		case .pak: nil
 		case .rus: Unit(model: .t90m, country: country)
 		case .irn, .ind: nil
 		default: switch country.team {
-		case .axis: Unit(model: .leo2a6, country: country)
+		case .axis: nil
 		case .allies: Unit(model: .m1A2, country: country)
 		case .soviet: Unit(model: .t90m, country: country)
 		case .none: nil

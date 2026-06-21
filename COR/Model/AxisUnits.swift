@@ -194,7 +194,7 @@ extension UnitStats {
 		mov: 7,
 		rng: 1,
 		ini: 9,
-		softAtk: 9,
+		softAtk: 10,
 		hardAtk: 8,
 		airAtk: 10,
 		groundDef: 10,

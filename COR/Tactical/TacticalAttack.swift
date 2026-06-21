@@ -1,42 +1,61 @@
 extension TacticalSim {
 
-	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
-		let su = units[src]
-		let du = units[dst]
-		let sp = position[src]
-		let dp = position[dst]
-		return sp.stepDistance(to: dp) <= su.rng * 2 + 1
-			&& su.atk(du) > 0
-			&& (su.isAir ? su.ammo > 0 : true)
-	}
+	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
+		let (si, di) = (src.index, dst.index)
+		let (su, du) = (units[si], units[di])
 
-	func artSupport(defender: UID, attacker: UID) -> UID? {
-		position[defender].n8.firstMap { hx in
-			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isArt && u.ammo > 0
-				? unitsMap[hx] : nil
-			}
+		guard su.country == country, su.country.team != du.country.team,
+			  su.ammo > 0, unitCanHit(src, dst), su.canAttack || surprise
+		else { return }
+
+		let (sp, dp) = (position[si], position[di])
+		let dxy = dp - sp
+		let (st, dt) = (map[sp], map[dp])
+		let ranged = su.isArt && !surprise
+
+		let ruggedDefence: Bool = ranged ? false : (
+			d20() + Int(su.ini + su.lvl) * 2
+		) < (
+			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
+		)
+		if ruggedDefence {
+			events.append(.ruggedDefence(dp))
 		}
-	}
 
-	func aaSupport(defender: UID, attacker: UID) -> UID? {
-		position[defender].n8.firstMap { hx in
-			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isAA && u.ammo > 0
-				? unitsMap[hx] : nil
-			}
+		let mountaineer: Int8 = dt.isHighground
+			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
+		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
+		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
+
+		let srcDef: Int8 = (ranged ? Int8(su.entDef) + st.def(su.type) : dt.closeCombat(su.type))
+			+ (ruggedDefence ? -3 : 0)
+			+ (du.ammo == 0 ? 5 : 0)
+		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type) + (ranged ? 0 : dt.closeCombat(du.type))
+			+ mountaineer
+			+ mhtn + diag
+			- encirclement(id: dst)
+
+		units[si].ap.decrement()
+
+		if !su.isAir, !du.isAir, !su.isArt, let art = artSupport(defender: dst, attacker: src) {
+			fire(src: art, dst: src, defMod: 0, into: &events)
 		}
-	}
-
-	private func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
-		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
-			units[$0].country == country && units[$0][skills]
+		if su.isAir, !du.isAA, let aa = aaSupport(defender: dst, attacker: src) {
+			fire(src: aa, dst: src, defMod: 0, into: &events)
 		}
-	}
-
-	private func aura(_ traits: Traits, country: Country, at xy: XY) -> Bool {
-		(unitAt(xy)?[traits] ?? false) || neighbors(at: xy).contains {
-			units[$0].country == country && units[$0][traits]
+		if !ruggedDefence, units[si].alive {
+			fire(src: src, dst: dst, defMod: dstDef, into: &events)
+			units[di].ent.decrement(by: su.entDamage)
+		}
+		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
+			fire(src: dst, dst: src, defMod: srcDef, into: &events)
+		}
+		if ruggedDefence, units[si].alive {
+			fire(src: src, dst: dst, defMod: dstDef, into: &events)
+			units[di].ent.decrement(by: su.entDamage)
+		}
+		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
+			retreat(unit: dst, from: position[si], into: &events)
 		}
 	}
 
@@ -99,70 +118,52 @@ extension TacticalSim {
 		events.append(.fire(src, dst, dmg, destination.hp))
 	}
 
+	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
+		let su = units[src]
+		let du = units[dst]
+		let sp = position[src]
+		let dp = position[dst]
+		return sp.stepDistance(to: dp) <= su.rng * 2 + 1
+			&& su.atk(du) > 0
+			&& (su.isAir ? su.ammo > 0 : true)
+	}
+
+	func artSupport(defender: UID, attacker: UID) -> UID? {
+		position[defender].n8.firstMap { hx in
+			unitAt(hx).flatMap { u in
+				u.country.team == units[defender].country.team && u.isArt && u.ammo > 0
+				? unitsMap[hx] : nil
+			}
+		}
+	}
+
+	func aaSupport(defender: UID, attacker: UID) -> UID? {
+		position[defender].n8.firstMap { hx in
+			unitAt(hx).flatMap { u in
+				u.country.team == units[defender].country.team && u.isAA && u.ammo > 0
+				? unitsMap[hx] : nil
+			}
+		}
+	}
+
+	private func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
+		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
+			units[$0].country == country && units[$0][skills]
+		}
+	}
+
+	private func aura(_ traits: Traits, country: Country, at xy: XY) -> Bool {
+		(unitAt(xy)?[traits] ?? false) || neighbors(at: xy).contains {
+			units[$0].country == country && units[$0][traits]
+		}
+	}
+
 	private func encirclement(id: UID) -> Int8 {
 		let team = units[id].country.team
 		let enemies = position[id.index].n4.reduce(into: 0 as Int8) { r, xy in
 			r += (unitAt(xy).map { u in u.country.team != team ? 1 : 0 } ?? 0)
 		}
 		return max(0, enemies - 1)
-	}
-
-	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
-		let (si, di) = (src.index, dst.index)
-		let (su, du) = (units[si], units[di])
-
-		guard su.country == country, su.country.team != du.country.team,
-			  su.ammo > 0, unitCanHit(src, dst), su.canAttack || surprise
-		else { return }
-
-		let (sp, dp) = (position[si], position[di])
-		let dxy = dp - sp
-		let dt = map[dp]
-
-		let ruggedDefence: Bool = !surprise && su.isArt ? false : (
-			d20() + Int(su.ini + su.lvl) * 2
-		) < (
-			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
-		)
-		if ruggedDefence {
-			events.append(.ruggedDefence(dp))
-		}
-
-		let mountaineer: Int8 = dt.isHighground
-			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
-		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
-		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
-
-		let srcDef: Int8 = (su.isArt ? 0 : dt.closeCombat(su.type))
-			+ (ruggedDefence ? -3 : 0)
-			+ (du.ammo == 0 ? 5 : 0)
-		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type)
-			+ mountaineer
-			+ mhtn + diag
-			- encirclement(id: dst)
-
-		units[si].ap.decrement()
-
-		if !su.isAir, !du.isAir, !su.isArt, let art = artSupport(defender: dst, attacker: src) {
-			fire(src: art, dst: src, defMod: 0, into: &events)
-		}
-		if su.isAir, !du.isAA, let aa = aaSupport(defender: dst, attacker: src) {
-			fire(src: aa, dst: src, defMod: 0, into: &events)
-		}
-		if !ruggedDefence, units[si].alive {
-			fire(src: src, dst: dst, defMod: dstDef, into: &events)
-			units[di].ent.decrement(by: su.entDamage)
-		}
-		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
-			fire(src: dst, dst: src, defMod: srcDef, into: &events)
-		}
-		if ruggedDefence, units[si].alive {
-			fire(src: src, dst: dst, defMod: dstDef, into: &events)
-			units[di].ent.decrement(by: su.entDamage)
-		}
-		if units[di].alive, units[di].hp * 2 + units[di].ini + UInt8(d20()) < 20 {
-			retreat(unit: dst, from: position[si], into: &events)
-		}
 	}
 
 	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [TacticalEvent]) {
