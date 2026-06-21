@@ -11,6 +11,7 @@ public extension TacticalState {
 		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count)
 		let cities: [(XY, Country)] = Self.cities(
 			countries: players.map { p in p.country },
+			objective: objective,
 			map: map
 		)
 		let units: [Unit] = (
@@ -30,24 +31,30 @@ public extension TacticalState {
 		)
 	}
 
-	private static func cities(countries: [Country], map: borrowing Map<32, Terrain>) -> [(XY, Country)] {
+	private static func cities(
+		countries: [Country],
+		objective: Objective,
+		map: borrowing Map<32, Terrain>
+	) -> [(XY, Country)] {
 		let cityXYs: [XY] = map.indices.compactMap { xy in
 			map[xy] == .city ? xy : nil
 		}
 		let n = cityXYs.count
+
+		let defending: Team? = switch objective {
+		case .survive(let team, _): team
+		case .none: nil
+		}
+		let weights = countries.map { $0.team == defending ? 2 : 1 }
+		let total = weights.reduce(0, +)
+		let thresholds = weights.reduce(into: [Int]()) { acc, w in
+			acc.append((acc.last ?? 0) + w)
+		}
+
 		return cityXYs.enumerated().map { i, xy in
-			let c: Country = switch countries.count {
-			case 4: i < n * 1 / 4 ? countries[0]
-				: i < n * 2 / 4 ? countries[1]
-				: i < n * 3 / 4 ? countries[2]
-				: countries[3]
-			case 3: i < n * 1 / 3 ? countries[0]
-				: i < n * 2 / 3 ? countries[1]
-				: countries[2]
-			case 2: i < n * 1 / 2 ? countries[0] : countries[1]
-			default: fatalError()
-			}
-			return (xy, c)
+			let pos = i * total / n
+			let idx = thresholds.firstIndex { pos < $0 } ?? countries.count - 1
+			return (xy, countries[idx])
 		}
 	}
 }

@@ -1,11 +1,11 @@
 public struct Core: ~Copyable {
-	public internal(set) var hq: HQState?
+	public internal(set) var hq: HQState
 	public internal(set) var strategic: StrategicState?
 	public internal(set) var tactical: TacticalState?
 	public internal(set) var location: Location = .hq
 
 	public init(
-		hq: consuming HQState? = nil,
+		hq: consuming HQState,
 		strategic: consuming StrategicState? = nil,
 		tactical: consuming TacticalState? = nil,
 		location: Location = .hq
@@ -45,13 +45,11 @@ public extension Core {
 	}
 
 	mutating func store(_ state: borrowing TacticalState) {
-		guard hq != nil else { return }
 		tactical = clone(state)
 		location = .tactical
 	}
 
 	mutating func store(_ state: borrowing StrategicState) {
-		guard hq != nil else { return }
 		strategic = clone(state)
 		location = .strategic
 	}
@@ -62,16 +60,16 @@ public extension Core {
 	}
 
 	mutating func startCampaignBattle(at tile: XY) {
-		guard let human = hq?.sim.player.country,
-			let prestige = hq?.sim.player.prestige,
-			let defender = strategic?.sim.owner[tile]
-		else { return }
+		guard let defender = strategic?.sim.owner[tile] else { return }
+
+		let human = hq.sim.player.country
+		let prestige = hq.sim.player.prestige
 
 		let players = [
 			Player(country: human, type: .human, prestige: prestige),
 			Player(country: defender, type: .ai),
 		]
-		let units = hq?.sim.units.compactMap { u in u.alive ? u : nil } ?? []
+		let units = hq.sim.units.compactMap { u in u.alive ? u : nil }
 
 		strategic?.sim.battle = tile
 		tactical = TacticalState(
@@ -91,20 +89,15 @@ public extension Core {
 	}
 
 	mutating func complete(_ state: borrowing TacticalState) {
-		guard let c = hq?.sim.player.country else {
-			tactical = nil
-			location = .hq
-			return
-		}
-
+		let c = hq.sim.player.country
 		let units: [Unit] = state.sim.units
 			.compactMapAlive { i, u in
 				u.country != c || u[.aux] ? nil : modifying(u) { u in
 					u.reset()
 				}
 			}
-		hq?.sim.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
-		hq?.sim.player.prestige = state.sim[c].prestige
+		hq.sim.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
+		hq.sim.player.prestige = state.sim[c].prestige
 
 		tactical = nil
 
@@ -113,7 +106,7 @@ public extension Core {
 			strategic?.sim.resolveBattle(at: tile, won: won, by: c)
 			location = .strategic
 		} else {
-			hq?.ui.cursor = .zero
+			hq.ui.cursor = .zero
 			location = .hq
 		}
 	}
