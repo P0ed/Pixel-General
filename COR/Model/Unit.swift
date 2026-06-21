@@ -87,12 +87,12 @@ public extension Unit {
 		case .heli: rng > 0 ? 3 : 0
 		case .art: 6
 		case .wheelArt, .trackArt: 5
-		case .aa: rng > 1 ? 5 : 7
-		case .wheelAA, .trackAA: rng > 1 ? 4 : 6
-		case .inf: 7
-		case .lightWheel: 7
-		case .lightTrack: 7
-		case .heavyTrack: 7
+		case .aa: rng > 1 ? 5 : 6
+		case .wheelAA, .trackAA: rng > 1 ? 4 : 5
+		case .inf: 6
+		case .lightWheel: 6
+		case .lightTrack: 6
+		case .heavyTrack: 6
 		}
 	}
 
