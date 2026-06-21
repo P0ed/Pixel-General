@@ -18,7 +18,7 @@ extension TacticalSim {
 		let isAir = map[xy] == .airfield
 		return .make { units in
 			if core {
-				units += Shop(country: country, air: isAir, tier: player.tier).units
+				units += Shop(country: country, tier: player.tier, air: isAir).units
 			}
 			if aux {
 				units += auxilia[playerIndex]

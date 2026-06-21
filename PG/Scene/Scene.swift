@@ -217,9 +217,9 @@ extension MenuState {
 
 	mutating func padItems() {
 		let cnt = items.count
-		if cnt % 16 != 0 {
+		if cnt % 4 != 0 {
 			items.append(contentsOf: [MenuItem<Action>](
-				repeatElement(.space, count: 16 - cnt % 16)
+				repeatElement(.space, count: 4 - cnt % 4)
 			))
 		}
 	}

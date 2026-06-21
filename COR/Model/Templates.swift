@@ -1,26 +1,27 @@
 public extension [Unit] {
 
-	static func base(_ country: Country, lvl: UInt8 = 0) -> [Unit] {
+	static func base(_ country: Country, lvl: UInt8 = 0, tier: UInt8 = 3) -> [Unit] {
+		let shop = Shop(country: country, tier: tier)
 		let units: [Unit?] = [
 			Unit(model: .truck, country: country),
-			.inf1(country),
-			.inf1(country),
-			.inf1(country)?.veteran,
+			shop.inf1,
+			shop.inf1,
+			shop.inf1?.veteran,
 
-			.inf1(country)?.veteran,
-			.tank1(country),
-			.tank1(country)?.veteran,
-			.tank2(country)?.veteran,
+			shop.inf1?.veteran,
+			shop.tank1,
+			shop.tank1?.veteran,
+			shop.tank2?.veteran,
 
-			.recon1(country),
-			.ifv1(country)?.veteran,
-			.art1(country),
-			.art1(country)?.veteran,
+			shop.recon1,
+			shop.ifv1?.veteran,
+			shop.art1,
+			shop.art1?.veteran,
 
-			.art2(country),
-			.art2(country)?.veteran,
-			.aa1(country),
-			.aa1(country)?.veteran,
+			shop.art2,
+			shop.art2?.veteran,
+			shop.aa1,
+			shop.aa1?.veteran,
 		]
 
 		return units.compactMap { u in
@@ -28,41 +29,43 @@ public extension [Unit] {
 		}
 	}
 
-	static func small(_ country: Country) -> [Unit] {
+	static func small(_ country: Country, tier: UInt8 = 3) -> [Unit] {
+		let shop = Shop(country: country, tier: tier)
 		let units: [Unit?] = [
 			Unit(model: .truck, country: country),
-			.inf1(country),
-			.inf1(country)?.veteran,
-			.tank1(country),
-			.ifv1(country)?.veteran,
-			.art1(country)?.veteran,
-			.aa2(country)?.veteran,
+			shop.inf1,
+			shop.inf1?.veteran,
+			shop.tank1,
+			shop.ifv1?.veteran,
+			shop.art1?.veteran,
+			shop.aa2?.veteran,
 		]
 
 		return units.compactMap { u in u }
 	}
 
-	static func aux(_ country: Country) -> [Unit] {
+	static func aux(_ country: Country, tier: UInt8 = 3) -> [Unit] {
+		let shop = Shop(country: country, tier: tier)
 		let units: [Unit?] = [
 			Unit(model: .truck, country: country),
 			Unit(model: .truck, country: country),
-			.inf1(country),
-			.inf1(country),
+			shop.inf1,
+			shop.inf1,
 
-			.inf2(country),
-			.inf2(country),
-			.ifv1(country),
-			.ifv2(country),
+			shop.inf2,
+			shop.inf2,
+			shop.ifv1,
+			shop.ifv2,
 
-			.tank1(country),
-			.tank2(country),
-			.air1(country),
-			.air2(country),
+			shop.tank1,
+			shop.tank2,
+			shop.air1,
+			shop.air2,
 
-			.art1(country),
-			.art2(country),
-			.aa1(country),
-			.aa2(country),
+			shop.art1,
+			shop.art2,
+			shop.aa1,
+			shop.aa2,
 		]
 
 		return units.compactMap { u in u?.aux }

@@ -1,9 +1,9 @@
 public struct Shop {
 	var country: Country
-	var air: Bool?
 	var tier: UInt8
+	var air: Bool?
 
-	public init(country: Country, air: Bool? = nil, tier: UInt8) {
+	public init(country: Country, tier: UInt8, air: Bool? = nil) {
 		self.country = country
 		self.air = air
 		self.tier = tier
@@ -29,30 +29,30 @@ public extension Shop {
 		[
 			Unit(model: .truck, country: country),
 
-			.inf1(country),
-			.inf2(country),
-			.inf3(country),
+			inf1,
+			inf2,
+			inf3,
 
-			.recon1(country),
+			recon1,
 
-			.ifv1(country),
-			.ifv2(country),
+			ifv1,
+			ifv2,
 
-			.tank1(country),
-			.tank2(country),
-			.tank3(country),
+			tank1,
+			tank2,
+			tank3,
 
-			.art1(country),
-			.art2(country),
+			art1,
+			art2,
 
-			.aa1(country),
-			.aa2(country),
-			.aa3(country),
+			aa1,
+			aa2,
+			aa3,
 
-			.air1(country),
-			.air2(country),
-			.air3(country),
-			.air4(country),
+			air1,
+			air2,
+			air3,
+			air4,
 		]
 		.compactMap { (u: Unit?) -> Unit? in
 			u.flatMap { predicate($0) ? $0 : nil }
