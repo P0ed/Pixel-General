@@ -14,9 +14,9 @@ extension TacticalSim {
 		let ranged = su.isArt && !surprise
 
 		let ruggedDefence: Bool = ranged ? false : (
-			d20() + Int(su.ini + su.lvl) * 2
+			UInt8(d20()) + su.ini * 2 + su.lvl
 		) < (
-			Int(du.ent + du.ini + du.lvl) * 2 + (surprise ? 10 : 0)
+			du.ent * 2 + du.ini * 2 + du.lvl + (surprise ? 10 : 0)
 		)
 		if ruggedDefence {
 			events.append(.ruggedDefence(dp))
@@ -24,15 +24,15 @@ extension TacticalSim {
 
 		let mountaineer: Int8 = dt.isHighground
 			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
-		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? -1 : 0
-		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? -1 : 0
+		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? 1 : 0
+		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? 1 : 0
 
 		let srcDef: Int8 = (ranged ? Int8(su.entDef) + st.def(su.type) : dt.closeCombat(su.type))
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 5 : 0)
 		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type) + (ranged ? 0 : dt.closeCombat(du.type))
 			+ mountaineer
-			+ mhtn + diag
+			- mhtn - diag
 			- encirclement(id: dst)
 
 		units[si].ap.decrement()
@@ -47,7 +47,7 @@ extension TacticalSim {
 			fire(src: src, dst: dst, defMod: dstDef, into: &events)
 			units[di].ent.decrement(by: su.entDamage)
 		}
-		if units[di].alive, units[si].alive, unitCanHit(dst, src), !su.isArt || du.isArt || surprise {
+		if units[di].alive, units[si].alive, unitCanHit(dst, src), !ranged || du.isArt {
 			fire(src: dst, dst: src, defMod: srcDef, into: &events)
 		}
 		if ruggedDefence, units[si].alive {
@@ -70,12 +70,11 @@ extension TacticalSim {
 		let def = Int8(destination.def(source)) + defMod + dRC + dLR
 
 		let dif = atk - def
-		let t1 = max(0, 8 - dif)
-		let t2 = max(1, 14 - dif)
+		let t1 = max(0, 9 - dif)
+		let t2 = max(1, 15 - dif)
 		let t3 = max(2, 20 - dif)
-		let t4 = max(3, 26 - dif)
-		let iniRound = source.ini + source.lvl / 2 > d20(.max, 2)
-		let rounds: UInt8 = (source.hp + 2) / 3 + (iniRound ? 1 : 0)
+		let t4 = max(3, 25 - dif)
+		let rounds: UInt8 = (source.hp + 2) / 3
 		let crit = source[.crit]
 		let evasion = destination[.evasion]
 
@@ -94,21 +93,18 @@ extension TacticalSim {
 		let cargoId = cargo[dst]
 		if cargoId != .none {
 			units[cargoId].hp.decrement(by: dmg)
-		}
-		if !destination.alive {
-			unitsMap[position[dst]] = .none
-			if cargoId != .none {
+			if !destination.alive {
 				units[cargoId].hp = 0x0
 			}
+			if !units[cargoId].alive {
+				cargo[dst] = .none
+				cargo[cargoId] = .none
+				events.append(.update(cargoId))
+			}
 		}
-		if cargoId != .none, !units[cargoId].alive {
-			cargo[dst] = .none
-			cargo[cargoId] = .none
-			events.append(.update(cargoId))
-		}
-
 		source.exp.increment(by: UInt16(dmg) * destination.cost / (destination.alive ? 32 : 24))
 		if !destination.alive {
+			unitsMap[position[dst]] = .none
 			source.kills.increment(by: 1)
 			source.promote(using: &d20)
 			self[source.country].prestige.increment(by: destination.cost / 16)

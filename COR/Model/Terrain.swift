@@ -153,19 +153,22 @@ public extension Terrain {
 			}
 		case .hill, .airfield:
 			switch type {
-			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 1
+			case .inf, .art, .aa: 1
+			case .supply, .wheelArt, .wheelAA: 1
 			case .trackAA, .trackArt: 1
 			default: 0
 			}
 		case .forest, .villageE, .villageN, .villageW, .villageS:
 			switch type {
-			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 2
+			case .inf, .art, .aa: 2
+			case .supply, .wheelArt, .wheelAA: 1
 			case .trackAA, .trackArt: 1
 			default: 0
 			}
 		case .city, .mountain, .forestHill:
 			switch type {
-			case .inf, .art, .aa, .supply, .wheelArt, .wheelAA: 3
+			case .inf, .art, .aa: 3
+			case .supply, .wheelArt, .wheelAA: 2
 			case .trackAA, .trackArt: 1
 			default: 0
 			}

@@ -48,25 +48,30 @@ struct RNGTests {
 		state.sim.position[1] = XY(2, 2)
 
 		let baseDif = Int(u0.atk(u1)) - Int(u1.def(u0))
-		var avgs: [Float] = []
+		var dmgs: [(Float, UInt8, UInt8)] = []
 
-		for atkMod in Int8(-15)...25 {
+		for atkMod in Int8(-15)...24 {
+			state.sim.d20 = D20()
 			var events: [TacticalEvent] = []
+			var min = UInt8.max, max = UInt8.min
 			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
 				state.sim.units[0] = u0
 				state.sim.units[1] = u1
 				state.sim.fire(src: UID(0), dst: UID(1), defMod: -atkMod, into: &events)
-				return acc + UInt32(state.sim.units[1].maxHP - state.sim.units[1].hp)
+				let dmg = state.sim.units[1].maxHP - state.sim.units[1].hp
+				if dmg > max { max = dmg }
+				if dmg < min { min = dmg }
+				return acc + UInt32(dmg)
 			}
 
 			let avg = Float(sum) / 512
 			let dif = baseDif + Int(atkMod)
 			if dif >= 0 { #expect(avg > 0) }
-			avgs.append(avg)
-			report += "\ndif: \(dif) dmg: \(avg)"
+			dmgs.append((avg, min, max))
+			report += "\ndif: \(dif) dmg: \(avg) \(min)...\(max)"
 		}
 
-		#expect(avgs.first! < avgs.last!)
+		#expect(dmgs.first!.0 < dmgs.last!.0)
 		print(report)
 	}
 }
