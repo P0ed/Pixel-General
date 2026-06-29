@@ -5,8 +5,8 @@ public extension HQState {
 		case .direction(let direction?): moveCursor(direction)
 		case .action(.a): mainAction()
 		case .action(.b): secondaryAction()
-		case .action(.c): shopAction()
-		case .action(.d): .none
+		case .action(.c): upgradeAction()
+		case .action(.d): sellAction()
 		case .menu: .events([.menu])
 		case .tile(let xy): select(xy)
 		default: .none
@@ -48,14 +48,22 @@ extension HQState {
 		return .none
 	}
 
-	mutating func shopAction() -> HQReaction {
+	/// `.c` opens the upgrade menu for the *selected* unit; with nothing
+	/// selected it falls back to the purchase shop on an empty slot.
+	mutating func upgradeAction() -> HQReaction {
 		if ui.selected != .none {
-			defer { ui.selected = .none }
-			return .action(.sell(ui.selected.index))
+			return .events([.upgrade(ui.selected)])
 		} else if sim.units[ui.cursor] == nil {
 			return .events([.shop])
 		} else {
 			return .none
 		}
+	}
+
+	/// `.d` sells the selected unit.
+	mutating func sellAction() -> HQReaction {
+		guard ui.selected != .none else { return .none }
+		defer { ui.selected = .none }
+		return .action(.sell(ui.selected.index))
 	}
 }

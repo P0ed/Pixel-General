@@ -13,6 +13,24 @@ public extension Unit {
 	func skills(_ skills: Skills) -> Self {
 		modifying(self) { u in u.skills.formUnion(skills) }
 	}
+
+	/// Re-equip the unit with a new platform while keeping its experience,
+	/// skills, bits, and country, then refresh its supplies for that platform.
+	/// The basis for HQ unit upgrades — unlike a fresh shop purchase, the crew's
+	/// veterancy carries over.
+	func upgraded(to model: UnitModel) -> Self {
+		modifying(self) { u in
+			u.model = model
+			u.reset()
+		}
+	}
+
+	/// Prestige charged to upgrade into `model`: the full cost of the resulting
+	/// unit — the new platform carrying the crew's current experience. The old
+	/// platform is not credited back.
+	func upgradeCost(to model: UnitModel) -> UInt16 {
+		upgraded(to: model).cost
+	}
 }
 
 extension Shop {

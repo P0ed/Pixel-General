@@ -4,6 +4,7 @@ public typealias HQReaction = Reaction<HQAction, HQEvent>
 	case swap(Int, Int)
 	case purchase(Int, Int)
 	case sell(Int)
+	case upgrade(Int, UnitModel)
 }
 
 @frozen public enum HQEvent {
@@ -11,6 +12,7 @@ public typealias HQReaction = Reaction<HQAction, HQEvent>
 	case spawn(UID)
 	case remove(UID)
 	case shop
+	case upgrade(UID)
 	case menu
 }
 
@@ -22,6 +24,7 @@ public extension HQSim {
 		case .purchase(let t, let idx): purchase(t, idx, into: &events)
 		case .sell(let idx): sell(idx, into: &events)
 		case .swap(let src, let dst): swap(src, dst, into: &events)
+		case .upgrade(let idx, let model): upgrade(idx, model, into: &events)
 		}
 		return events
 	}
@@ -34,6 +37,21 @@ public extension HQSim {
 		let unit = modifying(u) { u in u.reset() }
 		player.prestige.decrement(by: cost)
 		units[idx] = unit
+		events.append(.spawn(idx.uid))
+	}
+
+	private mutating func upgrade(_ idx: Int, _ model: UnitModel, into events: inout [HQEvent]) {
+		let current = units[idx]
+		guard current.alive,
+		      Shop(country: country, tier: player.tier)
+			.upgrades(for: current).contains(where: { $0.model == model })
+		else { return }
+
+		let cost = current.upgradeCost(to: model)
+		guard player.prestige >= cost else { return }
+
+		player.prestige.decrement(by: cost)
+		units[idx] = current.upgraded(to: model)
 		events.append(.spawn(idx.uid))
 	}
 

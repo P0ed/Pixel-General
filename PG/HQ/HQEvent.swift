@@ -9,6 +9,7 @@ extension HQNodes {
 		case .spawn(let uid): processSpawn(uid, state)
 		case .remove(let uid): removeUnit(uid)
 		case .shop: processShop(state)
+		case .upgrade(let uid): processUpgrade(uid, state)
 		case .menu: processMenu()
 		}
 	}
@@ -33,6 +34,23 @@ extension HQNodes {
 					icon: u.image,
 					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
 					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
+				)
+			}
+		))
+	}
+
+	private func processUpgrade(_ uid: UID, _ state: borrowing HQState) {
+		let unit = state.sim.units[uid.index]
+		let prestige = state.sim.player.prestige
+		let options = Shop(country: state.sim.country, tier: state.sim.player.tier).upgrades(for: unit)
+
+		scene?.show(.init(
+			items: options.map { option in
+				let result = unit.upgraded(to: option.model)
+				return .close(
+					icon: result.image,
+					status: .init(text: result.status(), action: .init("\(unit.upgradeCost(to: option.model)) / \(prestige)")),
+					action: .upgrade(uid.index, option.model)
 				)
 			}
 		))

@@ -62,3 +62,41 @@ public extension Shop {
 		}
 	}
 }
+
+public extension Shop {
+
+	/// Upgrade families mirror the shop categories. A deployed unit can be
+	/// re-equipped with any *other* model in the same family that the current
+	/// tier unlocks, carrying its experience and skills across (see
+	/// `Unit.upgraded(to:)`). Supply (the truck) belongs to no family and so
+	/// cannot be upgraded.
+	private var families: [[Unit?]] {
+		[
+			[inf1, inf2, inf3],
+			[recon1, recon2],
+			[ifv1, ifv2],
+			[tank1, tank2, tank3],
+			[art1, art2],
+			[aa1, aa2, aa3],
+			[air1, air2, air3, air4],
+		]
+	}
+
+	/// Models `unit` may upgrade into: the other members of its family that the
+	/// current tier unlocks, ammo topped up for the new platform to match
+	/// `units`. The unit's own model — and any tier-locked sibling — is omitted.
+	/// Returns `[]` when the unit has no family (supply) or no unlocked sibling.
+	func upgrades(for unit: Unit) -> [Unit] {
+		guard let family = families.first(where: { fam in
+			fam.contains { $0?.model == unit.model }
+		}) else { return [] }
+
+		return family.compactMap { (slot: Unit?) -> Unit? in
+			slot.flatMap { u in
+				u.model != unit.model && filter(u)
+					? modifying(u) { u in u.ammo = u.maxAmmo }
+					: nil
+			}
+		}
+	}
+}

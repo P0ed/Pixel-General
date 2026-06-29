@@ -26,15 +26,19 @@ extension HQState {
 			text: ui.selected != .none ? sim.units[ui.selected.index].status() : .makeStatus { add in
 				add("prestige: \(sim.player.prestige)")
 			},
-			action: {
-				if ui.selected != .none {
-					"C: sell"
-				} else if sim.units[ui.cursor] == nil {
-					"C: shop"
-				} else {
-					""
-				}
-			}()
+			action: actionHint
 		)
+	}
+
+	private var actionHint: String {
+		if ui.selected != .none {
+			let xy = XY(ui.selected.index % 4, ui.selected.index / 4)
+			let upgrade = sim.upgrades(at: xy).isEmpty ? "" : "C: upgrade  "
+			return upgrade + "D: sell"
+		} else if sim.units[ui.cursor] == nil {
+			return "C: shop"
+		} else {
+			return ""
+		}
 	}
 }

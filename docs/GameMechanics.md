@@ -278,6 +278,15 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   `[Unit].aux(country)`), filtered by air/ground; an aux unit is consumed from
   the pool when bought.
 - **Slots**: up to 16 core + 16 auxiliary units per player.
+- **HQ upgrades** (`Shop.upgrades(for:)`, `HQAction.upgrade`): a deployed roster
+  unit can be re-equipped with another model in the same shop **family** (inf,
+  recon, ifv, tank, art, aa, air) that the current tier unlocks — select the
+  unit (`.a`) and press `.c` to open the upgrade menu (`.d` sells it; `.c` over
+  an empty slot opens the purchase shop). The crew's veterancy
+  (`exp`, `kills`, skills, bits) carries over; the upgrade is charged the full
+  cost of the resulting unit (`Unit.upgradeCost` = the new platform at the
+  unit's current level), with no credit for the old platform. Supply (the
+  truck) has no family and cannot be upgraded.
 - **Unit `cost`** =
   `(typeCost + traitCost + skillCost + weightedStats) / (aux ? 7 : 4)`:
   - `typeCost`: inf/aa/art 10; supply/wheelAA/wheelArt/lightWheel 100;
