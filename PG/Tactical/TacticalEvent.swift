@@ -55,12 +55,13 @@ private extension TacticalNodes {
 		sounds.mov.play()
 		node.isHidden = !state.sim.isVisibleToHuman(path[0])
 
+		let scale = settings.animationScale
 		var actions: [SKAction] = []
 		for i in 1 ..< path.count {
 			let xy = path[i]
 			let point = state.sim.map.point(at: xy)
 			let prev = state.sim.map.point(at: path[i - 1])
-			let duration = (prev - point).length / 480.0
+			let duration = (prev - point).length / 330.0 * scale
 			let hidden = i == path.count - 1
 				? !state.sim.isVisibleToHuman(uid)
 				: !state.sim.isVisibleToHuman(xy)
@@ -82,10 +83,11 @@ private extension TacticalNodes {
 
 		guard state.sim.isVisibleToHuman(src) || state.sim.isVisibleToHuman(dst) else { return }
 
-		units[src]?.showSight(for: 0.47)
-		await scene?.run(.wait(forDuration: 0.22))
-		units[dst]?.showSight(for: 0.47 - 0.22)
-		await scene?.run(.wait(forDuration: 0.22))
+		let scale = settings.animationScale
+		units[src]?.showSight(for: 0.47 * scale)
+		await scene?.run(.wait(forDuration: 0.22 * scale))
+		units[dst]?.showSight(for: (0.47 - 0.22) * scale)
+		await scene?.run(.wait(forDuration: 0.22 * scale))
 
 		if dmg > 0, hp == 0 {
 			sounds.boomL.play()

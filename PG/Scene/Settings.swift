@@ -3,6 +3,7 @@ import COR
 
 struct Settings {
 	var soundLevel: UInt8 = 1
+	var animationSpeed: UInt8 = 1
 }
 
 extension Settings {
@@ -17,5 +18,13 @@ extension Settings {
 		case 1: 0.3
 		default: 1.0
 		}
+	}
+
+	mutating func toggleAnimation() {
+		animationSpeed.toggle4()
+	}
+
+	var animationScale: Double {
+		1.5 / Double(animationSpeed + 1)
 	}
 }

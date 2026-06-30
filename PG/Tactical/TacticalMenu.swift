@@ -42,7 +42,12 @@ extension TacticalNodes {
 						menu.items[8].icon = UIImage(named: "Sound\(vol)") ?? .clear
 					}
 				}),
-				.space,
+				MenuItem(icon: .toggle4(settings.animationSpeed), status: .init(text: "Animation speed"), update: { menu in
+					modifying(menu) { menu in
+						settings.toggleAnimation()
+						menu.items[9].icon = .toggle4(settings.animationSpeed)
+					}
+				}),
 				.space,
 				.space,
 			]
