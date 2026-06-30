@@ -12,6 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: xcodebuild build -scheme PG -destination 'platform=macOS'
+        run: >-
+          xcodebuild build -scheme PG -destination 'platform=macOS'
+          CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ENABLE_HARDENED_RUNTIME=NO
       - name: Test
-        run: xcodebuild test -scheme PG -destination 'platform=macOS'
+        run: >-
+          xcodebuild test -scheme PG -destination 'platform=macOS'
+          CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ENABLE_HARDENED_RUNTIME=NO
