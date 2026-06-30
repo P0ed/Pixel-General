@@ -6,14 +6,19 @@ extension Scene where State: ~Copyable {
 
 	@discardableResult
 	func handle(key: UIKey) -> Bool {
+		if alertState?.field != nil { return editAlertField(key) }
 		guard let nodes, let input = mode.keyboard(nodes, key) else { return false }
 		apply(input)
 		return true
 	}
 
-	/// `scenePoint` is in scene coordinates.
 	func processTouch(at scenePoint: CGPoint) {
 		guard let nodes, let baseNodes else { return }
+		if alertState != nil {
+			let buttons: [Input] = [.action(.a), .action(.b), .action(.c), .action(.d)]
+			baseNodes.alertActionIndex(at: scenePoint, in: self).map { apply(buttons[$0]) }
+			return
+		}
 		if menuState == nil {
 			if let input = mode.mouse(nodes, scenePoint) {
 				apply(input)

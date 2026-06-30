@@ -47,20 +47,24 @@ private extension TacticalState {
 	}
 
 	mutating func primaryAction() -> TacticalReaction {
+		let playerCountry = sim.country
+		let playerType = sim[playerCountry].type
+
 		if ui.selectedUnit != .none {
 			let unit = sim.units[ui.selectedUnit]
+			let unitCountry = unit.country
 
 			if let dst = sim.unitAt(ui.cursor), sim.vision[sim.playerIndex][ui.cursor] {
-				if dst.country.team != unit.country.team, sim[sim.country].type == .human {
+				if playerType == .human, unitCountry == playerCountry, dst.country.team != unitCountry.team {
 					return .action(.attack(ui.selectedUnit, sim.unitsMap[ui.cursor]))
-				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), sim[sim.country].type == .human {
+				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), playerType == .human {
 					return .action(.embark(ui.selectedUnit, sim.unitsMap[ui.cursor]))
 				} else {
 					ui.selectedUnit = dst == unit ? .none : sim.unitsMap[ui.cursor]
 				}
-			} else if unit.country == sim.country, unit.canMove, sim[sim.country].type == .human {
+			} else if unitCountry == playerCountry, unit.canMove, playerType == .human {
 				return .action(.move(ui.selectedUnit, ui.cursor))
-			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
+			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == playerCountry, playerType == .human {
 				return .events([.shop])
 			} else {
 				ui.selectedUnit = .none
@@ -68,7 +72,7 @@ private extension TacticalState {
 		} else {
 			if sim.vision[sim.playerIndex][ui.cursor], sim.unitAt(ui.cursor) != nil {
 				ui.selectedUnit = sim.unitsMap[ui.cursor]
-			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == sim.country, sim.player.type == .human {
+			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == playerCountry, playerType == .human {
 				return .events([.shop])
 			}
 		}

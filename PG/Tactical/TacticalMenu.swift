@@ -6,7 +6,7 @@ extension TacticalNodes {
 
 	func processMenu(_ state: borrowing TacticalState) {
 		guard let scene, case .none = scene.menuState else {
-			return _ = scene?.show(.none)
+			return _ = scene?.showMenu(.none)
 		}
 
 		var vol: Int {
@@ -18,7 +18,7 @@ extension TacticalNodes {
 			audioEngine.mainMixerNode.outputVolume = settings.outputVolume
 		}
 
-		scene.show(MenuState(
+		scene.showMenu(MenuState(
 			items: [
 				.close(icon: .start, status: "End turn", action: .end),
 				.space,

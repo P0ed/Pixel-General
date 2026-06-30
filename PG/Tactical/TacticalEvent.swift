@@ -122,6 +122,6 @@ private extension TacticalNodes {
 			)
 		}
 
-		if !items.isEmpty { scene?.show(MenuState(items: items)) }
+		if !items.isEmpty { scene?.showMenu(MenuState(items: items)) }
 	}
 }

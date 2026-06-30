@@ -57,7 +57,7 @@ private var lanAddress: String {
 			nil, 0, NI_NUMERICHOST
 		) == 0 else { continue }
 
-		let name = String(cString: host)
+		let name = String(safeCString: host)
 		if unsafe String(cString: ifa.ifa_name) == "en0" { return name }
 		if fallback == nil { fallback = name }
 	}

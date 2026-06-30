@@ -28,7 +28,7 @@ extension HQNodes {
 	}
 
 	private func processShop(_ state: borrowing HQState) {
-		scene?.show(.init(
+		scene?.showMenu(.init(
 			items: Shop(country: state.sim.country, tier: state.sim.player.tier).units.enumerated().map { i, u in
 				.close(
 					icon: u.image,
@@ -44,7 +44,7 @@ extension HQNodes {
 		let prestige = state.sim.player.prestige
 		let options = Shop(country: state.sim.country, tier: state.sim.player.tier).upgrades(for: unit)
 
-		scene?.show(.init(
+		scene?.showMenu(.init(
 			items: options.map { option in
 				let result = unit.upgraded(to: option.model)
 				return .close(
@@ -57,7 +57,7 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
-		scene?.show(MenuState(items: [
+		scene?.showMenu(MenuState(items: [
 			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
 				guard let scene else { return nil }
 				return scenarioMenu(m, scene.state)

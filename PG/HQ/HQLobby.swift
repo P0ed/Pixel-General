@@ -13,7 +13,7 @@ extension HQNodes {
 		net = session
 		session.onLobby = { [weak scene] in
 			guard let scene, scene.menuState != nil else { return }
-			scene.show(modifying(lobby(root)) { m in
+			scene.showMenu(modifying(lobby(root)) { m in
 				m.cursor = scene.menuState?.cursor ?? 0
 			})
 		}
@@ -21,20 +21,20 @@ extension HQNodes {
 	}
 
 	func joinMenu(_ root: MenuState<HQAction>) -> MenuState<HQAction>? {
-		Self.askForAddress { address in
+		askForAddress { address in
 			let session = NetSession.join(address)
 			net = session
 			session.onLobby = { [weak scene] in
 				guard let scene, scene.menuState != nil else { return }
-				scene.show(modifying(lobby(root)) { m in
+				scene.showMenu(modifying(lobby(root)) { m in
 					m.cursor = scene.menuState?.cursor ?? 0
 				})
 			}
 			session.onEnd = { [weak scene] in
 				guard let scene, scene.menuState != nil else { return }
-				scene.show(root)
+				scene.showMenu(root)
 			}
-			scene?.show(lobby(root))
+			scene?.showMenu(lobby(root))
 		}
 		return root
 	}
@@ -147,21 +147,22 @@ extension HQNodes {
 	}
 
 	@MainActor
-	private static func askForAddress(_ completion: @escaping @MainActor (Address) -> Void) {
-		controller.alert(
+	private func askForAddress(_ completion: @escaping @MainActor (Address) -> Void) {
+		scene?.showAlert(Alert(
 			title: "Join LAN battle",
 			message: "Host address as ip:port",
-			fields: [
-				{ field in field.text = UserDefaults.standard.lanHost.string }
-			],
+			field: .init(
+				placeholder: "0.0.0.0:1234",
+				text: UserDefaults.standard.lanHost.string
+			),
 			actions: [
-				.cancel(),
-				.action(title: "Join") { alert in
-					let address = Address(alert.textFields?.first?.text ?? "") ?? .default
+				.init("Join") { text in
+					let address = Address(text) ?? .default
 					UserDefaults.standard.lanHost = address
 					completion(address)
 				},
+				.init("Cancel"),
 			]
-		)
+		))
 	}
 }

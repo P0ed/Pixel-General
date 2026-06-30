@@ -22,6 +22,24 @@ public typealias TacticalReaction = Reaction<TacticalAction, TacticalEvent>
 	case end
 }
 
+extension TacticalAction {
+
+	func cameraFocus(in sim: borrowing TacticalSim) -> XY? {
+		switch self {
+		case .move(let uid, _), .embark(let uid, _), .resupply(let uid):
+			let xy = sim.position[uid]
+			return sim.isVisibleToHuman(xy) ? xy : nil
+		case .disembark(_, let xy):
+			return sim.isVisibleToHuman(xy) ? xy : nil
+		case .attack(let src, let dst):
+			let s = sim.position[src], d = sim.position[dst]
+			return sim.isVisibleToHuman(s) ? s : sim.isVisibleToHuman(d) ? d : nil
+		case .purchase, .takeover, .end:
+			return nil
+		}
+	}
+}
+
 extension TacticalSim {
 
 	public mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
@@ -63,6 +81,15 @@ extension TacticalState {
 			ui.selectedUnit = .none
 		default:
 			break
+		}
+
+		if sim.player.type != .human, let focus = action.cameraFocus(in: sim) {
+			let cam = ui.camera
+			let across = (focus.x + focus.y) - (cam.x + cam.y)
+			let depth = (focus.y - focus.x) - (cam.y - cam.x)
+			if abs(across) > 8 * ui.scale || abs(depth) > 10 * ui.scale {
+				ui.camera = focus.clamped(sim.map.size)
+			}
 		}
 
 		ui.selectable = ui.selectedUnit != .none && sim.units[ui.selectedUnit].canMove

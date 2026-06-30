@@ -6,10 +6,6 @@
 - Surrender if can't retreat.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
 
-## General
-
-- Native alerts with proper focus.
-
 ## Map
 
 - Supply map mode (gray gradient 8 values).

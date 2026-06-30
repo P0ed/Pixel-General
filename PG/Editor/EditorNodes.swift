@@ -83,11 +83,11 @@ private extension EditorNodes {
 
 	func processMenu(_ state: borrowing EditorState) {
 		guard let scene, case .none = scene.menuState else {
-			scene?.show(.none)
+			scene?.showMenu(.none)
 			return
 		}
 
-		scene.show(MenuState(
+		scene.showMenu(MenuState(
 			items: Terrain.palette.map { terrain in
 				.close(
 					icon: terrain.image,

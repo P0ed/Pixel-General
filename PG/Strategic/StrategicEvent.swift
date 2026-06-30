@@ -20,10 +20,10 @@ extension StrategicNodes {
 
 	private func processMenu(_ state: borrowing StrategicState) {
 		guard let scene, case .none = scene.menuState else {
-			return _ = scene?.show(.none)
+			return _ = scene?.showMenu(.none)
 		}
 
-		scene.show(MenuState(
+		scene.showMenu(MenuState(
 			items: [
 				.space,
 				.space,

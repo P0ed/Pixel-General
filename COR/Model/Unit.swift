@@ -312,7 +312,7 @@ public struct UID: Equatable, BitwiseCopyable {
 
 public extension UID {
 
-	static let none = UID(-1)
+	@safe nonisolated(unsafe) static let none = UID(-1)
 
 	var index: Int { Int(rawValue) }
 }

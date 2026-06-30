@@ -12,6 +12,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private(set) var pan: CGPoint = .zero
 	private var lastPan: CGPoint = .zero
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
+	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
@@ -82,7 +83,16 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	func apply(_ input: Input) {
-		if case .some = menuState {
+		if alertState != nil {
+			switch input {
+			case .action(.a): fireAlert(0)
+			case .action(.b): fireAlert(1)
+			case .action(.c): fireAlert(2)
+			case .action(.d): fireAlert(3)
+			case .menu: alertState = nil
+			default: break
+			}
+		} else if menuState != nil {
 			menuState?.apply(input)
 		} else if processing {
 			pending = input
@@ -114,7 +124,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 
 	/// Also poked by `NetSession` when actions arrive over the wire.
 	func advance() {
-		guard !processing, menuState == nil else { return }
+		guard !processing, menuState == nil, alertState == nil else { return }
 		if let input = pending {
 			pending = nil
 			apply(input)
@@ -123,11 +133,41 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		}
 	}
 
-	func show(_ menu: MenuState<Action>?) {
+	func showMenu(_ menu: MenuState<Action>?) {
 		menuState = modifying(menu) { m in
 			m = m.flatMap { m in m.items.isEmpty ? nil : m }
 			m?.padItems()
 		}
+	}
+
+	func showAlert(_ alert: Alert?) {
+		alertState = alert
+	}
+
+	private func fireAlert(_ index: Int) {
+		guard let alert = alertState, index < alert.actions.count else { return }
+		let text = alert.field?.text ?? ""
+		let handler = alert.actions[index].handler
+		alertState = nil
+		handler(text)
+	}
+
+	func editAlertField(_ key: UIKey) -> Bool {
+		guard let field = alertState?.field else { return false }
+		switch key.keyCode {
+		case .keyboardReturnOrEnter: apply(.action(.a))
+		case .keyboardEscape: apply(.menu)
+		case .keyboardDeleteOrBackspace:
+			if !field.text.isEmpty { alertState?.field?.text.removeLast() }
+		default:
+			let chars = key.characters
+			if !chars.isEmpty,
+				chars.unicodeScalars.allSatisfy({ $0.value >= 0x20 && $0.value != 0x7F }),
+				field.text.count + chars.count <= field.maxLength {
+				alertState?.field?.text.append(contentsOf: chars)
+			}
+		}
+		return true
 	}
 
 	func saveState() {
@@ -146,14 +186,14 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 				if let action = menuState.items[idx].action {
 					react(.action(action))
 				}
-				show(menuState.items[idx].update(
+				showMenu(menuState.items[idx].update(
 					modifying(menuState) { m in
 						m.action = nil
 						m.padItems()
 					}
 				))
 			} else {
-				show(menuState.close(modifying(menuState) { m in m.action = nil }))
+				showMenu(menuState.close(modifying(menuState) { m in m.action = nil }))
 			}
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
@@ -165,6 +205,16 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			baseNodes?.updateMenu(menuState)
 		}
 		updateStatus()
+		advance()
+	}
+
+	private func didSetAlert(_ oldValue: Alert?) {
+		switch (oldValue, alertState) {
+		case (.none, .some(let alert)): baseNodes?.showAlert(alert)
+		case (.some, .none): baseNodes?.hideAlert()
+		case (.some, .some(let alert)): baseNodes?.updateAlert(alert)
+		case (.none, .none): break
+		}
 		advance()
 	}
 

@@ -7,8 +7,7 @@ extension NotificationCenter {
 		object: Any? = nil,
 		using body: @MainActor @escaping (Notification) -> Void
 	) -> any NSObjectProtocol {
-		nonisolated(unsafe) let body = body
-		return addObserver(
+		addObserver(
 			forName: name,
 			object: object,
 			queue: .main,

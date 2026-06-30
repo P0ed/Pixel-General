@@ -4,6 +4,7 @@ import UIKit
 @MainActor
 struct BaseNodes {
 	var menu: SKNode
+	var alert: SKNode
 	var status: SKLabelNode
 	var action: SKLabelNode
 	var icon: SKSpriteNode
@@ -20,10 +21,21 @@ extension Scene where State: ~Copyable {
 	func makeBaseNodes() -> BaseNodes {
 		BaseNodes(
 			menu: addMenu(),
+			alert: addAlert(),
 			status: addStatus(),
 			action: addStatus(alignment: .right),
 			icon: addIcon()
 		)
+	}
+
+	func addAlert() -> SKNode {
+		let alert = SKShapeNode(rectOf: BaseNodes.alertSize)
+		alert.fillColor = .darkGray.withAlphaComponent(0.9)
+		alert.strokeColor = .clear
+		alert.zPosition = 69.0
+		alert.isHidden = true
+		camera?.addChild(alert)
+		return alert
 	}
 
 	func addMenu() -> SKNode {

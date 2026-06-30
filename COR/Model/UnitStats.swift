@@ -33,14 +33,14 @@ public extension Traits {
 public extension UnitStats {
 
 	// MARK: Common
-	static let truck = UnitStats(
+	@safe nonisolated(unsafe) static let truck = UnitStats(
 		type: .supply,
 		mov: 8,
 		groundDef: 3,
 		airDef: 1,
 		traits: .transport
 	)
-	static let regular = UnitStats(
+	@safe nonisolated(unsafe) static let regular = UnitStats(
 		type: .inf,
 		tier: 1,
 		mov: 3,
@@ -51,7 +51,7 @@ public extension UnitStats {
 		groundDef: 6,
 		airDef: 4
 	)
-	static let engineer = UnitStats(
+	@safe nonisolated(unsafe) static let engineer = UnitStats(
 		type: .inf,
 		tier: 2,
 		mov: 3,
@@ -64,7 +64,7 @@ public extension UnitStats {
 		airDef: 5,
 		traits: .engineer
 	)
-	static let art155 = UnitStats(
+	@safe nonisolated(unsafe) static let art155 = UnitStats(
 		type: .art,
 		tier: 1,
 		mov: 2,
@@ -79,7 +79,7 @@ public extension UnitStats {
 
 public extension UnitStats {
 
-	static let table: [256 of UnitStats] = .init { i in
+	@safe nonisolated(unsafe) static let table: [256 of UnitStats] = .init { i in
 		guard let model = UnitModel(rawValue: UInt8(i)) else { return .init() }
 		return switch model {
 
