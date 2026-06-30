@@ -86,9 +86,9 @@
 			path = PG;
 			sourceTree = "<group>";
 		};
-		5FD7B4182FE7356A00CA6557 /* docs */ = {
+		5FD7B4182FE7356A00CA6557 /* Docs */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = docs;
+			path = Docs;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -131,7 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				5FB297482E79A39000FA039B /* README.md */,
-				5FD7B4182FE7356A00CA6557 /* docs */,
+				5FD7B4182FE7356A00CA6557 /* Docs */,
 				5FD7B3DE2FE7356600CA6557 /* PG */,
 				5FD7B3732FE7356100CA6557 /* COR */,
 				5FD7B32A2FE7337F00CA6557 /* Tests */,

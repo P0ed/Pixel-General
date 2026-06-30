@@ -1,10 +1,17 @@
 # Roadmap
 
+## Architecture
+
+- Extract a deep, pure combat-resolution seam — a `Duel` value parameterized by the attacker-vs-defender numbers that `fire` already computes.
+
 ## Scenario
 
 - Better supply model for reinforcements and resupply.
 - Surrender if can't retreat.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
+- Defensive AI.
+- Weather.
+- Bridging engineers.
 
 ## Map
 
