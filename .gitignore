@@ -4,3 +4,4 @@
 *.xcodeproj/xcshareddata/*.xcodeproj/xcuserdata/
 *.xcuserdatad/
 build/
+tmp/

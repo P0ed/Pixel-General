@@ -9,7 +9,6 @@ extension TacticalSim {
 		else { return }
 
 		let (sp, dp) = (position[si], position[di])
-		let dxy = dp - sp
 		let (st, dt) = (map[sp], map[dp])
 		let ranged = su.isArt && !surprise
 
@@ -22,18 +21,11 @@ extension TacticalSim {
 			events.append(.ruggedDefence(dp))
 		}
 
-		let mountaineer: Int8 = dt.isHighground
-			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
-		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? 1 : 0
-		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? 1 : 0
-
 		let srcDef: Int8 = (ranged ? Int8(su.entDef) + st.def(su.type) : dt.closeCombat(su.type))
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 5 : 0)
-		let dstDef: Int8 = Int8(du.entDef) + dt.def(du.type) + (ranged ? 0 : dt.closeCombat(du.type))
-			+ mountaineer
-			- mhtn - diag
-			- encirclement(id: dst)
+		let dstDef: Int8 = defenderMod(defender: dst, attacker: src, ranged: ranged)
+			+ (ruggedDefence ? -3 : 0)
 
 		units[si].ap.decrement()
 
@@ -61,31 +53,14 @@ extension TacticalSim {
 
 	mutating func fire(src: UID, dst: UID, defMod: Int8, into events: inout [TacticalEvent]) {
 		var (source, destination) = (units[src], units[dst])
-		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src]) ? 1 : 0
-		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
-		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
-		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
-		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src]) ? 2 : 0
-		let atk = Int8(source.atk(destination)) + aRC + aLR + radar
-		let def = Int8(destination.def(source)) + defMod + dRC + dLR
-
-		let dif = atk - def
-		let t1 = max(0, 9 - dif)
-		let t2 = max(1, 15 - dif)
-		let t3 = max(2, 20 - dif)
-		let t4 = max(3, 25 - dif)
-		let rounds: UInt8 = (source.hp + 2) / 3
-		let crit = source[.crit]
-		let evasion = destination[.evasion]
-
-		let ds = (0 ..< rounds).map { _ in d20() }
-		let dmgs = ds.map { d in
-			var dmg: UInt8 = d > t4 ? 4 : d > t3 ? 3 : d > t2 ? 2 : d > t1 ? 1 : 0
-			if crit, d20() > 16 { dmg *= 2 }
-			if evasion, d20() > 16 { dmg = 0 }
-			return dmg
-		}
-		let dmg: UInt8 = dmgs.reduce(into: 0, +=)
+		let (atk, def) = combatStats(src: src, dst: dst, defMod: defMod)
+		let dmg = Duel(
+			atk: atk,
+			def: def,
+			hp: source.hp,
+			crit: source[.crit],
+			evasion: destination[.evasion]
+		).resolve(&d20)
 
 		source.ammo.decrement()
 		destination.hp.decrement(by: dmg)
@@ -112,6 +87,45 @@ extension TacticalSim {
 		units[src] = source
 		units[dst] = destination
 		events.append(.fire(src, dst, dmg, destination.hp))
+	}
+
+	/// The attacker/defender numbers that feed the duel: base `atk`/`def` plus the
+	/// leadership/recon/radar auras, with the caller's `defMod` folded into `def`.
+	/// Shared by `fire` (live) and `estimateDamage` (prediction) so the aura and
+	/// base-stat assembly has a single definition.
+	func combatStats(src: UID, dst: UID, defMod: Int8) -> (atk: Int8, def: Int8) {
+		let (source, destination) = (units[src], units[dst])
+		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src]) ? 1 : 0
+		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
+		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
+		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
+		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src]) ? 2 : 0
+		let atk = Int8(source.atk(destination)) + aRC + aLR + radar
+		let def = Int8(destination.def(source)) + defMod + dRC + dLR
+		return (atk, def)
+	}
+
+	/// The defender's terrain/entrenchment modifier for a shot from `attacker`:
+	/// entrench + terrain def + (close-combat unless ranged) + mountaineer, minus
+	/// the attacker's manhattan/diagonal reach and encirclement. This is the
+	/// deterministic part of `attack`'s `dstDef`; the stochastic rugged-defence
+	/// `-3` stays in `attack`. Shared with `estimateDamage` so the AI predicts the
+	/// same defence the engine applies.
+	func defenderMod(defender dst: UID, attacker src: UID, ranged: Bool) -> Int8 {
+		let (su, du) = (units[src], units[dst])
+		let (sp, dp) = (position[src], position[dst])
+		let dxy = dp - sp
+		let dt = map[dp]
+
+		let mountaineer: Int8 = dt.isHighground
+			? (du[.mountaineer] ? 2 : 0) - (su[.mountaineer] ? 1 : 0) : 0
+		let mhtn: Int8 = su[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? 1 : 0
+		let diag: Int8 = su[.diag] && (abs(dxy.x) == abs(dxy.y)) ? 1 : 0
+
+		return Int8(du.entDef) + dt.def(du.type) + (ranged ? 0 : dt.closeCombat(du.type))
+			+ mountaineer
+			- mhtn - diag
+			- encirclement(id: dst)
 	}
 
 	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
@@ -182,16 +196,21 @@ extension TacticalSim {
 		}
 	}
 
+	/// The AI's prediction of `fire`, as the mean of the same curve the engine
+	/// rolls. It assembles the identical modifiers a real attack would (the AI is
+	/// never `surprise`, so `ranged == a.isArt`), so the estimate is the true
+	/// expected damage of the shot — save the stochastic rugged-defence roll,
+	/// which is unknowable in advance.
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
 		let (a, d) = (units[attacker], units[defender])
-		let atk = Int8(a.atk(d))
-		let def = Int8(d.def(a) + d.entDef)
-
-		let rounds = Int(a.hp + 3) / 3
-		let base = max(0, 127 + Int(atk - def) * 15)
-		let crit = a[.crit] ? 120 : 100
-		let evasion = d[.evasion] ? 80 : 100
-
-		return UInt8(clamping: rounds * base * crit * evasion / 1_00_00_00)
+		let defMod = defenderMod(defender: defender, attacker: attacker, ranged: a.isArt)
+		let (atk, def) = combatStats(src: attacker, dst: defender, defMod: defMod)
+		return Duel(
+			atk: atk,
+			def: def,
+			hp: a.hp,
+			crit: a[.crit],
+			evasion: d[.evasion]
+		).expected()
 	}
 }
