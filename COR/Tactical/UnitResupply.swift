@@ -1,31 +1,55 @@
 public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	public var trucks: SetXY
 	public var buildings: SetXY
+	public var hostile: SetXY
 
 	public static var empty: SupplySources {
-		SupplySources(trucks: .empty, buildings: .empty)
+		SupplySources(trucks: .empty, buildings: .empty, hostile: .empty)
 	}
 
 	public mutating func combine(_ other: SupplySources) {
 		trucks.formUnion(other.trucks)
 		buildings.formUnion(other.buildings)
+		hostile.formUnion(other.hostile)
 	}
 
-	public func level(at xy: XY) -> UInt8 {
-		(trucks[xy] ? 1 : 0) + (buildings[xy] ? 1 : 0)
+	/// Effective ground-unit resupply grade: sources minus the rough-terrain
+	/// and enemy-control penalties of `resupply(unit:)`. Negative grades are
+	/// worse than open friendly ground.
+	public func level(at xy: XY, terrain: Terrain) -> Int8 {
+		Int8(trucks[xy] ? 1 : 0) + Int8(buildings[xy] ? 1 : 0)
+		- Int8(terrain.supplyPenalty) - Int8(hostile[xy] ? 1 : 0)
+	}
+}
+
+extension Terrain {
+
+	/// Rough terrain chokes the flow of ammo and replacements.
+	var supplyPenalty: UInt8 {
+		switch self {
+		case .forest, .hill: 1
+		case .forestHill, .mountain, .water: 2
+		default: 0
+		}
 	}
 }
 
 public extension TacticalSim {
 
-	/// Mirrors the ground-unit resupply bonus of `resupply(unit:)`: +1 next
-	/// to a friendly-team supply truck, +1 on or next to an owned settlement.
-	/// Airfields serve air units only and are not counted.
+	/// Mirrors the ground-unit half of `resupply(unit:)`: +1 next to a
+	/// friendly-team supply truck, +1 on or next to an owned settlement,
+	/// and the enemy-control penalty as `hostile` (the terrain penalty is
+	/// read off the map at `level(at:terrain:)` time). Airfields serve air
+	/// units only and are not counted.
 	func supplySources(for country: Country) -> SupplySources {
 		var sources = SupplySources.empty
-		for xy in map.indices
-		where map[xy].isSettlement && map[xy] != .airfield && control[xy] == country {
-			xy.c5.forEach { n in sources.buildings[n] = true }
+		for xy in map.indices {
+			if map[xy].isSettlement, map[xy] != .airfield, control[xy] == country {
+				xy.c5.forEach { n in sources.buildings[n] = true }
+			}
+			if control[xy].team != country.team {
+				sources.hostile[xy] = true
+			}
 		}
 		units.forEachAlive { i, u in
 			guard u.type == .supply, u.country.team == country.team, !offMap(unit: i.uid)
@@ -43,6 +67,13 @@ public extension TacticalSim {
 }
 
 extension TacticalSim {
+
+	/// Supply-chain penalty at `xy`: rough terrain slows deliveries (air
+	/// units fly over it) and enemy-controlled ground adds interdiction.
+	func supplyPenalty(at xy: XY, for unit: Unit) -> UInt8 {
+		(unit.isAir ? 0 : map[xy].supplyPenalty)
+		+ (control[xy].team != unit.country.team ? 1 : 0)
+	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
 		var unit = units[id]
@@ -65,23 +96,24 @@ extension TacticalSim {
 			&& units[n].type == .supply
 		}
 		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)
+		let penalty = supplyPenalty(at: position, for: unit)
 
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
 			if unit.untouched {
-				unit.ammo.increment(
-					by: (noEnemy ? 2 : 1) * (supply + 1),
-					cap: unit.maxAmmo
-				)
+				var restock = (noEnemy ? 2 : 1) * (supply + 1)
+				restock.decrement(by: penalty)
+				unit.ammo.increment(by: restock, cap: unit.maxAmmo)
 			}
 			if endOfTurn {
 				unit.ammo.increment(
-					by: noEnemy && supply > 0 ? 1 : 0,
+					by: noEnemy && supply > penalty ? 1 : 0,
 					cap: unit.maxAmmo
 				)
 			}
 		}
 		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {
-			let healCap: UInt8 = (noEnemy ? 3 : 2) * (supply + 1)
+			var healCap: UInt8 = (noEnemy ? 3 : 2) * (supply + 1)
+			healCap.decrement(by: penalty)
 			let healed = unit.heal(healCap)
 			unit.exp.decrement(by: UInt16(healed) * 4 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)

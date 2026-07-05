@@ -2,7 +2,6 @@
 
 ## Scenario
 
-- Better supply model for reinforcements and resupply (add penalties for resupplying in a rough terrain, and in enemy controlled tiles).
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
 - Add unit deployment phase before day 1.

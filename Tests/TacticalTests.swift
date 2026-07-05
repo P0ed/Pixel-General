@@ -364,4 +364,122 @@ struct TacticalTests {
 		sim.players.modifyEach { _, p in if p.country == .rus { p.alive = false } }
 		#expect(sim.winner == .axis, "Last team standing wins")
 	}
+
+	// MARK: Supply penalties
+
+	/// Two-city 8×8 field sim: swe (axis) owns the north-west corner, rus
+	/// (soviet) the south-east — `control` splits along the diagonal.
+	private static func supplySim() -> TacticalSim {
+		var map = Map<32, Terrain>(size: 8, zero: .field)
+		map[XY(0, 0)] = .city
+		map[XY(7, 7)] = .city
+		let players = [
+			Player(country: .swe, type: .human, prestige: 0xF00),
+			Player(country: .rus, type: .ai, prestige: 0xF00),
+		]
+		return TacticalSim(
+			map: consume map,
+			players: players,
+			cities: [(XY(0, 0), .swe), (XY(7, 7), .rus)],
+			units: []
+		)
+	}
+
+	private static func infantry(ammo: UInt8 = 0, hp: UInt8 = 1) -> Unit {
+		var u = Unit(model: .regular, country: .swe)
+		u.reset()
+		u.ammo = ammo
+		u.hp = hp
+		return u
+	}
+
+	@Test func resupplyOnOpenFriendlyGroundIsUnpenalised() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		let uid = sim.spawn(Self.infantry(), at: XY(2, 2))
+		sim.resupply(unit: uid, into: &events)
+		#expect(sim.units[uid].ammo == 2)
+		#expect(sim.units[uid].hp == 1 + 3)
+	}
+
+	@Test func roughTerrainPenalisesResupply() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		sim.map[XY(4, 1)] = .forest
+		let forest = sim.spawn(Self.infantry(), at: XY(4, 1))
+		sim.resupply(unit: forest, into: &events)
+		#expect(sim.units[forest].ammo == 2 - 1)
+		#expect(sim.units[forest].hp == 1 + 3 - 1)
+
+		sim.map[XY(1, 4)] = .mountain
+		let mountain = sim.spawn(Self.infantry(), at: XY(1, 4))
+		sim.resupply(unit: mountain, into: &events)
+		#expect(sim.units[mountain].ammo == 0)
+		#expect(sim.units[mountain].hp == 1 + 3 - 2)
+	}
+
+	@Test func enemyControlledTilePenalisesResupply() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		// (5, 5) is closer to the rus city — hostile ground for swe.
+		let uid = sim.spawn(Self.infantry(), at: XY(5, 5))
+		sim.resupply(unit: uid, into: &events)
+		#expect(sim.units[uid].ammo == 2 - 1)
+		#expect(sim.units[uid].hp == 1 + 3 - 1)
+	}
+
+	@Test func supplyTruckOffsetsRoughTerrain() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		sim.map[XY(1, 4)] = .mountain
+		var truck = Unit(model: .truck, country: .swe)
+		truck.reset()
+		sim.spawn(truck, at: XY(1, 5))
+		let uid = sim.spawn(Self.infantry(), at: XY(1, 4))
+		sim.resupply(unit: uid, into: &events)
+		#expect(sim.units[uid].ammo == 2 * 2 - 2)
+		#expect(sim.units[uid].hp == 1 + 3 * 2 - 2)
+	}
+
+	@Test func endOfTurnTrickleBlockedByPenalty() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		// Spend `mp` so only the end-of-turn trickle applies, not the
+		// untouched-unit restock.
+		var moved = Self.infantry()
+		moved.mp = 0
+
+		var truck = Unit(model: .truck, country: .swe)
+		truck.reset()
+		sim.spawn(truck, at: XY(2, 3))
+		let field = sim.spawn(moved, at: XY(2, 2))
+		sim.resupply(unit: field, endOfTurn: true, into: &events)
+		#expect(sim.units[field].ammo == 1, "Truck-fed trickle on open ground")
+
+		sim.map[XY(5, 1)] = .forest
+		var truck2 = Unit(model: .truck, country: .swe)
+		truck2.reset()
+		sim.spawn(truck2, at: XY(5, 2))
+		let forest = sim.spawn(moved, at: XY(5, 1))
+		sim.resupply(unit: forest, endOfTurn: true, into: &events)
+		#expect(sim.units[forest].ammo == 0, "Rough terrain chokes the trickle")
+	}
+
+	@Test func supplySourcesMirrorPenalties() {
+		var sim = Self.supplySim()
+		sim.map[XY(1, 4)] = .mountain
+		let sources = sim.supplySources(for: .swe)
+
+		#expect(!sources.hostile[XY(2, 2)])
+		#expect(sources.hostile[XY(5, 5)], "rus-controlled ground is hostile for swe")
+		#expect(sources.level(at: XY(0, 1), terrain: .field) == 1, "Next to the owned city")
+		#expect(sources.level(at: XY(2, 2), terrain: .field) == 0)
+		#expect(sources.level(at: XY(1, 4), terrain: .mountain) == -2)
+		#expect(sources.level(at: XY(5, 5), terrain: .field) == -1)
+	}
 }

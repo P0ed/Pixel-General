@@ -233,16 +233,21 @@ combat is reproducible.
 The `resupply(unit:endOfTurn:into:)` routine drives both the player-initiated
 `.resupply` action *and* the per-unit end-of-turn pass. Behavior differs:
 
+- **Supply penalty**. Every resupply is throttled by the tile the unit
+  stands on: `supplyPenalty` = rough terrain (forest/hill 1;
+  forest-hill/mountain/river 2; roads, bridges, and settlements 0) plus 1
+  if the tile is enemy-controlled (`control[xy]` belongs to another team).
+  Air units ignore the terrain half.
 - **Ammo**. Player-initiated (untouched only) restores
-  `(noEnemy ? 2 : 1) * (supplyBonus + 1)`. End-of-turn restores 1 only when
-  `noEnemy && supplyBonus > 0`. `supplyBonus` = (adjacent friendly
-  `type == .supply` ? 1 : 0) + (adjacent owned settlement of matching
-  airfield/non-airfield kind ? 1 : 0). Air units only gain ammo adjacent
-  to such a building.
+  `(noEnemy ? 2 : 1) * (supplyBonus + 1) − supplyPenalty`. End-of-turn
+  restores 1 only when `noEnemy && supplyBonus > supplyPenalty`.
+  `supplyBonus` = (adjacent friendly `type == .supply` ? 1 : 0) +
+  (adjacent owned settlement of matching airfield/non-airfield kind
+  ? 1 : 0). Air units only gain ammo adjacent to such a building.
 - **Healing**. *Only* on the player-initiated path (untouched units).
-  Heal cap = `(noEnemy ? 3 : 2) * (supplyBonus + 1)`. Each HP healed
-  spends `3 << lvl` exp and `cost/32` prestige. Air heals only adjacent
-  to an owned building.
+  Heal cap = `(noEnemy ? 3 : 2) * (supplyBonus + 1) − supplyPenalty`.
+  Each HP healed spends `3 << lvl` exp and `cost/32` prestige. Air heals
+  only adjacent to an owned building.
 - **Regen**. End-of-turn only; the `regen` skill grants +1 HP (air
   needs a building).
 - **Entrench**. End-of-turn only; ground units `ent ← min(base+20, max(base, ent + entRate))`
@@ -342,11 +347,13 @@ surviving defender or `nil` (a player-driven abandon/draw).
 
 `TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) cycles
 `.terrain` → `.political` → `.supply` — political recolors tiles by `control`
-(country/team); supply shades tiles on a gray gradient by the human player's
-resupply bonus (`TacticalSim.supplySources(for:)`, `UnitResupply.swift`):
-+1 next to a friendly-team supply truck, +1 on/next to an owned settlement
-(ground-unit perspective — airfields serve air units only and are not shown).
-Bound to the `.mode` input event.
+(country/team); supply shades tiles on a red-to-green gradient by the human
+player's *effective* resupply grade (`TacticalSim.supplySources(for:)` +
+`SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +1 next to a
+friendly-team supply truck, +1 on/next to an owned settlement, minus the
+rough-terrain and enemy-control supply penalties (ground-unit perspective —
+airfields serve air units only and are not shown). Bound to the `.mode`
+input event.
 
 Only the base tile changes with the mode: buildings/roads/bridges
 (decorations) and fog of war render on separate tile-map layers in every
