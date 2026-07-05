@@ -174,11 +174,10 @@ public extension Unit {
 
 	var subLvl: UInt8 {
 		let lvl = lvl
-		let target: UInt16 = 1 << (8 + lvl)
 		let zero: UInt16 = lvl == 0 ? 0 : 1 << (7 + lvl)
-		let req = target - zero
+		let req: UInt32 = lvl == 0 ? 256 : UInt32(zero)
 		let has = exp > zero ? exp - zero : 0
-		return min(9, UInt8(clamping: has * 10 / req))
+		return min(9, UInt8(clamping: UInt32(has) * 10 / req))
 	}
 
 	func atk(_ dst: Unit) -> UInt8 {
