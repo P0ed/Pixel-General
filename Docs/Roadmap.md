@@ -1,9 +1,5 @@
 # Roadmap
 
-## Architecture
-
-- Extract a deep, pure combat-resolution seam — a `Duel` value parameterized by the attacker-vs-defender numbers that `fire` already computes.
-
 ## Scenario
 
 - Better supply model for reinforcements and resupply.
@@ -15,8 +11,11 @@
 
 ## Map
 
-- Supply map mode (gray gradient 8 values).
-- Keep roads/buildings in political/supply map mode.
+- ~~Supply map mode (gray gradient 8 values).~~ Done: visualizes the
+  resupply bonus (0/1/2) on the gray gradient; deepen once the better
+  supply model lands.
+- ~~Keep roads/buildings in political/supply map mode.~~ Done: decorations
+  and fog render on their own tile-map layers in every mode.
 
 ## Multiplayer
 
@@ -30,9 +29,9 @@
 
 ## Editor
 
-- Replace/Bucket tool replaces the same tiles under cursor with the current brush tile.
+- Replace/Bucket tool replaces the same tiles under cursor with the selected tile.
 - Undo stack for tile edits.
-- Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country). Surface as inline diagnostics, not a crash.
+- Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country).
 
 ## Game manual
 

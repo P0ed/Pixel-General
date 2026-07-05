@@ -36,4 +36,10 @@ extension SKColor {
 	static var yellowSurface: SKColor { .hex(0xF7EF73) }
 	static var greenSurface: SKColor { .hex(0x64B738) }
 	static var redSurface: SKColor { .hex(0xE8B26F) }
+
+	/// 8-step gray gradient for the supply map mode, dark to bright.
+	static func supplySurface(_ level: UInt8) -> SKColor {
+		let v = 0x50 + 0x16 * UInt32(min(level, 7))
+		return .hex(v << 16 | v << 8 | v)
+	}
 }

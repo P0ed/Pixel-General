@@ -34,12 +34,12 @@ plus a `model` index; the model's fixed *stats* live in a static table:
 
 ```swift
 public struct Unit: Equatable {
-    public var model: UnitModel    // index into UnitStats.table
+    public var model: UnitModel		// index into UnitStats.table
     public var country: Country
     public var hp, mp, ap, ammo, ent: UInt8
     public var exp, kills: UInt16
-    public var skills: Skills       // earned on promotion
-    public var bits: Bits           // per-instance flags (aux)
+    public var skills: Skills		// earned on promotion
+    public var bits: Bits			// per-instance flags (aux)
 }
 ```
 
@@ -341,10 +341,17 @@ surviving defender or `nil` (a player-driven abandon/draw).
 
 ### Map mode
 
-`TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) toggles between
-`.terrain` and `.political` — the political view recolors tiles by `control`
-(country/team), the terrain view shows the underlying tile sprite. Bound to the
-`.mode` input event.
+`TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) cycles
+`.terrain` → `.political` → `.supply` — political recolors tiles by `control`
+(country/team); supply shades tiles on a gray gradient by the human player's
+resupply bonus (`TacticalSim.supplySources(for:)`, `UnitResupply.swift`):
++1 next to a friendly-team supply truck, +1 on/next to an owned settlement
+(ground-unit perspective — airfields serve air units only and are not shown).
+Bound to the `.mode` input event.
+
+Only the base tile changes with the mode: buildings/roads/bridges
+(decorations) and fog of war render on separate tile-map layers in every
+mode (`PG/Scene/MapNodes.swift`, `TileZ`).
 
 ### Skills:
 

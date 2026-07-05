@@ -4,9 +4,20 @@ import COR
 @MainActor
 struct MapNodes {
 	var layers: [SKTileMapNode]
+	var decorationLayers: [SKTileMapNode]
+	var fogLayers: [SKTileMapNode]
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
+}
+
+/// Z offsets within one anti-diagonal: base tile at the diagonal index,
+/// fog overlay above it (darkens the base only), decorations above the fog
+/// (they carry their own fogged variant), units on top.
+enum TileZ {
+	static let fog: CGFloat = 0.2
+	static let decoration: CGFloat = 0.4
+	static let unit: CGFloat = 0.6
 }
 
 extension MapNodes {
@@ -28,12 +39,56 @@ extension MapNodes {
 		xy.x + size - 1 - xy.y
 	}
 
-	func setTileGroup(_ tileGroup: SKTileGroup?, at xy: XY) {
+	func setBase(_ tileGroup: SKTileGroup?, at xy: XY) {
 		layers[layer(at: xy)].setTileGroup(tileGroup, at: xy)
 	}
 
+	func setTile(_ terrain: Terrain, at xy: XY) {
+		setBase(.base(terrain: terrain), at: xy)
+		guard !decorationLayers.isEmpty else { return }
+		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: false), at: xy)
+	}
+
+	func setFog(_ fog: Bool, terrain: Terrain, at xy: XY) {
+		guard !fogLayers.isEmpty else { return }
+		fogLayers[layer(at: xy)].setTileGroup(
+			fog ? .fog(elevation: terrain.elevationLevel) : nil,
+			at: xy
+		)
+		if !decorationLayers.isEmpty, terrain.decoration != nil {
+			decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog), at: xy)
+		}
+	}
+
 	func zPosition(at xy: XY) -> CGFloat {
-		CGFloat(layer(at: xy))
+		CGFloat(layer(at: xy)) + TileZ.unit
+	}
+
+	static func make(
+		root: SKNode,
+		size: Int,
+		tiles: SKTileSet,
+		decorations: Bool = false,
+		fog: Bool = false
+	) -> MapNodes {
+		func addLayers(_ tiles: SKTileSet, z: CGFloat) -> [SKTileMapNode] {
+			(0 ..< size * 2 - 1).map { idx in
+				let layer = SKTileMapNode(tiles: tiles, size: size)
+				layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
+				layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
+				layer.zPosition = CGFloat(idx) + z
+				root.addChild(layer)
+				return layer
+			}
+		}
+		return MapNodes(
+			layers: addLayers(tiles, z: 0.0),
+			decorationLayers: decorations ? addLayers(.decorations, z: TileZ.decoration) : [],
+			fogLayers: fog ? addLayers(.fog, z: TileZ.fog) : [],
+			size: size,
+			cursor: addCursor(root: root),
+			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)
+		)
 	}
 
 	func update<let size: Int>(map: borrowing Map<size, Terrain>, cursor: XY, selected: XY?) {

@@ -28,7 +28,11 @@ public extension TacticalState {
 private extension TacticalState {
 
 	mutating func toggleMapMode() -> TacticalReaction {
-		ui.mapMode = ui.mapMode == .terrain ? .political : .terrain
+		ui.mapMode = switch ui.mapMode {
+		case .terrain: .political
+		case .political: .supply
+		case .supply: .terrain
+		}
 		return .none
 	}
 

@@ -30,21 +30,10 @@ extension StrategicNodes {
 	}
 
 	private static func addMap(root: SKNode, state: borrowing StrategicState) -> MapNodes {
-		let size = state.sim.owner.size
-		let layers = (0 ..< size * 2 - 1).map { _ in
-			SKTileMapNode(tiles: .terrain, size: size)
-		}
-		layers.enumerated().forEach { idx, layer in
-			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-			layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
-			layer.zPosition = CGFloat(idx)
-			root.addChild(layer)
-		}
-		return MapNodes(
-			layers: layers,
-			size: size,
-			cursor: MapNodes.addCursor(root: root),
-			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
+		MapNodes.make(
+			root: root,
+			size: state.sim.owner.size,
+			tiles: .terrain
 		)
 	}
 }
@@ -61,7 +50,7 @@ extension StrategicNodes {
 		map.cursor.zPosition = map.zPosition(at: state.ui.cursor)
 
 		state.sim.owner.indices.forEach { xy in
-			map.setTileGroup(Self.political(state.sim.owner[xy]), at: xy)
+			map.setBase(Self.political(state.sim.owner[xy]), at: xy)
 		}
 	}
 
@@ -73,6 +62,6 @@ extension StrategicNodes {
 		case .soviet: 2
 		case .none: -1
 		}
-		return .political(playerIndex: index, elevation: 0, fog: false)
+		return .political(playerIndex: index, elevation: 0)
 	}
 }
