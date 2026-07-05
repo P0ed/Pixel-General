@@ -21,6 +21,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
 		return cfg
 	}
+
+	override func buildMenu(with builder: UIMenuBuilder) {
+		super.buildMenu(with: builder)
+		buildHelpMenu(with: builder)
+	}
 }
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
