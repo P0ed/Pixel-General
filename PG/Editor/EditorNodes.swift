@@ -26,27 +26,15 @@ extension EditorNodes {
 	}
 
 	private static func addMap(root: SKNode, state: borrowing EditorState) -> MapNodes {
-		let layers = (0 ..< state.map.size * 2 - 1).map { _ in
-			SKTileMapNode(tiles: .terrain, size: state.map.size)
-		}
-		layers.enumerated().forEach { idx, layer in
-			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-			layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
-			layer.zPosition = CGFloat(idx)
-			root.addChild(layer)
-		}
-
-		let map = MapNodes(
-			layers: layers,
+		let map = MapNodes.make(
+			root: root,
 			size: state.map.size,
-			cursor: MapNodes.addCursor(root: root),
-			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
+			tiles: .terrain,
+			decorations: true
 		)
-
 		state.map.indices.forEach { xy in
-			map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
+			map.setTile(state.map[xy], at: xy)
 		}
-
 		return map
 	}
 
@@ -66,10 +54,10 @@ extension EditorNodes {
 	func process(_ event: EditorEvent, _ state: borrowing EditorState) async {
 		switch event {
 		case let .set(xy, terrain):
-			map.setTileGroup(.tileGroup(terrain: terrain, fog: false), at: xy)
+			map.setTile(terrain, at: xy)
 		case .redraw:
 			state.map.indices.forEach { xy in
-				map.setTileGroup(.tileGroup(terrain: state.map[xy], fog: false), at: xy)
+				map.setTile(state.map[xy], at: xy)
 			}
 		case .menu:
 			processMenu(state)

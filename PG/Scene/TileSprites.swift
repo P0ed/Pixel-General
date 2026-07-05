@@ -3,106 +3,36 @@ import GameplayKit
 import UIKit
 import COR
 
-@MainActor
-extension SKTileGroup {
+/// What the top face of a base tile shows. Mode-dependent: terrain colors,
+/// political ownership, or supply level. Decorations and fog are separate
+/// layers, so adding a mode only adds surfaces here.
+enum TileSurface: Hashable {
+	case field, forest, water
+	case political(Int)
+	case supply(UInt8)
 
-	static let gray = make(color: .graySurface)
-	static let blue = make(color: .blueSurface)
-	static let yellow = make(color: .yellowSurface)
-	static let green = make(color: .greenSurface)
-	static let red = make(color: .redSurface)
-
-	private static func make(_ image: UIImage) -> SKTileGroup {
-		let texture = SKTexture(image: image)
-		texture.filteringMode = .nearest
-
-		return SKTileGroup(
-			tileDefinition: SKTileDefinition(
-				texture: texture,
-				size: image.size
-			)
-		)
-	}
-
-	private struct PoliticalKey: Hashable {
-		let playerIndex: Int
-		let elevation: Int
-		let fog: Bool
-	}
-	private static var politicalCache: [PoliticalKey: SKTileGroup] = [:]
-
-	static func political(playerIndex: Int, elevation: Int, fog: Bool) -> SKTileGroup {
-		let key = PoliticalKey(playerIndex: playerIndex, elevation: elevation, fog: fog)
-		if let g = politicalCache[key] { return g }
-		let color: SKColor = switch playerIndex {
-		case 0: .blueSurface
-		case 1: .yellowSurface
-		case 2: .greenSurface
-		case 3: .redSurface
-		default: .graySurface
+	var color: SKColor {
+		switch self {
+		case .field: .fieldSurface
+		case .forest: .forestSurface
+		case .water: .waterSurface
+		case .political(0): .blueSurface
+		case .political(1): .yellowSurface
+		case .political(2): .greenSurface
+		case .political(3): .redSurface
+		case .political: .graySurface
+		case .supply(let level): .supplySurface(level)
 		}
-		let g = make(color: color, elevation: elevation, fog: fog)
-		politicalCache[key] = g
-		return g
-	}
-
-	static func make(
-		color: SKColor,
-		elevation: Int = 0,
-		fog: Bool = false,
-		decoration: UIImage? = nil
-	) -> SKTileGroup {
-		let frame = UIImage.frame(elevation)
-		let surface = UIImage.surface(elevation)
-		let image = composite(
-			frame: frame,
-			surface: surface,
-			tint: color,
-			decoration: decoration,
-			fog: fog
-		)
-		let texture = SKTexture(cgImage: image)
-		texture.filteringMode = .nearest
-		return SKTileGroup(
-			tileDefinition: SKTileDefinition(
-				texture: texture,
-				size: .tile3D
-			)
-		)
-	}
-}
-
-@MainActor
-extension SKTileGroup {
-
-	private struct CacheKey: Hashable {
-		let terrain: Terrain
-		let fog: Bool
-	}
-
-	private static var cache: [CacheKey: SKTileGroup] = [:]
-
-	static func tileGroup(terrain: Terrain, fog: Bool) -> SKTileGroup {
-		let key = CacheKey(terrain: terrain, fog: fog)
-		if let group = Self.cache[key] { return group }
-		let group = SKTileGroup.make(
-			color: terrain.surfaceColor,
-			elevation: terrain.elevationLevel,
-			fog: fog,
-			decoration: terrain.decoration
-		)
-		Self.cache[key] = group
-		return group
 	}
 }
 
 extension Terrain {
 
-	var surfaceColor: SKColor {
+	var tileSurface: TileSurface {
 		switch self {
-		case .forest, .forestHill: .forestSurface
-		case .water, .bridgeWE, .bridgeSN: .waterSurface
-		default: .fieldSurface
+		case .forest, .forestHill: .forest
+		case .water, .bridgeWE, .bridgeSN: .water
+		default: .field
 		}
 	}
 
@@ -129,37 +59,145 @@ extension Terrain {
 }
 
 @MainActor
+extension SKTileGroup {
+
+	static let gray = base(surface: .political(-1), elevation: 0)
+	static let blue = base(surface: .political(0), elevation: 0)
+	static let yellow = base(surface: .political(1), elevation: 0)
+	static let green = base(surface: .political(2), elevation: 0)
+	static let red = base(surface: .political(3), elevation: 0)
+
+	private struct BaseKey: Hashable {
+		let surface: TileSurface
+		let elevation: Int
+	}
+	private static var baseCache: [BaseKey: SKTileGroup] = [:]
+
+	static func base(surface: TileSurface, elevation: Int) -> SKTileGroup {
+		let key = BaseKey(surface: surface, elevation: elevation)
+		if let group = baseCache[key] { return group }
+		let group = make(
+			image: ImageBuffer.tile.draw { ctx in
+				ctx.drawTile(UIImage.frame(elevation).cg)
+				ctx.drawTile(UIImage.surface(elevation).cg?.tinted(surface.color.cgColor))
+			}
+		)
+		baseCache[key] = group
+		return group
+	}
+
+	static func base(terrain: Terrain) -> SKTileGroup {
+		base(surface: terrain.tileSurface, elevation: terrain.elevationLevel)
+	}
+
+	static func political(playerIndex: Int, elevation: Int) -> SKTileGroup {
+		base(surface: .political(playerIndex), elevation: elevation)
+	}
+
+	private struct DecorationKey: Hashable {
+		let terrain: Terrain
+		let fog: Bool
+	}
+	private static var decorationCache: [DecorationKey: SKTileGroup] = [:]
+
+	static func decoration(_ terrain: Terrain, fog: Bool) -> SKTileGroup? {
+		guard let image = terrain.decoration else { return nil }
+		let key = DecorationKey(terrain: terrain, fog: fog)
+		if let group = decorationCache[key] { return group }
+		let group = make(
+			image: ImageBuffer.tile.draw { ctx in
+				ctx.drawTile(image.cg)
+				if fog { ctx.dim(.sourceAtop) }
+			}
+		)
+		decorationCache[key] = group
+		return group
+	}
+
+	private static var fogCache: [Int: SKTileGroup] = [:]
+
+	static func fog(elevation: Int) -> SKTileGroup {
+		if let group = fogCache[elevation] { return group }
+		let group = make(
+			image: ImageBuffer.tile.draw { ctx in
+				ctx.drawTile(UIImage.frame(elevation).cg)
+				ctx.drawTile(UIImage.surface(elevation).cg)
+				ctx.dim(.sourceIn)
+			}
+		)
+		fogCache[elevation] = group
+		return group
+	}
+
+	private static func make(image: CGImage) -> SKTileGroup {
+		let texture = SKTexture(cgImage: image)
+		texture.filteringMode = .nearest
+		return SKTileGroup(
+			tileDefinition: SKTileDefinition(
+				texture: texture,
+				size: .tile3D
+			)
+		)
+	}
+}
+
+private extension CGContext {
+
+	func drawTile(_ image: CGImage?) {
+		guard let image else { return }
+		draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+	}
+
+	/// Halves RGB while keeping alpha: 50 % black over premultiplied pixels.
+	/// `.sourceIn` shapes a standalone overlay, `.sourceAtop` dims in place.
+	func dim(_ mode: CGBlendMode) {
+		setBlendMode(mode)
+		setFillColor(UIColor.black.withAlphaComponent(0.5).cgColor)
+		fill(CGRect(origin: .zero, size: .tile3D))
+		setBlendMode(.normal)
+	}
+}
+
+@MainActor
 extension SKTileSet {
 
-	private static let tiles: [Terrain] = [
-		.city, .airfield, .field, .forest, .hill, .forestHill, .mountain,
-		.water, .bridgeWE, .bridgeSN,
-		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
-		.villageE, .villageN, .villageW, .villageS, .roadX,
+	private static let decorated: [Terrain] = [
+		.city, .airfield, .bridgeWE, .bridgeSN,
+		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX,
+		.villageE, .villageN, .villageW, .villageS,
 	]
 
 	static let terrain = SKTileSet(
 		tileGroups: .make { ts in
-			tiles.forEach { terrain in
-				ts.append(.tileGroup(terrain: terrain, fog: false))
-				ts.append(.tileGroup(terrain: terrain, fog: true))
+			for elevation in 0 ... 2 {
+				for surface in [TileSurface.field, .forest, .water] {
+					ts.append(.base(surface: surface, elevation: elevation))
+				}
+				for idx in -1 ... 3 {
+					ts.append(.political(playerIndex: idx, elevation: elevation))
+				}
+				for level in 0 ... 7 as ClosedRange<UInt8> {
+					ts.append(.base(surface: .supply(level), elevation: elevation))
+				}
 			}
-			ts += politicalTiles
 		},
 		tileSetType: .isometric
 	)
 
-	private static var politicalTiles: [SKTileGroup] {
-		.make { out in
-			for idx in -1 ... 3 {
-				for elevation in 0 ... 2 {
-					for fog in [false, true] {
-						out.append(.political(playerIndex: idx, elevation: elevation, fog: fog))
-					}
-				}
+	static let decorations = SKTileSet(
+		tileGroups: .make { ts in
+			decorated.forEach { terrain in
+				ts.append(.decoration(terrain, fog: false)!)
+				ts.append(.decoration(terrain, fog: true)!)
 			}
-		}
-	}
+		},
+		tileSetType: .isometric
+	)
+
+	static let fog = SKTileSet(
+		tileGroups: (0 ... 2).map { .fog(elevation: $0) },
+		tileSetType: .isometric
+	)
 
 	static let colors = SKTileSet(
 		tileGroups: [.gray, .blue, .yellow, .green, .red],
@@ -186,17 +224,13 @@ extension SKTileMapNode {
 extension UIImage {
 
 	@MainActor
-	static func tile(_ terrain: Terrain, fog: Bool = false) -> UIImage {
+	static func tile(_ terrain: Terrain) -> UIImage {
 		let elevation = terrain.elevationLevel
-		let frame = UIImage.frame(elevation)
-		let surface = UIImage.surface(elevation)
-		let image = composite(
-			frame: frame,
-			surface: surface,
-			tint: terrain.surfaceColor,
-			decoration: terrain.decoration,
-			fog: fog
-		)
+		let image = ImageBuffer.tile.draw { ctx in
+			ctx.drawTile(UIImage.frame(elevation).cg)
+			ctx.drawTile(UIImage.surface(elevation).cg?.tinted(terrain.tileSurface.color.cgColor))
+			ctx.drawTile(terrain.decoration?.cg)
+		}
 		return UIImage(cgImage: image)
 	}
 
@@ -213,36 +247,6 @@ extension UIImage {
 		case 0: .surface0
 		case 1: .surface1
 		default: .surface2
-		}
-	}
-}
-
-@MainActor
-private func composite(
-	frame: UIImage,
-	surface: UIImage,
-	tint: SKColor,
-	decoration: UIImage?,
-	fog: Bool
-) -> CGImage {
-	ImageBuffer.tile.draw { ctx in
-		if let img = frame.cg {
-			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
-		}
-		if let img = surface.cg?.tinted(tint.cgColor) {
-			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
-		}
-		if let img = decoration?.cg {
-			ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
-		}
-		if fog {
-			let count = ctx.bytesPerRow * ctx.height
-			let px = unsafe ctx.data?.bindMemory(to: UInt8.self, capacity: count)
-			for i in stride(from: 0, to: count, by: 4) {
-				unsafe px?[i + 0] >>= 1
-				unsafe px?[i + 1] >>= 1
-				unsafe px?[i + 2] >>= 1
-			}
 		}
 	}
 }

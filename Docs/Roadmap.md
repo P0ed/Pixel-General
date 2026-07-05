@@ -1,22 +1,15 @@
 # Roadmap
 
-## Architecture
-
-- Extract a deep, pure combat-resolution seam — a `Duel` value parameterized by the attacker-vs-defender numbers that `fire` already computes.
-
 ## Scenario
 
-- Better supply model for reinforcements and resupply.
-- Surrender if can't retreat.
+- Better supply model for reinforcements and resupply (add penalties for resupplying in a rough terrain, and in enemy controlled tiles).
+- Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
+- Add unit deployment phase before day 1.
+- Unit surrenders if can't retreat.
 - Defensive AI.
 - Weather.
 - Bridging engineers.
-
-## Map
-
-- Supply map mode (gray gradient 8 values).
-- Keep roads/buildings in political/supply map mode.
 
 ## Multiplayer
 
@@ -30,9 +23,9 @@
 
 ## Editor
 
-- Replace/Bucket tool replaces the same tiles under cursor with the current brush tile.
+- Replace/Bucket tool replaces the same tiles under cursor with the selected tile.
 - Undo stack for tile edits.
-- Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country). Surface as inline diagnostics, not a crash.
+- Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country).
 
 ## Game manual
 
@@ -42,3 +35,7 @@
 ## iOS
 
 - On-screen touch controls.
+
+## AI
+
+- Train an LSTM model to play against.

@@ -10,6 +10,7 @@ struct TacticalNodes {
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
 	@IO var mapMode: MapMode = .terrain
+	@IO var supply: SupplySources = .empty
 }
 
 @MainActor
@@ -71,27 +72,16 @@ extension TacticalNodes {
 	}
 
 	private static func addMap(root: SKNode, state: borrowing TacticalState) -> MapNodes {
-		let layers = (0 ..< state.sim.map.size * 2 - 1).map { idx in
-			SKTileMapNode(tiles: .terrain, size: state.sim.map.size)
-		}
-		layers.enumerated().forEach { idx, layer in
-			layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-			layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
-			layer.zPosition = CGFloat(idx)
-			root.addChild(layer)
-		}
-
-		let map = MapNodes(
-			layers: layers,
+		let map = MapNodes.make(
+			root: root,
 			size: state.sim.map.size,
-			cursor: MapNodes.addCursor(root: root),
-			selection: MapNodes.addCursor(root: root, z: 0.05, color: .selectedCursor)
+			tiles: .terrain,
+			decorations: true,
+			fog: true
 		)
-
 		state.sim.map.indices.forEach { xy in
-			map.setTileGroup(.tileGroup(terrain: state.sim.map[xy], fog: false), at: xy)
+			map.setTile(state.sim.map[xy], at: xy)
 		}
-
 		return map
 	}
 
@@ -132,29 +122,53 @@ extension TacticalNodes {
 	private func updateFogIfNeeded(state: borrowing TacticalState) {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
 		let mode = state.ui.mapMode
+		let supply = mode == .supply ? state.sim.humanSupply : self.supply
 
-		guard self.lit != lit || self.mapMode != mode else { return }
-		defer { self.lit = lit; self.mapMode = mode }
+		let baseChanged = mode != mapMode || supply != self.supply
+		let litChanged = lit != self.lit
+		guard baseChanged || litChanged else { return }
+		defer { self.lit = lit; self.mapMode = mode; self.supply = supply }
 
-		state.sim.map.indices.forEach { xy in
-			map.setTileGroup(tileGroup(for: state, at: xy, fog: !lit[xy]), at: xy)
+		if baseChanged {
+			state.sim.map.indices.forEach { xy in
+				map.setBase(baseGroup(for: state, at: xy, supply: supply), at: xy)
+			}
 		}
-		state.sim.units.forEachAlive { i, u in
-			units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
+		if litChanged {
+			state.sim.map.indices.forEach { xy in
+				map.setFog(!lit[xy], terrain: state.sim.map[xy], at: xy)
+			}
+			state.sim.units.forEachAlive { i, u in
+				units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
+			}
 		}
 	}
 
-	private func tileGroup(for state: borrowing TacticalState, at xy: XY, fog: Bool) -> SKTileGroup {
+	private func baseGroup(
+		for state: borrowing TacticalState,
+		at xy: XY,
+		supply: SupplySources
+	) -> SKTileGroup {
 		switch state.ui.mapMode {
 		case .terrain:
-			return .tileGroup(terrain: state.sim.map[xy], fog: fog)
+			return .base(terrain: state.sim.map[xy])
 		case .political:
 			let country = state.sim.control[xy]
 			let idx = state.sim.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
 			return .political(
 				playerIndex: idx,
-				elevation: state.sim.map[xy].elevationLevel,
-				fog: fog
+				elevation: state.sim.map[xy].elevationLevel
+			)
+		case .supply:
+			// Bonus 0/1/2 spread over the 8-step gradient with headroom.
+			let gray: UInt8 = switch supply.level(at: xy) {
+			case 0: 1
+			case 1: 4
+			default: 7
+			}
+			return .base(
+				surface: .supply(gray),
+				elevation: state.sim.map[xy].elevationLevel
 			)
 		}
 	}
