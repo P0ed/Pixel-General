@@ -103,12 +103,7 @@ public extension TacticalSim {
 			if xy == pos { break }
 		}
 
-		unitsMap[position[uid]] = .none
-		unitsMap[pos] = uid
-		position[uid] = pos
-		if cargo[uid.index] != .none {
-			position[cargo[uid.index].index] = pos
-		}
+		place(uid, at: pos)
 		units[uid].mp.decrement()
 		units[uid].ent = 0
 		if !units[uid].canAttackAfterMove {

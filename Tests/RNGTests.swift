@@ -76,10 +76,8 @@ struct RNGTests {
 		u0.reset()
 		u1.reset()
 
-		state.sim.units.insert(u0)
-		state.sim.units.insert(u1)
-		state.sim.position[0] = XY(1, 1)
-		state.sim.position[1] = XY(2, 2)
+		let u0id = state.sim.spawn(u0, at: XY(1, 1))
+		let u1id = state.sim.spawn(u1, at: XY(2, 2))
 
 		let baseDif = Int(u0.atk(u1)) - Int(u1.def(u0))
 		var dmgs: [(Float, UInt8, UInt8)] = []
@@ -89,10 +87,10 @@ struct RNGTests {
 			var events: [TacticalEvent] = []
 			var min = UInt8.max, max = UInt8.min
 			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
-				state.sim.units[0] = u0
-				state.sim.units[1] = u1
-				state.sim.fire(src: UID(0), dst: UID(1), defMod: -atkMod, into: &events)
-				let dmg = state.sim.units[1].maxHP - state.sim.units[1].hp
+				state.sim.units[u0id] = u0
+				state.sim.units[u1id] = u1
+				state.sim.fire(src: u0id, dst: u1id, defMod: -atkMod, into: &events)
+				let dmg = state.sim.units[u1id].maxHP - state.sim.units[u1id].hp
 				if dmg > max { max = dmg }
 				if dmg < min { min = dmg }
 				return acc + UInt32(dmg)

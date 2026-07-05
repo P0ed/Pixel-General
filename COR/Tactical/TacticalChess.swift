@@ -38,12 +38,6 @@ public extension TacticalState {
 			Unit(model: .strv122, country: .isr),
 		]
 		+ (0..<8).map { i in Unit(model: .regular, country: .isr) }
-		let position: [128 of XY] = .init { i in
-			XY(i % 8, i < 16 ? i / 8 : 4 + i / 8)
-		}
-
-		var unitsMap = Map<32, UID>(size: 8, zero: .none)
-		units.enumerated().forEach { i, u in unitsMap[position[i]] = i.uid }
 		units.modifyEach { u in u.reset() }
 
 		var control = Map<32, Country>(size: 8, zero: .default)
@@ -57,14 +51,17 @@ public extension TacticalState {
 		var sim = TacticalSim(
 			map: map,
 			control: control,
-			unitsMap: unitsMap,
+			unitsMap: Map<32, UID>(size: 8, zero: .none),
 			players: .init(head: [players[0], players[1]], tail: .none),
 			vision: .init(repeating: .empty),
 			auxilia: .init { i in .init(tail: .empty) },
 			units: .init(head: units, tail: .empty),
-			position: position,
+			position: .init(repeating: .zero),
 			cargo: .init(repeating: .none)
 		)
+		for i in units.indices {
+			sim.place(i.uid, at: XY(i % 8, i < 16 ? i / 8 : 4 + i / 8))
+		}
 		sim.vision[0] = sim.vision(for: sim.players[0].country)
 		sim.vision[1] = sim.vision(for: sim.players[1].country)
 

@@ -19,12 +19,12 @@ extension TacticalSim {
 
 	mutating func embark(unit: UID, transport: UID, into events: inout [TacticalEvent]) {
 		guard canEmbark(unit: unit, transport: transport) else { return }
-		cargo[transport.index] = unit
-		cargo[unit.index] = transport
 		let p = position[unit.index]
 		let tp = position[transport.index]
+		cargo[transport.index] = unit
+		cargo[unit.index] = transport
+		vacate(unit)
 		position[unit.index] = tp
-		unitsMap[p] = .none
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(tp)
 		events.append(.move(unit, Path(count: path.count, path: path.mem)))
@@ -45,11 +45,10 @@ extension TacticalSim {
 		let from = position[idx]
 		cargo[unit.index] = .none
 		cargo[idx] = .none
-		position[idx] = xy
+		place(idx.uid, at: xy)
 		units[idx].mp = 0
 		units[idx].ent = 0
 		if !units[idx].canAttackAfterMove { units[idx].ap = 0 }
-		unitsMap[xy] = idx.uid
 		vision[playerIndex].formUnion(vision(for: idx.uid))
 		var path = CArray<16, XY>(head: from, tail: .zero)
 		path.add(xy)

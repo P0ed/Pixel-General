@@ -169,12 +169,8 @@ struct TacticalTests {
 		let infUID = sim.units.firstMapAlive { i, u in u.type == .inf ? i.uid : nil }!
 
 		// Lay the two units out on open ground with full vision.
-		sim.unitsMap[sim.position[heliUID]] = .none
-		sim.unitsMap[sim.position[infUID]] = .none
-		sim.position[heliUID.index] = XY(15, 10)
-		sim.position[infUID.index] = XY(18, 10)
-		sim.unitsMap[XY(15, 10)] = heliUID
-		sim.unitsMap[XY(18, 10)] = infUID
+		sim.place(heliUID, at: XY(15, 10))
+		sim.place(infUID, at: XY(18, 10))
 		sim.vision.modifyEach { v in v = .full }
 
 		#expect(sim.units[heliUID].mp == 2, "Helicopter should start with 2 MP")
@@ -225,12 +221,8 @@ struct TacticalTests {
 		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, inf])
 		let heliUID = sim.units.firstMapAlive { i, u in u.type == .heli ? i.uid : nil }!
 		let infUID = sim.units.firstMapAlive { i, u in u.type == .inf ? i.uid : nil }!
-		sim.unitsMap[sim.position[heliUID]] = .none
-		sim.unitsMap[sim.position[infUID]] = .none
-		sim.position[heliUID.index] = XY(15, 10)
-		sim.position[infUID.index] = XY(17, 10)
-		sim.unitsMap[XY(15, 10)] = heliUID
-		sim.unitsMap[XY(17, 10)] = infUID
+		sim.place(heliUID, at: XY(15, 10))
+		sim.place(infUID, at: XY(17, 10))
 		sim.vision.modifyEach { v in v = .full }
 
 		var state = TacticalState(sim: consume sim)
@@ -278,12 +270,8 @@ struct TacticalTests {
 		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, enemy])
 		let heliUID = sim.units.firstMapAlive { i, u in u.country == .usa ? i.uid : nil }!
 		let enemyUID = sim.units.firstMapAlive { i, u in u.country == .rus ? i.uid : nil }!
-		sim.unitsMap[sim.position[heliUID]] = .none
-		sim.unitsMap[sim.position[enemyUID]] = .none
-		sim.position[heliUID.index] = XY(15, 10)
-		sim.position[enemyUID.index] = XY(16, 10)
-		sim.unitsMap[XY(15, 10)] = heliUID
-		sim.unitsMap[XY(16, 10)] = enemyUID
+		sim.place(heliUID, at: XY(15, 10))
+		sim.place(enemyUID, at: XY(16, 10))
 		// The mover can't see the enemy, so it walks into the ambush tile.
 		sim.vision.modifyEach { v in v = .empty }
 

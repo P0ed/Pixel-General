@@ -98,9 +98,10 @@ public extension TacticalSim {
 		}
 		var allocatedUnits = [0, 0, 0, 0] as [4 of Int]
 
-		self.units.forEachAlive { i, u in
+		for i in self.units.indices where self.units[i].alive {
+			let u = self.units[i]
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
-			else { return }
+			else { continue }
 
 			var k = allocatedUnits[player]
 			while k < placements[player].count {
@@ -112,9 +113,8 @@ public extension TacticalSim {
 			}
 			guard k < placements[player].count else { fatalError() }
 
-			position[i] = placements[player][k]
+			place(i.uid, at: placements[player][k])
 			allocatedUnits[player] = k + 1
-			unitsMap[position[i]] = i.uid
 		}
 
 		let v = self.players.map { i, p in vision(for: p.country) }

@@ -79,7 +79,7 @@ extension TacticalSim {
 		}
 		source.exp.increment(by: UInt16(dmg) * destination.cost / (destination.alive ? 32 : 24))
 		if !destination.alive {
-			unitsMap[position[dst]] = .none
+			vacate(dst)
 			source.kills.increment(by: 1)
 			source.promote(using: &d20)
 			self[source.country].prestige.increment(by: destination.cost / 16)
@@ -179,12 +179,7 @@ extension TacticalSim {
 		let pos = moves(for: id).ordered.min(by: (p + p - xy).manhattanComparator)
 		guard let pos, unitAt(pos) == nil else { return }
 
-		unitsMap[position[id]] = .none
-		unitsMap[pos] = id
-		position[id] = pos
-		if cargo[id] != .none {
-			position[cargo[id].index] = pos
-		}
+		place(id, at: pos)
 		units[id].ent = 0
 		var path = CArray<16, XY>(head: p, tail: .zero)
 		path.add(pos)
