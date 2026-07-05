@@ -1,9 +1,6 @@
 import Testing
 @testable import COR
 
-/// `Unit.lvl`/`subLvl` derive both values from the packed `exp` field. `subLvl`
-/// used to compute an out-of-range bit shift at the max level (8), which then
-/// underflowed and trapped — crashing anywhere the unit's status is displayed.
 struct UnitTests {
 
 	private static func unit(exp: UInt16) -> Unit {
@@ -17,18 +14,15 @@ struct UnitTests {
 	}
 
 	@Test func subLvlProgressesThroughMaxLevel() {
-		// Just past the level-8 threshold (exp == 1 << 15) subLvl restarts at 0,
-		// then climbs gradually up to 9 as exp approaches UInt16.max, instead of
-		// jumping straight to 9.
 		let atThreshold = Self.unit(exp: 1 << 15)
 		#expect(atThreshold.lvl == 8)
 		#expect(atThreshold.subLvl == 0)
 
-		let midway = Self.unit(exp: 1 << 15 | 1 << 13) // zero + 8192, req 32768
+		let midway = Self.unit(exp: 1 << 15 | 1 << 13)
 		#expect(midway.lvl == 8)
 		#expect(midway.subLvl == 2)
 
-		#expect(Self.unit(exp: .max - 1).subLvl == 9)
+		#expect(Self.unit(exp: .max).subLvl == 9)
 	}
 
 	@Test func subLvlResetsAtEachLevelUp() {
