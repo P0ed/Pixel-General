@@ -264,10 +264,9 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 `COR/Tactical/TacticalShop.swift`, `COR/Model/Shop.swift`, `COR/Model/Templates.swift`
 
-- Each player has **prestige** (default `0xF00`; campaigns set `.poor` = `0x0A00`
-  / `.rich` = `0x1F00`). Income per day = sum of owned settlements' income
-  (`Terrain.income` in `COR/Tactical/TacticalState.swift`: city 24, village 8,
-  airfield 4).
+- Each player has **prestige** (`.poor` = `0x0A00` / `.rich` = `0x1F00`).
+  Income per day = sum of owned settlements' income (`Terrain.income` in
+  `COR/Tactical/TacticalState.swift`: city 24, village 8, airfield 4).
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
   unit if prestige ≥ `unit.cost`. Airfields sell air units; cities (and
   villages) sell ground. Bought units start at `lvl += player.baseLevel`.

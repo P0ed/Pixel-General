@@ -74,24 +74,7 @@ extension CGImage {
 	func draw(_ body: (CGContext) -> Void) -> CGImage {
 		unsafe pixels.initialize(repeating: 0, count: context.width * context.height * 4)
 		body(context)
-		// The backing store is cleared by the direct memory write above, which
-		// bypasses the context's copy-on-write tracking — an image returned by
-		// makeImage() would alias pixels that the next draw() overwrites. Hand
-		// out an image that owns its own copy instead.
-		let data = unsafe Data(bytes: pixels, count: context.bytesPerRow * context.height)
-		return CGImage(
-			width: context.width,
-			height: context.height,
-			bitsPerComponent: 8,
-			bitsPerPixel: 32,
-			bytesPerRow: context.bytesPerRow,
-			space: CGColorSpaceCreateDeviceRGB(),
-			bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-			provider: CGDataProvider(data: data as CFData)!,
-			decode: nil,
-			shouldInterpolate: false,
-			intent: .defaultIntent
-		)!
+		return context.makeImage()!
 	}
 }
 

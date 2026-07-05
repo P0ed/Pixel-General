@@ -2,20 +2,14 @@
 
 ## Scenario
 
-- Better supply model for reinforcements and resupply.
-- Surrender if can't retreat.
+- Better supply model for reinforcements and resupply (add penalties for resupplying in a rough terrain, and in enemy controlled tiles).
+- Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
+- Add unit deployment phase before day 1.
+- Unit surrenders if can't retreat.
 - Defensive AI.
 - Weather.
 - Bridging engineers.
-
-## Map
-
-- ~~Supply map mode (gray gradient 8 values).~~ Done: visualizes the
-  resupply bonus (0/1/2) on the gray gradient; deepen once the better
-  supply model lands.
-- ~~Keep roads/buildings in political/supply map mode.~~ Done: decorations
-  and fog render on their own tile-map layers in every mode.
 
 ## Multiplayer
 
@@ -41,3 +35,7 @@
 ## iOS
 
 - On-screen touch controls.
+
+## AI
+
+- Train an LSTM model to play against.
