@@ -38,7 +38,7 @@ private final class HelpViewController: UIViewController {
 		self.body = body
 		super.init(nibName: nil, bundle: nil)
 		self.title = title
-		preferredContentSize = CGSize(width: 520, height: 560)
+		preferredContentSize = CGSize(width: 640, height: 560)
 	}
 
 	@available(*, unavailable)
@@ -93,24 +93,22 @@ private enum Help {
 	KEYBOARD
 
 	  Arrow keys       Move the cursor
-	  Space / A        Confirm — select, move, attack (A)
-	  Delete / S       Cancel — deselect, go back (B)
+	  A / Space        Confirm — select, move, attack (A)
+	  S / Delete       Cancel — deselect, go back (B)
 	  Q                Action — shop, upgrade menu (C)
 	  W                Action — sell, secondary (D)
-	  Tab   /  ]       Select next unit
-	  Shift-Tab  /  [  Select previous unit
+	  Tab / ]          Select next unit
+	  Shift-Tab / [    Select previous unit
 	  Esc              Open the menu
 	  Z / X / C        Zoom  1× / 2× / 4×
 	  §                Cycle map mode (terrain · political · supply)
-
-	Note: the letter keys A and S also map to Confirm and Cancel.
 
 	GAMEPAD
 
 	  D-pad            Move the cursor
 	  A  /  B          Confirm  /  Cancel
-	  X  /  Y          Shop / upgrade  /  Sell
-	  L / R shoulder   Previous / next unit
+	  X  /  Y          Shop  /  Sell
+	  L / R shoulder   Previous / Next unit
 	  Menu             Open the menu
 	  Options          Cycle map mode
 
@@ -154,9 +152,8 @@ private enum Help {
 	SUPPLY & REPAIR
 
 	  • Keep units near supply trucks and your own settlements to rearm,
-	    repair, and recover. Rough or enemy-held ground throttles resupply.
-	  • Fast repairs cost prestige and experience (green replacements dilute
-	    veterans); resting near supply heals slowly for free.
+		repair, and recover. Rough or enemy-held ground throttles resupply.
+	  • Repairs cost prestige and experience (green replacements dilute veterans).
 
 	CAPTURING
 
