@@ -26,11 +26,6 @@
 - Undo stack for tile edits.
 - Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country).
 
-## Game manual
-
-- Controls — list of actions with associated buttons for keyboard/gamepad.
-- Rules — `GameMechanics.md` but without referencing engine internals.
-
 ## iOS
 
 - On-screen touch controls.

@@ -128,14 +128,17 @@ COR/                  Headless game core (import COR), no UI dependency
   Model/              Shared game data: Core, Unit/Units, UnitStats (model → static stats table),
                       {Allied,Axis,Soviet}Units (per-team catalogue), Player, Terrain, Templates, Shop, Strings
   Tactical/           Combat sim + UI: state (TacticalSim/TacticalUI), reaction (action+event+reduce),
-                      AI, attacks, movement, resupply, transport, turns, shop, map generation
+                      AI, attacks + Duel (damage curve), movement, resupply, transport, turns, shop,
+                      placement (place/vacate/spawn — the spatial invariant over position/unitsMap/cargo),
+                      map generation, chess (debug scenario)
   HQ/                 Roster management: state (HQSim/HQUI), reaction (action+event+reduce), input
   Strategic/          Campaign map: state (StrategicSim/StrategicUI — Europe map, province ownership,
                       battle launch/resolution), reaction, input
 
 PG/                   App & presentation layer
   App.swift           @main AppDelegate / SceneDelegate; owns global `core` + `settings`
-  App/                App helpers: ViewController, UserDefaults (save/load), Colors, Images, SpriteKit, AlertController
+  App/                App helpers: ViewController, UserDefaults (save/load), Colors, Images, SpriteKit,
+                      AlertController, HelpMenu (macOS Help menu: About / Controls / Rules)
   Scene/              SpriteKit scenes, SceneMode, input, menus, map/tile rendering, settings
   Networking/         Client, Connection, Server, Messages, NetSession (LAN relay)
   Tactical/           Tactical nodes, mode, event rendering, status, unit sprites

@@ -1,7 +1,5 @@
 import UIKit
 
-// macOS (Mac Catalyst) Help menu: game description, controls, and a short
-// rules summary. Inserted into the system Help menu by `AppDelegate.buildMenu`.
 extension AppDelegate {
 
 	func buildHelpMenu(with builder: UIMenuBuilder) {
@@ -10,7 +8,7 @@ extension AppDelegate {
 		let help = UIMenu(
 			options: .displayInline,
 			children: [
-				UICommand(title: "About Panzer General", action: #selector(showGameDescription)),
+				UICommand(title: "About Pixel General", action: #selector(showGameDescription)),
 				UICommand(title: "Controls", action: #selector(showControls)),
 				UICommand(title: "Game Rules", action: #selector(showGameRules)),
 			]
@@ -18,7 +16,7 @@ extension AppDelegate {
 		builder.insertChild(help, atStartOfMenu: .help)
 	}
 
-	@objc func showGameDescription() { presentHelp(title: "About Panzer General", body: Help.description) }
+	@objc func showGameDescription() { presentHelp(title: "About Pixel General", body: Help.description) }
 	@objc func showControls() { presentHelp(title: "Controls", body: Help.controls) }
 	@objc func showGameRules() { presentHelp(title: "Game Rules", body: Help.rules) }
 
@@ -75,7 +73,7 @@ private final class HelpViewController: UIViewController {
 private enum Help {
 
 	static let description = """
-	Panzer General — a turn-based wargame
+	Pixel General — a turn-based wargame
 
 	A Panzer-General-inspired game of operational combat. Purchase units \
 	with prestige, maneuver them across a 32×32 tactical grid, capture cities \

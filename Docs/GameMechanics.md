@@ -138,7 +138,7 @@ vision lives in `TacticalSim.vision: [4 of SetXY]`, recomputed on each turn chan
 
 ## Combat
 
-`COR/Tactical/TacticalAttack.swift`
+`COR/Tactical/TacticalAttack.swift`, `COR/Tactical/Duel.swift`
 
 `attack(src:dst:)` requires same-country attacker, enemy target, `ap>0`,
 `ammo>0`, and target within `rng*2+1`. Sequence:
@@ -151,7 +151,7 @@ vision lives in `TacticalSim.vision: [4 of SetXY]`, recomputed on each turn chan
    (`isAA`) of the defender fires on the attacker.
 3. **Rugged Defence** check (skipped only if attacker `isArt` *and* this
    is not a surprise): if
-   `d20 + (su.ini+su.lvl)*2  <  (du.ent+du.ini+du.lvl)*2 + (surprise ? 10 : 0)`,
+   `d20 + su.ini*2 + su.lvl  <  du.ent*2 + du.ini*2 + du.lvl + (surprise ? 10 : 0)`,
    defender fires first and the attacker's shot is delayed until after the
    counter. The +10 surprise bonus goes to the defender's side.
 4. Attacker fires (`fire`), reducing defender `ent` by `entDamage`.
@@ -164,7 +164,9 @@ vision lives in `TacticalSim.vision: [4 of SetXY]`, recomputed on each turn chan
 6. Low-HP defenders may **retreat** (`du.hp*2 + du.ini + d20 < 20`) to the
    reachable tile farthest from the attacker.
 
-**`fire(src:dst:defMod:)`** — the damage core:
+**`fire(src:dst:defMod:)`** — the damage core. It assembles `atk`/`def` via
+`combatStats`, then hands them to a `Duel` (`COR/Tactical/Duel.swift`) that owns
+the actual damage curve:
 
 - `atk = atk(target) + leadershipAura + reconAura + radarAura` (leadership /
   recon auras = +1 if the firing unit or a friendly neighbour has the skill;
@@ -172,22 +174,27 @@ vision lives in `TacticalSim.vision: [4 of SetXY]`, recomputed on each turn chan
   trait nearby). `lvl` is already folded into `atk(target)`.
 - `def = def(attacker) + defMod + leadershipAura + reconAura`, with `lvl/2`
   folded into `def(attacker)` and `defMod = entDef + terrain.def(defType)
-  + mountaineer + mhtn + diag − encirclement`.
+  + mountaineer − mhtn − diag − encirclement` (the deterministic part is
+  computed by `defenderMod`; `mhtn`/`diag` each subtract 1, see [Skills](#skills)).
   `entDef = ent/4`; `terrain.def(_:)` is a per-type bonus/penalty
   (negative on roads, bridges, rivers; positive on cover for foot/wheeled
   arty/AA; negative for wheels and tracks in cover, worst for heavy
   tracks); `encirclement` = `max(0, enemiesAround − 1)` so the first
   surrounder is free.
-- `dif = atk − def`. Four thresholds `t1=max(0,7−dif)`, `t2=max(1,13−dif)`,
-  `t3=max(2,19−dif)`, `t4=max(3,26−dif)`.
-- Rounds = `(hp+2)/3 + (ini + lvl/2 > d20(max of 2) ? 1 : 0)`. Each round
-  rolls `d20` (0–19): `>t4`→4, `>t3`→3, `>t2`→2, `>t1`→1, else 0 damage.
-  `crit` may double a round (`d20>16`); `evasion` may zero it (`d20>16`).
+- **The `Duel` curve.** `dif = atk − def`, giving four thresholds
+  `t1=max(0,9−dif)`, `t2=max(1,15−dif)`, `t3=max(2,20−dif)`, `t4=max(3,25−dif)`.
+  Rounds = `(hp+2)/3`. Each round rolls `d20` (0–19): `>t4`→4, `>t3`→3,
+  `>t2`→2, `>t1`→1, else 0 damage. `crit` may double a round (`d20>16`);
+  `evasion` may zero it (`d20>16`). The roll order — all main dice first,
+  then the per-round crit/evasion dice — is load-bearing for the multiplayer
+  relay (see [Architecture](./Architecture.md#multiplayer-lan)).
 - Damage hits the unit (and its cargo). Each shot grants
   `dmg * du.cost / 32` exp if the defender survives, `dmg * du.cost / 24`
   if the shot kills. A kill also grants a flat `du.cost / 16` prestige
-  bounty and rolls for promotion. `estimateDamage` is the AI's
-  deterministic preview.
+  bounty and rolls for promotion. `Duel.expected()` — the closed-form mean
+  of the same curve — is the AI's deterministic preview (via
+  `estimateDamage`), so it can never plan against a model that disagrees with
+  what the engine rolls.
 
 `D20` is a SplitMix64 PRNG (`COR/Foundation/D20.swift`) seeded per battle so
 combat is reproducible.
