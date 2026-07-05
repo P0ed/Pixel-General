@@ -108,9 +108,7 @@ extension TacticalSim {
 	/// The defender's terrain/entrenchment modifier for a shot from `attacker`:
 	/// entrench + terrain def + (close-combat unless ranged) + mountaineer, minus
 	/// the attacker's manhattan/diagonal reach and encirclement. This is the
-	/// deterministic part of `attack`'s `dstDef`; the stochastic rugged-defence
-	/// `-3` stays in `attack`. Shared with `estimateDamage` so the AI predicts the
-	/// same defence the engine applies.
+	/// deterministic part of `attack`'s `dstDef`.
 	func defenderMod(defender dst: UID, attacker src: UID, ranged: Bool) -> Int8 {
 		let (su, du) = (units[src], units[dst])
 		let (sp, dp) = (position[src], position[dst])
@@ -196,11 +194,6 @@ extension TacticalSim {
 		}
 	}
 
-	/// The AI's prediction of `fire`, as the mean of the same curve the engine
-	/// rolls. It assembles the identical modifiers a real attack would (the AI is
-	/// never `surprise`, so `ranged == a.isArt`), so the estimate is the true
-	/// expected damage of the shot — save the stochastic rugged-defence roll,
-	/// which is unknowable in advance.
 	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
 		let (a, d) = (units[attacker], units[defender])
 		let defMod = defenderMod(defender: defender, attacker: attacker, ranged: a.isArt)
