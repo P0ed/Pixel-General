@@ -49,7 +49,12 @@ final class Model {
 
 	/// One recurrent step: same inputs as `LSTMPolicy.step` plus the
 	/// conditioning actor tile; returns every head plus the next h/c.
+	/// Pool-drained like `BCGraph.step` — see the note there.
 	func step(planes p: [Float], globals gl: [Float], h: [Float], c: [Float], actor: Int) -> Step {
+		autoreleasepool { stepBody(planes: p, globals: gl, h: h, c: c, actor: actor) }
+	}
+
+	private func stepBody(planes p: [Float], globals gl: [Float], h: [Float], c: [Float], actor: Int) -> Step {
 		let side = NSNumber(value: Observation.side)
 		let feeds: [MPSGraphTensor: MPSGraphTensorData] = [
 			planes: tensorData(device, p, [1, side, side, NSNumber(value: Observation.planeCount)]),

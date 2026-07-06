@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import COR
 
-/// Contracts of the LSTM policy plumbing (see Docs/LSTM-AI-Plan.md):
+/// Contracts of the LSTM policy plumbing (see Docs/LSTM-AI.md):
 /// the observation encoding is fog-correct, and the factored action space
 /// (`ActionSpace`) masks exactly the actions `reduce` accepts.
 struct PolicyTests {

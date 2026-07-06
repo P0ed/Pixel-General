@@ -3,7 +3,7 @@ import Foundation
 // Train — headless data-generation / training CLI for the LSTM AI.
 // Compiles the COR sources directly (a macOS tool cannot link the Catalyst
 // framework), so internal core symbols are visible without `@testable`.
-// See Docs/LSTM-AI-Plan.md.
+// See Docs/LSTM-AI.md.
 
 // Line-buffer stdout even when redirected to a file, so long runs
 // (`Train rl … > run.log`) can be tailed and nothing is lost on a kill.

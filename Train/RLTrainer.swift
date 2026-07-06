@@ -9,11 +9,26 @@ import Foundation
 /// advantages are normalized to mean |A| = 1 per batch (the graph divides by
 /// Σ|w| per window, so this keeps every window's scale honest).
 ///
-/// Reward: win +1 / loss −1 / timeout −0.2, plus 0.2 × the hp-weighted
-/// unit-cost margin — so even a timeout draw rewards ending up ahead on
-/// material. Argmax arena checkpoints (`Eval.play`, battle indices 0…) track
-/// real strength on the same configs `Train eval` reports.
+/// Reward: dense, symmetric progress terms — win/loss alone starves
+/// REINFORCE when the sampled win rate is ~0 (run-2 lesson: the policy
+/// drifted to "don't lose" stalling). Each term is ~[−1, 1]:
+///   settlements  Δ(own − enemy settlement count) / total on map — capture
+///                is good, being captured is bad; control IS the win
+///                condition, so this is the win/loss signal made dense
+///   units        enemy value killed − own value lost, each as a fraction
+///                of that side's starting value (hp-weighted unit cost,
+///                accumulated per step so purchases don't pollute it)
+///   prestige     (mine − theirs) / (mine + theirs) at episode end
+///   outcome      ±wOutcome on a decided battle; timeouts score 0 here and
+///                are judged by the dense terms instead
+/// Argmax arena checkpoints (`Eval.play`, battle indices 0…) track real
+/// strength on the same configs `Train eval` reports.
 enum RLTrainer {
+
+	static let wOutcome: Float = 0.5
+	static let wSettlements: Float = 1.0
+	static let wUnits: Float = 0.5
+	static let wPrestige: Float = 0.25
 
 	struct Episode {
 		var replay: Replay
@@ -21,6 +36,9 @@ enum RLTrainer {
 		var reward: Float = 0
 		var outcome = "D"
 		var samples = 0
+		var settleTerm: Float = 0
+		var unitTerm: Float = 0
+		var prestigeTerm: Float = 0
 	}
 
 	static func run(_ args: [String]) throws {
@@ -75,7 +93,7 @@ enum RLTrainer {
 		var battleIndex = seed
 		var baseline: Float?
 		var globalStep = 0
-		var csv = "iter,wins,losses,draws,meanR,baseline,days,samples,loss,windows,arenaWin\n"
+		var csv = "iter,wins,losses,draws,meanR,baseline,settle,units,prestige,days,samples,loss,windows,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
 
@@ -115,7 +133,10 @@ enum RLTrainer {
 			let draws = batch.count - wins - losses
 			let days = batch.reduce(0) { $0 + Int($1.replay.days) } / batch.count
 			let samples = batch.reduce(0) { $0 + $1.samples }
-			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  base \(f(base))  days \(days)  samples \(samples)  loss \(f(loss))")
+			let settle = batch.reduce(0) { $0 + $1.settleTerm } / Float(batch.count)
+			let units = batch.reduce(0) { $0 + $1.unitTerm } / Float(batch.count)
+			let prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / Float(batch.count)
+			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  base \(f(base))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))")
 
 			var arena = ""
 			if iter % ckpt == 0 || iter == iters {
@@ -139,7 +160,7 @@ enum RLTrainer {
 					try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
 				}
 			}
-			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(base),\(days),\(samples),\(loss),\(windows),\(arena)\n"
+			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(base),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -181,6 +202,13 @@ enum RLTrainer {
 		var rng = Rand(s: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
 		var episode = Episode(replay: replay, seat: seat)
 
+		let mine = replay.seats[seat].country.team
+		let theirs = replay.seats[1 - seat].country.team
+		let start = census(state, mine: mine, theirs: theirs)
+		var prev = (mine: start.mineValue, theirs: start.theirsValue)
+		var killed: Float = 0
+		var lost: Float = 0
+
 		while replay.actions.count < Rollouts.maxActions {
 			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
 			if state.sim.day > Rollouts.maxDays { break }
@@ -196,41 +224,81 @@ enum RLTrainer {
 			}
 			replay.actions.append(action)
 			_ = state.reduce(action)
+
+			// Value only *decreases* through kills — purchases and arriving
+			// reinforcements increase it, so accumulating the drops separates
+			// combat results from economy.
+			let cur = unitValues(state, mine: mine)
+			killed += max(0, prev.theirs - cur.theirs)
+			lost += max(0, prev.mine - cur.mine)
+			prev = cur
 		}
 		replay.winner = state.sim.winner ?? .none
 		replay.days = UInt16(state.sim.day)
 
-		let mine = replay.seats[seat].country.team
-		let theirs = replay.seats[1 - seat].country.team
-		let bonus = 0.2 * margin(state, team: mine)
+		let end = census(state, mine: mine, theirs: theirs)
+		episode.settleTerm = clamp(
+			Float((end.ownSettlements - end.theirsSettlements) - (start.ownSettlements - start.theirsSettlements))
+			/ Float(max(start.settlements, 1))
+		)
+		episode.unitTerm = clamp(
+			killed / max(start.theirsValue, 1) - lost / max(start.mineValue, 1)
+		)
+		let pMine = Float(state.sim.players[seat].prestige)
+		let pTheirs = Float(state.sim.players[1 - seat].prestige)
+		episode.prestigeTerm = (pMine - pTheirs) / max(pMine + pTheirs, 1)
+
+		episode.reward = wSettlements * episode.settleTerm
+			+ wUnits * episode.unitTerm
+			+ wPrestige * episode.prestigeTerm
 		if replay.winner == mine {
-			episode.reward = 1 + bonus
+			episode.reward += wOutcome
 			episode.outcome = "W"
 		} else if replay.winner == theirs {
-			episode.reward = -1 + bonus
+			episode.reward -= wOutcome
 			episode.outcome = "L"
-		} else {
-			episode.reward = -0.2 + bonus
-			episode.outcome = "D"
 		}
 		episode.replay = replay
 		return episode
 	}
 
-	/// Material margin ∈ [−1, 1]: hp-weighted unit cost, mine vs theirs.
-	static func margin(_ state: borrowing TacticalState, team: Team) -> Float {
-		let value = state.sim.units.reduceAlive(into: (mine: Float(0), theirs: Float(0))) { r, i, u in
+	struct Census {
+		var mineValue: Float = 0
+		var theirsValue: Float = 0
+		var ownSettlements = 0
+		var theirsSettlements = 0
+		var settlements = 0
+	}
+
+	/// Hp-weighted unit cost per side plus settlement control (neutral
+	/// settlements count toward the total but neither side).
+	static func census(_ state: borrowing TacticalState, mine: Team, theirs: Team) -> Census {
+		var c = Census()
+		let value = unitValues(state, mine: mine)
+		c.mineValue = value.mine
+		c.theirsValue = value.theirs
+		for xy in state.sim.map.indices where state.sim.map[xy].isSettlement {
+			c.settlements += 1
+			let team = state.sim.control[xy].team
+			if team == mine { c.ownSettlements += 1 }
+			else if team == theirs { c.theirsSettlements += 1 }
+		}
+		return c
+	}
+
+	static func unitValues(_ state: borrowing TacticalState, mine: Team) -> (mine: Float, theirs: Float) {
+		state.sim.units.reduceAlive(into: (mine: Float(0), theirs: Float(0))) { r, i, u in
 			guard !state.sim.offMap(unit: i.uid) else { return }
 			let v = Float(u.cost) * Float(u.hp) / 15
-			if u.country.team == team {
+			if u.country.team == mine {
 				r.mine += v
 			} else {
 				r.theirs += v
 			}
 		}
-		let total = value.mine + value.theirs
-		return total > 0 ? (value.mine - value.theirs) / total : 0
 	}
+
+	static func clamp(_ v: Float) -> Float { max(-1, min(1, v)) }
 
 	/// Masked softmax sample at temperature `temp` (≤ 0 degenerates to
 	/// argmax); `nil` iff no mask bit is set — same contract as argmax.

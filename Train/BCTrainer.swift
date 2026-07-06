@@ -304,7 +304,14 @@ final class BCGraph {
 	}
 
 	/// One window through the graph; `update` runs the Adam assigns.
+	/// The body drains its autorelease pool: feeds and results are
+	/// autoreleased ObjC objects (~50 MB of planes per window), and a CLI
+	/// has no runloop to drain them — long runs died of memory otherwise.
 	func step(_ w: Batcher.Window, lr: Float, update: Bool) -> Metrics {
+		autoreleasepool { stepBody(w, lr: lr, update: update) }
+	}
+
+	private func stepBody(_ w: Batcher.Window, lr: Float, update: Bool) -> Metrics {
 		let side = NSNumber(value: Observation.side)
 		let nn = NSNumber(value: n)
 		let feeds: [MPSGraphTensor: MPSGraphTensorData] = [
@@ -346,11 +353,13 @@ final class BCGraph {
 
 	/// Current variable values as a PGW1-writable weight set.
 	func checkpoint() -> LSTMWeights {
-		let out = graph.run(with: queue, feeds: [:], targetTensors: Array(vars.values), targetOperations: nil)
-		var values = [String: [Float]]()
-		for (name, shape) in LSTMWeights.spec {
-			values[name] = readFloats(out[vars[name]!]!, shape.reduce(1, *))
+		autoreleasepool {
+			let out = graph.run(with: queue, feeds: [:], targetTensors: Array(vars.values), targetOperations: nil)
+			var values = [String: [Float]]()
+			for (name, shape) in LSTMWeights.spec {
+				values[name] = readFloats(out[vars[name]!]!, shape.reduce(1, *))
+			}
+			return LSTMWeights(values: values)
 		}
-		return LSTMWeights(values: values)
 	}
 }
