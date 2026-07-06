@@ -77,7 +77,8 @@ public extension Core {
 			objective: .survive(defender.team, day: 20),
 			units: units,
 			size: 24,
-			seed: tile.x + tile.y * 32
+			seed: tile.x + tile.y * 32,
+			terrain: strategic?.sim.terrain[tile] ?? .field
 		)
 		location = .tactical
 	}

@@ -46,22 +46,26 @@ extension StrategicNodes {
 			camera.run(.move(to: cameraPosition, duration: 0.15))
 		}
 
-		map.cursor.position = state.ui.cursor.point
+		map.cursor.position = state.sim.terrain.point(at: state.ui.cursor)
 		map.cursor.zPosition = map.zPosition(at: state.ui.cursor)
 
 		state.sim.owner.indices.forEach { xy in
-			map.setBase(Self.political(state.sim.owner[xy]), at: xy)
+			map.setBase(
+				Self.political(state.sim.owner[xy], elevation: state.sim.terrain[xy].elevationLevel),
+				at: xy
+			)
 		}
 	}
 
 	/// Colour a province by its owner's team (axis/allies/soviet); .none is gray.
-	private static func political(_ country: Country) -> SKTileGroup {
+	/// `elevation` raises hill/mountain provinces like tactical highground.
+	private static func political(_ country: Country, elevation: Int) -> SKTileGroup {
 		let index: Int = switch country.team {
 		case .axis: 0
 		case .allies: 1
 		case .soviet: 2
 		case .none: -1
 		}
-		return .political(playerIndex: index, elevation: 0)
+		return .political(playerIndex: index, elevation: elevation)
 	}
 }

@@ -5,10 +5,11 @@ public extension TacticalState {
 		objective: Objective = .none,
 		units: [Unit],
 		size: Int,
-		seed: Int
+		seed: Int,
+		terrain: Terrain = .field
 	) {
 		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
-		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count)
+		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain)
 		let cities: [(XY, Country)] = Self.cities(
 			countries: players.map { p in p.country },
 			objective: objective,

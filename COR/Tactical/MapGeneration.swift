@@ -2,7 +2,11 @@ import GameplayKit
 
 public extension Map<32, Terrain> {
 
-	init(size: Int, seed: Int, players: Int = 4) {
+	/// `terrain` is the dominant terrain of the generated map: `.field` keeps
+	/// the plains baseline, `.hill`/`.mountain` lift the height field so
+	/// highground dominates. Campaign battles pass the contested province's
+	/// strategic terrain here.
+	init(size: Int, seed: Int, players: Int = 4, terrain: Terrain = .field) {
 		self = Map(size: size, zero: .none)
 
 		let size = SIMD2<Int32>(Int32(size), Int32(size))
@@ -11,17 +15,21 @@ public extension Map<32, Terrain> {
 		let humidity = GKNoiseMap.humidity(size: size, seed: seed + 1)
 		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
 
-		generateTerrain(height: height, humidity: humidity)
+		generateTerrain(
+			height: height,
+			humidity: humidity,
+			bias: 0.25 * Float(terrain.elevationLevel)
+		)
 		placeRivers(height: height)
 		let cities = placeCities(d20: &d20, players: players)
 		connectCities(cities: cities)
 		shapeRoads()
 	}
 
-	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap) {
+	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap, bias: Float) {
 		indices.forEach { xy in
 			self[xy] = Terrain(
-				height: height.value(at: xy.simd),
+				height: height.value(at: xy.simd) + bias,
 				humidity: humidity.value(at: xy.simd)
 			)
 		}
@@ -390,7 +398,7 @@ extension Terrain {
 		case -0.5 ..< 0.3: humidity > 0.5 ? .forest : .field
 		case 0.3 ..< 0.7: humidity > 0.5 ? .forestHill : .hill
 		case 0.7 ..< 0.85: .hill
-		case 0.85 ... 1.0: .mountain
+		case 0.85...: .mountain
 		default: .field
 		}
 	}

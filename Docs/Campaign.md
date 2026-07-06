@@ -46,9 +46,11 @@ HQ  ──manage roster──┐
   the turn counter, and the strategic AI. Picking an adjacent (`XY.n4`) enemy province
   and committing units launches a battle.
 - **Tactical** generates the battle via the
-  `TacticalState(players:objective:units:size:seed:)` initializer
+  `TacticalState(players:objective:units:size:seed:terrain:)` initializer
   (`COR/Tactical/TacticalStateFactory.swift`) seeded by the contested border,
-  carrying an `Objective`.
+  carrying an `Objective` and the contested province's dominant terrain
+  (`StrategicSim.terrain`), which biases map generation toward hills or
+  mountains.
 - **`Core.complete()`** does the writeback: it returns the
   surviving core units and the player's prestige to HQ
   (`Core.complete` filters `u[.aux]`), and applies the result to the strategic
@@ -114,6 +116,7 @@ inline, `BitwiseCopyable`, no heap/`String`/class fields (so `clone` / `encode`
 ```swift
 public struct StrategicSim: ~Copyable {
     public var owner: Map<32, Country>   // province ownership (political map)
+    public var terrain: Map<32, Terrain> // dominant terrain (field/hill/mountain)
     public var human: Country            // the country the player commands
     public var turn: UInt32
     public var battle: XY?               // contested tile while a battle runs; nil otherwise

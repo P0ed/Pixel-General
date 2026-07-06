@@ -60,6 +60,28 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func terrainBiasRaisesHighground() {
+		// A hill/mountain province must generate a battle map with more
+		// highground than the plains baseline, and still place cities.
+		for seed in [1, 5, 42] {
+			func highground(_ terrain: Terrain) -> Int {
+				let map = Map<32, Terrain>(size: 24, seed: seed, terrain: terrain)
+				var high = 0, cities = 0
+				for xy in map.indices {
+					if map[xy].isHighground { high += 1 }
+					if map[xy] == .city { cities += 1 }
+				}
+				#expect(cities > 0, "no city on \(terrain) map for seed \(seed)")
+				return high
+			}
+			let field = highground(.field)
+			let hill = highground(.hill)
+			let mountain = highground(.mountain)
+			#expect(field < hill, "hill bias did not raise highground for seed \(seed)")
+			#expect(hill < mountain, "mountain bias did not raise highground for seed \(seed)")
+		}
+	}
+
 	@Test func riversAreContiguousAndOrthogonal() {
 		// A river tile must touch another river/bridge through one of its 4
 		// orthogonal neighbors (after `shapeRivers`). Diagonal-only adjacency

@@ -52,6 +52,29 @@ struct StrategicTests {
 		#expect(sea > 0, "water tiles missing from the map")
 	}
 
+	@Test func europeTerrainHasHillsAndMountains() {
+		let state = StrategicState.europe(human: .fin)
+		var hills = 0, mountains = 0, highgroundOnSea = 0
+		for xy in state.sim.terrain.indices {
+			switch state.sim.terrain[xy] {
+			case .hill: hills += 1
+			case .mountain: mountains += 1
+			default: continue
+			}
+			if state.sim.owner[xy] == .none { highgroundOnSea += 1 }
+		}
+		#expect(hills > 0, "no hills on the europe map")
+		#expect(mountains > 0, "no mountains on the europe map")
+		#expect(highgroundOnSea == 0, "elevation placed on sea tiles")
+
+		// The Alps: every Austrian province is hill or mountain.
+		var flatAustria = 0
+		for xy in state.sim.owner.indices where state.sim.owner[xy] == .aut {
+			if !state.sim.terrain[xy].isHighground { flatAustria += 1 }
+		}
+		#expect(flatAustria == 0, "\(flatAustria) Austrian tiles missed the Alps")
+	}
+
 	@Test func canAttackEnemyBorderTile() {
 		let state = StrategicState.europe(human: .fin)
 		let target = Self.borderTile(state, human: .fin, target: .rus)

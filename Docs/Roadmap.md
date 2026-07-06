@@ -17,8 +17,6 @@
 
 ## Campaign
 
-- Add hills and mountains to the map of Europe.
-- Pass terrain type to map generation.
 - Dynamic diplomacy.
 - Economy.
 - Tier unlock mechanics.
