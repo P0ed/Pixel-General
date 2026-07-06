@@ -249,4 +249,32 @@ struct PolicyTests {
 			}
 		}
 	}
+
+	// MARK: - Heuristic AI
+
+	/// A generated map can hold more settlements than the plan's `CArray<32>`
+	/// buckets — villages are emergent 3-way road junctions, so their count is
+	/// unbounded. `preplan` must truncate instead of trapping (regression:
+	/// RL collection crashed on a seed-2000 map).
+	@Test func preplanHandlesSettlementOverflow() {
+		var state = Self.makeState(seed: 1)
+
+		// Paint 80 extra cities, alternating own / enemy control, so both
+		// plan buckets overflow their 32-slot capacity.
+		var painted = 0
+		for xy in state.sim.map.indices where state.sim.map[xy] == .field {
+			state.sim.map[xy] = .city
+			state.sim.control[xy] = painted % 2 == 0 ? .ger : .usa
+			painted += 1
+			if painted == 80 { break }
+		}
+		#expect(painted == 80)
+
+		var ai = TacticalSim.AI()
+		for _ in 0 ..< 5 {
+			_ = state.reduce(state.sim.axis(ai: &ai))
+		}
+		#expect(ai.ownSettlements.count == 32)
+		#expect(ai.enemySettlements.count == 32)
+	}
 }

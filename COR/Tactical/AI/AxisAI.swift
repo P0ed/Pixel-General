@@ -39,11 +39,14 @@ extension TacticalSim {
 			if isVisible(i.uid), !offMap(unit: i.uid), u.country.team != country.team { ai.enemies.add(i.uid) }
 		}
 
+		// Villages are emergent (3-way road junctions), so a map can hold more
+		// settlements than the plan arrays — keep the first 32 per bucket, in
+		// map order (deterministic, multiplayer-safe).
 		map.indices.forEach { xy in
 			if map[xy].isSettlement {
 				if control[xy] == country {
-					ai.ownSettlements.add(xy)
-				} else {
+					if !ai.ownSettlements.isFull { ai.ownSettlements.add(xy) }
+				} else if !ai.enemySettlements.isFull {
 					ai.enemySettlements.add(xy)
 				}
 			}

@@ -9,6 +9,8 @@ public extension CArray {
 
 	var isEmpty: Bool { count == 0 }
 
+	var isFull: Bool { count == capacity }
+
 	init(tail: Element) {
 		mem = .init(repeating: tail)
 		count = 0

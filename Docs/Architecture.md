@@ -5,6 +5,11 @@ The codebase is split into two modules:
 - **COR** — the headless, deterministic game core (data structures, model, state, reducers, AI). Pure logic, no UI/SpriteKit dependency. Its public API is consumed via `import COR`.
 - **PG** — the app/presentation layer: SpriteKit scenes and nodes, rendering, input wiring, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`. The view controller forwards hardware-keyboard `UIPress` events to the active scene, while touches and trackpad/scroll panning are handled in `Scene` itself.
 
+A third target, **Train**, is a macOS-only command-line tool for the LSTM opponent's
+training pipeline (rollout generation, behavior cloning and RL fine-tuning via MPSGraph,
+model parity checks, arena evaluation). It compiles the COR sources directly — a macOS
+tool cannot link the Catalyst framework — so it ships nothing; see [LSTM-AI](./LSTM-AI.md).
+
 Three game modes:
 - **HQ** (unit management),
 - **Strategic** (campaign),
@@ -128,7 +133,9 @@ COR/                  Headless game core (import COR), no UI dependency
   Model/              Shared game data: Core, Unit/Units, UnitStats (model → static stats table),
                       {Allied,Axis,Soviet}Units (per-team catalogue), Player, Terrain, Templates, Shop, Strings
   Tactical/           Combat sim + UI: state (TacticalSim/TacticalUI), reaction (action+event+reduce),
-                      AI, attacks + Duel (damage curve), movement, resupply, transport, turns, shop,
+                      AI (heuristic axis/soviet + LSTM: Encoding, ActionSpace, LSTMWeights (PGW1 IO),
+                      LSTMPolicy — pure-Swift masked-argmax inference), attacks + Duel (damage curve),
+                      movement, resupply, transport, turns, shop,
                       placement (place/vacate/spawn — the spatial invariant over position/unitsMap/cargo),
                       map generation, chess (debug scenario)
   HQ/                 Roster management: state (HQSim/HQUI), reaction (action+event+reduce), input
@@ -146,4 +153,9 @@ PG/                   App & presentation layer
   Strategic/          Strategic nodes, mode, event rendering
   Editor/             Map editor (in progress)
   Scenes.swift        Scene construction / mode wiring
+  policy.pgw          Bundled LSTM opponent weights (PGW1; heuristic fallback when absent)
+
+Train/                Headless macOS CLI (not shipped): LSTM training pipeline — rollout generation,
+                      behavior cloning + RL fine-tune (MPSGraph), model parity, arena eval;
+                      compiles COR sources directly (see Docs/LSTM-AI.md)
 ```
