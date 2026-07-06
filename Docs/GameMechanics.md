@@ -21,9 +21,10 @@ All mechanics use integer arithmetic on inline state (see [Architecture](./Archi
      regen (`regen` skill, +1 HP) → entrench (ground only, towards terrain
      base) → rest (refresh `ap`/`mp` to max).
   4. Advance `turn` to the next living player and recompute its vision.
-- If no more than one team is alive, no turn is advanced and the battle ends
-  (`.end` event); `TacticalSim.winner` then interprets the result against the
-  active `Objective`. See [Objectives & victory](#objectives--victory).
+- If no more than one team is alive — or the objective's `survive` deadline
+  has passed — no turn is advanced and the battle ends (`.end` event);
+  `TacticalSim.winner` then interprets the result against the active
+  `Objective`. See [Objectives & victory](#objectives--victory).
 
 ## Units
 
@@ -345,22 +346,18 @@ returning `Team?`; it stays `nil` while the battle is undecided. `Core.complete`
 reads `won = sim.winner == humanTeam`, so a repulse is `winner` being the
 surviving defender or `nil` (a player-driven abandon/draw).
 
-> **Not yet wired:** `winner` is read only by `Core.complete`, not by the
-> end-of-turn pass. `endTurn` still emits `.end` purely on last-team-standing,
-> so a `survive` deadline does not by itself end a live battle — it is decided
-> when the battle ends by annihilation or a manual Retreat/Abandon/Draw.
-
 ### Map mode
 
 `TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) cycles
 `.terrain` → `.political` → `.supply` — political recolors tiles by `control`
 (country/team); supply shades tiles on a red-to-green gradient by the human
-player's *effective* resupply grade (`TacticalSim.supplySources(for:)` +
-`SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +1 next to a
-friendly-team supply truck, +1 on/next to an owned settlement, minus the
-rough-terrain and enemy-control supply penalties (ground-unit perspective —
-airfields serve air units only and are not shown). Bound to the `.mode`
-input event.
+player's resupply grade (`TacticalSim.supplySources(for:)` +
+`SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +2 on or next to a
+friendly-team supply truck, +3 in the `.c5` plus-shape of an owned settlement,
+minus the rough-terrain and enemy-control supply penalties (ground-unit
+perspective — airfields serve air units only and are not shown; the shading
+weighs sources heavier than the +1/+1 of the actual `resupply(unit:)` math).
+Bound to the `.mode` input event.
 
 Only the base tile changes with the mode: buildings/roads/bridges
 (decorations) and fog of war render on separate tile-map layers in every

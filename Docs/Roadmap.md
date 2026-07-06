@@ -12,6 +12,8 @@
 - Separate layer for air units.
 - Weather.
 - Bridging engineers.
+- Explosion animations (three levels).
+- Movement sounds depending on unit type (leg, wheel, track, heli, jet).
 
 ## Campaign
 

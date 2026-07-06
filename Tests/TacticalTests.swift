@@ -470,14 +470,14 @@ struct TacticalTests {
 		#expect(sim.units[forest].ammo == 0, "Rough terrain chokes the trickle")
 	}
 
-	@Test func supplySourcesMirrorPenalties() {
+	@Test func supplyLevelWeighsSourcesAndPenalties() {
 		var sim = Self.supplySim()
 		sim.map[XY(1, 4)] = .mountain
 		let sources = sim.supplySources(for: .swe)
 
 		#expect(!sources.hostile[XY(2, 2)])
 		#expect(sources.hostile[XY(5, 5)], "rus-controlled ground is hostile for swe")
-		#expect(sources.level(at: XY(0, 1), terrain: .field) == 1, "Next to the owned city")
+		#expect(sources.level(at: XY(0, 1), terrain: .field) == 3, "In the owned city's c5")
 		#expect(sources.level(at: XY(2, 2), terrain: .field) == 0)
 		#expect(sources.level(at: XY(1, 4), terrain: .mountain) == -2)
 		#expect(sources.level(at: XY(5, 5), terrain: .field) == -1)

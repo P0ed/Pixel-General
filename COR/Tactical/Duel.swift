@@ -48,7 +48,7 @@ struct Duel {
 		return UInt8(clamping: (scaled + 5_000) / 10_000)
 	}
 
-	private var thresholds: [4 of Int] {
+	var thresholds: [4 of Int] {
 		let dif = Int(atk) - Int(def)
 
 		return [
