@@ -169,13 +169,18 @@ actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
 actions** (mutation oracle). `--wseed` plays random weights instead — the sanity floor.
 
 **`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
-[--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]`** — REINFORCE
+[--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
+[--curriculum 0]`** — REINFORCE
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
 sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
 touched, and each episode is fully determined by its index, so runs are reproducible);
-EMA baseline (0.9); advantages normalized to mean |A| = 1; then the episodes replay
-through the BC graph as advantage-weighted CE (Σ|w| normalization ≡ the policy
-gradient).
+leave-one-out batch baseline (an EMA baseline goes stale after a policy shift and
+un-learns everything — within-batch advantages always straddle zero); advantages
+normalized to mean |A| = 1, clamped to ±3, and **length-normalized** (an episode's
+gradient mass is ∝ its action count, and losses/draws run to the day cap while wins
+end early — unscaled, the update is dominated by "stop doing what long episodes do",
+i.e. acting at all); then the episodes replay through the BC graph as
+advantage-weighted CE (Σ|w| normalization ≡ the policy gradient).
 
 Terminal reward = dense, symmetric progress terms (weights are the `w…` constants at
 the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFORCE at
@@ -188,11 +193,23 @@ the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFO
 | prestige | 0.25 | (mine − theirs) / (mine + theirs) at episode end |
 | outcome | 0.5 | ±0.5 on a decided battle; timeouts score 0 and are judged by the dense terms |
 
+`--curriculum <0-3>` starts collection with the policy seat economically boosted
+(3 = rich + baseLevel 5 + tier 3 vs poor; 2 = rich + baseLevel 2 vs poor; 1 = rich vs
+poor) and anneals one level down whenever the EMA sampled win rate clears 35% — pure
+REINFORCE needs to *experience* captures and wins before it can reinforce them, and at
+even matchups the sampled win rate is ~0 (measured: level 3 gives the BC policy ~50%
+sampled wins vs ~0% at level 0). The boost only changes collection configs; the arena
+always plays the standard even matchups.
+
 Every `--ckpt` iterations: `ckpt-N.pgw`, an **argmax** arena on eval configs
 `0…evaln−1` (same configs as `Train eval`), and episode dumps (`episodes-N/`, replay
-format). `rl-log.csv`:
-`iter,wins,losses,draws,meanR,baseline,settle,units,prestige,days,samples,loss,windows,arenaWin`.
-Note `--resume` does not exist here: restarting from a checkpoint restarts Adam.
+format — boosted seats are recorded in the header, so dumps stay replay-valid).
+`rl-log.csv`:
+`iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin`
+(`madv` = raw mean |advantage| before normalization — near the 0.1 floor means the
+batch carries almost no signal).
+Note `--resume` does not exist here: restarting from a checkpoint restarts Adam (pass
+the reached `--curriculum` level explicitly when continuing an annealed run).
 
 ### Reading a run
 

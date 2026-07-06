@@ -5,9 +5,11 @@ import Foundation
 /// *sampling* (own SplitMix64 — the sim's D20 is never touched), scores them
 /// with a terminal reward, and replays them through the BC graph as
 /// advantage-weighted cross-entropy — with `Σ|w|` normalization that is
-/// exactly the policy gradient. The baseline is an EMA of episode returns;
-/// advantages are normalized to mean |A| = 1 per batch (the graph divides by
-/// Σ|w| per window, so this keeps every window's scale honest).
+/// exactly the policy gradient. The baseline is the leave-one-out batch mean
+/// (within-batch advantages always straddle zero — an EMA baseline went stale
+/// after a policy shift and un-learned the BC prior, see run 4); advantages
+/// are normalized to mean |A| = 1 per batch and clamped to ±3 (the graph
+/// divides by Σ|w| per window, so this keeps every window's scale honest).
 ///
 /// Reward: dense, symmetric progress terms — win/loss alone starves
 /// REINFORCE when the sampled win rate is ~0 (run-2 lesson: the policy
@@ -53,6 +55,7 @@ enum RLTrainer {
 		var seed = 1000
 		var ckpt = 10
 		var evalN = 8
+		var curriculum = 0
 
 		var i = 0
 		while i < args.count {
@@ -73,6 +76,7 @@ enum RLTrainer {
 			case "--seed": seed = try Int(next()) ?? seed
 			case "--ckpt": ckpt = try Int(next()) ?? ckpt
 			case "--evaln": evalN = try Int(next()) ?? evalN
+			case "--curriculum": curriculum = try Int(next()) ?? curriculum
 			default: throw TrainError.usage("unknown option \(args[i])")
 			}
 			i += 1
@@ -91,27 +95,44 @@ enum RLTrainer {
 
 		let graph = try BCGraph(weights: weights, b: b, t: t)
 		var battleIndex = seed
-		var baseline: Float?
 		var globalStep = 0
-		var csv = "iter,wins,losses,draws,meanR,baseline,settle,units,prestige,days,samples,loss,windows,arenaWin\n"
+		var level = curriculum
+		var winEMA: Float = 0
+		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
 
 		for iter in 1 ... iters {
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
-			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp)
+			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp, level: level)
 			battleIndex += episodes
 
-			let meanR = batch.reduce(0) { $0 + $1.reward } / Float(batch.count)
-			let base = baseline ?? meanR
-			baseline = 0.9 * base + 0.1 * meanR
-			var advantages = batch.map { e in e.reward - base }
-			let meanAbs = max(advantages.reduce(0) { $0 + abs($1) } / Float(advantages.count), 0.1)
-			advantages = advantages.map { a in a / meanAbs }
+			// Leave-one-out batch baseline: within-batch advantages always
+			// straddle zero, so a policy shift can never turn a whole update
+			// into a wholesale push-down (run-4 lesson: the EMA baseline went
+			// stale after the first big shift, every advantage went ≈ −1.3
+			// for eight iterations straight, and the BC prior was unlearned).
+			// The clamp bounds any single episode's pull after normalization.
+			let n = Float(batch.count)
+			let meanR = batch.reduce(0) { $0 + $1.reward } / n
+			var advantages = batch.map { e in (e.reward - meanR) * n / max(n - 1, 1) }
+			let meanAbs = max(advantages.reduce(0) { $0 + abs($1) } / n, 0.1)
+			advantages = advantages.map { a in max(-3, min(3, a / meanAbs)) }
 
+			// Length-normalized: an episode's gradient mass is ∝ its sample
+			// count, and losing/drawing episodes run to the day cap with
+			// thousands of actions while wins end early with few — unscaled,
+			// the update is dominated by "push down whatever long episodes
+			// do", which is acting at all (run-4b lesson: one update halved
+			// samples/episode and the policy just ended turns). Scaling by
+			// meanSamples/samples makes each episode vote once.
+			let meanSamples = batch.reduce(0) { $0 + Float($1.samples) } / n
 			let batcher = Batcher(
-				episodes: batch.indices.map { j in (batch[j].replay, batch[j].seat, advantages[j]) },
+				episodes: batch.indices.map { j in
+					(batch[j].replay, batch[j].seat,
+					 advantages[j] * meanSamples / max(Float(batch[j].samples), 1))
+				},
 				b: b, t: t
 			)
 			var loss: Float = 0
@@ -136,7 +157,16 @@ enum RLTrainer {
 			let settle = batch.reduce(0) { $0 + $1.settleTerm } / Float(batch.count)
 			let units = batch.reduce(0) { $0 + $1.unitTerm } / Float(batch.count)
 			let prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / Float(batch.count)
-			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  base \(f(base))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))")
+			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  |A| \(f(meanAbs))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))\(level > 0 ? "  lvl \(level)" : "")")
+
+			// Self-paced curriculum: once the policy wins comfortably at this
+			// advantage, shrink it.
+			winEMA = 0.8 * winEMA + 0.2 * Float(wins) / Float(batch.count)
+			if level > 0, winEMA > 0.35 {
+				level -= 1
+				winEMA = 0
+				print("  curriculum → level \(level)")
+			}
 
 			var arena = ""
 			if iter % ckpt == 0 || iter == iters {
@@ -160,7 +190,7 @@ enum RLTrainer {
 					try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
 				}
 			}
-			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(base),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(arena)\n"
+			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(meanAbs),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(level),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -178,24 +208,44 @@ enum RLTrainer {
 	/// Plays `count` episodes concurrently; every episode is fully determined
 	/// by its battle index (config, map seed, sampling seed, policy seat), so
 	/// the batch is reproducible regardless of thread interleaving.
-	static func collect(weights: LSTMWeights, count: Int, startIndex: Int, temp: Float) -> [Episode] {
+	static func collect(weights: LSTMWeights, count: Int, startIndex: Int, temp: Float, level: Int = 0) -> [Episode] {
 		var results = [Episode?](repeating: nil, count: count)
 		unsafe results.withUnsafeMutableBufferPointer { buffer in
 			let out = unsafe UnsafeSendable(buffer)
 			DispatchQueue.concurrentPerform(iterations: count) { j in
 				unsafe out.value[j] = play(
 					index: startIndex + j, seat: j % 2,
-					weights: weights, temp: temp
+					weights: weights, temp: temp, level: level
 				)
 			}
 		}
 		return results.compactMap { $0 }
 	}
 
+	/// The standard config with the policy seat's economy boosted by
+	/// `level` (0 = untouched): the curriculum manufactures the captures
+	/// and wins REINFORCE must *experience* before it can reinforce them.
+	static func config(index: Int, seat: Int, level: Int) -> Replay {
+		var replay = Rollouts.replay(index: index)
+		guard level > 0 else { return replay }
+		replay.seats[seat].prestige = .rich
+		replay.seats[1 - seat].prestige = .poor
+		if level >= 2 {
+			replay.seats[seat].baseLevel = max(replay.seats[seat].baseLevel, 2)
+			replay.seats[1 - seat].baseLevel = 0
+		}
+		if level >= 3 {
+			replay.seats[seat].baseLevel = 5
+			replay.seats[seat].tier = 3
+			replay.seats[1 - seat].tier = 0
+		}
+		return replay
+	}
+
 	/// One sampled episode: the policy on `seat`, the heuristic opposite,
 	/// rollout budgets, terminal reward from the final state.
-	static func play(index: Int, seat: Int, weights: LSTMWeights, temp: Float) -> Episode {
-		var replay = Rollouts.replay(index: index)
+	static func play(index: Int, seat: Int, weights: LSTMWeights, temp: Float, level: Int = 0) -> Episode {
+		var replay = config(index: index, seat: seat, level: level)
 		var state = replay.makeState()
 		var policy = LSTMPolicy(weights: weights)
 		var ai = TacticalSim.AI()
