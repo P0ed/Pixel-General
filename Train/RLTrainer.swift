@@ -96,8 +96,9 @@ enum RLTrainer {
 		let graph = try BCGraph(weights: weights, b: b, t: t)
 		var battleIndex = seed
 		var globalStep = 0
-		var level = curriculum
+		var difficulty = Float(curriculum)
 		var winEMA: Float = 0
+		var starved = 0
 		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
@@ -105,7 +106,7 @@ enum RLTrainer {
 		for iter in 1 ... iters {
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
-			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp, level: level)
+			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp, difficulty: difficulty)
 			battleIndex += episodes
 
 			// Leave-one-out batch baseline: within-batch advantages always
@@ -157,15 +158,28 @@ enum RLTrainer {
 			let settle = batch.reduce(0) { $0 + $1.settleTerm } / Float(batch.count)
 			let units = batch.reduce(0) { $0 + $1.unitTerm } / Float(batch.count)
 			let prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / Float(batch.count)
-			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  |A| \(f(meanAbs))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))\(level > 0 ? "  lvl \(level)" : "")")
+			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  |A| \(f(meanAbs))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))\(difficulty > 0 ? "  d \(f(difficulty))" : "")")
 
-			// Self-paced curriculum: once the policy wins comfortably at this
-			// advantage, shrink it.
+			// Self-paced curriculum, both directions: winning comfortably
+			// nudges difficulty down a quarter-step (soft EMA decay keeps
+			// momentum across smooth terrain); a winless stretch nudges it
+			// back up rather than starving (run 6 sat winless for 46 iters).
 			winEMA = 0.8 * winEMA + 0.2 * Float(wins) / Float(batch.count)
-			if level > 0, winEMA > 0.35 {
-				level -= 1
-				winEMA = 0
-				print("  curriculum → level \(level)")
+			if difficulty > 0, winEMA > 0.35 {
+				difficulty = max(0, difficulty - 0.25)
+				winEMA *= 0.5
+				starved = 0
+				print("  curriculum → difficulty \(f(difficulty))")
+			} else if difficulty < Float(curriculum), wins == 0 {
+				starved += 1
+				if starved >= 6 {
+					difficulty = min(Float(curriculum), difficulty + 0.25)
+					starved = 0
+					winEMA = 0
+					print("  curriculum → difficulty \(f(difficulty)) (win starvation)")
+				}
+			} else {
+				starved = 0
 			}
 
 			var arena = ""
@@ -190,7 +204,7 @@ enum RLTrainer {
 					try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
 				}
 			}
-			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(meanAbs),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(level),\(arena)\n"
+			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(meanAbs),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(difficulty),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -206,15 +220,24 @@ enum RLTrainer {
 	// MARK: - Episode collection
 
 	/// Plays `count` episodes concurrently; every episode is fully determined
-	/// by its battle index (config, map seed, sampling seed, policy seat), so
-	/// the batch is reproducible regardless of thread interleaving.
-	static func collect(weights: LSTMWeights, count: Int, startIndex: Int, temp: Float, level: Int = 0) -> [Episode] {
+	/// by its battle index (config, map seed, sampling seed, policy seat, mix
+	/// draw), so the batch is reproducible regardless of thread interleaving.
+	/// `difficulty` is continuous: each episode plays at ⌊d⌋ or ⌈d⌉ with
+	/// probability from the fractional part — discrete level steps proved to
+	/// be cliffs (run 7: even the purely economic 3→2 step collapsed the win
+	/// rate), mixing makes every anneal a gradual re-weighting of the batch.
+	static func collect(weights: LSTMWeights, count: Int, startIndex: Int, temp: Float, difficulty: Float = 0) -> [Episode] {
+		let base = Int(difficulty)
+		let frac = difficulty - Float(base)
 		var results = [Episode?](repeating: nil, count: count)
 		unsafe results.withUnsafeMutableBufferPointer { buffer in
 			let out = unsafe UnsafeSendable(buffer)
 			DispatchQueue.concurrentPerform(iterations: count) { j in
+				let index = startIndex + j
+				var mix = Rand(s: 0xC0FF_EE00 &+ UInt64(bitPattern: Int64(index)))
+				let level = base + (Float(mix.next() >> 40) * 0x1p-24 < frac ? 1 : 0)
 				unsafe out.value[j] = play(
-					index: startIndex + j, seat: j % 2,
+					index: index, seat: j % 2,
 					weights: weights, temp: temp, level: level
 				)
 			}
@@ -225,9 +248,16 @@ enum RLTrainer {
 	/// The standard config with the policy seat's economy boosted by
 	/// `level` (0 = untouched): the curriculum manufactures the captures
 	/// and wins REINFORCE must *experience* before it can reinforce them.
+	/// While boosted, config tier asymmetry is neutralized — a tier-0
+	/// seat facing tier 3 is unwinnable whatever its prestige, and such
+	/// batches poison the curriculum with hopeless losses (run-6 lesson:
+	/// the 3→2 step reintroduced them and win starvation returned).
 	static func config(index: Int, seat: Int, level: Int) -> Replay {
 		var replay = Rollouts.replay(index: index)
 		guard level > 0 else { return replay }
+		let tier = max(replay.seats[0].tier, replay.seats[1].tier)
+		replay.seats[0].tier = tier
+		replay.seats[1].tier = tier
 		replay.seats[seat].prestige = .rich
 		replay.seats[1 - seat].prestige = .poor
 		if level >= 2 {

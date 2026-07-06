@@ -193,13 +193,19 @@ the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFO
 | prestige | 0.25 | (mine − theirs) / (mine + theirs) at episode end |
 | outcome | 0.5 | ±0.5 on a decided battle; timeouts score 0 and are judged by the dense terms |
 
-`--curriculum <0-3>` starts collection with the policy seat economically boosted
-(3 = rich + baseLevel 5 + tier 3 vs poor; 2 = rich + baseLevel 2 vs poor; 1 = rich vs
-poor) and anneals one level down whenever the EMA sampled win rate clears 35% — pure
-REINFORCE needs to *experience* captures and wins before it can reinforce them, and at
-even matchups the sampled win rate is ~0 (measured: level 3 gives the BC policy ~50%
-sampled wins vs ~0% at level 0). The boost only changes collection configs; the arena
-always plays the standard even matchups.
+`--curriculum <0-3>` starts collection with the policy seat economically boosted.
+Difficulty is **continuous**: each episode plays at level ⌊d⌋ or ⌈d⌉ with probability
+from the fractional part (level 3 = rich + baseLevel 5 + tier 3 vs poor; 2 = rich +
+baseLevel 2 vs poor; 1 = rich vs poor; at any boosted level, config tier asymmetry is
+neutralized — a tier-0 seat facing tier 3 is unwinnable at any prestige). d anneals
+down a quarter-step whenever the EMA sampled win rate clears 35%, and back **up** a
+quarter-step after 6 consecutive winless iterations — discrete level steps proved to be
+cliffs (even the purely economic tier-equalized 3→2 step collapsed the win rate), and
+without the way back up a cliff means starvation. Pure REINFORCE needs to *experience*
+captures and wins before it can reinforce them, and at even matchups the sampled win
+rate is ~0 (measured: level 3 gives the BC policy ~50% sampled wins vs ~0% at level 0).
+The boost only changes collection configs; the arena always plays the standard even
+matchups. The `level` CSV column records d (fractional).
 
 Every `--ckpt` iterations: `ckpt-N.pgw`, an **argmax** arena on eval configs
 `0…evaln−1` (same configs as `Train eval`), and episode dumps (`episodes-N/`, replay
