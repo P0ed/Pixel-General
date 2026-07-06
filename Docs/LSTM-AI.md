@@ -174,8 +174,12 @@ actions** (mutation oracle). `--wseed` plays random weights instead — the sani
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
 sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
 touched, and each episode is fully determined by its index, so runs are reproducible);
-leave-one-out batch baseline (an EMA baseline goes stale after a policy shift and
-un-learns everything — within-batch advantages always straddle zero); advantages
+leave-one-out baseline within each difficulty-level group (an EMA baseline goes stale
+after a policy shift and un-learns everything — within-batch advantages always straddle
+zero; a *shared* mean over a mixed-difficulty batch grades episodes by their matchup,
+not their play — harder-level episodes sit systematically below it and the update
+leaks "push down whatever the policy does at the harder level"; a singleton group
+contributes no gradient); advantages
 normalized to mean |A| = 1, clamped to ±3, and **length-normalized** (an episode's
 gradient mass is ∝ its action count, and losses/draws run to the day cap while wins
 end early — unscaled, the update is dominated by "stop doing what long episodes do",
@@ -199,9 +203,12 @@ from the fractional part (level 3 = rich + baseLevel 5 + tier 3 vs poor; 2 = ric
 baseLevel 2 vs poor; 1 = rich vs poor; at any boosted level, config tier asymmetry is
 neutralized — a tier-0 seat facing tier 3 is unwinnable at any prestige). d anneals
 down a quarter-step whenever the EMA sampled win rate clears 35%, and back **up** a
-quarter-step after 6 consecutive winless iterations — discrete level steps proved to be
-cliffs (even the purely economic tier-equalized 3→2 step collapsed the win rate), and
-without the way back up a cliff means starvation. Pure REINFORCE needs to *experience*
+quarter-step after 6 consecutive iterations with the EMA under 0.10 (restarting the
+EMA at 0.2 — a fair evaluation window before the floor can re-trigger). Discrete level
+steps proved to be cliffs (even the purely economic tier-equalized 3→2 step collapsed
+the win rate); without the way back up a cliff means starvation, and a strict zero-win
+ascent trigger left run 8 parked at W1–2/16 — too many wins for six consecutive zeros,
+hopelessly short of the descent threshold. Pure REINFORCE needs to *experience*
 captures and wins before it can reinforce them, and at even matchups the sampled win
 rate is ~0 (measured: level 3 gives the BC policy ~50% sampled wins vs ~0% at level 0).
 The boost only changes collection configs; the arena always plays the standard even

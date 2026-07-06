@@ -5,9 +5,11 @@ import Foundation
 /// *sampling* (own SplitMix64 — the sim's D20 is never touched), scores them
 /// with a terminal reward, and replays them through the BC graph as
 /// advantage-weighted cross-entropy — with `Σ|w|` normalization that is
-/// exactly the policy gradient. The baseline is the leave-one-out batch mean
-/// (within-batch advantages always straddle zero — an EMA baseline went stale
-/// after a policy shift and un-learned the BC prior, see run 4); advantages
+/// exactly the policy gradient. The baseline is the leave-one-out mean of the
+/// episode's difficulty-level group (within-batch advantages always straddle
+/// zero — an EMA baseline went stale after a policy shift and un-learned the
+/// BC prior, see run 4; a shared mean over a mixed-difficulty batch graded
+/// episodes by their matchup, not their play, see run 8); advantages
 /// are normalized to mean |A| = 1 per batch and clamped to ±3 (the graph
 /// divides by Σ|w| per window, so this keeps every window's scale honest).
 ///
@@ -35,6 +37,7 @@ enum RLTrainer {
 	struct Episode {
 		var replay: Replay
 		var seat: Int
+		var level = 0
 		var reward: Float = 0
 		var outcome = "D"
 		var samples = 0
@@ -109,15 +112,31 @@ enum RLTrainer {
 			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp, difficulty: difficulty)
 			battleIndex += episodes
 
-			// Leave-one-out batch baseline: within-batch advantages always
-			// straddle zero, so a policy shift can never turn a whole update
-			// into a wholesale push-down (run-4 lesson: the EMA baseline went
-			// stale after the first big shift, every advantage went ≈ −1.3
-			// for eight iterations straight, and the BC prior was unlearned).
+			// Leave-one-out baseline, stratified by drawn difficulty level:
+			// within-batch advantages always straddle zero, so a policy shift
+			// can never turn a whole update into a wholesale push-down (run-4
+			// lesson: the EMA baseline went stale after the first big shift,
+			// every advantage went ≈ −1.3 for eight iterations straight, and
+			// the BC prior was unlearned). Stratification because a mixed
+			// batch under one shared mean confounds "which level did you
+			// draw" with "how well did you act" — harder-level episodes sit
+			// systematically below the mean and every update leaks "push down
+			// whatever the policy does at the harder level" (run-8 lesson:
+			// parked at d=2.5 the wins decayed 5→1 of 16 over 20 iterations).
+			// A singleton group has no baseline and contributes no gradient.
 			// The clamp bounds any single episode's pull after normalization.
 			let n = Float(batch.count)
 			let meanR = batch.reduce(0) { $0 + $1.reward } / n
-			var advantages = batch.map { e in (e.reward - meanR) * n / max(n - 1, 1) }
+			var advantages = [Float](repeating: 0, count: batch.count)
+			for level in Set(batch.map(\.level)) {
+				let group = batch.indices.filter { batch[$0].level == level }
+				guard group.count > 1 else { continue }
+				let g = Float(group.count)
+				let mean = group.reduce(0) { $0 + batch[$1].reward } / g
+				for j in group {
+					advantages[j] = (batch[j].reward - mean) * g / (g - 1)
+				}
+			}
 			let meanAbs = max(advantages.reduce(0) { $0 + abs($1) } / n, 0.1)
 			advantages = advantages.map { a in max(-3, min(3, a / meanAbs)) }
 
@@ -162,20 +181,26 @@ enum RLTrainer {
 
 			// Self-paced curriculum, both directions: winning comfortably
 			// nudges difficulty down a quarter-step (soft EMA decay keeps
-			// momentum across smooth terrain); a winless stretch nudges it
-			// back up rather than starving (run 6 sat winless for 46 iters).
+			// momentum across smooth terrain); a *starving* stretch nudges it
+			// back up. Starvation is winEMA under a floor, not a strict
+			// zero-win streak — run 8 parked 20 iterations at W1–2/16, too
+			// many wins to ever hit six consecutive zeros, hopelessly short
+			// of the descent threshold. On ascent winEMA restarts at 0.2:
+			// above the floor so the easier mix gets a fair evaluation
+			// window, below the descent threshold so it must earn the way
+			// back down.
 			winEMA = 0.8 * winEMA + 0.2 * Float(wins) / Float(batch.count)
 			if difficulty > 0, winEMA > 0.35 {
 				difficulty = max(0, difficulty - 0.25)
 				winEMA *= 0.5
 				starved = 0
 				print("  curriculum → difficulty \(f(difficulty))")
-			} else if difficulty < Float(curriculum), wins == 0 {
+			} else if difficulty < Float(curriculum), winEMA < 0.10 {
 				starved += 1
 				if starved >= 6 {
 					difficulty = min(Float(curriculum), difficulty + 0.25)
 					starved = 0
-					winEMA = 0
+					winEMA = 0.2
 					print("  curriculum → difficulty \(f(difficulty)) (win starvation)")
 				}
 			} else {
@@ -280,7 +305,7 @@ enum RLTrainer {
 		var policy = LSTMPolicy(weights: weights)
 		var ai = TacticalSim.AI()
 		var rng = Rand(s: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
-		var episode = Episode(replay: replay, seat: seat)
+		var episode = Episode(replay: replay, seat: seat, level: level)
 
 		let mine = replay.seats[seat].country.team
 		let theirs = replay.seats[1 - seat].country.team
