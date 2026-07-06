@@ -55,8 +55,8 @@ enum Parity {
 		/// logits weren't in a near-tie.
 		func checkArgmax(_ head: String, _ swift: [Float], _ graph: [Float], _ mask: [Bool]) {
 			guard
-				let a = policy.argmax(swift, mask),
-				let b = policy.argmax(graph, mask),
+				let a = LSTMPolicy.argmax(swift, mask),
+				let b = LSTMPolicy.argmax(graph, mask),
 				a != b, abs(swift[a] - swift[b]) > threshold
 			else { return }
 			flips += 1
@@ -93,7 +93,7 @@ enum Parity {
 					diff("value", [policy.lastValue], [out.value])
 					checkArgmax("kind", trace.kind, out.kind, masks.kinds)
 
-					let kind = policy.argmax(trace.kind, masks.kinds).flatMap(ActionSpace.Kind.init)
+					let kind = LSTMPolicy.argmax(trace.kind, masks.kinds).flatMap(ActionSpace.Kind.init)
 					if let actor = trace.actor, let kind {
 						diff("actor", actor, out.actor)
 						checkArgmax("actor", actor, out.actor, masks.actors[kind.rawValue])

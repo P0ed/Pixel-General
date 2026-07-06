@@ -16,7 +16,7 @@ import Foundation
 /// magic `UInt32` "PGW1", version `UInt32`, record count `UInt32`; per record:
 /// name length `UInt16` + UTF-8 name, rank `UInt8`, `UInt32` dims, float32
 /// payload.
-public struct LSTMWeights {
+public struct LSTMWeights: Sendable {
 	public static let magic: UInt32 = 0x3157_4750	// "PGW1"
 	public static let version: UInt32 = 1
 
@@ -126,7 +126,7 @@ public struct LSTMWeights {
 
 		func put<T: FixedWidthInteger>(_ v: T) {
 			var le = v.littleEndian
-			unsafe withUnsafeBytes(of: &le) { raw in out.append(contentsOf: raw) }
+			unsafe withUnsafeBytes(of: &le) { raw in unsafe out.append(contentsOf: raw) }
 		}
 
 		put(Self.magic)

@@ -36,6 +36,22 @@ public extension TacticalState {
 		var ai = TacticalSim.AI()
 		return { state in state.sim.run(&ai) }
 	}
+
+	/// Same hook shape, but AI seats play through the LSTM policy when
+	/// weights are provided — identical to `ai` otherwise. One policy per
+	/// seat: the recurrent state is that seat's battle memory under its own
+	/// fog and must not mix across players. The policy resets itself when the
+	/// turn counter goes backwards (a new battle reusing this closure).
+	static func ai(lstm weights: LSTMWeights?) -> (borrowing TacticalState) -> TacticalAction? {
+		guard let weights else { return ai }
+		var policies = [Int: LSTMPolicy]()
+		return { state in
+			guard state.sim.player.type == .ai else { return nil }
+			let seat = state.sim.playerIndex
+			if policies[seat] == nil { policies[seat] = LSTMPolicy(weights: weights) }
+			return policies[seat]!.action(for: state.sim)
+		}
+	}
 }
 
 extension TacticalSim {

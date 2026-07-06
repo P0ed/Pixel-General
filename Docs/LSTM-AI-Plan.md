@@ -174,7 +174,10 @@ optional KL anchor to the BC policy. Reuses the BC graph with advantage-weighted
    7.5 → 5.25, held-out loss 6.28 → 5.81, held-out accuracy kind 0.66 / actor 0.29
    (1024-way) / target 0.39 / slot 0.67. Checkpoint: `tmp/runs/bc/policy.pgw`.
    (Also fixed a pre-existing UInt16 prestige-overflow crash in `AxisAI.purchase`.)
-6. **M6 — Eval harness**: `Train/Eval.swift`. ✓ win-rate table vs axisAI.
+6. ✅ **M6 — Eval harness**: `Train/Eval.swift` (`Train eval`; each config played from
+   both sides, mutation oracle, hard gate on 0 illegal actions). ✓ BC checkpoint over
+   64 battles: 7.8% wins (5W 51L 8D), avg 52 days, 0 illegal in 78,669 policy actions;
+   random-weight baseline 0% (mostly timeouts).
 7. **M7 — RL fine-tune**: `Train/RLTrainer.swift`. ✓ win rate improves over the BC
    checkpoint.
 8. **M8 — App integration**: `policy.pgw` resource + Settings toggle +

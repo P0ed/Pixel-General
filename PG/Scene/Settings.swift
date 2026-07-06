@@ -4,6 +4,9 @@ import COR
 struct Settings {
 	var soundLevel: UInt8 = 1
 	var animationSpeed: UInt8 = 1
+	/// Tactical AI opponent: 0 = classic heuristic, 1 = neural (LSTM),
+	/// falling back to classic when no weights are bundled.
+	var aiKind: UInt8 = 0
 }
 
 extension Settings {
@@ -22,6 +25,10 @@ extension Settings {
 
 	mutating func toggleAnimation() {
 		animationSpeed.toggle4()
+	}
+
+	mutating func toggleAI() {
+		aiKind = aiKind == 0 ? 1 : 0
 	}
 
 	var animationScale: Double {

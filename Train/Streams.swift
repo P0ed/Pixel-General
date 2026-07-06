@@ -78,12 +78,20 @@ final class SampleStream {
 /// windows per lane by the trainer (`carry`); when a stream ends mid-window
 /// the rest of the lane's window is zero-weight padding and the lane restarts
 /// with a fresh stream — and zeroed h/c — at the next window boundary.
+///
+/// Two sources: a replay corpus on disk (BC — endless, epoch-shuffled) or an
+/// in-memory episode list (RL — each consumed exactly once, on-policy; the
+/// episode's advantage scales every label weight, so the graph's weighted CE
+/// becomes the policy gradient). A window with `samples == 0` means the
+/// episode list is exhausted.
 final class Batcher {
 	let b: Int
 	let t: Int
 	var n: Int { b * t }
 
 	private let files: [URL]
+	private var episodes: [(replay: Replay, seat: Int, scale: Float)] = []
+	private let onePass: Bool
 	private var rng: UInt64
 	private var order: [Int] = []
 	private var cursor = 0
@@ -91,6 +99,7 @@ final class Batcher {
 
 	private struct Lane {
 		var stream: SampleStream?
+		var scale: Float = 1
 		var h = [Float](repeating: 0, count: LSTMWeights.hidden)
 		var c = [Float](repeating: 0, count: LSTMWeights.hidden)
 	}
@@ -108,12 +117,30 @@ final class Batcher {
 		self.files = files
 		self.b = b
 		self.t = t
+		onePass = false
 		rng = seed
 		lanes = [Lane](repeating: Lane(), count: b)
 	}
 
-	/// Streams are battle-seat pairs, shuffled anew each epoch.
-	private func nextStream() -> SampleStream? {
+	init(episodes: [(replay: Replay, seat: Int, scale: Float)], b: Int, t: Int) {
+		files = []
+		self.episodes = episodes
+		self.b = b
+		self.t = t
+		onePass = true
+		rng = 0
+		lanes = [Lane](repeating: Lane(), count: b)
+	}
+
+	/// BC: streams are battle-seat pairs, shuffled anew each epoch.
+	/// RL: the episode list, front to back, once.
+	private func nextStream() -> (SampleStream, Float)? {
+		if onePass {
+			guard cursor < episodes.count else { return nil }
+			let e = episodes[cursor]
+			cursor += 1
+			return (SampleStream(replay: e.replay, seat: e.seat), e.scale)
+		}
 		if cursor >= order.count {
 			order = Array(0 ..< files.count * 2)
 			for i in (1 ..< order.count).reversed() {
@@ -125,7 +152,7 @@ final class Batcher {
 		let id = order[cursor]
 		cursor += 1
 		guard let replay = try? Replay.read(files[id / 2]) else { return nil }
-		return SampleStream(replay: replay, seat: id % 2)
+		return (SampleStream(replay: replay, seat: id % 2), 1)
 	}
 
 	func window() -> Window {
@@ -151,7 +178,9 @@ final class Batcher {
 
 		for lane in 0 ..< b {
 			if lanes[lane].stream == nil {
-				lanes[lane].stream = nextStream()
+				let next = nextStream()
+				lanes[lane].stream = next?.0
+				lanes[lane].scale = next?.1 ?? 1
 				lanes[lane].h = [Float](repeating: 0, count: LSTMWeights.hidden)
 				lanes[lane].c = [Float](repeating: 0, count: LSTMWeights.hidden)
 			}
@@ -172,19 +201,20 @@ final class Batcher {
 				w.actorMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.actorMask)
 				w.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)
 				w.slotMask.replaceSubrange(i * ActionSpace.slots ..< (i + 1) * ActionSpace.slots, with: s.slotMask)
+				let scale = lanes[lane].scale
 				w.kind[i] = s.kind
-				w.kindW[i] = 1
+				w.kindW[i] = scale
 				if s.actor >= 0 {
 					w.actor[i] = s.actor
-					w.actorW[i] = 1
+					w.actorW[i] = scale
 				}
 				if s.target >= 0 {
 					w.target[i] = s.target
-					w.targetW[i] = 1
+					w.targetW[i] = scale
 				}
 				if s.slot >= 0 {
 					w.slot[i] = s.slot
-					w.slotW[i] = 1
+					w.slotW[i] = scale
 				}
 				w.samples += 1
 			}

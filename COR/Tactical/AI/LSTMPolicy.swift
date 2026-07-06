@@ -51,9 +51,17 @@ public struct LSTMPolicy {
 	}
 
 	/// `action(for:)` plus the trace; the trace is `nil` only on the
-	/// runaway-turn guard, where no forward pass runs.
-	mutating func traced(for sim: borrowing TacticalSim) -> (TacticalAction, Trace?) {
+	/// runaway-turn guard, where no forward pass runs. `select` picks the
+	/// index at every head — masked argmax for play, masked sampling in the
+	/// RL trainer; whatever it returns must respect the mask.
+	mutating func traced(
+		for sim: borrowing TacticalSim,
+		select: ([Float], [Bool]) -> Int? = LSTMPolicy.argmax
+	) -> (TacticalAction, Trace?) {
 		if sim.turn != lastTurn {
+			// A turn counter running backwards means a new battle is reusing
+			// this policy — stale memory of another map must not leak in.
+			if sim.turn < lastTurn { reset() }
 			lastTurn = sim.turn
 			actionsThisTurn = 0
 		}
@@ -65,13 +73,13 @@ public struct LSTMPolicy {
 
 		var trace = Trace(kind: fc(h, "kind"))
 		guard
-			let k = argmax(trace.kind, masks.kinds),
+			let k = select(trace.kind, masks.kinds),
 			let kind = ActionSpace.Kind(rawValue: k), kind != .end
 		else { return (.end, trace) }
 
 		let proj = fc(h, "actor.proj")
 		trace.actor = tileHead(trunk, per: proj, prefix: "actor")
-		guard let actor = argmax(trace.actor!, masks.actors[k]) else { return (.end, trace) }
+		guard let actor = select(trace.actor!, masks.actors[k]) else { return (.end, trace) }
 		trace.actorTile = actor
 
 		var idx = ActionIndices(kind: kind, actor: actor)
@@ -81,11 +89,11 @@ public struct LSTMPolicy {
 		case .move, .embark, .disembark, .attack:
 			let cond = relu(fc(h + actorTrunk, "target.cond"))
 			trace.target = tileHead(trunk, per: cond, prefix: "target")
-			guard let target = argmax(trace.target!, sim.targetMask(kind, actor: actor)) else { return (.end, trace) }
+			guard let target = select(trace.target!, sim.targetMask(kind, actor: actor)) else { return (.end, trace) }
 			idx.target = target
 		case .purchase:
 			trace.slot = fc(relu(fc(h + actorTrunk, "slot.fc1")), "slot.fc2")
-			guard let slot = argmax(trace.slot!, sim.slotMask(actor: actor)) else { return (.end, trace) }
+			guard let slot = select(trace.slot!, sim.slotMask(actor: actor)) else { return (.end, trace) }
 			idx.slot = slot
 		case .resupply, .end:
 			break
@@ -229,7 +237,7 @@ public struct LSTMPolicy {
 	}
 
 	/// Index of the maximum logit among set mask bits; `nil` if none is set.
-	func argmax(_ logits: [Float], _ mask: [Bool]) -> Int? {
+	static func argmax(_ logits: [Float], _ mask: [Bool]) -> Int? {
 		var best: Int?
 		for i in logits.indices where mask[i] {
 			if let b = best, logits[b] >= logits[i] { continue }

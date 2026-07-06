@@ -5,6 +5,10 @@ import Foundation
 // framework), so internal core symbols are visible without `@testable`.
 // See Docs/LSTM-AI-Plan.md.
 
+// Line-buffer stdout even when redirected to a file, so long runs
+// (`Train rl … > run.log`) can be tailed and nothing is lost on a kill.
+unsafe setvbuf(stdout, nil, _IOLBF, 0)
+
 let arguments = Array(CommandLine.arguments.dropFirst())
 
 do {
@@ -17,6 +21,10 @@ do {
 		try Parity.run(Array(arguments.dropFirst()))
 	case "bc":
 		try BCTrainer.run(Array(arguments.dropFirst()))
+	case "eval":
+		try Eval.run(Array(arguments.dropFirst()))
+	case "rl":
+		try RLTrainer.run(Array(arguments.dropFirst()))
 	default:
 		print("""
 		Usage: Train <command> [options]
@@ -34,6 +42,14 @@ do {
 		     [--resume <pgw>]
 		      Behavior-clone axisAI from a replay corpus; writes PGW1
 		      checkpoints and a CSV loss/accuracy log.
+		  eval --weights <pgw> [--n <configs>] [--seed <base>] [--wseed <n>]
+		      Arena: the pure-Swift LSTMPolicy vs axisAI, each config played
+		      from both sides; reports win rate and gates on 0 illegal actions.
+		  rl --weights <pgw> [--out <dir>] [--iters <n>] [--episodes <per iter>]
+		     [--b <streams>] [--t <bptt>] [--lr <rate>] [--temp <sampling>]
+		     [--seed <battle base>] [--ckpt <every>] [--evaln <configs>]
+		      REINFORCE fine-tune vs the frozen heuristic: sampled episodes,
+		      EMA baseline, advantage-weighted CE; arena eval at checkpoints.
 		""")
 	}
 } catch {
