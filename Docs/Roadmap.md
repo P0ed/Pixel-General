@@ -2,13 +2,23 @@
 
 ## Scenario
 
+- Adjust the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
 - Add unit deployment phase before day 1.
 - Unit surrenders if can't retreat.
 - Defensive AI.
+- Sea tiles and ships.
+- Separate layer for air units.
 - Weather.
 - Bridging engineers.
+
+## Campaign
+
+- Add hills and mountains to the map of Europe.
+- Pass terrain type to map generation.
+- Dynamic diplomacy.
+- Economy.
 
 ## Multiplayer
 
