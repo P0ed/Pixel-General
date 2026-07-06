@@ -218,7 +218,7 @@ extension TacticalSim {
 		for spot in buildable {
 			let shop = shopUnits(at: spot)
 			let pick = shop.enumerated().compactMap { i, t -> (Int, Int)? in
-				guard t.cost <= player.prestige * 2 / 3 else { return nil }
+				guard UInt32(t.cost) <= UInt32(player.prestige) * 2 / 3 else { return nil }
 				var s = score(t, enemyAir: enemyAir)
 				if needSupply, t.type == .supply { s += 50 }
 				if needAA, t.isAA { s += 50 }

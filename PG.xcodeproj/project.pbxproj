@@ -55,6 +55,7 @@
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5FD7B3292FE7337F00CA6557 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0D0000000000000000000A5 /* Train */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Train; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -91,6 +92,11 @@
 			path = Docs;
 			sourceTree = "<group>";
 		};
+		D0D0000000000000000000A1 /* Train */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Train;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +123,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0D0000000000000000000A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -135,6 +148,7 @@
 				5FD7B3DE2FE7356600CA6557 /* PG */,
 				5FD7B3732FE7356100CA6557 /* COR */,
 				5FD7B32A2FE7337F00CA6557 /* Tests */,
+				D0D0000000000000000000A1 /* Train */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,
 				5FCB86362E77041800C2C69E /* Products */,
 			);
@@ -146,6 +160,7 @@
 				5F919D2C2EA9564A0037A208 /* PG.app */,
 				5F10D23B2FCEE14700E6B598 /* COR.framework */,
 				5FD7B3292FE7337F00CA6557 /* Tests.xctest */,
+				D0D0000000000000000000A5 /* Train */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -234,6 +249,28 @@
 			productReference = 5FD7B3292FE7337F00CA6557 /* Tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		D0D0000000000000000000A2 /* Train */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0D0000000000000000000A6 /* Build configuration list for PBXNativeTarget "Train" */;
+			buildPhases = (
+				D0D0000000000000000000A3 /* Sources */,
+				D0D0000000000000000000A4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5FD7B3732FE7356100CA6557 /* COR */,
+				D0D0000000000000000000A1 /* Train */,
+			);
+			name = Train;
+			packageProductDependencies = (
+			);
+			productName = Train;
+			productReference = D0D0000000000000000000A5 /* Train */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -272,6 +309,7 @@
 				5F919D2B2EA9564A0037A208 /* PG */,
 				5F10D23A2FCEE14700E6B598 /* COR */,
 				5FD7B3282FE7337F00CA6557 /* Tests */,
+				D0D0000000000000000000A2 /* Train */,
 			);
 		};
 /* End PBXProject section */
@@ -316,6 +354,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5FD7B3252FE7337F00CA6557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0D0000000000000000000A3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -670,6 +715,36 @@
 			};
 			name = Release;
 		};
+		D0D0000000000000000000A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Debug;
+		};
+		D0D0000000000000000000A8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -705,6 +780,15 @@
 			buildConfigurations = (
 				5FD7B3312FE7337F00CA6557 /* Debug */,
 				5FD7B3322FE7337F00CA6557 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D0D0000000000000000000A6 /* Build configuration list for PBXNativeTarget "Train" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0D0000000000000000000A7 /* Debug */,
+				D0D0000000000000000000A8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
