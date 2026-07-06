@@ -13,18 +13,14 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 		hostile.formUnion(other.hostile)
 	}
 
-	/// Effective ground-unit resupply grade: sources minus the rough-terrain
-	/// and enemy-control penalties of `resupply(unit:)`. Negative grades are
-	/// worse than open friendly ground.
 	public func level(at xy: XY, terrain: Terrain) -> Int8 {
-		Int8(trucks[xy] ? 1 : 0) + Int8(buildings[xy] ? 1 : 0)
+		Int8(trucks[xy] ? 2 : 0) + Int8(buildings[xy] ? 3 : 0)
 		- Int8(terrain.supplyPenalty) - Int8(hostile[xy] ? 1 : 0)
 	}
 }
 
 extension Terrain {
 
-	/// Rough terrain chokes the flow of ammo and replacements.
 	var supplyPenalty: UInt8 {
 		switch self {
 		case .forest, .hill: 1
@@ -36,11 +32,6 @@ extension Terrain {
 
 public extension TacticalSim {
 
-	/// Mirrors the ground-unit half of `resupply(unit:)`: +1 next to a
-	/// friendly-team supply truck, +1 on or next to an owned settlement,
-	/// and the enemy-control penalty as `hostile` (the terrain penalty is
-	/// read off the map at `level(at:terrain:)` time). Airfields serve air
-	/// units only and are not counted.
 	func supplySources(for country: Country) -> SupplySources {
 		var sources = SupplySources.empty
 		for xy in map.indices {
@@ -54,7 +45,7 @@ public extension TacticalSim {
 		units.forEachAlive { i, u in
 			guard u.type == .supply, u.country.team == country.team, !offMap(unit: i.uid)
 			else { return }
-			position[i].n8.forEach { n in sources.trucks[n] = true }
+			position[i].s9.forEach { n in sources.trucks[n] = true }
 		}
 		return sources
 	}
@@ -68,8 +59,6 @@ public extension TacticalSim {
 
 extension TacticalSim {
 
-	/// Supply-chain penalty at `xy`: rough terrain slows deliveries (air
-	/// units fly over it) and enemy-controlled ground adds interdiction.
 	func supplyPenalty(at xy: XY, for unit: Unit) -> UInt8 {
 		(unit.isAir ? 0 : map[xy].supplyPenalty)
 		+ (control[xy].team != unit.country.team ? 1 : 0)

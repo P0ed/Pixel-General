@@ -21,7 +21,7 @@ enum TileSurface: Hashable {
 		case .political(2): .greenSurface
 		case .political(3): .redSurface
 		case .political: .graySurface
-		case .supply(let level): .supplySurface(level)
+		case .supply(let level): .redToGreen8(level)
 		}
 	}
 }

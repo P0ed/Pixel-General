@@ -160,17 +160,18 @@ extension TacticalNodes {
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		case .supply:
-			// Effective grade −3…2 spread over the 8-step gradient.
-			let gray: UInt8 = switch supply.level(at: xy, terrain: state.sim.map[xy]) {
+			let level: UInt8 = switch supply.level(at: xy, terrain: state.sim.map[xy]) {
 			case ..<(-2): 0
 			case -2: 1
 			case -1: 2
 			case 0: 3
-			case 1: 5
+			case 1: 4
+			case 2: 5
+			case 3: 6
 			default: 7
 			}
 			return .base(
-				surface: .supply(gray),
+				surface: .supply(level),
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		}

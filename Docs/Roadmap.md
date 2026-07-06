@@ -2,7 +2,7 @@
 
 ## Scenario
 
-- Adjust the damage curve.
+- Finetune the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
 - Add unit deployment phase before day 1.
@@ -19,6 +19,7 @@
 - Pass terrain type to map generation.
 - Dynamic diplomacy.
 - Economy.
+- Tier unlock mechanics.
 
 ## Multiplayer
 
@@ -36,9 +37,11 @@
 - Undo stack for tile edits.
 - Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country).
 
-## iOS
+## Controls
 
-- On-screen touch controls.
+- Display action hints depending on current input method (gamepad is connected / fallback to keyboard).
+- Camera pan controls other than trackpad scrolling.
+- On-screen touch controls for iOS.
 
 ## AI
 
