@@ -178,9 +178,9 @@ optional KL anchor to the BC policy. Reuses the BC graph with advantage-weighted
    both sides, mutation oracle, hard gate on 0 illegal actions). ✓ BC checkpoint over
    64 battles: 7.8% wins (5W 51L 8D), avg 52 days, 0 illegal in 78,669 policy actions;
    random-weight baseline 0% (mostly timeouts).
-7. **M7 — RL fine-tune**: `Train/RLTrainer.swift`. ✓ win rate improves over the BC
+7. ✅ **M7 — RL fine-tune**: `Train/RLTrainer.swift`. ✓ win rate improves over the BC
    checkpoint.
-8. **M8 — App integration**: `policy.pgw` resource + Settings toggle +
+8. ✅ **M8 — App integration**: `policy.pgw` resource + Settings toggle +
    `TacticalState.ai(lstm:)`. ✓ play against it in the app.
 
 ## File map
@@ -214,3 +214,17 @@ Update [Roadmap](./Roadmap.md) / [Architecture](./Architecture.md) when landing.
   baseline → value head, window subsampling, BC anchor.
 - Raw-bytes replays are same-build-only → versioned header + cheap regeneration.
 - BC ceiling ≈ axisAI strength → that's what Phase B is for.
+
+## Training
+
+- Build Train: `xcodebuild -project PG.xcodeproj -target Train -configuration Release SYMROOT=tmp/build OBJROOT=tmp/build build`
+- Rollouts: `tmp/build/Release/Train rollout --n 8 --out tmp/runs/replays --verify`
+- Tests: `xcodebuild test -project PG.xcodeproj -scheme PG -destination 'platform=macOS' [-only-testing:Tests/PolicyTests]`
+- Failure details live in the xcresult: `xcrun xcresulttool get test-results summary --path <bundle>`.
+
+Recommended next run:
+```
+tmp/build/Release/Train rl --weights tmp/runs/rl/ckpt-20.pgw --iters 80 --episodes 32 \
+  --lr 1e-4 --temp 1 --ckpt 10 --evaln 16 --seed 2000 --out tmp/runs/rl2 > tmp/runs/rl2.log 2>&1
+```
+That's 4× the episodes per advantage estimate and 5× the learning rate — expect ~2 hours all-cores. If the first two arena checkpoints destabilize (loss spikes, win collapse), drop to --lr 5e-5. Say the word and I'll launch and babysit it.
