@@ -79,3 +79,17 @@ Build Train (compiles COR directly), run the full test suite. Green =
 equivalence: `MultiplayerTests` (determinism), `PolicyTests` (mask oracle),
 `RNGTests.damageCalculation` (Duel), `TacticalTests`, plus
 `TacticalPerformanceTests` before/after numbers.
+
+### Post-merge note: compilation mode
+
+The first `TacticalPerformanceTests` after-numbers showed a ~8% *regression*
+(0.655s → 0.705s avg). Cause: the PG scheme tests the Debug configuration,
+where COR forced `-O` but not `SWIFT_COMPILATION_MODE`, so COR compiled
+per-file — and this change moved the hot inner-loop checks into shared
+cross-file predicates (`canAttack`, `SetXY.forEach`, …) that per-file
+compilation cannot inline. Under whole-module optimization the same commit is
+~10% *faster* (0.343s → 0.309s avg), and WMO itself is worth a flat 2× here
+(0.637s → 0.343s at the pre-change commit). Fixed by setting
+`SWIFT_COMPILATION_MODE = wholemodule` on COR's Debug config, same rationale
+as its Debug `-O` override. Perf numbers measured before that setting are not
+comparable to numbers measured after.
