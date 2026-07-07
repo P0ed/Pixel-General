@@ -101,10 +101,11 @@ public extension TacticalSim {
 
 	// MARK: - Legality masks
 
-	/// Kind/actor legality for the acting player. Mirrors the guards of the
-	/// corresponding reducers (`move`, `embark`, `disembark`, `attack`,
-	/// `resupply`, `buy`) — plus the axisAI's stricter no-water rule for
-	/// disembark — so every masked action mutates the state.
+	/// Kind/actor legality for the acting player. Built from the same `can*`
+	/// predicates that guard the corresponding reducers (`canMove`,
+	/// `canEmbark`, `canDisembark`, `canAttack`, `canResupply`, `canBuy`) —
+	/// plus the axisAI's stricter no-water rule for disembark — so every
+	/// masked action mutates the state.
 	func actionMasks() -> ActionMasks {
 		var actors = [[Bool]](
 			repeating: [Bool](repeating: false, count: ActionSpace.tiles),
@@ -117,7 +118,7 @@ public extension TacticalSim {
 			let uid = i.uid
 			let tile = ActionSpace.tile(position[i])
 
-			if u.canMove, cargo[uid] == .none || u[.transport], hasMoveTarget(uid) {
+			if canMove(unit: uid), hasMoveTarget(uid) {
 				actors[ActionSpace.Kind.move.rawValue][tile] = true
 			}
 			if hasEmbarkTarget(uid) {
@@ -129,17 +130,14 @@ public extension TacticalSim {
 			if u.canAttack, u.ammo > 0, hasAttackTarget(uid) {
 				actors[ActionSpace.Kind.attack.rawValue][tile] = true
 			}
-			if u.untouched, cargo[uid] == .none || u[.transport], !u.isAir || hasBuildings(near: uid) {
+			if canResupply(unit: uid) {
 				actors[ActionSpace.Kind.resupply.rawValue][tile] = true
 			}
 		}
 
-		for xy in map.indices
-		where map[xy].isSettlement && control[xy] == country && unitsMap[xy] == .none {
-			let shop = shopUnits(at: xy)
-			if shop.contains(where: { u in u.cost <= player.prestige }) {
-				actors[ActionSpace.Kind.purchase.rawValue][ActionSpace.tile(xy)] = true
-			}
+		settlements.forEach { xy in
+			guard control[xy] == country, canBuy(at: xy) else { return }
+			actors[ActionSpace.Kind.purchase.rawValue][ActionSpace.tile(xy)] = true
 		}
 
 		var kinds = actors.map { mask in mask.contains(true) }
@@ -160,9 +158,8 @@ public extension TacticalSim {
 				mask[ActionSpace.tile(xy)] = true
 			}
 		case .attack:
-			let u = units[uid]
-			units.forEachAlive { j, t in
-				if t.country.team != u.country.team, isVisible(j.uid), unitCanHit(uid, j.uid) {
+			units.forEachAlive { j, _ in
+				if canAttack(src: uid, dst: j.uid) {
 					mask[ActionSpace.tile(position[j])] = true
 				}
 			}
@@ -185,7 +182,8 @@ public extension TacticalSim {
 		return mask
 	}
 
-	/// Legal shop slots for a `.purchase` at the actor tile.
+	/// Legal shop slots for a `.purchase` at the actor tile. One `shopUnits`
+	/// build; the per-slot rule is `canBuy(slot:at:)`.
 	func slotMask(actor: Int) -> [Bool] {
 		var mask = [Bool](repeating: false, count: ActionSpace.slots)
 		let shop = shopUnits(at: ActionSpace.xy(actor))
@@ -202,10 +200,8 @@ public extension TacticalSim {
 	}
 
 	private func hasAttackTarget(_ uid: UID) -> Bool {
-		let u = units[uid]
-		return units.firstMapAlive { j, t in
-			t.country.team != u.country.team && isVisible(j.uid) && unitCanHit(uid, j.uid)
-			? true : nil
+		units.firstMapAlive { j, _ in
+			canAttack(src: uid, dst: j.uid) ? true : nil
 		} ?? false
 	}
 

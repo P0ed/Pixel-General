@@ -67,7 +67,7 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 | `CArray<N, Element>` | `COR/Foundation/CArray.swift` | Fixed-capacity array, must be used in game mechanics instead of `Array<Element>` |
 | `Speicher<N, Element: DeadOrAlive>` | `COR/Foundation/Speicher.swift` | Same as CArray + quick elements removal and slot reuse |
 | `Map<Element>` | `COR/Foundation/Map.swift` | 32×32 grid |
-| `SetXY` | `COR/Foundation/XY.swift` | Efficient coordinate set for visibility/movement |
+| `SetXY` | `COR/Foundation/SetXY.swift` | Efficient coordinate set (visibility, movement, the settlement index); iterates row-major like `Map.indices` |
 | `D20` | `COR/Foundation/D20.swift` | PRNG for combat resolution |
 
 ### State
@@ -77,6 +77,8 @@ The root `Core` struct (`COR/Model/Core.swift`) holds optional `.hq`, `.strategi
 App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.
+
+Each `TacticalAction` reducer opens with a guard on its sim-level legality predicate — `canMove` / `canAttack` / `canEmbark` / `canDisembark` / `canResupply` / `canBuy`, colocated with the reducer it mirrors — and an illegal action leaves the sim bitwise-unchanged (see the `reduce` doc in `COR/Tactical/TacticalReaction.swift`). The LSTM action masks and the heuristic AIs consult the same predicates, so mask/reducer/AI legality cannot drift. `TacticalSim.settlements: SetXY` indexes the settlement tiles once at battle creation (the map never changes during a battle, only `control` does); turn bookkeeping, the AIs, and the masks iterate it instead of rescanning the map.
 
 ### Concurrency
 

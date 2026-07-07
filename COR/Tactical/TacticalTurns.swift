@@ -57,7 +57,7 @@ extension TacticalSim {
 	}
 
 	private func income(for country: Country) -> UInt16 {
-		map.indices.reduce(into: 0) { r, xy in
+		settlements.reduce(into: 0) { r, xy in
 			r += control[xy] == country ? map[xy].income : 0
 		}
 	}
@@ -78,15 +78,15 @@ extension TacticalSim {
 	}
 
 	mutating func assignControl() {
-		var anchors: [XY] = []
-		var owners: [Country] = []
-		for xy in map.indices where map[xy].isSettlement {
-			anchors.append(xy)
-			owners.append(control[xy])
+		var anchors = CArray<1024, XY>(tail: .zero)
+		var owners = CArray<1024, Country>(tail: .default)
+		settlements.forEach { xy in
+			anchors.add(xy)
+			owners.add(control[xy])
 		}
 		guard !anchors.isEmpty else { return }
 
-		for xy in map.indices where !map[xy].isSettlement {
+		for xy in map.indices where !settlements[xy] {
 			var best = 0
 			var bestD = xy.manhattanDistance(to: anchors[0])
 			for k in 1 ..< anchors.count {
@@ -103,7 +103,7 @@ extension TacticalSim {
 	}
 
 	private func countryHasSettlements(_ country: Country) -> Bool {
-		map.indices.contains { xy in map[xy].isSettlement && control[xy] == country }
+		settlements.contains { xy in control[xy] == country }
 	}
 }
 

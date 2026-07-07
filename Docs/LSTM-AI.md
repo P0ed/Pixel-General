@@ -55,9 +55,11 @@ both map sizes:
 - **actor tile** (1024), **target tile** (1024), **shop slot** (40)
 
 `actionIndices(_:)` / `action(_:)` map `TacticalAction` ↔ head indices (`.takeover`
-excluded). `actionMasks()`, `targetMask(_:actor:)`, `slotMask(actor:)` mirror the
-reducer guards exactly, so a masked sample can never no-op — reducers silently ignoring
-illegal input is what makes "state mutated" a legality oracle in tests.
+excluded). `actionMasks()`, `targetMask(_:actor:)`, `slotMask(actor:)` are built from
+the same sim-level `can*` predicates that guard the reducers (`canMove`, `canAttack`,
+`canEmbark`, `canDisembark`, `canResupply`, `canBuy` — see
+`Docs/Architecture.md`), so a masked sample can never no-op — reducers silently
+ignoring illegal input is what makes "state mutated" a legality oracle in tests.
 
 ### Network (~188k params, 31 tensors)
 

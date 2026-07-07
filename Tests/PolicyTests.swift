@@ -268,6 +268,7 @@ struct PolicyTests {
 			painted += 1
 			if painted == 160 { break }
 		}
+		state.sim.indexSettlements()
 		#expect(painted == 160)
 
 		var ai = TacticalSim.AI()

@@ -13,29 +13,38 @@ extension TacticalSim {
 	}
 
 	private var target: XY? {
-		let ownCities: [XY] = map.indices.compactMap { [country] xy in
-			map[xy].isSettlement && control[xy] == country ? xy : nil
+		let country = country
+		var ownCount = 0
+		settlements.forEach { xy in
+			if control[xy] == country { ownCount += 1 }
 		}
-		let cnt = XY(ownCities.count, ownCities.count)
-		let mid = ownCities.reduce(.zero as XY) { r, e in r + e / cnt }
-		return map.indices.compactMap { [country] xy in
-			map[xy].isSettlement && control[xy].team != country.team ? xy : nil
+		var mid = XY.zero
+		if ownCount > 0 {
+			let cnt = XY(ownCount, ownCount)
+			settlements.forEach { xy in
+				if control[xy] == country { mid = mid + xy / cnt }
+			}
 		}
-		.sorted { a, b in a.stepDistance(to: mid) < b.stepDistance(to: mid) }
-		.first
+		var best: XY? = nil
+		var bestD = Int.max
+		settlements.forEach { xy in
+			guard control[xy].team != country.team else { return }
+			let d = xy.stepDistance(to: mid)
+			if d < bestD { bestD = d; best = xy }
+		}
+		return best
 	}
 
 	private var nextPurchase: TacticalAction? {
 		guard player.prestige >= 0x200 else { return nil }
-		for xy in map.indices {
-			guard map[xy].isSettlement, control[xy] == country, unitsMap[xy] == .none else { continue }
+		return settlements.firstMap { [country] xy in
+			guard control[xy] == country, unitsMap[xy] == .none else { return nil }
 			var d20 = D20(seed: d20.seed ^ UInt64(xy.x) ^ UInt64(xy.y) << 8)
-			if let (i, t) = shopUnits(at: xy).enumerated().randomElement(using: &d20),
-			   t.cost * 2 <= player.prestige {
-				return .purchase(i, xy)
-			}
+			guard let (i, t) = shopUnits(at: xy).enumerated().randomElement(using: &d20),
+				  t.cost * 2 <= player.prestige
+			else { return nil }
+			return .purchase(i, xy)
 		}
-		return nil
 	}
 
 	private func needsReinforcements(_ idx: Int, _ unit: Unit) -> Bool {
@@ -48,10 +57,7 @@ extension TacticalSim {
 
 	private var nextReinforce: TacticalAction? {
 		units.firstMapAlive { [country] i, u in
-			(
-				u.country == country && needsReinforcements(i, u)
-				&& u.untouched && (!u.isAir || hasBuildings(near: i.uid))
-			)
+			u.country == country && needsReinforcements(i, u) && canResupply(unit: i.uid)
 			? .resupply(i.uid)
 			: nil
 		}
@@ -60,13 +66,14 @@ extension TacticalSim {
 	private var nextRetreat: TacticalAction? {
 		units.firstMapAlive { [country] i, u in
 			guard u.country == country, needsReinforcements(i, u) else { return nil }
-			let havens: [XY] = map.indices.compactMap { xy in
-				map[xy].isSettlement && control[xy] == country
-				&& (map[xy] == .airfield) == u.isAir ? xy : nil
+			var haven: XY? = nil
+			var bestD = Int.max
+			settlements.forEach { xy in
+				guard control[xy] == country, (map[xy] == .airfield) == u.isAir else { return }
+				let d = xy.stepDistance(to: position[i])
+				if d < bestD { bestD = d; haven = xy }
 			}
-			return havens.min { a, b in
-				a.stepDistance(to: position[i]) < b.stepDistance(to: position[i])
-			}.flatMap { xy in
+			return haven.flatMap { xy in
 				move(id: i.uid, to: xy)
 			}
 		}
@@ -74,23 +81,18 @@ extension TacticalSim {
 
 	private var nextAttack: TacticalAction? {
 		units.firstMapAlive { [country] i, u in
-			u.country != country
-			? nil
-			: targets(id: i.uid)
-				.max(by: { a, b in
-					(
-						(a.1.isArt ? 5 : 0)
-						+ (a.1.isAA ? 6 : 0)
-						+ (a.1.maxHP - a.1.hp)
-						+ (u.isAA && a.1.isAir ? 10 : 0)
-					) < (
-						(b.1.isArt ? 5 : 0)
-						+ (b.1.isAA ? 6 : 0)
-						+ (b.1.maxHP - b.1.hp)
-						+ (u.isAA && b.1.isAir ? 10 : 0)
-					)
-				})
-				.map { t in .attack(i.uid, t.0) }
+			guard u.country == country else { return nil }
+			var best: UID = .none
+			var bestScore = Int.min
+			units.forEachAlive { j, du in
+				guard canAttack(src: i.uid, dst: j.uid) else { return }
+				let score = (du.isArt ? 5 : 0)
+					+ (du.isAA ? 6 : 0)
+					+ Int(du.maxHP - du.hp)
+					+ (u.isAA && du.isAir ? 10 : 0)
+				if score > bestScore { bestScore = score; best = j.uid }
+			}
+			return best == .none ? nil : .attack(i.uid, best)
 		}
 	}
 
@@ -101,24 +103,13 @@ extension TacticalSim {
 	}
 
 	private func move(id: UID, to target: XY) -> TacticalAction? {
-		moves(for: id)
-			.ordered
-			.max(by: { a, b in
-				(
-					max(0, Int(map[a].baseEntrenchment)) - target.stepDistance(to: a)
-				) < (
-					max(0, Int(map[b].baseEntrenchment)) - target.stepDistance(to: b)
-				)
-			})
-			.map { x in .move(id, x) }
-	}
-
-	private func targets(id: UID) -> [(UID, Unit)] {
-		let su = units[id]
-		return !su.canAttack ? [] : units.reduceAlive(into: []) { r, i, du in
-			if du.country.team != su.country.team, isVisible(i.uid), unitCanHit(id, i.uid) {
-				r.append((i.uid, du))
-			}
+		let mv = moves(for: id)
+		var best: XY? = nil
+		var bestScore = Int.min
+		for xy in mv.moves.indices where mv.moves[xy] > 0 {
+			let score = max(0, Int(map[xy].baseEntrenchment)) - target.stepDistance(to: xy)
+			if score > bestScore { bestScore = score; best = xy }
 		}
+		return best.map { x in .move(id, x) }
 	}
 }

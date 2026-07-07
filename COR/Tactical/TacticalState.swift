@@ -2,6 +2,10 @@ public struct TacticalSim: ~Copyable {
 	public var map: Map<32, Terrain>
 	public var control: Map<32, Country>
 	public var unitsMap: Map<32, UID>
+	/// The settlement tiles of `map`, indexed once at battle creation
+	/// (`indexSettlements`) — the map never changes during a battle, only
+	/// `control` does.
+	public var settlements: SetXY = .empty
 
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
@@ -68,8 +72,10 @@ public extension TacticalSim {
 				tail: .empty
 			)
 		}
+		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }
-		for xy in self.map.indices where self.map[xy].isVillage || self.map[xy] == .airfield {
+		settlements.forEach { xy in
+			guard self.map[xy].isVillage || self.map[xy] == .airfield else { return }
 			control[xy] = cities.min { a, b in
 				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
 			}.map { $0.1 } ?? .default
@@ -145,14 +151,22 @@ public extension TacticalSim {
 		}
 	}
 
+	/// Rebuilds the settlement index from `map`. Called by the battle
+	/// constructors; anything that mutates `map` afterwards (nothing does
+	/// today) must call it again.
+	mutating func indexSettlements() {
+		settlements = .empty
+		for xy in map.indices where map[xy].isSettlement {
+			settlements[xy] = true
+		}
+	}
+
 	func hasBuildings(near id: UID) -> Bool {
 		let u = units[id]
-		let p = position[id.index]
-		return map.indices.contains { xy in
+		return position[id.index].c5.contains { xy in
 			map[xy].isSettlement
 			&& control[xy] == u.country
 			&& (map[xy] == .airfield) == u.isAir
-			&& xy.manhattanDistance(to: p) <= 1
 		}
 	}
 
@@ -174,7 +188,8 @@ public extension TacticalSim {
 		var v = units.reduceAlive(into: SetXY.empty) { v, i, u in
 			if u.country.team == country.team { v.formUnion(vision(for: i.uid)) }
 		}
-		for xy in map.indices where map[xy].isSettlement && control[xy].team == country.team {
+		settlements.forEach { xy in
+			guard control[xy].team == country.team else { return }
 			v[xy] = true
 			xy.n8.forEach { xy in v[xy] = true }
 		}

@@ -53,6 +53,44 @@ public extension SetXY {
 		xy.x >= 0 && xy.x < 32 && xy.y >= 0 && xy.y < 32
 	}
 
+	func forEach(_ body: (XY) -> Void) {
+		for y in storage.indices {
+			var row = storage[y]
+			while row != 0 {
+				body(XY(row.trailingZeroBitCount, y))
+				row &= row - 1
+			}
+		}
+	}
+
+	func contains(_ predicate: (XY) -> Bool) -> Bool {
+		for y in storage.indices {
+			var row = storage[y]
+			while row != 0 {
+				if predicate(XY(row.trailingZeroBitCount, y)) { return true }
+				row &= row - 1
+			}
+		}
+		return false
+	}
+
+	func firstMap<A>(_ transform: (XY) -> A?) -> A? {
+		for y in storage.indices {
+			var row = storage[y]
+			while row != 0 {
+				if let some = transform(XY(row.trailingZeroBitCount, y)) { return some }
+				row &= row - 1
+			}
+		}
+		return nil
+	}
+
+	func reduce<R>(into result: R, _ fold: (inout R, XY) -> Void) -> R {
+		var result = result
+		forEach { xy in fold(&result, xy) }
+		return result
+	}
+
 	mutating func formUnion(_ set: Self) {
 		for i in storage.indices {
 			storage[i] |= set.storage[i]

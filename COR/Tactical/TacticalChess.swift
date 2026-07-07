@@ -59,6 +59,7 @@ public extension TacticalState {
 			position: .init(repeating: .zero),
 			cargo: .init(repeating: .none)
 		)
+		sim.indexSettlements()
 		for i in units.indices {
 			sim.place(i.uid, at: XY(i % 8, i < 16 ? i / 8 : 4 + i / 8))
 		}

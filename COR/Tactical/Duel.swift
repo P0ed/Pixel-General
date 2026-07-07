@@ -19,16 +19,20 @@ struct Duel {
 	/// order of `d20()` calls must not change.
 	func resolve(_ d20: inout D20) -> UInt8 {
 		let ts = thresholds
-		let rounds: UInt8 = (hp + 2) / 3
+		let rounds = (Int(hp) + 2) / 3
 
-		let ds = (0 ..< rounds).map { _ in d20() }
-		let dmgs = ds.map { d in
+		var ds: [5 of Int] = .init(repeating: 0)
+		for i in 0 ..< rounds { ds[i] = d20() }
+
+		var total: UInt8 = 0
+		for i in 0 ..< rounds {
+			let d = ds[i]
 			var dmg: UInt8 = d > ts[3] ? 4 : d > ts[2] ? 3 : d > ts[1] ? 2 : d > ts[0] ? 1 : 0
 			if crit, d20() > 16 { dmg *= 2 }
 			if evasion, d20() > 16 { dmg = 0 }
-			return dmg
+			total += dmg
 		}
-		return dmgs.reduce(into: 0, +=)
+		return total
 	}
 
 	/// The mean of `resolve`, in closed form. Per round the damage is

@@ -76,10 +76,12 @@ public extension TacticalSim {
 		return mov
 	}
 
+	func canMove(unit uid: UID) -> Bool {
+		units[uid].country == country && units[uid].canMove && !offMap(unit: uid)
+	}
+
 	mutating func move(unit uid: UID, to target: XY, into events: inout [TacticalEvent]) {
-		guard units[uid].country == country, units[uid].canMove,
-			  cargo[uid] == .none || units[uid][.transport]
-		else { return }
+		guard canMove(unit: uid) else { return }
 
 		let moves = moves(for: uid, target: target)
 		let route = moves.route(to: target)
@@ -87,7 +89,8 @@ public extension TacticalSim {
 
 		var pos = moves.start
 		var interruptor: UID = .none
-		for xy in route.reversed() {
+		for k in stride(from: route.count - 1, through: 0, by: -1) {
+			let xy = route[k]
 			if let tid = uidAt(xy) {
 				let u = units[tid]
 				if u.country.team != units[uid].country.team, !vision[playerIndex][position[tid.index]] {
@@ -98,9 +101,9 @@ public extension TacticalSim {
 				pos = xy
 			}
 		}
-		for xy in route.reversed() {
-			vision[playerIndex].formUnion(vision(at: xy, spot: units[uid].spot))
-			if xy == pos { break }
+		for k in stride(from: route.count - 1, through: 0, by: -1) {
+			vision[playerIndex].formUnion(vision(at: route[k], spot: units[uid].spot))
+			if route[k] == pos { break }
 		}
 
 		place(uid, at: pos)
@@ -112,9 +115,9 @@ public extension TacticalSim {
 
 		if pos != moves.start {
 			var path = CArray<16, XY>(head: moves.start, tail: .zero)
-			for xy in route.reversed() {
-				path.add(xy)
-				if xy == pos { break }
+			for k in stride(from: route.count - 1, through: 0, by: -1) {
+				path.add(route[k])
+				if route[k] == pos { break }
 			}
 			events.append(.move(uid, Path(count: path.count, path: path.mem)))
 			if cargo[uid.index] != .none {
@@ -128,30 +131,43 @@ public extension TacticalSim {
 	}
 }
 
+/// Reachable tiles of one unit, as BFS budget leftovers per tile.
+///
+/// Consumers scan `moves.indices` in its fixed row-major order and break score
+/// ties by iteration order — deliberately never through a `Set<XY>`: Swift
+/// seeds `Set`/`Dictionary` hashing with a per-process random value, so a set
+/// walk would make the battle (and `TacticalPerformanceTests`)
+/// non-deterministic across launches.
 public struct Moves: ~Copyable {
 	public var start: XY
 	public var moves: Map<32, UInt8>
 
 	public subscript(_ xy: XY) -> Bool { moves[xy] != 0 }
 
-	public func route(to target: XY) -> [XY] {
-		moves[target] == 0 ? [] : .make { route in
-			var pos = target
-			while pos != start {
-				route.append(pos)
+	/// The path to `target`, ordered target → start (exclusive). Empty when
+	/// `target` is unreachable.
+	public func route(to target: XY) -> CArray<16, XY> {
+		var route = CArray<16, XY>(tail: .zero)
+		guard moves[target] != 0 else { return route }
 
-				if route.count > 0xF {
-					route = []; return
-				}
+		var pos = target
+		while pos != start {
+			route.add(pos)
 
-				if let m = pos.n8
-					.compactMap({ moves[$0] > 0 ? $0 : nil })
-					.max(by: { a, b in moves[a] < moves[b] })
-				{ pos = m } else {
-					route = []; return
-				}
+			if route.count > 0xF {
+				route.erase(); return route
+			}
+
+			let n8 = pos.n8
+			var next: XY? = nil
+			for i in n8.indices where moves[n8[i]] > 0 {
+				if next == nil || moves[next!] < moves[n8[i]] { next = n8[i] }
+			}
+			if let next { pos = next } else {
+				route.erase(); return route
 			}
 		}
+		return route
 	}
 }
 
@@ -166,20 +182,6 @@ public extension Moves {
 		.make { set in
 			for xy in moves.indices where moves[xy] > 0 {
 				set[xy] = true
-			}
-		}
-	}
-
-	/// Reachable tiles in a fixed row-major order.
-	///
-	/// Deliberately an ordered `[XY]`, not a `Set<XY>`: the AI breaks ties on
-	/// tile score by iteration order, and Swift seeds `Set`/`Dictionary` hashing
-	/// with a per-process random value, so a `Set` here would make the battle
-	/// (and `TacticalPerformanceTests`) non-deterministic across launches.
-	var ordered: [XY] {
-		.make { out in
-			for xy in moves.indices where moves[xy] > 0 {
-				out.append(xy)
 			}
 		}
 	}

@@ -300,14 +300,14 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   unit's current level), with no credit for the old platform. Supply (the
   truck) has no family and cannot be upgraded.
 - **Unit `cost`** =
-  `(typeCost + traitCost + skillCost + weightedStats) / (aux ? 7 : 4)`:
+  `(typeCost + traitCost + skillCost + weightedStats) / (aux ? 11 : 7)`:
   - `typeCost`: inf/aa/art 10; supply/wheelAA/wheelArt/lightWheel 100;
     trackAA/lightTrack 150; trackArt/heavyTrack 220; heli 270; fighter/cas 330.
   - `traitCost = traitsCount * 15`; `skillCost = skillsCount * 15`.
-  - `weightedStats = (lvl + 4) * (softAtk*4 + hardAtk*5 + airAtk*6 + groundDef*4
+  - `weightedStats = (lvl + 7) * (softAtk*4 + hardAtk*5 + airAtk*6 + groundDef*4
     + airDef*4 + ini*4 + mov*4 + rng*7)`.
-  - `lvl + 4` makes veterans (and the skills they earn) linearly pricier; `aux`
-    divides by 7 instead of 4.
+  - `lvl + 7` makes veterans (and the skills they earn) linearly pricier; `aux`
+    divides by 11 instead of 7.
 
 ## Players & Victory
 

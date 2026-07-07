@@ -42,6 +42,18 @@ extension TacticalAction {
 
 extension TacticalSim {
 
+	/// Applies `action` — the only mutation of deterministic state.
+	///
+	/// Contract: an **illegal action leaves the sim bitwise-unchanged** and
+	/// emits no events. Three subsystems rely on that no-op guarantee: the
+	/// LSTM masks use "state mutated" as their legality oracle
+	/// (`Tests/PolicyTests`), the multiplayer host re-validates client
+	/// intents by simply applying them, and the AI drivers may propose
+	/// actions that turn out illegal. Each reducer therefore opens with a
+	/// guard on its legality predicate — `canMove` / `canAttack` /
+	/// `canEmbark` / `canDisembark` / `canResupply` / `canBuy` — which is
+	/// also what the action masks and the AIs consult. Keep new reducers on
+	/// this pattern: one predicate, three consumers.
 	public mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
 		var events: [TacticalEvent] = []
 		switch action {

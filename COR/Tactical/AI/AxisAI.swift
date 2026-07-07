@@ -42,13 +42,11 @@ extension TacticalSim {
 		// Villages are emergent (3-way road junctions), so a map can hold more
 		// settlements than the plan arrays — keep the first 64 per bucket, in
 		// map order (deterministic, multiplayer-safe).
-		map.indices.forEach { xy in
-			if map[xy].isSettlement {
-				if control[xy] == country {
-					if !ai.ownSettlements.isFull { ai.ownSettlements.add(xy) }
-				} else if !ai.enemySettlements.isFull {
-					ai.enemySettlements.add(xy)
-				}
+		settlements.forEach { xy in
+			if control[xy] == country {
+				if !ai.ownSettlements.isFull { ai.ownSettlements.add(xy) }
+			} else if !ai.enemySettlements.isFull {
+				ai.enemySettlements.add(xy)
 			}
 		}
 	}
@@ -174,13 +172,6 @@ extension TacticalSim {
 		return best
 	}
 
-	private func hasAirfield(_ xy: XY) -> Bool {
-		xy.c5.contains { p in
-			map[p] == .airfield && control[p] == country
-			&& p.manhattanDistance(to: xy) <= 1
-		}
-	}
-
 	private func nearestOwnAirfield(to p: XY, _ ai: borrowing AI) -> XY? {
 		var best: XY? = nil
 		var bd = Int.max
@@ -209,17 +200,30 @@ extension TacticalSim {
 	private func purchase(_ ai: borrowing AI) -> TacticalAction? {
 		guard player.prestige >= 0x280 else { return nil }
 
-		let buildable = map.indices.filter { [country] xy in
-			map[xy].isSettlement && control[xy] == country && unitsMap[xy] == .none
+		// Buildable spots with their front distance, in map order — same
+		// first-64 cap rationale as the `preplan` buckets.
+		var spots = CArray<64, XY>(tail: .zero)
+		var dists = CArray<64, Int>(tail: 0)
+		settlements.forEach { [country] xy in
+			guard !spots.isFull, control[xy] == country, unitsMap[xy] == .none else { return }
+			spots.add(xy)
+			dists.add(frontDistance(xy, ai))
 		}
-		.sorted { frontDistance($0, ai) < frontDistance($1, ai) }
 
 		let enemyAir = ai.enemies.firstMap { _, uid in units[uid].isAir } != nil
 		let needSupply = ownSupplyCount == 0
 		let needAA = enemyAir && ownAACount == 0
 
-		for spot in buildable {
-			let shop = shopUnits(at: spot)
+		var visited: UInt64 = 0
+		while true {
+			var best = -1
+			for i in spots.indices where visited & 1 << i == 0 {
+				if best < 0 || dists[i] < dists[best] { best = i }
+			}
+			guard best >= 0 else { return nil }
+			visited |= 1 << best
+
+			let shop = shopUnits(at: spots[best])
 			let pick = shop.enumerated().compactMap { i, t -> (Int, Int)? in
 				guard UInt32(t.cost) <= UInt32(player.prestige) * 2 / 3 else { return nil }
 				var s = score(t, enemyAir: enemyAir)
@@ -227,9 +231,8 @@ extension TacticalSim {
 				if needAA, t.isAA { s += 50 }
 				return (i, s)
 			}.max(by: { a, b in a.1 < b.1 })
-			if let pick { return .purchase(pick.0, spot) }
+			if let pick { return .purchase(pick.0, spots[best]) }
 		}
-		return nil
 	}
 
 	/// Distance from a buildable tile to the front (nearest enemy settlement,
@@ -269,8 +272,7 @@ extension TacticalSim {
 
 	private func needsResupply(_ uid: UID) -> Bool {
 		let u = units[uid]
-		guard u.untouched, !offMap(unit: uid) else { return false }
-		if u.isAir, !hasAirfield(position[uid]) { return false }
+		guard canResupply(unit: uid), !offMap(unit: uid) else { return false }
 		return u.hp < 6 || (u.maxAmmo > 0 && u.ammo == 0)
 	}
 
@@ -320,31 +322,27 @@ extension TacticalSim {
 
 	/// Artillery softens first (it takes no counter), then air, AA, armor and
 	/// finally infantry mop up — so each shot lands against the weakest target.
-	private func attackOrder(_ ai: borrowing AI) -> [UID] {
-		ai.roster.map { $1 }.sorted { a, b in
-			let pa = attackPriority(units[a])
-			let pb = attackPriority(units[b])
-			return pa != pb ? pa < pb : a.rawValue < b.rawValue
-		}
-	}
-
+	/// One roster pass per priority bucket: the roster is UID-ascending, so
+	/// the visit order equals the old `(priority, rawValue)` sort.
 	private func bestAttack(_ ai: borrowing AI) -> TacticalAction? {
-		for uid in attackOrder(ai) {
-			let u = units[uid]
-			guard u.canAttack, u.ammo > 0, !offMap(unit: uid) else { continue }
+		for priority in 0 ... 4 {
+			let act = ai.roster.firstMap { _, uid -> TacticalAction? in
+				let u = units[uid]
+				guard attackPriority(u) == priority else { return nil }
+				guard u.canAttack, u.ammo > 0, !offMap(unit: uid) else { return nil }
 
-			var bestTarget: UID = .none
-			var bestScore = 0
-			units.forEachAlive { j, t in
-				guard t.country.team != u.country.team,
-					  isVisible(j.uid),
-					  unitCanHit(uid, j.uid) else { return }
-				let dmg = estimateDamage(attacker: uid, defender: j.uid)
-				guard dmg > 0 else { return }
-				let score = attackValue(uid, j.uid, dmg: dmg, u, t)
-				if score > bestScore { bestScore = score; bestTarget = j.uid }
+				var bestTarget: UID = .none
+				var bestScore = 0
+				units.forEachAlive { j, t in
+					guard canAttack(src: uid, dst: j.uid) else { return }
+					let dmg = estimateDamage(attacker: uid, defender: j.uid)
+					guard dmg > 0 else { return }
+					let score = attackValue(uid, j.uid, dmg: dmg, u, t)
+					if score > bestScore { bestScore = score; bestTarget = j.uid }
+				}
+				return bestTarget == .none ? nil : .attack(uid, bestTarget)
 			}
-			if bestTarget != .none { return .attack(uid, bestTarget) }
+			if let act { return act }
 		}
 		return nil
 	}
@@ -380,14 +378,16 @@ extension TacticalSim {
 		}
 	}
 
+	/// Same bucket-pass shape as `bestAttack`: roster is UID-ascending, so
+	/// the visit order equals the old `(roleRank, rawValue)` sort.
 	private func bestMove(_ ai: borrowing AI) -> TacticalAction? {
-		let order = ai.roster.map { $1 }.sorted { a, b in
-			let ra = roleRank(ai.role[a]), rb = roleRank(ai.role[b])
-			return ra != rb ? ra < rb : a.rawValue < b.rawValue
-		}
-		for uid in order {
-			guard units[uid].canMove, !offMap(unit: uid) else { continue }
-			if let m = moveByRole(uid, ai) { return m }
+		for rank in 0 ... 5 {
+			let act = ai.roster.firstMap { _, uid -> TacticalAction? in
+				guard roleRank(ai.role[uid]) == rank else { return nil }
+				guard units[uid].canMove, !offMap(unit: uid) else { return nil }
+				return moveByRole(uid, ai)
+			}
+			if let act { return act }
 		}
 		return nil
 	}
@@ -427,7 +427,7 @@ extension TacticalSim {
 		let here = position[id]
 		var best: XY? = nil
 		var bestScore = tileScore(at: here, for: id, toward: target, defensive: defensive)
-		for xy in mv.ordered where xy != here {
+		for xy in mv.moves.indices where mv.moves[xy] > 0 && xy != here {
 			let s = tileScore(at: xy, for: id, toward: target, defensive: defensive)
 			if s > bestScore { bestScore = s; best = xy }
 		}

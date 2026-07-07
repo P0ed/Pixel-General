@@ -34,13 +34,13 @@ public extension TacticalSim {
 
 	func supplySources(for country: Country) -> SupplySources {
 		var sources = SupplySources.empty
-		for xy in map.indices {
-			if map[xy].isSettlement, map[xy] != .airfield, control[xy] == country {
+		settlements.forEach { xy in
+			if map[xy] != .airfield, control[xy] == country {
 				xy.c5.forEach { n in sources.buildings[n] = true }
 			}
-			if control[xy].team != country.team {
-				sources.hostile[xy] = true
-			}
+		}
+		for xy in map.indices where control[xy].team != country.team {
+			sources.hostile[xy] = true
 		}
 		units.forEachAlive { i, u in
 			guard u.type == .supply, u.country.team == country.team, !offMap(unit: i.uid)
@@ -64,14 +64,25 @@ extension TacticalSim {
 		+ (control[xy].team != unit.country.team ? 1 : 0)
 	}
 
+	/// Mirror of the player-initiated `.resupply` reducer guard — shared by
+	/// `resupply`, the action masks, and the AIs. The end-of-turn pass inside
+	/// `resupply` has its own relaxed guard.
+	func canResupply(unit id: UID) -> Bool {
+		let unit = units[id]
+		return unit.country == country && unit.untouched
+			&& !offMap(unit: id)
+			&& (!unit.isAir || hasBuildings(near: id))
+	}
+
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
 		var unit = units[id]
-		let hasBuildings = hasBuildings(near: id)
 
-		guard unit.country == country, unit.untouched || endOfTurn,
-			  cargo[id] == .none || unit[.transport],
-			  !unit.isAir || hasBuildings || endOfTurn
+		guard endOfTurn
+			? unit.country == country && !offMap(unit: id)
+			: canResupply(unit: id)
 		else { return }
+
+		let hasBuildings = hasBuildings(near: id)
 
 		let country = unit.country
 		let position = position[id.index]

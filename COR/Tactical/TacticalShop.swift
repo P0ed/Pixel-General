@@ -2,6 +2,8 @@ extension TacticalSim {
 
 	public func shopUnits(at xy: XY) -> [Unit] {
 		let country = country
+		guard map[xy].isSettlement, control[xy] == country else { return [] }
+
 		let enemyAdjacent = neighbors(at: xy).contains { id in
 			units[id].country.team != country.team
 		}
@@ -14,7 +16,6 @@ extension TacticalSim {
 		let core = unitSlots[0] < 16
 		let aux = unitSlots[1] < 16
 
-		guard map[xy].isSettlement, control[xy] == country else { return [] }
 		let isAir = map[xy] == .airfield
 		return .make { units in
 			if core {
@@ -27,11 +28,24 @@ extension TacticalSim {
 		}
 	}
 
-	mutating func buy(_ idx: Int, at pos: XY, into events: inout [TacticalEvent]) {
+	/// Mirror of the `.purchase` reducer guard for one shop slot — shared by
+	/// `buy` and `slotMask`. `shopUnits` itself owns the tile half of the rule
+	/// (settlement, ownership, enemy contact, roster slots).
+	func canBuy(slot idx: Int, at pos: XY) -> Bool {
+		guard unitsMap[pos] == .none else { return false }
 		let shop = shopUnits(at: pos)
-		guard idx < shop.count else { return }
-		let template = shop[idx]
-		guard player.prestige >= template.cost, unitsMap[pos] == .none else { return }
+		return idx >= 0 && idx < shop.count && player.prestige >= shop[idx].cost
+	}
+
+	/// `canBuy(slot:at:)` for any slot — the purchase actor mask.
+	func canBuy(at xy: XY) -> Bool {
+		unitsMap[xy] == .none
+		&& shopUnits(at: xy).contains { u in player.prestige >= u.cost }
+	}
+
+	mutating func buy(_ idx: Int, at pos: XY, into events: inout [TacticalEvent]) {
+		guard canBuy(slot: idx, at: pos) else { return }
+		let template = shopUnits(at: pos)[idx]
 
 		let unit = modifying(template) { u in
 			u.reset()

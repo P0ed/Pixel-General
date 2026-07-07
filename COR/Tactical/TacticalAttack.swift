@@ -1,11 +1,25 @@
 extension TacticalSim {
 
+	/// Mirror of the `.attack` reducer guard — shared by `attack`, the action
+	/// masks, and the AIs. Requires the target to be visible to the acting
+	/// player; the surprise attack out of `move` is the one exempt path (its
+	/// target is hidden by definition, and it fires with `ap` already spent).
+	func canAttack(src: UID, dst: UID) -> Bool {
+		let (su, du) = (units[src], units[dst])
+		return su.country == country
+			&& su.country.team != du.country.team
+			&& su.canAttack && su.ammo > 0
+			&& isVisible(dst) && unitCanHit(src, dst)
+	}
+
 	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
 		let (si, di) = (src.index, dst.index)
 		let (su, du) = (units[si], units[di])
 
-		guard su.country == country, su.country.team != du.country.team,
-			  su.ammo > 0, unitCanHit(src, dst), su.canAttack || surprise
+		guard surprise
+			? su.country == country && su.country.team != du.country.team
+				&& su.ammo > 0 && unitCanHit(src, dst)
+			: canAttack(src: src, dst: dst)
 		else { return }
 
 		let (sp, dp) = (position[si], position[di])
@@ -176,7 +190,14 @@ extension TacticalSim {
 
 	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [TacticalEvent]) {
 		let p = position[id]
-		let pos = moves(for: id).ordered.min(by: (p + p - xy).manhattanComparator)
+		let mv = moves(for: id)
+		let anchor = p + p - xy
+		var pos: XY? = nil
+		var bestD = Int.max
+		for t in mv.moves.indices where mv.moves[t] > 0 {
+			let d = anchor.manhattanDistance(to: t)
+			if d < bestD { bestD = d; pos = t }
+		}
 		guard let pos, unitAt(pos) == nil else { return }
 
 		place(id, at: pos)
