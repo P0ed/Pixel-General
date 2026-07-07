@@ -59,6 +59,7 @@ enum RLTrainer {
 		var ckpt = 10
 		var evalN = 8
 		var curriculum = 0
+		var anneal: Float = 0.35
 
 		var i = 0
 		while i < args.count {
@@ -80,6 +81,7 @@ enum RLTrainer {
 			case "--ckpt": ckpt = try Int(next()) ?? ckpt
 			case "--evaln": evalN = try Int(next()) ?? evalN
 			case "--curriculum": curriculum = try Int(next()) ?? curriculum
+			case "--anneal": anneal = try Float(next()) ?? anneal
 			default: throw TrainError.usage("unknown option \(args[i])")
 			}
 			i += 1
@@ -190,7 +192,7 @@ enum RLTrainer {
 			// window, below the descent threshold so it must earn the way
 			// back down.
 			winEMA = 0.8 * winEMA + 0.2 * Float(wins) / Float(batch.count)
-			if difficulty > 0, winEMA > 0.35 {
+			if difficulty > 0, winEMA > anneal {
 				difficulty = max(0, difficulty - 0.25)
 				winEMA *= 0.5
 				starved = 0

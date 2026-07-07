@@ -155,13 +155,8 @@ public extension TacticalSim {
 
 		switch kind {
 		case .move:
-			// `ordered` (occupied tiles zeroed) is exactly the candidate set the
-			// heuristic picks from. No route check: the reducer routes on the
-			// un-zeroed field, where a route to any BFS-reached tile always
-			// exists — checking `route(to:)` on the zeroed field instead would
-			// wrongly reject targets whose path passes through a friendly unit.
 			let mv = moves(for: uid)
-			for xy in mv.ordered where xy != mv.start {
+			for xy in mv.moves.indices where mv.moves[xy] > 0 && xy != mv.start {
 				mask[ActionSpace.tile(xy)] = true
 			}
 		case .attack:
@@ -203,8 +198,7 @@ public extension TacticalSim {
 	// MARK: - Actor predicates
 
 	private func hasMoveTarget(_ uid: UID) -> Bool {
-		let mv = moves(for: uid)
-		return mv.ordered.contains { xy in xy != mv.start }
+		moves(for: uid).hasMoves
 	}
 
 	private func hasAttackTarget(_ uid: UID) -> Bool {

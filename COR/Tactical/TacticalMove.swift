@@ -183,6 +183,13 @@ public extension Moves {
 			}
 		}
 	}
+
+	var hasMoves: Bool {
+		for xy in moves.indices where moves[xy] > 0 && xy != start {
+			return true
+		}
+		return false
+	}
 }
 
 public struct Path {

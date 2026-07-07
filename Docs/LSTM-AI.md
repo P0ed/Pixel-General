@@ -170,7 +170,7 @@ actions** (mutation oracle). `--wseed` plays random weights instead — the sani
 
 **`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
-[--curriculum 0]`** — REINFORCE
+[--curriculum 0] [--anneal 0.35]`** — REINFORCE
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
 sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
 touched, and each episode is fully determined by its index, so runs are reproducible);
@@ -202,7 +202,9 @@ Difficulty is **continuous**: each episode plays at level ⌊d⌋ or ⌈d⌉ wit
 from the fractional part (level 3 = rich + baseLevel 5 + tier 3 vs poor; 2 = rich +
 baseLevel 2 vs poor; 1 = rich vs poor; at any boosted level, config tier asymmetry is
 neutralized — a tier-0 seat facing tier 3 is unwinnable at any prestige). d anneals
-down a quarter-step whenever the EMA sampled win rate clears 35%, and back **up** a
+down a quarter-step whenever the EMA sampled win rate clears `--anneal` (default
+0.35, calibrated on noisy 16-episode EMAs — 32-episode EMAs are tighter and warrant
+~0.30: run 11 sat at EMA 0.25–0.31 for 138 healthy iterations without firing), and back **up** a
 quarter-step after 6 consecutive iterations with the EMA under 0.10 (restarting the
 EMA at 0.2 — a fair evaluation window before the floor can re-trigger). Discrete level
 steps proved to be cliffs (even the purely economic tier-equalized 3→2 step collapsed
