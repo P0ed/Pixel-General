@@ -39,11 +39,14 @@ extension TacticalSim {
 			if isVisible(i.uid), !offMap(unit: i.uid), u.country.team != country.team { ai.enemies.add(i.uid) }
 		}
 
+		// Villages are emergent (3-way road junctions), so a map can hold more
+		// settlements than the plan arrays — keep the first 64 per bucket, in
+		// map order (deterministic, multiplayer-safe).
 		map.indices.forEach { xy in
 			if map[xy].isSettlement {
 				if control[xy] == country {
-					ai.ownSettlements.add(xy)
-				} else {
+					if !ai.ownSettlements.isFull { ai.ownSettlements.add(xy) }
+				} else if !ai.enemySettlements.isFull {
 					ai.enemySettlements.add(xy)
 				}
 			}
@@ -218,7 +221,7 @@ extension TacticalSim {
 		for spot in buildable {
 			let shop = shopUnits(at: spot)
 			let pick = shop.enumerated().compactMap { i, t -> (Int, Int)? in
-				guard t.cost <= player.prestige * 2 / 3 else { return nil }
+				guard UInt32(t.cost) <= UInt32(player.prestige) * 2 / 3 else { return nil }
 				var s = score(t, enemyAir: enemyAir)
 				if needSupply, t.type == .supply { s += 50 }
 				if needAA, t.isAA { s += 50 }

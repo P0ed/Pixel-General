@@ -1,5 +1,8 @@
 public extension TacticalState {
 
+	/// Map-generation progress logging; the headless `Train` tool turns it off.
+	@safe nonisolated(unsafe) static var logsMapGen = true
+
 	init(
 		players: [Player],
 		objective: Objective = .none,
@@ -8,7 +11,7 @@ public extension TacticalState {
 		seed: Int,
 		terrain: Terrain = .field
 	) {
-		print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)")
+		if Self.logsMapGen { print("Map gen started. Players: \(players.map { "\($0.country)" }). Seed: \(seed)") }
 		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain)
 		let cities: [(XY, Country)] = Self.cities(
 			countries: players.map { p in p.country },
@@ -23,7 +26,7 @@ public extension TacticalState {
 		)
 		.mapInPlace { u in u.reset() }
 
-		print("Map gen done. Seed: \(seed) size: \(size)")
+		if Self.logsMapGen { print("Map gen done. Seed: \(seed) size: \(size)") }
 		self = TacticalState(
 			map: map,
 			players: players,

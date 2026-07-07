@@ -48,7 +48,12 @@ extension TacticalNodes {
 						menu.items[9].icon = .toggle4(settings.animationSpeed)
 					}
 				}),
-				.space,
+				MenuItem(icon: .toggle4(settings.aiKind == 0 ? 0 : 3), status: .init(text: "Neural opponent"), update: { menu in
+					modifying(menu) { menu in
+						settings.toggleAI()
+						menu.items[10].icon = .toggle4(settings.aiKind == 0 ? 0 : 3)
+					}
+				}),
 				.space,
 			]
 		))

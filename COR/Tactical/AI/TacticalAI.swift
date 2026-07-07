@@ -15,8 +15,8 @@ public extension TacticalSim {
 		public var roster: CArray<128, UID> = .init(tail: .none)
 		public var enemies: CArray<128, UID> = .init(tail: .none)
 
-		public var ownSettlements: CArray<32, XY> = .init(tail: .zero)
-		public var enemySettlements: CArray<32, XY> = .init(tail: .zero)
+		public var ownSettlements: CArray<64, XY> = .init(tail: .zero)
+		public var enemySettlements: CArray<64, XY> = .init(tail: .zero)
 
 		@frozen public enum Role: UInt8 {
 			case idle		// no assignment (e.g. freshly built unit)
@@ -35,6 +35,22 @@ public extension TacticalState {
 	static var ai: (borrowing TacticalState) -> TacticalAction? {
 		var ai = TacticalSim.AI()
 		return { state in state.sim.run(&ai) }
+	}
+
+	/// Same hook shape, but AI seats play through the LSTM policy when
+	/// weights are provided — identical to `ai` otherwise. One policy per
+	/// seat: the recurrent state is that seat's battle memory under its own
+	/// fog and must not mix across players. The policy resets itself when the
+	/// turn counter goes backwards (a new battle reusing this closure).
+	static func ai(lstm weights: LSTMWeights?) -> (borrowing TacticalState) -> TacticalAction? {
+		guard let weights else { return ai }
+		var policies = [Int: LSTMPolicy]()
+		return { state in
+			guard state.sim.player.type == .ai else { return nil }
+			let seat = state.sim.playerIndex
+			if policies[seat] == nil { policies[seat] = LSTMPolicy(weights: weights) }
+			return policies[seat]!.action(for: state.sim)
+		}
 	}
 }
 

@@ -43,6 +43,7 @@
 - Camera pan controls other than trackpad scrolling.
 - On-screen touch controls for iOS.
 
-## AI
+## [AI](./LSTM-AI.md)
 
-- Train an LSTM model to play against.
+- Strengthen the neural opponent: value-head baseline / entropy bonus if REINFORCE
+  variance stalls; self-play once it consistently beats the heuristic.
