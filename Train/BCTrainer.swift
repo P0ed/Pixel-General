@@ -174,12 +174,12 @@ final class BCGraph {
 
 		let g = graph
 		let H = LSTMWeights.hidden
-		let side = NSNumber(value: Observation.side)
+		let side = NSNumber(value: SimObservation.side)
 		func ph(_ shape: [NSNumber], _ type: MPSDataType, _ name: String) -> MPSGraphTensor {
 			g.placeholder(shape: shape, dataType: type, name: name)
 		}
-		planes = ph([NSNumber(value: n), side, side, NSNumber(value: Observation.planeCount)], .float32, "planes")
-		globals = ph([NSNumber(value: n), NSNumber(value: Observation.globalCount)], .float32, "globals")
+		planes = ph([NSNumber(value: n), side, side, NSNumber(value: SimObservation.planeCount)], .float32, "planes")
+		globals = ph([NSNumber(value: n), NSNumber(value: SimObservation.globalCount)], .float32, "globals")
 		h0 = ph([NSNumber(value: b), NSNumber(value: H)], .float32, "h0")
 		c0 = ph([NSNumber(value: b), NSNumber(value: H)], .float32, "c0")
 		lrIn = ph([1], .float32, "lr")
@@ -312,11 +312,11 @@ final class BCGraph {
 	}
 
 	private func stepBody(_ w: Batcher.Window, lr: Float, update: Bool) -> Metrics {
-		let side = NSNumber(value: Observation.side)
+		let side = NSNumber(value: SimObservation.side)
 		let nn = NSNumber(value: n)
 		let feeds: [MPSGraphTensor: MPSGraphTensorData] = [
-			planes: tensorData(device, w.planes, [nn, side, side, NSNumber(value: Observation.planeCount)]),
-			globals: tensorData(device, w.globals, [nn, NSNumber(value: Observation.globalCount)]),
+			planes: tensorData(device, w.planes, [nn, side, side, NSNumber(value: SimObservation.planeCount)]),
+			globals: tensorData(device, w.globals, [nn, NSNumber(value: SimObservation.globalCount)]),
 			h0: tensorData(device, w.h0, [NSNumber(value: b), NSNumber(value: LSTMWeights.hidden)]),
 			c0: tensorData(device, w.c0, [NSNumber(value: b), NSNumber(value: LSTMWeights.hidden)]),
 			lrIn: tensorData(device, [lr], [1]),

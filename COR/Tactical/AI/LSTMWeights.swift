@@ -34,10 +34,10 @@ public struct LSTMWeights: Sendable {
 
 	/// The full tensor catalog: name → shape. Order is the file order.
 	public static let spec: [(name: String, shape: [Int])] = [
-		("conv1.w", [3, 3, Observation.planeCount, trunk]), ("conv1.b", [trunk]),
+		("conv1.w", [3, 3, SimObservation.planeCount, trunk]), ("conv1.b", [trunk]),
 		("conv2.w", [3, 3, trunk, trunk]), ("conv2.b", [trunk]),
 		("conv3.w", [3, 3, trunk, trunk]), ("conv3.b", [trunk]),
-		("fc1.w", [trunk + Observation.globalCount, hidden]), ("fc1.b", [hidden]),
+		("fc1.w", [trunk + SimObservation.globalCount, hidden]), ("fc1.b", [hidden]),
 		("lstm.wx", [hidden, 4 * hidden]),
 		("lstm.wh", [hidden, 4 * hidden]),
 		("lstm.b", [4 * hidden]),

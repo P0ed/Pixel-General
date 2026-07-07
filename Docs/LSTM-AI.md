@@ -18,7 +18,7 @@ and regenerated deterministically instead of storing states.
 
 | Where | What |
 |---|---|
-| `COR/Tactical/AI/Encoding.swift` | Observation tensor (shared by training and inference) |
+| `COR/Tactical/AI/Encoding.swift` | `SimObservation` tensor (shared by training and inference) |
 | `COR/Tactical/AI/ActionSpace.swift` | Factored action heads + legality masks |
 | `COR/Tactical/AI/LSTMWeights.swift` | `PGW1` weight format: IO, spec catalog, seeded random init |
 | `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
@@ -29,7 +29,7 @@ and regenerated deterministically instead of storing states.
 
 ## Architecture
 
-### Observation — `Encoding.swift`
+### `SimObservation` — `Encoding.swift`
 
 Everything the acting player may know, immediately before each of its actions, as
 32×32×**51** planes (HWC, index `(y*32 + x)*51 + plane`) plus **12** global scalars,

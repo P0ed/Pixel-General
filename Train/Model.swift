@@ -31,9 +31,9 @@ final class Model {
 		queue = q
 
 		let g = graph
-		let side = NSNumber(value: Observation.side)
-		planes = g.placeholder(shape: [1, side, side, NSNumber(value: Observation.planeCount)], dataType: .float32, name: "planes")
-		globals = g.placeholder(shape: [1, NSNumber(value: Observation.globalCount)], dataType: .float32, name: "globals")
+		let side = NSNumber(value: SimObservation.side)
+		planes = g.placeholder(shape: [1, side, side, NSNumber(value: SimObservation.planeCount)], dataType: .float32, name: "planes")
+		globals = g.placeholder(shape: [1, NSNumber(value: SimObservation.globalCount)], dataType: .float32, name: "globals")
 		hIn = g.placeholder(shape: [1, NSNumber(value: LSTMWeights.hidden)], dataType: .float32, name: "h")
 		cIn = g.placeholder(shape: [1, NSNumber(value: LSTMWeights.hidden)], dataType: .float32, name: "c")
 		actorTile = g.placeholder(shape: [1], dataType: .int32, name: "actorTile")
@@ -55,10 +55,10 @@ final class Model {
 	}
 
 	private func stepBody(planes p: [Float], globals gl: [Float], h: [Float], c: [Float], actor: Int) -> Step {
-		let side = NSNumber(value: Observation.side)
+		let side = NSNumber(value: SimObservation.side)
 		let feeds: [MPSGraphTensor: MPSGraphTensorData] = [
-			planes: tensorData(device, p, [1, side, side, NSNumber(value: Observation.planeCount)]),
-			globals: tensorData(device, gl, [1, NSNumber(value: Observation.globalCount)]),
+			planes: tensorData(device, p, [1, side, side, NSNumber(value: SimObservation.planeCount)]),
+			globals: tensorData(device, gl, [1, NSNumber(value: SimObservation.globalCount)]),
 			hIn: tensorData(device, h, [1, NSNumber(value: LSTMWeights.hidden)]),
 			cIn: tensorData(device, c, [1, NSNumber(value: LSTMWeights.hidden)]),
 			actorTile: tensorData(device, [Int32(actor)], [1]),

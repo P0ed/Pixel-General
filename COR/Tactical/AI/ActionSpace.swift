@@ -3,12 +3,12 @@
 /// A `TacticalAction` maps to (kind, actor tile, target tile, shop slot) head
 /// indices and back, and the legality masks mirror the reducer guards — so a
 /// masked action can never silently no-op through `reduce`. Tiles index the
-/// fixed 32-stride grid of `Observation` regardless of the actual map size
+/// fixed 32-stride grid of `SimObservation` regardless of the actual map size
 /// (`x + y * 32`); UIDs are deliberately absent from the interface because
 /// they are arbitrary storage slots the network cannot observe.
 public enum ActionSpace {
 	public static let kinds = 7
-	public static let tiles = Observation.planeSize
+	public static let tiles = SimObservation.planeSize
 	/// Shop head capacity: `Shop.units` tops out at 21 rows + 16 auxilia.
 	public static let slots = 40
 
@@ -16,8 +16,8 @@ public enum ActionSpace {
 		case move, embark, disembark, attack, resupply, purchase, end
 	}
 
-	public static func tile(_ xy: XY) -> Int { xy.x + xy.y * Observation.side }
-	public static func xy(_ tile: Int) -> XY { XY(tile % Observation.side, tile / Observation.side) }
+	public static func tile(_ xy: XY) -> Int { xy.x + xy.y * SimObservation.side }
+	public static func xy(_ tile: Int) -> XY { XY(tile % SimObservation.side, tile / SimObservation.side) }
 }
 
 /// Head indices of one concrete action; `-1` marks heads the kind doesn't use.

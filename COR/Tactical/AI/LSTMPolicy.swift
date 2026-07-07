@@ -106,8 +106,8 @@ public struct LSTMPolicy {
 
 	/// Runs the recurrent trunk on one observation, updating `h`/`c` and
 	/// `lastValue`; returns the per-tile trunk features `[1024, trunk]`.
-	mutating func step(_ obs: Observation) -> [Float] {
-		var t = relu(conv3x3(obs.planes, channels: Observation.planeCount, "conv1"))
+	mutating func step(_ obs: SimObservation) -> [Float] {
+		var t = relu(conv3x3(obs.planes, channels: SimObservation.planeCount, "conv1"))
 		t = relu(conv3x3(t, channels: LSTMWeights.trunk, "conv2"))
 		t = relu(conv3x3(t, channels: LSTMWeights.trunk, "conv3"))
 
@@ -116,12 +116,12 @@ public struct LSTMPolicy {
 		// map edge do they carry signal — which is fine, it is the same grid
 		// the trainer pools over).
 		var pooled = [Float](repeating: 0, count: LSTMWeights.trunk)
-		for tile in 0 ..< Observation.planeSize {
+		for tile in 0 ..< SimObservation.planeSize {
 			for ch in 0 ..< LSTMWeights.trunk {
 				pooled[ch] += t[tile * LSTMWeights.trunk + ch]
 			}
 		}
-		for ch in pooled.indices { pooled[ch] /= Float(Observation.planeSize) }
+		for ch in pooled.indices { pooled[ch] /= Float(SimObservation.planeSize) }
 
 		let x = relu(fc(pooled + obs.globals, "fc1"))
 
@@ -146,7 +146,7 @@ public struct LSTMPolicy {
 
 	/// Per-tile logits: `[trunk ⊕ per]` → 1×1 conv → ReLU → 1×1 conv → `[1024]`.
 	func tileHead(_ trunk: [Float], per: [Float], prefix: String) -> [Float] {
-		let n = Observation.planeSize
+		let n = SimObservation.planeSize
 		var fused = [Float](repeating: 0, count: n * LSTMWeights.fused)
 		for tile in 0 ..< n {
 			let o = tile * LSTMWeights.fused
@@ -168,7 +168,7 @@ public struct LSTMPolicy {
 	/// Same-padded 3×3 convolution over the 32×32 HWC grid: im2col into
 	/// `[1024, 9·channels]`, one matmul against the HWIO kernel.
 	func conv3x3(_ input: [Float], channels: Int, _ name: String) -> [Float] {
-		let side = Observation.side
+		let side = SimObservation.side
 		let patch = 9 * channels
 		var cols = [Float](repeating: 0, count: side * side * patch)
 

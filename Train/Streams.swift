@@ -156,10 +156,10 @@ final class Batcher {
 	}
 
 	func window() -> Window {
-		let planeCount = Observation.planeSize * Observation.planeCount
+		let planeCount = SimObservation.planeSize * SimObservation.planeCount
 		var w = Window(
 			planes: [Float](repeating: 0, count: n * planeCount),
-			globals: [Float](repeating: 0, count: n * Observation.globalCount),
+			globals: [Float](repeating: 0, count: n * SimObservation.globalCount),
 			kind: [Int32](repeating: 0, count: n),
 			actor: [Int32](repeating: 0, count: n),
 			target: [Int32](repeating: 0, count: n),
@@ -196,7 +196,7 @@ final class Batcher {
 				}
 				let i = step * b + lane
 				w.planes.replaceSubrange(i * planeCount ..< (i + 1) * planeCount, with: s.planes)
-				w.globals.replaceSubrange(i * Observation.globalCount ..< (i + 1) * Observation.globalCount, with: s.globals)
+				w.globals.replaceSubrange(i * SimObservation.globalCount ..< (i + 1) * SimObservation.globalCount, with: s.globals)
 				w.kindMask.replaceSubrange(i * ActionSpace.kinds ..< (i + 1) * ActionSpace.kinds, with: s.kindMask)
 				w.actorMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.actorMask)
 				w.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)

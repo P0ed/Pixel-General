@@ -6,7 +6,7 @@
 /// `isVisible` holds for the acting player, and embarked cargo appears only as
 /// its transport's `hasCargo` flag — exactly the information a human at the
 /// screen has.
-public struct Observation {
+public struct SimObservation {
 	public static let side = 32
 	public static let planeCount = 51
 	public static let globalCount = 12
@@ -91,16 +91,16 @@ public enum Global {
 public extension TacticalSim {
 
 	/// Encodes the state as seen by the acting player (`playerIndex`).
-	func observation() -> Observation {
-		var planes = [Float](repeating: 0, count: Observation.planeSize * Observation.planeCount)
-		var globals = [Float](repeating: 0, count: Observation.globalCount)
+	func observation() -> SimObservation {
+		var planes = [Float](repeating: 0, count: SimObservation.planeSize * SimObservation.planeCount)
+		var globals = [Float](repeating: 0, count: SimObservation.globalCount)
 
 		let me = player
 		let myTeam = me.country.team
 		let visible = vision[playerIndex]
 
 		func put(_ xy: XY, _ plane: Int, _ value: Float) {
-			planes[(xy.y * Observation.side + xy.x) * Observation.planeCount + plane] = value
+			planes[(xy.y * SimObservation.side + xy.x) * SimObservation.planeCount + plane] = value
 		}
 
 		var ownSettlements = 0
@@ -176,7 +176,7 @@ public extension TacticalSim {
 		}
 		globals[Global.mapSize] = Float(map.size) / 32
 
-		return Observation(planes: planes, globals: globals)
+		return SimObservation(planes: planes, globals: globals)
 	}
 }
 

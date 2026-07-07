@@ -28,7 +28,7 @@ enum Net {
 		return vars
 	}
 
-	/// Observation encoder: conv trunk + pooled features.
+	/// SimObservation encoder: conv trunk + pooled features.
 	/// `planes [n, 32, 32, P]`, `globals [n, G]` →
 	/// (`trunk [n, 1024, C]`, `x [n, H]` — the LSTM input).
 	static func encode(

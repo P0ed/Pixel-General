@@ -33,7 +33,7 @@ struct PolicyTests {
 		mutating func pick(_ n: Int) -> Int { Int(next() % UInt64(max(1, n))) }
 	}
 
-	// MARK: - Observation
+	// MARK: - SimObservation
 
 	@Test func observationRespectsFog() {
 		var state = Self.makeState(seed: 3)
@@ -46,8 +46,8 @@ struct PolicyTests {
 		}
 
 		let obs = state.sim.observation()
-		let side = Observation.side
-		let c = Observation.planeCount
+		let side = SimObservation.side
+		let c = SimObservation.planeCount
 		func plane(_ xy: XY, _ p: Int) -> Float { obs.planes[(xy.y * side + xy.x) * c + p] }
 
 		let myTeam = state.sim.player.country.team
