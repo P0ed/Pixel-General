@@ -43,10 +43,7 @@
 - Camera pan controls other than trackpad scrolling.
 - On-screen touch controls for iOS.
 
-## AI
+## [AI](./LSTM-AI.md)
 
-- ✅ Train an LSTM model to play against — see [LSTM-AI](./LSTM-AI.md): imitation + RL
-  fine-tune pipeline (`Train` target, MPSGraph), pure-Swift inference in COR, "Neural
-  opponent" toggle in the Tactical menu (`policy.pgw` bundled, heuristic fallback).
 - Strengthen the neural opponent: value-head baseline / entropy bonus if REINFORCE
   variance stalls; self-play once it consistently beats the heuristic.
