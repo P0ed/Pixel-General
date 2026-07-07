@@ -31,7 +31,4 @@ extension D20: RandomNumberGenerator {
 
 public extension D20 {
 	enum Throw { case min, max, sum }
-
-	/// Uniform float in `[0, 1)` from the top 24 bits of `next()`.
-	mutating func uniform() -> Float { Float(next() >> 40) * 0x1p-24 }
 }
