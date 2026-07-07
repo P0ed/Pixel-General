@@ -8,7 +8,7 @@ The codebase is split into two modules:
 A third target, **Train**, is a macOS-only command-line tool for the LSTM opponent's
 training pipeline (rollout generation, behavior cloning and RL fine-tuning via MPSGraph,
 model parity checks, arena evaluation). It compiles the COR sources directly — a macOS
-tool cannot link the Catalyst framework — so it ships nothing; see [LSTM-AI](./LSTM-AI.md).
+tool cannot link the framework; see [LSTM-AI](./LSTM-AI.md).
 
 Three game modes:
 - **HQ** (unit management),
