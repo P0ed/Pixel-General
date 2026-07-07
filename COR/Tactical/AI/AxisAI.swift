@@ -40,7 +40,7 @@ extension TacticalSim {
 		}
 
 		// Villages are emergent (3-way road junctions), so a map can hold more
-		// settlements than the plan arrays — keep the first 32 per bucket, in
+		// settlements than the plan arrays — keep the first 64 per bucket, in
 		// map order (deterministic, multiplayer-safe).
 		map.indices.forEach { xy in
 			if map[xy].isSettlement {

@@ -15,8 +15,8 @@ public extension TacticalSim {
 		public var roster: CArray<128, UID> = .init(tail: .none)
 		public var enemies: CArray<128, UID> = .init(tail: .none)
 
-		public var ownSettlements: CArray<32, XY> = .init(tail: .zero)
-		public var enemySettlements: CArray<32, XY> = .init(tail: .zero)
+		public var ownSettlements: CArray<64, XY> = .init(tail: .zero)
+		public var enemySettlements: CArray<64, XY> = .init(tail: .zero)
 
 		@frozen public enum Role: UInt8 {
 			case idle		// no assignment (e.g. freshly built unit)
