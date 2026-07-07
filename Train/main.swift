@@ -50,7 +50,7 @@ do {
 		     [--seed <battle base>] [--ckpt <every>] [--evaln <configs>]
 		     [--curriculum <level 0-3>]
 		      REINFORCE fine-tune vs the frozen heuristic: sampled episodes,
-		      EMA baseline, advantage-weighted CE; arena eval at checkpoints.
+		      leave-one-out baseline, advantage-weighted CE; arena eval at checkpoints.
 		      --curriculum starts collection with the policy seat economically
 		      boosted (3 = rich+lvl5+tier3 vs poor) and anneals toward 0 as
 		      the sampled win rate clears 35%.

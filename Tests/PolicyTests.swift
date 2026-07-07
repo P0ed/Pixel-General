@@ -2,6 +2,11 @@ import Testing
 import Foundation
 @testable import COR
 
+/// Test-only sampling helper, kept separate from `D20`'s combat-facing API.
+private extension D20 {
+	mutating func pick(_ n: Int) -> Int { Int(next() % UInt64(max(1, n))) }
+}
+
 /// Contracts of the LSTM policy plumbing (see Docs/LSTM-AI.md):
 /// the observation encoding is fog-correct, and the factored action space
 /// (`ActionSpace`) masks exactly the actions `reduce` accepts.
@@ -19,19 +24,6 @@ struct PolicyTests {
 		)
 	}
 
-	/// SplitMix64, deliberately separate from the sim's `D20`: sampling for
-	/// tests must never advance combat randomness.
-	private struct Rand {
-		var s: UInt64
-		mutating func next() -> UInt64 {
-			s &+= 0x9E37_79B9_7F4A_7C15
-			var z = s
-			z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-			z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-			return z ^ (z >> 31)
-		}
-		mutating func pick(_ n: Int) -> Int { Int(next() % UInt64(max(1, n))) }
-	}
 
 	// MARK: - SimObservation
 
@@ -191,7 +183,7 @@ struct PolicyTests {
 	/// no-op on illegal input, so mutation is the legality oracle.
 	@Test func maskedRandomActionsAlwaysMutateState() {
 		var state = Self.makeState(seed: 7)
-		var rand = Rand(s: 42)
+		var rand = D20(seed: 42)
 		var perTurn = 0
 
 		for _ in 0 ..< 400 {

@@ -8,13 +8,13 @@ extension TacticalSim {
 
 		return u.country == country
 		&& t.country == country
-		&& canEmbarkType(unit: u, transport: t) && u.canMove && cargo[unit] == .none
-		&& t[.transport] && cargo[transport] == .none
+		&& u.transportable
+		&& t[.transport]
+		&& (!t.isAir || u[.elite])
+		&& u.canMove
+		&& cargo[unit] == .none
+		&& cargo[transport] == .none
 		&& up.manhattanDistance(to: tp) == 1
-	}
-
-	func canEmbarkType(unit: Unit, transport: Unit) -> Bool {
-		unit.transportable ? (transport.isAir ? unit[.elite] : true) : false
 	}
 
 	mutating func embark(unit: UID, transport: UID, into events: inout [TacticalEvent]) {
@@ -31,12 +31,12 @@ extension TacticalSim {
 	}
 
 	func canDisembark(unit: UID, to xy: XY) -> Bool {
-		let u = units[unit]
-
-		return u.country == country
-		&& u[.transport] && cargo[unit.index] != .none
+		map.contains(xy)
+		&& units[unit].country == country
+		&& units[unit][.transport] && cargo[unit.index] != .none
 		&& position[unit.index].manhattanDistance(to: xy) == 1
 		&& unitsMap[xy] == .none
+		&& !map[xy].isRiver
 	}
 
 	mutating func disembark(unit: UID, to xy: XY, into events: inout [TacticalEvent]) {

@@ -20,14 +20,8 @@ enum BCTrainer {
 		var wseed = 13
 		var resume: String?
 
-		var i = 0
-		while i < args.count {
-			func next() throws -> String {
-				i += 1
-				guard i < args.count else { throw TrainError.usage("missing value for \(args[i - 1])") }
-				return args[i]
-			}
-			switch args[i] {
+		try Args(args).parse { flag, next in
+			switch flag {
 			case "--data": data = try next()
 			case "--out": out = try next()
 			case "--steps": steps = try Int(next()) ?? steps
@@ -38,9 +32,8 @@ enum BCTrainer {
 			case "--ckpt": ckpt = try Int(next()) ?? ckpt
 			case "--wseed": wseed = try Int(next()) ?? wseed
 			case "--resume": resume = try next()
-			default: throw TrainError.usage("unknown option \(args[i])")
+			default: throw TrainError.usage("unknown option \(flag)")
 			}
-			i += 1
 		}
 
 		TacticalState.logsMapGen = false
@@ -60,10 +53,7 @@ enum BCTrainer {
 
 		let weights: LSTMWeights
 		if let resume {
-			guard let w = LSTMWeights(data: try Data(contentsOf: URL(fileURLWithPath: resume))) else {
-				throw TrainError.badFile(resume)
-			}
-			weights = w
+			weights = try LSTMWeights.load(resume)
 		} else {
 			weights = .random(seed: UInt64(wseed))
 		}
@@ -116,8 +106,6 @@ enum BCTrainer {
 		print("  steps:    \(steps) (\(d.seconds)s)")
 		print("  out:      \(outDir.path)/policy.pgw")
 	}
-
-	private static func f(_ v: Float) -> String { unsafe String(format: "%.3f", v) }
 }
 
 /// The unrolled training graph: `Net.encode` over all B·T observations at

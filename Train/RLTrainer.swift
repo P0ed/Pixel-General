@@ -2,7 +2,7 @@ import Foundation
 
 /// `Train rl` — REINFORCE fine-tune of a BC checkpoint against the frozen
 /// heuristic. Each iteration plays a batch of episodes with masked-softmax
-/// *sampling* (own SplitMix64 — the sim's D20 is never touched), scores them
+/// *sampling* (own `D20` instance — the sim's is never touched), scores them
 /// with a terminal reward, and replays them through the BC graph as
 /// advantage-weighted cross-entropy — with `Σ|w|` normalization that is
 /// exactly the policy gradient. The baseline is the leave-one-out mean of the
@@ -61,14 +61,8 @@ enum RLTrainer {
 		var curriculum = 0
 		var anneal: Float = 0.35
 
-		var i = 0
-		while i < args.count {
-			func next() throws -> String {
-				i += 1
-				guard i < args.count else { throw TrainError.usage("missing value for \(args[i - 1])") }
-				return args[i]
-			}
-			switch args[i] {
+		try Args(args).parse { flag, next in
+			switch flag {
 			case "--weights": weightsPath = try next()
 			case "--out": out = try next()
 			case "--iters": iters = try Int(next()) ?? iters
@@ -82,17 +76,14 @@ enum RLTrainer {
 			case "--evaln": evalN = try Int(next()) ?? evalN
 			case "--curriculum": curriculum = try Int(next()) ?? curriculum
 			case "--anneal": anneal = try Float(next()) ?? anneal
-			default: throw TrainError.usage("unknown option \(args[i])")
+			default: throw TrainError.usage("unknown option \(flag)")
 			}
-			i += 1
 		}
 
 		guard let weightsPath else {
 			throw TrainError.usage("rl needs --weights <pgw> (a BC checkpoint)")
 		}
-		guard let weights = LSTMWeights(data: try Data(contentsOf: URL(fileURLWithPath: weightsPath))) else {
-			throw TrainError.badFile(weightsPath)
-		}
+		let weights = try LSTMWeights.load(weightsPath)
 
 		TacticalState.logsMapGen = false
 		let outDir = URL(fileURLWithPath: out, isDirectory: true)
@@ -215,13 +206,7 @@ enum RLTrainer {
 				try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
 
 				var policy = LSTMPolicy(weights: snapshot)
-				var tally = Eval.Tally()
-				for index in 0 ..< evalN {
-					let config = Rollouts.replay(index: index)
-					for seat in 0 ..< config.seats.count {
-						tally.add(Eval.play(config, policySeat: seat, policy: &policy))
-					}
-				}
+				let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN)
 				arena = f(Float(100 * tally.winRate))
 				print("  arena \(tally.line)  illegal \(tally.illegal)")
 
@@ -242,8 +227,6 @@ enum RLTrainer {
 		print("  out:      \(outDir.path)/policy.pgw")
 	}
 
-	private static func f(_ v: Float) -> String { unsafe String(format: "%.3f", v) }
-
 	// MARK: - Episode collection
 
 	/// Plays `count` episodes concurrently; every episode is fully determined
@@ -261,8 +244,8 @@ enum RLTrainer {
 			let out = unsafe UnsafeSendable(buffer)
 			DispatchQueue.concurrentPerform(iterations: count) { j in
 				let index = startIndex + j
-				var mix = Rand(s: 0xC0FF_EE00 &+ UInt64(bitPattern: Int64(index)))
-				let level = base + (Float(mix.next() >> 40) * 0x1p-24 < frac ? 1 : 0)
+				var mix = D20(seed: 0xC0FF_EE00 &+ UInt64(bitPattern: Int64(index)))
+				let level = base + (mix.uniform() < frac ? 1 : 0)
 				unsafe out.value[j] = play(
 					index: index, seat: j % 2,
 					weights: weights, temp: temp, level: level
@@ -306,7 +289,7 @@ enum RLTrainer {
 		var state = replay.makeState()
 		var policy = LSTMPolicy(weights: weights)
 		var ai = TacticalSim.AI()
-		var rng = Rand(s: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
+		var rng = D20(seed: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
 		var episode = Episode(replay: replay, seat: seat, level: level)
 
 		let mine = replay.seats[seat].country.team
@@ -384,7 +367,7 @@ enum RLTrainer {
 		let value = unitValues(state, mine: mine)
 		c.mineValue = value.mine
 		c.theirsValue = value.theirs
-		for xy in state.sim.map.indices where state.sim.map[xy].isSettlement {
+		state.sim.settlements.forEach { xy in
 			c.settlements += 1
 			let team = state.sim.control[xy].team
 			if team == mine { c.ownSettlements += 1 }
@@ -409,7 +392,7 @@ enum RLTrainer {
 
 	/// Masked softmax sample at temperature `temp` (≤ 0 degenerates to
 	/// argmax); `nil` iff no mask bit is set — same contract as argmax.
-	static func sample(_ logits: [Float], _ mask: [Bool], temp: Float, rng: inout Rand) -> Int? {
+	static func sample(_ logits: [Float], _ mask: [Bool], temp: Float, rng: inout D20) -> Int? {
 		guard temp > 0 else { return LSTMPolicy.argmax(logits, mask) }
 
 		var top = -Float.infinity
@@ -428,18 +411,6 @@ enum RLTrainer {
 			if u <= 0 { return i }
 		}
 		return last // float round-off: fall back to the final legal index
-	}
-
-	/// SplitMix64, deliberately separate from the sim's `D20`.
-	struct Rand {
-		var s: UInt64
-		mutating func next() -> UInt64 {
-			s &+= 0x9E37_79B9_7F4A_7C15
-			var z = s
-			z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-			z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-			return z ^ (z >> 31)
-		}
 	}
 }
 

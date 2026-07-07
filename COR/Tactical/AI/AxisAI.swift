@@ -291,11 +291,9 @@ extension TacticalSim {
 			guard position[i].stepDistance(to: target) >= 3 * Int(u.mov) else { return nil }
 
 			return position[i].n4.firstMap { xy -> TacticalAction? in
-				guard let tid = uidAt(xy) else { return nil }
-				let t = units[tid]
-				return t.country == country && t[.transport] && cargo[tid] == .none
-					&& canEmbarkType(unit: u, transport: t)
-					? .embark(i.uid, tid) : nil
+				guard let tid = uidAt(xy), canEmbark(unit: i.uid, transport: tid)
+				else { return nil }
+				return .embark(i.uid, tid)
 			}
 		}
 	}
@@ -307,9 +305,7 @@ extension TacticalSim {
 				  position[i].stepDistance(to: target) <= 4
 			else { return nil }
 			return position[i].n4.firstMap { xy -> TacticalAction? in
-				map.contains(xy) && unitsMap[xy] == .none
-				&& !map[xy].isRiver && map[xy] != .water
-				? .disembark(i.uid, xy) : nil
+				canDisembark(unit: i.uid, to: xy) ? .disembark(i.uid, xy) : nil
 			}
 		}
 	}

@@ -144,20 +144,13 @@ public struct LSTMWeights: Sendable {
 
 	// MARK: - Initialization
 
-	/// Seeded random weights (SplitMix64): uniform ±√(3 / fanIn) per tensor,
-	/// zero biases except the LSTM forget gate at +1 — standard so the cell
-	/// starts out remembering. In COR (not `Train`) so tests can exercise the
-	/// full inference path without a trained file.
+	/// Seeded random weights (`D20`, a separate instance from any sim's):
+	/// uniform ±√(3 / fanIn) per tensor, zero biases except the LSTM forget
+	/// gate at +1 — standard so the cell starts out remembering. In COR (not
+	/// `Train`) so tests can exercise the full inference path without a
+	/// trained file.
 	public static func random(seed: UInt64) -> LSTMWeights {
-		var s = seed
-		func next() -> UInt64 {
-			s &+= 0x9E37_79B9_7F4A_7C15
-			var z = s
-			z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-			z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-			return z ^ (z >> 31)
-		}
-		func uniform() -> Float { Float(next() >> 40) / Float(1 << 24) }	// [0, 1)
+		var rng = D20(seed: seed)
 
 		var w = LSTMWeights()
 		for (name, shape) in spec {
@@ -168,7 +161,7 @@ public struct LSTMWeights: Sendable {
 				// HWIO conv fanIn = kh·kw·in; matmul fanIn = in.
 				let fanIn = shape.dropLast().reduce(1, *)
 				let bound = (3 / Float(fanIn)).squareRoot()
-				w.values[name] = (0 ..< n).map { _ in (uniform() * 2 - 1) * bound }
+				w.values[name] = (0 ..< n).map { _ in (rng.uniform() * 2 - 1) * bound }
 			}
 		}
 		for i in hidden ..< 2 * hidden { w.values["lstm.b"]![i] = 1 }

@@ -19,20 +19,13 @@ enum Parity {
 		var wseed = 13
 		let threshold: Float = 1e-3
 
-		var i = 0
-		while i < args.count {
-			func next() throws -> String {
-				i += 1
-				guard i < args.count else { throw TrainError.usage("missing value for \(args[i - 1])") }
-				return args[i]
-			}
-			switch args[i] {
+		try Args(args).parse { flag, next in
+			switch flag {
 			case "--steps": steps = try Int(next()) ?? steps
 			case "--seed": seed = try Int(next()) ?? seed
 			case "--wseed": wseed = try Int(next()) ?? wseed
-			default: throw TrainError.usage("unknown option \(args[i])")
+			default: throw TrainError.usage("unknown option \(flag)")
 			}
-			i += 1
 		}
 
 		TacticalState.logsMapGen = false

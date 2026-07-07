@@ -92,7 +92,7 @@ final class Batcher {
 	private let files: [URL]
 	private var episodes: [(replay: Replay, seat: Int, scale: Float)] = []
 	private let onePass: Bool
-	private var rng: UInt64
+	private var rng: D20
 	private var order: [Int] = []
 	private var cursor = 0
 	private var lanes: [Lane]
@@ -118,7 +118,7 @@ final class Batcher {
 		self.b = b
 		self.t = t
 		onePass = false
-		rng = seed
+		rng = D20(seed: seed)
 		lanes = [Lane](repeating: Lane(), count: b)
 	}
 
@@ -128,7 +128,7 @@ final class Batcher {
 		self.b = b
 		self.t = t
 		onePass = true
-		rng = 0
+		rng = D20(seed: 0)
 		lanes = [Lane](repeating: Lane(), count: b)
 	}
 
@@ -144,7 +144,7 @@ final class Batcher {
 		if cursor >= order.count {
 			order = Array(0 ..< files.count * 2)
 			for i in (1 ..< order.count).reversed() {
-				order.swapAt(i, Int(random() % UInt64(i + 1)))
+				order.swapAt(i, Int(rng.next() % UInt64(i + 1)))
 			}
 			cursor = 0
 		}
@@ -231,13 +231,5 @@ final class Batcher {
 				lanes[lane].c[i] = c[lane * LSTMWeights.hidden + i]
 			}
 		}
-	}
-
-	private func random() -> UInt64 {
-		rng &+= 0x9E37_79B9_7F4A_7C15
-		var z = rng
-		z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-		z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-		return z ^ (z >> 31)
 	}
 }

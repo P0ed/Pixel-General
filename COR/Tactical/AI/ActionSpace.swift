@@ -9,7 +9,7 @@
 public enum ActionSpace {
 	public static let kinds = 7
 	public static let tiles = SimObservation.planeSize
-	/// Shop head capacity: `Shop.units` tops out at 21 rows + 16 auxilia.
+	/// Shop head capacity: `Shop.units` tops out at 20 rows + 16 auxilia.
 	public static let slots = 40
 
 	@frozen public enum Kind: Int, CaseIterable {
@@ -42,8 +42,13 @@ public struct ActionMasks {
 	/// `kinds × tiles`; a set bit means the unit (or shop tile) at that tile
 	/// has at least one legal target/slot for the kind.
 	public var actors: [[Bool]]
-	/// Derived: a kind is available iff some actor bit is set; `.end` always is.
-	public var kinds: [Bool]
+
+	/// A kind is available iff some actor bit is set; `.end` always is.
+	public var kinds: [Bool] {
+		var k = actors.map { mask in mask.contains(true) }
+		k[ActionSpace.Kind.end.rawValue] = true
+		return k
+	}
 }
 
 public extension TacticalSim {
@@ -104,8 +109,7 @@ public extension TacticalSim {
 	/// Kind/actor legality for the acting player. Built from the same `can*`
 	/// predicates that guard the corresponding reducers (`canMove`,
 	/// `canEmbark`, `canDisembark`, `canAttack`, `canResupply`, `canBuy`) —
-	/// plus the axisAI's stricter no-water rule for disembark — so every
-	/// masked action mutates the state.
+	/// so every masked action mutates the state.
 	func actionMasks() -> ActionMasks {
 		var actors = [[Bool]](
 			repeating: [Bool](repeating: false, count: ActionSpace.tiles),
@@ -140,9 +144,7 @@ public extension TacticalSim {
 			actors[ActionSpace.Kind.purchase.rawValue][ActionSpace.tile(xy)] = true
 		}
 
-		var kinds = actors.map { mask in mask.contains(true) }
-		kinds[ActionSpace.Kind.end.rawValue] = true
-		return ActionMasks(actors: actors, kinds: kinds)
+		return ActionMasks(actors: actors)
 	}
 
 	/// Legal target tiles for `kind` once the actor tile is chosen.
@@ -165,15 +167,12 @@ public extension TacticalSim {
 			}
 		case .embark:
 			let n4 = position[uid].n4
-			for i in n4.indices {
-				if let tid = uidAt(n4[i]), canEmbark(unit: uid, transport: tid) {
-					mask[ActionSpace.tile(n4[i])] = true
-				}
+			for i in n4.indices where isEmbarkTarget(uid, n4[i]) {
+				mask[ActionSpace.tile(n4[i])] = true
 			}
 		case .disembark:
 			let n4 = position[uid].n4
-			for i in n4.indices
-			where map.contains(n4[i]) && !map[n4[i]].isRiver && canDisembark(unit: uid, to: n4[i]) {
+			for i in n4.indices where isDisembarkTarget(uid, n4[i]) {
 				mask[ActionSpace.tile(n4[i])] = true
 			}
 		case .resupply, .purchase, .end:
@@ -206,14 +205,18 @@ public extension TacticalSim {
 	}
 
 	private func hasEmbarkTarget(_ uid: UID) -> Bool {
-		position[uid].n4.contains { xy in
-			uidAt(xy).map { tid in canEmbark(unit: uid, transport: tid) } ?? false
-		}
+		position[uid].n4.contains { xy in isEmbarkTarget(uid, xy) }
 	}
 
 	private func hasDisembarkTarget(_ uid: UID) -> Bool {
-		position[uid].n4.contains { xy in
-			map.contains(xy) && !map[xy].isRiver && canDisembark(unit: uid, to: xy)
-		}
+		position[uid].n4.contains { xy in isDisembarkTarget(uid, xy) }
+	}
+
+	private func isEmbarkTarget(_ uid: UID, _ xy: XY) -> Bool {
+		uidAt(xy).map { tid in canEmbark(unit: uid, transport: tid) } ?? false
+	}
+
+	private func isDisembarkTarget(_ uid: UID, _ xy: XY) -> Bool {
+		canDisembark(unit: uid, to: xy)
 	}
 }

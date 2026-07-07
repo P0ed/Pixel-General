@@ -46,29 +46,19 @@ enum Eval {
 		var weightsPath: String?
 		var wseed: Int?
 
-		var i = 0
-		while i < args.count {
-			func next() throws -> String {
-				i += 1
-				guard i < args.count else { throw TrainError.usage("missing value for \(args[i - 1])") }
-				return args[i]
-			}
-			switch args[i] {
+		try Args(args).parse { flag, next in
+			switch flag {
 			case "--n": n = try Int(next()) ?? n
 			case "--seed": seedBase = try Int(next()) ?? seedBase
 			case "--weights": weightsPath = try next()
 			case "--wseed": wseed = try Int(next())
-			default: throw TrainError.usage("unknown option \(args[i])")
+			default: throw TrainError.usage("unknown option \(flag)")
 			}
-			i += 1
 		}
 
 		let weights: LSTMWeights
 		if let weightsPath {
-			guard let w = LSTMWeights(data: try Data(contentsOf: URL(fileURLWithPath: weightsPath))) else {
-				throw TrainError.badFile(weightsPath)
-			}
-			weights = w
+			weights = try LSTMWeights.load(weightsPath)
 		} else if let wseed {
 			weights = .random(seed: UInt64(wseed))
 		} else {
@@ -114,6 +104,20 @@ enum Eval {
 		guard total.illegal == 0 else {
 			throw TrainError.failed("eval gate: \(total.illegal) illegal policy actions — masks must make this impossible")
 		}
+	}
+
+	/// Plays `configs` from both sides against `policy`, accumulating a
+	/// tally — the fixed arena both `Train eval` and the RL trainer's
+	/// checkpoints report.
+	static func arena(policy: inout LSTMPolicy, configs: Range<Int>) -> Tally {
+		var tally = Tally()
+		for index in configs {
+			let config = Rollouts.replay(index: index)
+			for seat in 0 ..< config.seats.count {
+				tally.add(play(config, policySeat: seat, policy: &policy))
+			}
+		}
+		return tally
 	}
 
 	/// One battle: the policy on `policySeat`, the heuristic on the rest;

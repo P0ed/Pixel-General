@@ -27,10 +27,7 @@ public struct LSTMPolicy {
 	}
 
 	public mutating func reset() {
-		h = [Float](repeating: 0, count: LSTMWeights.hidden)
-		c = [Float](repeating: 0, count: LSTMWeights.hidden)
-		lastTurn = .max
-		actionsThisTurn = 0
+		self = LSTMPolicy(weights: w)
 	}
 
 	/// The policy's move for the acting player. Always legal; `.end` when the

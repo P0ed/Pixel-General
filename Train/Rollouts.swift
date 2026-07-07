@@ -20,21 +20,14 @@ enum Rollouts {
 		var seedBase = 0
 		var verify = false
 
-		var i = 0
-		while i < args.count {
-			func next() throws -> String {
-				i += 1
-				guard i < args.count else { throw TrainError.usage("missing value for \(args[i - 1])") }
-				return args[i]
-			}
-			switch args[i] {
+		try Args(args).parse { flag, next in
+			switch flag {
 			case "--n": n = try Int(next()) ?? n
 			case "--out": out = try next()
 			case "--seed": seedBase = try Int(next()) ?? seedBase
 			case "--verify": verify = true
-			default: throw TrainError.usage("unknown option \(args[i])")
+			default: throw TrainError.usage("unknown option \(flag)")
 			}
-			i += 1
 		}
 
 		TacticalState.logsMapGen = false

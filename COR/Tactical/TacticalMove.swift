@@ -89,7 +89,7 @@ public extension TacticalSim {
 
 		var pos = moves.start
 		var interruptor: UID = .none
-		for k in stride(from: route.count - 1, through: 0, by: -1) {
+		for k in route.indices.reversed() {
 			let xy = route[k]
 			if let tid = uidAt(xy) {
 				let u = units[tid]
@@ -101,7 +101,7 @@ public extension TacticalSim {
 				pos = xy
 			}
 		}
-		for k in stride(from: route.count - 1, through: 0, by: -1) {
+		for k in route.indices.reversed() {
 			vision[playerIndex].formUnion(vision(at: route[k], spot: units[uid].spot))
 			if route[k] == pos { break }
 		}
@@ -115,7 +115,7 @@ public extension TacticalSim {
 
 		if pos != moves.start {
 			var path = CArray<16, XY>(head: moves.start, tail: .zero)
-			for k in stride(from: route.count - 1, through: 0, by: -1) {
+			for k in route.indices.reversed() {
 				path.add(route[k])
 				if route[k] == pos { break }
 			}
