@@ -28,7 +28,6 @@ enum Parity {
 			}
 		}
 
-		TacticalState.logsMapGen = false
 		let weights = LSTMWeights.random(seed: UInt64(wseed))
 		var policy = LSTMPolicy(weights: weights)
 		let model = try Model(weights: weights)
@@ -57,28 +56,28 @@ enum Parity {
 		}
 
 		while compared < steps {
-			var state = Rollouts.replay(index: battle).makeState()
+			var sim = Rollouts.replay(index: battle).makeSim()
 			battle += 1
 			policy.reset()
 			var ai = TacticalSim.AI()
 
-			while compared < steps, state.sim.aliveTeams.nonzeroBitCount > 1, state.sim.day <= 32 {
-				guard state.sim.playerIndex == 0 else {
-					_ = state.reduce(state.sim.axis(ai: &ai))
+			while compared < steps, sim.aliveTeams.nonzeroBitCount > 1, sim.day <= 32 {
+				guard sim.playerIndex == 0 else {
+					_ = sim.reduce(sim.run(ai: &ai))
 					continue
 				}
 
-				let obs = state.sim.observation()
+				let obs = sim.observation()
 				let h0 = policy.h
 				let c0 = policy.c
-				let (action, trace) = policy.traced(for: state.sim)
+				let (action, trace) = policy.traced(for: sim)
 
 				if let trace {
 					let out = model.step(
 						planes: obs.planes, globals: obs.globals,
 						h: h0, c: c0, actor: max(0, trace.actorTile)
 					)
-					let masks = state.sim.actionMasks()
+					let masks = sim.actionMasks()
 
 					diff("kind", trace.kind, out.kind)
 					diff("h", policy.h, out.h)
@@ -93,15 +92,15 @@ enum Parity {
 					}
 					if let target = trace.target, let kind {
 						diff("target", target, out.target)
-						checkArgmax("target", target, out.target, state.sim.targetMask(kind, actor: trace.actorTile))
+						checkArgmax("target", target, out.target, sim.targetMask(kind, actor: trace.actorTile))
 					}
 					if let slot = trace.slot {
 						diff("slot", slot, out.slot)
-						checkArgmax("slot", slot, out.slot, state.sim.slotMask(actor: trace.actorTile))
+						checkArgmax("slot", slot, out.slot, sim.slotMask(actor: trace.actorTile))
 					}
 					compared += 1
 				}
-				_ = state.reduce(action)
+				_ = sim.reduce(action)
 			}
 		}
 

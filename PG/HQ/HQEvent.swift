@@ -78,7 +78,7 @@ extension HQNodes {
 			.space, .space, .space,
 
 			.close(icon: .chess, status: .init(text: "Chess"), update: { _ in
-				core.startScenario(TacticalState.chess())
+				core.startScenario(.chess())
 				view.present(.auto)
 			}),
 			.space, .space, .space,
@@ -91,7 +91,7 @@ extension HQNodes {
 			.space,
 			.close(icon: .chess, status: .init(text: "Editor")) { _ in
 				guard let scene else { return }
-				core.store(scene.state)
+				core.store(scene.state.sim)
 				view.present(.editor)
 			},
 		]))

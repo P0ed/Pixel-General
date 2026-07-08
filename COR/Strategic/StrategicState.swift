@@ -79,10 +79,10 @@ public extension StrategicSim {
 	}
 }
 
-public extension StrategicState {
+public extension StrategicSim {
 
 	/// Build the European campaign map from the docs/Map.md legend.
-	static func europe(human: Country) -> StrategicState {
+	static func europe(human: Country) -> StrategicSim {
 		var owner = Map<32, Country>(size: 32, zero: .none)
 		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
 		for (row, line) in rows.enumerated() {
@@ -108,11 +108,7 @@ public extension StrategicState {
 			sy += xy.y
 			count += 1
 		}
-		let cursor = count > 0 ? XY(sx / count, sy / count) : XY(16, 16)
-		return StrategicState(
-			sim: StrategicSim(owner: owner, terrain: terrain, human: human),
-			ui: StrategicUI(cursor: cursor, camera: cursor)
-		)
+		return StrategicSim(owner: owner, terrain: terrain, human: human)
 	}
 }
 

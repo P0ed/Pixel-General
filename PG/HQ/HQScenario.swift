@@ -119,7 +119,7 @@ extension HQNodes {
 			.space, .space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
-				core.startScenario(TacticalState(
+				core.startScenario(TacticalSim(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: scene.state.sim.units.compactMap { u in u.alive ? u : nil },
 					size: 16 + size * 8,

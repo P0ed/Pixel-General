@@ -31,8 +31,8 @@ extension Replay {
 	/// Rebuilds the battle's initial state, identical to what the generator saw.
 	/// The factory appends `.base` rosters for seats 1+ itself; seat 0's roster
 	/// is passed explicitly with the same recipe.
-	func makeState() -> TacticalState {
-		TacticalState(
+	func makeSim() -> TacticalSim {
+		TacticalSim(
 			players: seats.map { s in
 				Player(
 					country: s.country,
@@ -133,18 +133,17 @@ extension Replay {
 	@discardableResult
 	static func check(_ url: URL) throws -> Replay {
 		let replay = try read(url)
-		var state = replay.makeState()
-		for action in replay.actions { _ = state.reduce(action) }
+		var sim = replay.makeSim()
+		for action in replay.actions { _ = sim.reduce(action) }
 		guard
-			(state.sim.winner ?? .none) == replay.winner,
-			UInt16(state.sim.day) == replay.days
+			(sim.winner ?? .none) == replay.winner,
+			UInt16(sim.day) == replay.days
 		else { throw TrainError.mismatch(url.path) }
 		return replay
 	}
 
 	static func inspect(_ args: [String]) throws {
 		guard !args.isEmpty else { throw TrainError.usage("replay <file> ...") }
-		TacticalState.logsMapGen = false
 		for path in args {
 			let replay = try check(URL(fileURLWithPath: path))
 			let seats = replay.seats.map { "\($0.country)" }.joined(separator: " vs ")

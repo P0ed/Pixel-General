@@ -21,13 +21,13 @@ struct Sample {
 /// order — the teacher (axisAI) drove both seats, so every action of the
 /// seat is a label, observed under that seat's fog.
 final class SampleStream {
-	private var state: TacticalState
+	private var sim: TacticalSim
 	private let actions: [TacticalAction]
 	private let seat: Int
 	private var cursor = 0
 
 	init(replay: Replay, seat: Int) {
-		state = replay.makeState()
+		sim = replay.makeSim()
 		actions = replay.actions
 		self.seat = seat
 	}
@@ -37,10 +37,10 @@ final class SampleStream {
 			let action = actions[cursor]
 			cursor += 1
 			var sample: Sample?
-			if state.sim.playerIndex == seat, let idx = state.sim.actionIndices(action) {
-				sample = Self.sample(state.sim, idx)
+			if sim.playerIndex == seat, let idx = sim.actionIndices(action) {
+				sample = Self.sample(sim, idx)
 			}
-			_ = state.reduce(action)
+			_ = sim.reduce(action)
 			if let sample { return sample }
 		}
 		return nil

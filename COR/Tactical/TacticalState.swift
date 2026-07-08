@@ -40,10 +40,6 @@ public struct TacticalState: ~Copyable {
 		self.sim = sim
 		self.ui = ui
 	}
-
-	public init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
-		self.init(sim: TacticalSim(map: map, players: players, cities: cities, units: units))
-	}
 }
 
 @frozen public enum Objective: Equatable, BitwiseCopyable {

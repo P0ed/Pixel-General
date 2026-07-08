@@ -85,7 +85,6 @@ enum RLTrainer {
 		}
 		let weights = try LSTMWeights.load(weightsPath)
 
-		TacticalState.logsMapGen = false
 		let outDir = URL(fileURLWithPath: out, isDirectory: true)
 		try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
@@ -286,7 +285,7 @@ enum RLTrainer {
 	/// rollout budgets, terminal reward from the final state.
 	static func play(index: Int, seat: Int, weights: LSTMWeights, temp: Float, level: Int = 0) -> Episode {
 		var replay = config(index: index, seat: seat, level: level)
-		var state = replay.makeState()
+		var sim = replay.makeSim()
 		var policy = LSTMPolicy(weights: weights)
 		var ai = TacticalSim.AI()
 		var rng = D20(seed: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
@@ -294,39 +293,39 @@ enum RLTrainer {
 
 		let mine = replay.seats[seat].country.team
 		let theirs = replay.seats[1 - seat].country.team
-		let start = census(state, mine: mine, theirs: theirs)
+		let start = census(sim, mine: mine, theirs: theirs)
 		var prev = (mine: start.mineValue, theirs: start.theirsValue)
 		var killed: Float = 0
 		var lost: Float = 0
 
 		while replay.actions.count < Rollouts.maxActions {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
-			if state.sim.day > Rollouts.maxDays { break }
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.day > Rollouts.maxDays { break }
 
 			let action: TacticalAction
-			if state.sim.playerIndex == seat {
-				action = policy.traced(for: state.sim) { logits, mask in
+			if sim.playerIndex == seat {
+				action = policy.traced(for: sim) { logits, mask in
 					sample(logits, mask, temp: temp, rng: &rng)
 				}.0
 				episode.samples += 1
 			} else {
-				action = state.sim.axis(ai: &ai)
+				action = sim.run(ai: &ai)
 			}
 			replay.actions.append(action)
-			_ = state.reduce(action)
+			_ = sim.reduce(action)
 
 			// Value only *decreases* through kills — purchases and arriving
 			// reinforcements increase it, so accumulating the drops separates
 			// combat results from economy.
-			let cur = unitValues(state, mine: mine)
+			let cur = unitValues(sim, mine: mine)
 			killed += max(0, prev.theirs - cur.theirs)
 			lost += max(0, prev.mine - cur.mine)
 			prev = cur
 		}
-		replay.winner = state.sim.winner ?? .none
-		replay.days = UInt16(state.sim.day)
+		replay.winner = sim.winner ?? .none
+		replay.days = UInt16(sim.day)
 
-		let end = census(state, mine: mine, theirs: theirs)
+		let end = census(sim, mine: mine, theirs: theirs)
 		episode.settleTerm = clamp(
 			Float((end.ownSettlements - end.theirsSettlements) - (start.ownSettlements - start.theirsSettlements))
 			/ Float(max(start.settlements, 1))
@@ -334,8 +333,8 @@ enum RLTrainer {
 		episode.unitTerm = clamp(
 			killed / max(start.theirsValue, 1) - lost / max(start.mineValue, 1)
 		)
-		let pMine = Float(state.sim.players[seat].prestige)
-		let pTheirs = Float(state.sim.players[1 - seat].prestige)
+		let pMine = Float(sim.players[seat].prestige)
+		let pTheirs = Float(sim.players[1 - seat].prestige)
 		episode.prestigeTerm = (pMine - pTheirs) / max(pMine + pTheirs, 1)
 
 		episode.reward = wSettlements * episode.settleTerm
@@ -362,23 +361,23 @@ enum RLTrainer {
 
 	/// Hp-weighted unit cost per side plus settlement control (neutral
 	/// settlements count toward the total but neither side).
-	static func census(_ state: borrowing TacticalState, mine: Team, theirs: Team) -> Census {
+	static func census(_ sim: borrowing TacticalSim, mine: Team, theirs: Team) -> Census {
 		var c = Census()
-		let value = unitValues(state, mine: mine)
+		let value = unitValues(sim, mine: mine)
 		c.mineValue = value.mine
 		c.theirsValue = value.theirs
-		state.sim.settlements.forEach { xy in
+		sim.settlements.forEach { xy in
 			c.settlements += 1
-			let team = state.sim.control[xy].team
+			let team = sim.control[xy].team
 			if team == mine { c.ownSettlements += 1 }
 			else if team == theirs { c.theirsSettlements += 1 }
 		}
 		return c
 	}
 
-	static func unitValues(_ state: borrowing TacticalState, mine: Team) -> (mine: Float, theirs: Float) {
-		state.sim.units.reduceAlive(into: (mine: Float(0), theirs: Float(0))) { r, i, u in
-			guard !state.sim.offMap(unit: i.uid) else { return }
+	static func unitValues(_ sim: borrowing TacticalSim, mine: Team) -> (mine: Float, theirs: Float) {
+		sim.units.reduceAlive(into: (mine: Float(0), theirs: Float(0))) { r, i, u in
+			guard !sim.offMap(unit: i.uid) else { return }
 			let v = Float(u.cost) * Float(u.hp) / 15
 			if u.country.team == mine {
 				r.mine += v

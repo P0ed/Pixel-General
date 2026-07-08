@@ -1,6 +1,6 @@
-public extension TacticalState {
+public extension TacticalSim {
 
-	static func chess() -> TacticalState {
+	static func chess() -> TacticalSim {
 		var map = Map<32, Terrain>(size: 8, zero: .field)
 		map.indices.forEach { xy in
 			map[xy] = (xy.x + xy.y) % 2 == 0 ? .field : .forest
@@ -66,6 +66,6 @@ public extension TacticalState {
 		sim.vision[0] = sim.vision(for: sim.players[0].country)
 		sim.vision[1] = sim.vision(for: sim.players[1].country)
 
-		return TacticalState(sim: sim)
+		return sim
 	}
 }

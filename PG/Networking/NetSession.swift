@@ -173,15 +173,15 @@ final class NetSession {
 		guard players.count > 1 else { return }
 		countries = players.map { $0.country }
 
-		let state = TacticalState(
+		let sim = TacticalSim(
 			players: players,
 			units: units,
 			size: size,
 			seed: .random(in: 0 ..< 128)
 		)
 		started = true
-		server?.broadcast(.start(encode(state)))
-		core.startScenario(state)
+		server?.broadcast(.start(encode(sim)))
+		core.startScenario(sim)
 		core.save()
 		view.present(.auto)
 	}
@@ -255,7 +255,7 @@ final class NetSession {
 			self.seats = seats
 			onLobby()
 		case .start(let data), .resync(let data):
-			guard var state: TacticalState = decode(data) else { return hostLost() }
+			guard var state: TacticalSim = decode(data) else { return hostLost() }
 			localize(&state)
 			started = true
 			core.startScenario(state)
@@ -275,15 +275,11 @@ final class NetSession {
 	/// Make the decoded host state peer-relative: our seat is `.human`,
 	/// everything else `.remote`. UI fields are reset — they are never read
 	/// by `reduce` and may freely diverge between peers.
-	private func localize(_ state: inout TacticalState) {
+	private func localize(_ sim: inout TacticalSim) {
 		let mySeat = mySeat
-		state.sim.players.modifyEach { i, p in
+		sim.players.modifyEach { i, p in
 			p.type = i == mySeat ? .human : .remote
 		}
-		state.ui.cursor = .zero
-		state.ui.camera = .zero
-		state.ui.selectedUnit = .none
-		state.ui.selectable = .none
 	}
 
 	/// The host is gone. Mid-battle the game degrades to local play: every
@@ -306,7 +302,7 @@ final class NetSession {
 
 	/// Scene hook: inspect a locally produced action before Reduce. Returns
 	/// true when the action must not be applied locally.
-	func relay(_ state: borrowing TacticalState, _ action: TacticalAction) -> Bool {
+	func relay(_ sim: borrowing TacticalSim, _ action: TacticalAction) -> Bool {
 		defer { draining = false }
 		guard started else { return true }
 		switch role {
@@ -314,14 +310,14 @@ final class NetSession {
 			// Drop local actions for seats the host doesn't drive; everything
 			// applied here (own input, AI, drained client intents) is the
 			// authoritative stream and is echoed to every client.
-			guard draining || state.sim.player.type != .remote else { return true }
+			guard draining || sim.player.type != .remote else { return true }
 			server?.broadcast(.action(encode(action)))
 			return false
 		case .client:
 			// Confirmed actions drained from the queue apply as-is; our own
 			// actions travel to the host and apply on the echo.
 			if draining { return false }
-			guard state.sim.player.type == .human else { return true }
+			guard sim.player.type == .human else { return true }
 			client?.send(.action(encode(action)))
 			return true
 		}
@@ -331,8 +327,8 @@ final class NetSession {
 	/// actions into the scene, runs the real AI only on the host, and waits
 	/// for the wire otherwise.
 	func nextAction(
-		_ state: borrowing TacticalState,
-		_ ai: (borrowing TacticalState) -> TacticalAction?
+		_ sim: borrowing TacticalSim,
+		_ ai: (borrowing TacticalSim) -> TacticalAction?
 	) -> TacticalAction? {
 		guard started else { return nil }
 		switch role {
@@ -341,11 +337,11 @@ final class NetSession {
 				queue.removeFirst()
 				// Client intents were validated on arrival; drop the ones the
 				// turn rolled past (e.g. a duplicate `.end`).
-				guard first.seat == -1 || first.seat == state.sim.playerIndex else { continue }
+				guard first.seat == -1 || first.seat == sim.playerIndex else { continue }
 				draining = true
 				return first.action
 			}
-			return state.sim.player.type == .ai ? ai(state) : nil
+			return sim.player.type == .ai ? ai(sim) : nil
 		case .client:
 			if !queue.isEmpty {
 				draining = true
@@ -354,7 +350,7 @@ final class NetSession {
 			if hostless {
 				// All takeovers drained — degrade to plain local play.
 				shutdown()
-				return ai(state)
+				return ai(sim)
 			}
 			return nil
 		}

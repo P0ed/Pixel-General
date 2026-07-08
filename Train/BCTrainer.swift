@@ -36,7 +36,6 @@ enum BCTrainer {
 			}
 		}
 
-		TacticalState.logsMapGen = false
 		let outDir = URL(fileURLWithPath: out, isDirectory: true)
 		try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 

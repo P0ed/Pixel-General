@@ -1,13 +1,13 @@
 public struct Core: ~Copyable {
-	public internal(set) var hq: HQState
-	public internal(set) var strategic: StrategicState?
-	public internal(set) var tactical: TacticalState?
+	public internal(set) var hq: HQSim
+	public internal(set) var strategic: StrategicSim?
+	public internal(set) var tactical: TacticalSim?
 	public internal(set) var location: Location = .hq
 
 	public init(
-		hq: consuming HQState,
-		strategic: consuming StrategicState? = nil,
-		tactical: consuming TacticalState? = nil,
+		hq: consuming HQSim,
+		strategic: consuming StrategicSim? = nil,
+		tactical: consuming TacticalSim? = nil,
 		location: Location = .hq
 	) {
 		self.hq = hq
@@ -25,89 +25,86 @@ public extension Core {
 
 	static func new(country: Country) -> Core {
 		Core(
-			hq: HQState(
-				sim: HQSim(
-					player: Player(country: country, type: .human, tier: 3),
-					units: .init(
-						head: modifying(.base(country)) { base in
-							base.modifyEach { u in u.reset() }
-						},
-						tail: .empty
-					)
+			hq: HQSim(
+				player: Player(country: country, type: .human, tier: 3),
+				units: .init(
+					head: modifying(.base(country)) { base in
+						base.modifyEach { u in u.reset() }
+					},
+					tail: .empty
 				)
 			)
 		)
 	}
 
-	mutating func store(_ state: borrowing HQState) {
-		hq = clone(state)
+	mutating func store(_ sim: borrowing HQSim) {
+		hq = clone(sim)
 		location = .hq
 	}
 
-	mutating func store(_ state: borrowing TacticalState) {
-		tactical = clone(state)
+	mutating func store(_ sim: borrowing TacticalSim) {
+		tactical = clone(sim)
 		location = .tactical
 	}
 
-	mutating func store(_ state: borrowing StrategicState) {
-		strategic = clone(state)
+	mutating func store(_ sim: borrowing StrategicSim) {
+		strategic = clone(sim)
 		location = .strategic
 	}
 
-	mutating func startScenario(_ state: borrowing TacticalState) {
-		tactical = clone(state)
+	mutating func startScenario(_ sim: borrowing TacticalSim) {
+		tactical = clone(sim)
 		location = .tactical
 	}
 
 	mutating func startCampaignBattle(at tile: XY) {
-		guard let defender = strategic?.sim.owner[tile] else { return }
+		guard let defender = strategic?.owner[tile] else { return }
 
-		let human = hq.sim.player.country
-		let prestige = hq.sim.player.prestige
+		let human = hq.player.country
+		let prestige = hq.player.prestige
 
 		let players = [
 			Player(country: human, type: .human, prestige: prestige),
 			Player(country: defender, type: .ai),
 		]
-		let units = hq.sim.units.compactMap { u in u.alive ? u : nil }
+		let units = hq.units.compactMap { u in u.alive ? u : nil }
 
-		strategic?.sim.battle = tile
-		tactical = TacticalState(
+		strategic?.battle = tile
+		tactical = TacticalSim(
 			players: players,
-			objective: .survive(defender.team, day: 20),
 			units: units,
 			size: 24,
 			seed: tile.x + tile.y * 32,
-			terrain: strategic?.sim.terrain[tile] ?? .field
+			terrain: strategic?.terrain[tile] ?? .field,
+			objective: .survive(defender.team, day: 20)
 		)
 		location = .tactical
 	}
 
-	mutating func startCampaign(_ hq: borrowing HQState, _ strategic: borrowing StrategicState) {
+	mutating func startCampaign(_ hq: borrowing HQSim, _ strategic: borrowing StrategicSim) {
 		self.hq = clone(hq)
 		self.strategic = clone(strategic)
 		location = .strategic
 	}
 
-	mutating func complete(_ state: borrowing TacticalState) {
-		let c = hq.sim.player.country
-		let units: [Unit] = state.sim.units
+	mutating func complete(_ sim: borrowing TacticalSim) {
+		let c = hq.player.country
+		let units: [Unit] = sim.units
 			.compactMapAlive { i, u in
 				u.country != c || u[.aux] ? nil : modifying(u) { u in
 					u.reset()
 				}
 			}
-		hq.sim.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
-		hq.sim.player.prestige = state.sim[c].prestige
+		hq.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
+		hq.player.prestige = sim[c].prestige
 
 		tactical = nil
 
-		if let tile = strategic?.sim.battle {
-			let won = state.sim.winner == c.team
-			strategic?.sim.resolveBattle(at: tile, won: won, by: c)
+		if let tile = strategic?.battle {
+			let won = sim.winner == c.team
+			strategic?.resolveBattle(at: tile, won: won, by: c)
 			location = .strategic
 		} else {
-			hq.ui.cursor = .zero
 			location = .hq
 		}
 	}

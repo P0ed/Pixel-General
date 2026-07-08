@@ -30,7 +30,6 @@ enum Rollouts {
 			}
 		}
 
-		TacticalState.logsMapGen = false
 		let dir = URL(fileURLWithPath: out, isDirectory: true)
 		try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
@@ -80,17 +79,17 @@ enum Rollouts {
 
 	/// The proven headless loop (`TacticalPerformanceTests`), recording every action.
 	static func play(_ replay: inout Replay) {
-		var state = replay.makeState()
+		var sim = replay.makeSim()
 		var ai = TacticalSim.AI()
 		while replay.actions.count < maxActions {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
-			if state.sim.day > maxDays { break }
-			let action = state.sim.axis(ai: &ai)
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.day > maxDays { break }
+			let action = sim.run(ai: &ai)
 			replay.actions.append(action)
-			_ = state.reduce(action)
+			_ = sim.reduce(action)
 		}
-		replay.winner = state.sim.winner ?? .none
-		replay.days = UInt16(state.sim.day)
+		replay.winner = sim.winner ?? .none
+		replay.days = UInt16(sim.day)
 	}
 
 	static func name(_ index: Int) -> String {

@@ -120,28 +120,28 @@ struct RNGTests {
 
 	@Test func damageCalculation() {
 		var report = "Damage table:"
-		var state = TacticalState.xs
+		var sim = TacticalSim.xs
 
 		var u0 = Unit(model: .regular, country: .den)
 		var u1 = Unit(model: .regular, country: .usa)
 		u0.reset()
 		u1.reset()
 
-		let u0id = state.sim.spawn(u0, at: XY(1, 1))
-		let u1id = state.sim.spawn(u1, at: XY(2, 2))
+		let u0id = sim.spawn(u0, at: XY(1, 1))
+		let u1id = sim.spawn(u1, at: XY(2, 2))
 
 		let baseDif = Int(u0.atk(u1)) - Int(u1.def(u0))
 		var dmgs: [(Float, UInt8, UInt8)] = []
 
 		for atkMod in Int8(-15)...24 {
-			state.sim.d20 = D20()
+			sim.d20 = D20()
 			var events: [TacticalEvent] = []
 			var min = UInt8.max, max = UInt8.min
 			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
-				state.sim.units[u0id] = u0
-				state.sim.units[u1id] = u1
-				state.sim.fire(src: u0id, dst: u1id, defMod: -atkMod, into: &events)
-				let dmg = state.sim.units[u1id].maxHP - state.sim.units[u1id].hp
+				sim.units[u0id] = u0
+				sim.units[u1id] = u1
+				sim.fire(src: u0id, dst: u1id, defMod: -atkMod, into: &events)
+				let dmg = sim.units[u1id].maxHP - sim.units[u1id].hp
 				if dmg > max { max = dmg }
 				if dmg < min { min = dmg }
 				return acc + UInt32(dmg)
@@ -159,7 +159,7 @@ struct RNGTests {
 	}
 }
 
-extension TacticalState {
+extension TacticalSim {
 
 	static var xs: Self {
 		var map = Map<32, Terrain>(size: 4, zero: .field)
@@ -174,7 +174,7 @@ extension TacticalState {
 			Player(country: .usa, type: .human, prestige: 0xF00),
 		]
 
-		return TacticalState(
+		return TacticalSim(
 			map: map,
 			players: players,
 			cities: cities,

@@ -14,7 +14,7 @@ extension HQMode {
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			mouse: { nodes, point in nodes.map.tile(at: point) },
-			save: { state in core.store(state); core.save() }
+			save: { state in core.store(state.sim); core.save() }
 		)
 	}
 }

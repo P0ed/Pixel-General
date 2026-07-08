@@ -65,7 +65,6 @@ enum Eval {
 			throw TrainError.usage("eval needs --weights <pgw> (or --wseed <n> for a random-weight baseline)")
 		}
 
-		TacticalState.logsMapGen = false
 		var policy = LSTMPolicy(weights: weights)
 
 		let clock = ContinuousClock()
@@ -123,33 +122,33 @@ enum Eval {
 	/// One battle: the policy on `policySeat`, the heuristic on the rest;
 	/// same budgets as the rollout generator. Returns a single-battle tally.
 	static func play(_ config: Replay, policySeat: Int, policy: inout LSTMPolicy) -> Tally {
-		var state = config.makeState()
+		var sim = config.makeSim()
 		var ai = TacticalSim.AI()
 		policy.reset()
 
 		var tally = Tally()
 		var actions = 0
 		while actions < Rollouts.maxActions {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
-			if state.sim.day > Rollouts.maxDays { break }
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.day > Rollouts.maxDays { break }
 
-			if state.sim.playerIndex == policySeat {
-				let action = policy.action(for: state.sim)
+			if sim.playerIndex == policySeat {
+				let action = policy.action(for: sim)
 				tally.actions += 1
 				if action == .end {
-					_ = state.reduce(action)
+					_ = sim.reduce(action)
 				} else {
-					let before = encode(state.sim)
-					_ = state.reduce(action)
-					if encode(state.sim) == before { tally.illegal += 1 }
+					let before = encode(sim)
+					_ = sim.reduce(action)
+					if encode(sim) == before { tally.illegal += 1 }
 				}
 			} else {
-				_ = state.reduce(state.sim.axis(ai: &ai))
+				_ = sim.reduce(sim.run(ai: &ai))
 			}
 			actions += 1
 		}
 
-		let winner = state.sim.winner ?? .none
+		let winner = sim.winner ?? .none
 		let mine = config.seats[policySeat].country.team
 		let theirs = config.seats[1 - policySeat].country.team
 		if winner == mine {
@@ -159,7 +158,7 @@ enum Eval {
 		} else {
 			tally.draws = 1
 		}
-		tally.days = Int(state.sim.day)
+		tally.days = Int(sim.day)
 		tally.battles = 1
 		return tally
 	}
