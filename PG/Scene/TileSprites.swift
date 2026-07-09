@@ -63,7 +63,6 @@ extension SKTileGroup {
 	static let gray = base(surface: .none, elevation: 0)
 	static let blue = base(surface: .team(.axis), elevation: 0)
 	static let yellow = base(surface: .team(.allies), elevation: 0)
-	static let green = base(surface: .team(.none), elevation: 0)
 	static let red = base(surface: .team(.soviet), elevation: 0)
 
 	private struct BaseKey: Hashable {
@@ -202,7 +201,7 @@ extension SKTileSet {
 	)
 
 	static let colors = SKTileSet(
-		tileGroups: [/*.gray, */.blue, .yellow, .green, .red],
+		tileGroups: [.gray, .blue, .yellow, .red],
 		tileSetType: .isometric
 	)
 }

@@ -44,6 +44,6 @@ extension CGSize {
 	static var tile: CGSize { .init(width: 64.0, height: 32.0) }
 	static var tile3D: CGSize { .init(width: 64.0, height: 40.0) }
 
+	/// Initial size only — `PixelView` resizes the scene to track its bounds.
 	static var scene: CGSize { .init(width: 640.0, height: 400.0) }
-	static var window: CGSize { .init(width: 1280.0, height: 800.0) }
 }
