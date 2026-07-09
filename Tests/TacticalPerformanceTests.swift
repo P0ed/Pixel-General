@@ -28,7 +28,7 @@ struct TacticalPerformanceTests {
 		let clock = ContinuousClock()
 
 		for seed in 0..<Self.runs {
-			var state = TacticalState(
+			var sim = TacticalSim(
 				players: Self.countries.map { c in
 					Player(
 						country: c,
@@ -42,20 +42,20 @@ struct TacticalPerformanceTests {
 				seed: seed
 			)
 
-			var ai = TacticalSim.AI()
+			var ai = AI.Plan()
 			var actions = 0
 
 			let elapsed = clock.measure {
 				while actions < Self.maxActionsPerBattle {
-					if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
-					if state.sim.day > Self.maxDaysPerBattle { break }		// stalemate guard
-					let action = state.sim.axis(ai: &ai)
-					_ = state.reduce(action)
+					if sim.aliveTeams.nonzeroBitCount <= 1 { break }	// resolved
+					if sim.day > Self.maxDaysPerBattle { break }		// stalemate guard
+					let action = sim.run(ai: &ai)
+					_ = sim.reduce(action)
 					actions += 1
 				}
 			}
 
-			let resolved = state.sim.aliveTeams.nonzeroBitCount <= 1
+			let resolved = sim.aliveTeams.nonzeroBitCount <= 1
 			if resolved { resolvedCount += 1 }
 			totalActions += actions
 			totalDuration += elapsed
@@ -66,7 +66,7 @@ struct TacticalPerformanceTests {
 				resolved ? "resolved" : "UNRESOLVED",
 				elapsed.seconds,
 				actions,
-				state.sim.day,
+				sim.day,
 				Double(actions) / max(elapsed.seconds, 1e-9)
 			))
 		}
@@ -87,6 +87,7 @@ struct TacticalPerformanceTests {
 			resolvedCount == Self.runs,
 			"Only \(resolvedCount)/\(Self.runs) battles resolved within the budget"
 		)
+		#expect(totalActions == 7133, "Behaviour changed")
 	}
 }
 

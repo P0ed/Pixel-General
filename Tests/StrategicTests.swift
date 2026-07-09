@@ -13,15 +13,15 @@ struct StrategicTests {
 	/// Finds an enemy `target`-owned tile that borders a `human`-owned tile —
 	/// i.e. a valid attack target.
 	private static func borderTile(
-		_ state: borrowing StrategicState,
+		_ sim: borrowing StrategicSim,
 		human: Country,
 		target: Country
 	) -> XY? {
-		for xy in state.sim.owner.indices where state.sim.owner[xy] == target {
+		for xy in sim.owner.indices where sim.owner[xy] == target {
 			let n8 = xy.n8
 			for i in 0 ..< n8.count {
 				let n = n8[i]
-				if state.sim.owner.contains(n), state.sim.owner[n] == human {
+				if sim.owner.contains(n), sim.owner[n] == human {
 					return xy
 				}
 			}
@@ -30,17 +30,17 @@ struct StrategicTests {
 	}
 
 	@Test func europeFactoryParsesMap() {
-		let state = StrategicState.europe(human: .fin)
-		let size = state.sim.owner.size
-		let human = state.sim.human
-		let inBattle = state.sim.battle != nil
+		let sim = StrategicSim.europe(human: .fin)
+		let size = sim.owner.size
+		let human = sim.human
+		let inBattle = sim.battle != nil
 		#expect(size == 32)
 		#expect(human == .fin)
 		#expect(!inBattle)
 
 		var fin = 0, rus = 0, sea = 0
-		for xy in state.sim.owner.indices {
-			switch state.sim.owner[xy] {
+		for xy in sim.owner.indices {
+			switch sim.owner[xy] {
 			case .fin: fin += 1
 			case .rus: rus += 1
 			case .none: sea += 1
@@ -53,15 +53,15 @@ struct StrategicTests {
 	}
 
 	@Test func europeTerrainHasHillsAndMountains() {
-		let state = StrategicState.europe(human: .fin)
+		let sim = StrategicSim.europe(human: .fin)
 		var hills = 0, mountains = 0, highgroundOnSea = 0
-		for xy in state.sim.terrain.indices {
-			switch state.sim.terrain[xy] {
+		for xy in sim.terrain.indices {
+			switch sim.terrain[xy] {
 			case .hill: hills += 1
 			case .mountain: mountains += 1
 			default: continue
 			}
-			if state.sim.owner[xy] == .none { highgroundOnSea += 1 }
+			if sim.owner[xy] == .none { highgroundOnSea += 1 }
 		}
 		#expect(hills > 0, "no hills on the europe map")
 		#expect(mountains > 0, "no mountains on the europe map")
@@ -69,94 +69,94 @@ struct StrategicTests {
 
 		// The Alps: every Austrian province is hill or mountain.
 		var flatAustria = 0
-		for xy in state.sim.owner.indices where state.sim.owner[xy] == .aut {
-			if !state.sim.terrain[xy].isHighground { flatAustria += 1 }
+		for xy in sim.owner.indices where sim.owner[xy] == .aut {
+			if !sim.terrain[xy].isHighground { flatAustria += 1 }
 		}
 		#expect(flatAustria == 0, "\(flatAustria) Austrian tiles missed the Alps")
 	}
 
 	@Test func canAttackEnemyBorderTile() {
-		let state = StrategicState.europe(human: .fin)
-		let target = Self.borderTile(state, human: .fin, target: .rus)
+		let sim = StrategicSim.europe(human: .fin)
+		let target = Self.borderTile(sim, human: .fin, target: .rus)
 		#expect(target != nil, "no Finland/Russia border on the europe map")
 		if let target {
-			let attackable = state.sim.canAttack(target)
+			let attackable = sim.canAttack(target)
 			#expect(attackable)
 		}
 	}
 
 	@Test func cannotAttackOwnOrSea() {
-		let state = StrategicState.europe(human: .fin)
+		let sim = StrategicSim.europe(human: .fin)
 		var ownTile: XY?
 		var seaTile: XY?
-		for xy in state.sim.owner.indices {
-			if state.sim.owner[xy] == .fin, ownTile == nil { ownTile = xy }
-			if state.sim.owner[xy] == .none, seaTile == nil { seaTile = xy }
+		for xy in sim.owner.indices {
+			if sim.owner[xy] == .fin, ownTile == nil { ownTile = xy }
+			if sim.owner[xy] == .none, seaTile == nil { seaTile = xy }
 		}
 		if let ownTile {
-			let attackable = state.sim.canAttack(ownTile)
+			let attackable = sim.canAttack(ownTile)
 			#expect(!attackable, "own tile is attackable")
 		}
 		if let seaTile {
-			let attackable = state.sim.canAttack(seaTile)
+			let attackable = sim.canAttack(seaTile)
 			#expect(!attackable, "sea tile is attackable")
 		}
 	}
 
 	@Test func resolveBattleAnnexesOnWin() {
-		var state = StrategicState.europe(human: .fin)
-		guard let target = Self.borderTile(state, human: .fin, target: .rus) else {
+		var sim = StrategicSim.europe(human: .fin)
+		guard let target = Self.borderTile(sim, human: .fin, target: .rus) else {
 			Issue.record("no border tile to contest")
 			return
 		}
-		state.sim.battle = target
-		state.sim.resolveBattle(at: target, won: true, by: .fin)
-		let owner = state.sim.owner[target]
-		let inBattle = state.sim.battle != nil
+		sim.battle = target
+		sim.resolveBattle(at: target, won: true, by: .fin)
+		let owner = sim.owner[target]
+		let inBattle = sim.battle != nil
 		#expect(owner == .fin, "won battle did not annex the tile")
 		#expect(!inBattle, "battle context not cleared")
 	}
 
 	@Test func resolveBattleKeepsTileOnLoss() {
-		var state = StrategicState.europe(human: .fin)
-		guard let target = Self.borderTile(state, human: .fin, target: .rus) else {
+		var sim = StrategicSim.europe(human: .fin)
+		guard let target = Self.borderTile(sim, human: .fin, target: .rus) else {
 			Issue.record("no border tile to contest")
 			return
 		}
-		state.sim.battle = target
-		state.sim.resolveBattle(at: target, won: false, by: .fin)
-		let owner = state.sim.owner[target]
-		let inBattle = state.sim.battle != nil
+		sim.battle = target
+		sim.resolveBattle(at: target, won: false, by: .fin)
+		let owner = sim.owner[target]
+		let inBattle = sim.battle != nil
 		#expect(owner == .rus, "repulse should not flip the tile")
 		#expect(!inBattle, "battle context not cleared")
 	}
 
 	@Test func resolveBattleDoesNotFloodSea() {
-		var state = StrategicState.europe(human: .fin)
+		var sim = StrategicSim.europe(human: .fin)
 		// Pick a sea tile so the capture radius certainly overlaps water.
 		var seaTile: XY?
-		for xy in state.sim.owner.indices where state.sim.owner[xy] == .none {
+		for xy in sim.owner.indices where sim.owner[xy] == .none {
 			seaTile = xy
 			break
 		}
 		guard let seaTile else { return }
-		state.sim.resolveBattle(at: seaTile, won: true, by: .fin)
-		let owner = state.sim.owner[seaTile]
+		sim.resolveBattle(at: seaTile, won: true, by: .fin)
+		let owner = sim.owner[seaTile]
 		#expect(owner == .none, "sea was converted to land")
 	}
 
 	@Test func reduceEndTurnAdvancesDay() {
-		var state = StrategicState.europe(human: .fin)
-		let day = state.sim.turn
-		let events = state.sim.reduce(.endTurn)
-		let turn = state.sim.turn
+		var sim = StrategicSim.europe(human: .fin)
+		let day = sim.turn
+		let events = sim.reduce(.endTurn)
+		let turn = sim.turn
 		#expect(turn == day + 1)
 		#expect(events.isEmpty)
 	}
 
 	@Test func reduceAttackEmitsEvent() {
-		var state = StrategicState.europe(human: .fin)
-		let events = state.sim.reduce(.attack(XY(0, 0)))
+		var sim = StrategicSim.europe(human: .fin)
+		let events = sim.reduce(.attack(XY(0, 0)))
 		#expect(events.count == 1)
 		if case .attack = events.first {} else {
 			Issue.record("expected an .attack event")
@@ -164,15 +164,15 @@ struct StrategicTests {
 	}
 
 	@Test func serializationRoundTrip() {
-		let original = StrategicState.europe(human: .fin)
+		let original = StrategicSim.europe(human: .fin)
 		let data = encode(original)
-		guard let restored: StrategicState = decode(data) else {
+		guard let restored: StrategicSim = decode(data) else {
 			Issue.record("decode failed")
 			return
 		}
-		let human = restored.sim.human
-		let turn = restored.sim.turn
-		let originalTurn = original.sim.turn
+		let human = restored.human
+		let turn = restored.turn
+		let originalTurn = original.turn
 		let bytes = encode(restored)
 		#expect(human == .fin)
 		#expect(turn == originalTurn)

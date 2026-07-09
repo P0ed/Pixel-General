@@ -59,7 +59,7 @@ enum Parity {
 			var sim = Rollouts.replay(index: battle).makeSim()
 			battle += 1
 			policy.reset()
-			var ai = TacticalSim.AI()
+			var ai = AI.Plan()
 
 			while compared < steps, sim.aliveTeams.nonzeroBitCount > 1, sim.day <= 32 {
 				guard sim.playerIndex == 0 else {

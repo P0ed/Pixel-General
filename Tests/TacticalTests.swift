@@ -15,20 +15,20 @@ struct TacticalTests {
 	@Test func factoryProducesValidState() {
 		let players = Self.players()
 		let units = Array<Unit>.small(.swe)
-		let state = TacticalState(
+		let sim = TacticalSim(
 			players: players,
 			units: units,
 			size: 32,
 			seed: 0
 		)
 
-		#expect(state.sim.map.size == 32)
-		#expect(state.sim.players.count == 4)
-		#expect(state.sim.units.count > 0, "No units placed")
+		#expect(sim.map.size == 32)
+		#expect(sim.players.count == 4)
+		#expect(sim.units.count > 0, "No units placed")
 		var cityCount = 0
-		for xy in state.sim.map.indices where state.sim.map[xy] == .city { cityCount += 1 }
+		for xy in sim.map.indices where sim.map[xy] == .city { cityCount += 1 }
 		#expect(cityCount > 0, "No cities placed")
-		#expect(state.sim.turn == 0)
+		#expect(sim.turn == 0)
 
 		// Every alive unit must occupy a unique tile and the unitsMap must
 		// agree with `position`. Collect violations into local arrays so
@@ -38,11 +38,11 @@ struct TacticalTests {
 		var outOfMapPositions: [XY] = []
 		var collisions: [XY] = []
 		var unitsMapMismatches: [XY] = []
-		state.sim.units.forEachAlive { i, u in
-			let p = state.sim.position[i]
-			if !state.sim.map.contains(p) { outOfMapPositions.append(p) }
+		sim.units.forEachAlive { i, u in
+			let p = sim.position[i]
+			if !sim.map.contains(p) { outOfMapPositions.append(p) }
 			if !seen.insert(p).inserted { collisions.append(p) }
-			if state.sim.unitsMap[p] != i.uid { unitsMapMismatches.append(p) }
+			if sim.unitsMap[p] != i.uid { unitsMapMismatches.append(p) }
 		}
 		#expect(outOfMapPositions.isEmpty, "Out-of-map unit positions: \(outOfMapPositions)")
 		#expect(collisions.isEmpty, "Tile collisions: \(collisions)")
@@ -52,8 +52,8 @@ struct TacticalTests {
 		// degenerate empty-map case).
 		let playerCountries = Set(players.map { $0.country })
 		var cityBadCountry: [Country] = []
-		for xy in state.sim.map.indices where state.sim.map[xy] == .city {
-			let c = state.sim.control[xy]
+		for xy in sim.map.indices where sim.map[xy] == .city {
+			let c = sim.control[xy]
 			if !playerCountries.contains(c), c != .swe {
 				cityBadCountry.append(c)
 			}
@@ -62,12 +62,12 @@ struct TacticalTests {
 	}
 
 	@Test func cursorMovementStaysInBounds() {
-		var state = TacticalState(
+		var state = TacticalState(sim: TacticalSim(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
-		)
+		))
 
 		state.ui.cursor = XY(0, 0)
 		_ = state.apply(.direction(.left))   // would go to -1, must clamp
@@ -84,12 +84,12 @@ struct TacticalTests {
 	}
 
 	@Test func selectingOwnUnitSetsSelectableMoves() {
-		var state = TacticalState(
+		var state = TacticalState(sim: TacticalSim(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
-		)
+		))
 		// Ensure player 0's vision covers their own units (init does this).
 		let ownUnitPos = state.sim.units.firstMapAlive { i, u in
 			u.country == state.sim.country && u.canMove ? state.sim.position[i] : nil
@@ -111,21 +111,21 @@ struct TacticalTests {
 		// that the loop completes without a crash and that the turn counter
 		// advances at least once.
 
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 
-		var state = TacticalState(
+		var state = TacticalState(sim: TacticalSim(
 			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 32,
 			seed: 0
-		)
+		))
 
 		let initialTurn = state.sim.turn
 		var iterations = 0
 		let maxIterations = 1024
 
 		while iterations < maxIterations {
-			let action = state.sim.axis(ai: &ai)
+			let action = state.sim.run(ai: &ai)
 			_ = state.reduce(action)
 			iterations += 1
 			if action == .end {
@@ -140,15 +140,15 @@ struct TacticalTests {
 	}
 
 	@Test func endTurnIncrementsTurnCounter() {
-		var state = TacticalState(
+		var sim = TacticalSim(
 			players: Self.players(types: [.ai, .ai, .ai, .ai]),
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
 		)
-		let before = state.sim.turn
-		_ = state.reduce(.end)
-		#expect(state.sim.turn == before + 1, "End-of-turn must advance the turn counter")
+		let before = sim.turn
+		_ = sim.reduce(.end)
+		#expect(sim.turn == before + 1, "End-of-turn must advance the turn counter")
 	}
 
 	@Test func helicopterEmbarkThenMoveKeepsPositionInSync() {
@@ -302,22 +302,22 @@ struct TacticalTests {
 	}
 
 	@Test func movesForOwnUnitNotIncludeStartTile() {
-		let state = TacticalState(
+		let sim = TacticalSim(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
 			size: 32,
 			seed: 0
 		)
 
-		let pick = state.sim.units.firstMapAlive { i, u in
-			u.country == state.sim.country && u.canMove ? i.uid : nil
+		let pick = sim.units.firstMapAlive { i, u in
+			u.country == sim.country && u.canMove ? i.uid : nil
 		}
 		guard let uid = pick else {
 			Issue.record("No movable own unit found")
 			return
 		}
 		#expect(
-			!state.sim.moves(for: uid)[state.sim.position[uid]],
+			!sim.moves(for: uid)[sim.position[uid]],
 			"Movable unit's own tile must not be reachable"
 		)
 	}

@@ -1,4 +1,4 @@
-public extension TacticalSim {
+public enum AI {
 
 	/// Per-turn plan for an AI player. Computed once at the start of the
 	/// player's turn (`plan`) and then consulted by the action generators on
@@ -6,7 +6,7 @@ public extension TacticalSim {
 	///
 	/// The plan assigns every controllable unit a `Role` plus a target tile.
 	/// Roles encode *intent* (defend a town, push the front, fall back).
-	struct AI: ~Copyable {
+	public struct Plan: ~Copyable {
 		/// Game `turn` this plan was built for.
 		public var turn: UInt32?
 		public var role: [128 of Role] = .init(repeating: .idle)
@@ -28,19 +28,16 @@ public extension TacticalSim {
 		}
 	}
 
-	/// The AI hook drives the composite seat but only reads simulation state.
-	static var ai: (borrowing TacticalSim) -> TacticalAction? {
-		var ai = TacticalSim.AI()
-		return { sim in sim.run(ai: &ai) }
+	public static var heuristic: (borrowing TacticalSim) -> TacticalAction? {
+		var plan = Plan()
+		return { sim in
+			guard sim.player.type == .ai else { return nil }
+			return sim.run(ai: &plan)
+		}
 	}
 
-	/// Same hook shape, but AI seats play through the LSTM policy when
-	/// weights are provided — identical to `ai` otherwise. One policy per
-	/// seat: the recurrent state is that seat's battle memory under its own
-	/// fog and must not mix across players. The policy resets itself when the
-	/// turn counter goes backwards (a new battle reusing this closure).
-	static func ai(lstm weights: LSTMWeights?) -> (borrowing TacticalSim) -> TacticalAction? {
-		guard let weights else { return ai }
+	public static func lstm(_ weights: LSTMWeights?) -> (borrowing TacticalSim) -> TacticalAction? {
+		guard let weights else { return heuristic }
 		var policies = [Int: LSTMPolicy]()
 		return { sim in
 			guard sim.player.type == .ai else { return nil }
@@ -58,7 +55,7 @@ extension TacticalSim {
 	/// One AI action. The plan is rebuilt whenever the turn changes; the
 	/// generators below then translate that plan into a single concrete action,
 	/// applied in priority order: spend money, patch up, shoot, ferry, manoeuvre.
-	func run(ai: inout AI) -> TacticalAction {
+	func run(ai: inout AI.Plan) -> TacticalAction {
 		preplan(&ai)
 		if ai.turn != turn { plan(&ai) }
 
@@ -80,7 +77,7 @@ extension TacticalSim {
 	// AA to shoot the approach, supply trailing behind.
 
 	// Called before every action, caches units to AI struct
-	private func preplan(_ ai: inout AI) {
+	private func preplan(_ ai: inout AI.Plan) {
 		let country = country
 		ai.roster.erase()
 		ai.enemies.erase()
@@ -105,7 +102,7 @@ extension TacticalSim {
 	}
 
 	// Called once at the start of the new turn
-	private func plan(_ ai: inout AI) {
+	private func plan(_ ai: inout AI.Plan) {
 		ai.turn = turn
 
 		guard !ai.roster.isEmpty else { return }
@@ -204,7 +201,7 @@ extension TacticalSim {
 	/// failing that the nearest visible enemy unit.
 	private func frontObjective(
 		from p: XY,
-		_ ai: borrowing AI
+		_ ai: borrowing AI.Plan
 	) -> XY? {
 		if let c = ai.enemySettlements.min(by: { p.stepDistance(to: $0) < p.stepDistance(to: $1) }) {
 			return c
@@ -225,7 +222,7 @@ extension TacticalSim {
 		return best
 	}
 
-	private func nearestOwnAirfield(to p: XY, _ ai: borrowing AI) -> XY? {
+	private func nearestOwnAirfield(to p: XY, _ ai: borrowing AI.Plan) -> XY? {
 		var best: XY? = nil
 		var bd = Int.max
 		ai.ownSettlements.forEach { _, xy in
@@ -250,7 +247,7 @@ extension TacticalSim {
 
 	// MARK: - Purchase
 
-	private func purchase(_ ai: borrowing AI) -> TacticalAction? {
+	private func purchase(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		guard player.prestige >= 0x280 else { return nil }
 
 		// Buildable spots with their front distance, in map order — same
@@ -290,7 +287,7 @@ extension TacticalSim {
 
 	/// Distance from a buildable tile to the front (nearest enemy settlement,
 	/// else nearest visible enemy). Used to spawn units where they are needed.
-	private func frontDistance(_ xy: XY, _ ai: borrowing AI) -> Int {
+	private func frontDistance(_ xy: XY, _ ai: borrowing AI.Plan) -> Int {
 		if let d = ai.enemySettlements.min(
 			by: { a, b in xy.stepDistance(to: a) < xy.stepDistance(to: b) }
 		) {
@@ -329,7 +326,7 @@ extension TacticalSim {
 		return u.hp < 6 || (u.maxAmmo > 0 && u.ammo == 0)
 	}
 
-	private func resupply(_ ai: borrowing AI) -> TacticalAction? {
+	private func resupply(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		return ai.roster.firstMap { _, uid in
 			needsResupply(uid) ? .resupply(uid) : nil
 		}
@@ -337,7 +334,7 @@ extension TacticalSim {
 
 	// MARK: - Transport
 
-	private func embark(_ ai: borrowing AI) -> TacticalAction? {
+	private func embark(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		units.firstMapAlive { [country] i, u in
 			guard u.country == country, u.transportable, u.canMove, cargo[i] == .none else { return nil }
 			guard let target = frontObjective(from: position[i], ai) else { return nil }
@@ -351,7 +348,7 @@ extension TacticalSim {
 		}
 	}
 
-	private func disembark(_ ai: borrowing AI) -> TacticalAction? {
+	private func disembark(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		units.firstMapAlive { [country] i, u in
 			guard u.country == country, u[.transport], cargo[i] != .none else { return nil }
 			guard let target = frontObjective(from: position[i], ai),
@@ -373,7 +370,7 @@ extension TacticalSim {
 	/// finally infantry mop up — so each shot lands against the weakest target.
 	/// One roster pass per priority bucket: the roster is UID-ascending, so
 	/// the visit order equals the old `(priority, rawValue)` sort.
-	private func bestAttack(_ ai: borrowing AI) -> TacticalAction? {
+	private func bestAttack(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		for priority in 0 ... 4 {
 			let act = ai.roster.firstMap { _, uid -> TacticalAction? in
 				let u = units[uid]
@@ -416,7 +413,7 @@ extension TacticalSim {
 
 	// MARK: - Move
 
-	private func roleRank(_ role: AI.Role) -> Int {
+	private func roleRank(_ role: AI.Plan.Role) -> Int {
 		switch role {
 		case .retreat: 0
 		case .defend: 1
@@ -429,7 +426,7 @@ extension TacticalSim {
 
 	/// Same bucket-pass shape as `bestAttack`: roster is UID-ascending, so
 	/// the visit order equals the old `(roleRank, rawValue)` sort.
-	private func bestMove(_ ai: borrowing AI) -> TacticalAction? {
+	private func bestMove(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		for rank in 0 ... 5 {
 			let act = ai.roster.firstMap { _, uid -> TacticalAction? in
 				guard roleRank(ai.role[uid]) == rank else { return nil }
@@ -441,7 +438,7 @@ extension TacticalSim {
 		return nil
 	}
 
-	private func moveByRole(_ uid: UID, _ ai: borrowing AI) -> TacticalAction? {
+	private func moveByRole(_ uid: UID, _ ai: borrowing AI.Plan) -> TacticalAction? {
 		let u = units[uid]
 		let p = position[uid]
 		switch ai.role[uid] {

@@ -80,7 +80,7 @@ enum Rollouts {
 	/// The proven headless loop (`TacticalPerformanceTests`), recording every action.
 	static func play(_ replay: inout Replay) {
 		var sim = replay.makeSim()
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 		while replay.actions.count < maxActions {
 			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
 			if sim.day > maxDays { break }

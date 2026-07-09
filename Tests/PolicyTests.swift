@@ -12,8 +12,8 @@ private extension D20 {
 /// (`ActionSpace`) masks exactly the actions `reduce` accepts.
 struct PolicyTests {
 
-	private static func makeState(seed: Int, size: Int = 24) -> TacticalState {
-		TacticalState(
+	private static func makeSim(seed: Int, size: Int = 24) -> TacticalSim {
+		TacticalSim(
 			players: [
 				Player(country: .ger, type: .ai, prestige: .rich, baseLevel: 0),
 				Player(country: .usa, type: .ai, prestige: .rich, baseLevel: 0),
@@ -28,21 +28,21 @@ struct PolicyTests {
 	// MARK: - SimObservation
 
 	@Test func observationRespectsFog() {
-		var state = Self.makeState(seed: 3)
-		var ai = TacticalSim.AI()
+		var sim = Self.makeSim(seed: 3)
+		var ai = AI.Plan()
 
 		// Play into the midgame so fog actually hides units.
 		for _ in 0 ..< 300 {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
-			_ = state.reduce(state.sim.axis(ai: &ai))
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			_ = sim.reduce(sim.run(ai: &ai))
 		}
 
-		let obs = state.sim.observation()
+		let obs = sim.observation()
 		let side = SimObservation.side
 		let c = SimObservation.planeCount
 		func plane(_ xy: XY, _ p: Int) -> Float { obs.planes[(xy.y * side + xy.x) * c + p] }
 
-		let myTeam = state.sim.player.country.team
+		let myTeam = sim.player.country.team
 		var friendly = 0
 		var enemies = 0
 
@@ -50,12 +50,12 @@ struct PolicyTests {
 			for x in 0 ..< side {
 				let xy = XY(x, y)
 				let onMap = plane(xy, Plane.onMap)
-				#expect(onMap == (state.sim.map.contains(xy) ? 1 : 0))
+				#expect(onMap == (sim.map.contains(xy) ? 1 : 0))
 
 				// Fog: an enemy in the tensor must be a visible one.
 				if plane(xy, Plane.unitEnemy) == 1 {
 					#expect(plane(xy, Plane.visible) == 1)
-					#expect(state.sim.vision[state.sim.playerIndex][xy])
+					#expect(sim.vision[sim.playerIndex][xy])
 				}
 				friendly += plane(xy, Plane.unitFriendly) == 1 ? 1 : 0
 				enemies += plane(xy, Plane.unitEnemy) == 1 ? 1 : 0
@@ -63,11 +63,11 @@ struct PolicyTests {
 		}
 
 		// Plane counts match a direct census of the sim.
-		let expected = state.sim.units.reduceAlive(into: (0, 0)) { r, i, u in
-			guard !state.sim.offMap(unit: i.uid) else { return }
+		let expected = sim.units.reduceAlive(into: (0, 0)) { r, i, u in
+			guard !sim.offMap(unit: i.uid) else { return }
 			if u.country.team == myTeam {
 				r.0 += 1
-			} else if state.sim.vision[state.sim.playerIndex][state.sim.position[i]] {
+			} else if sim.vision[sim.playerIndex][sim.position[i]] {
 				r.1 += 1
 			}
 		}
@@ -82,38 +82,38 @@ struct PolicyTests {
 	/// the masks, and survive the head-indices round-trip. This pins the BC
 	/// training labels to the mask semantics.
 	@Test func heuristicActionsAreLegalAndRoundTrip() {
-		var state = Self.makeState(seed: 5)
-		var ai = TacticalSim.AI()
+		var sim = Self.makeSim(seed: 5)
+		var ai = AI.Plan()
 
 		var steps = 0
-		while steps < 600, state.sim.aliveTeams.nonzeroBitCount > 1, state.sim.day <= 16 {
-			let action = state.sim.axis(ai: &ai)
-			let idx = state.sim.actionIndices(action)
+		while steps < 600, sim.aliveTeams.nonzeroBitCount > 1, sim.day <= 16 {
+			let action = sim.run(ai: &ai)
+			let idx = sim.actionIndices(action)
 			guard let idx else {
 				Issue.record("axisAI emitted an unencodable action: \(action)")
 				break
 			}
 
-			#expect(state.sim.action(idx) == action, "round-trip failed for \(action)")
+			#expect(sim.action(idx) == action, "round-trip failed for \(action)")
 
 			if idx.kind != .end {
-				let masks = state.sim.actionMasks()
+				let masks = sim.actionMasks()
 				#expect(masks.kinds[idx.kind.rawValue], "kind \(idx.kind) masked off for \(action)")
 				#expect(masks.actors[idx.kind.rawValue][idx.actor], "actor masked off for \(action)")
 
 				switch idx.kind {
 				case .move, .embark, .disembark, .attack:
-					let targets = state.sim.targetMask(idx.kind, actor: idx.actor)
+					let targets = sim.targetMask(idx.kind, actor: idx.actor)
 					#expect(targets[idx.target], "target masked off for \(action)")
 				case .purchase:
-					let slots = state.sim.slotMask(actor: idx.actor)
+					let slots = sim.slotMask(actor: idx.actor)
 					#expect(idx.slot >= 0 && idx.slot < ActionSpace.slots && slots[idx.slot], "slot masked off for \(action)")
 				case .resupply, .end:
 					break
 				}
 			}
 
-			_ = state.reduce(action)
+			_ = sim.reduce(action)
 			steps += 1
 		}
 		#expect(steps > 100)
@@ -149,28 +149,28 @@ struct PolicyTests {
 	/// player: every non-`.end` action it emits mutates the state (reducers
 	/// no-op on illegal input), and its turns always terminate.
 	@Test func randomWeightPolicyPlaysLegally() {
-		var state = Self.makeState(seed: 9)
+		var sim = Self.makeSim(seed: 9)
 		var policy = LSTMPolicy(weights: .random(seed: 13))
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 
 		var policySteps = 0
 		var mutations = 0
 		for _ in 0 ..< 400 {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
 			if policySteps >= 120 { break }
 
-			if state.sim.playerIndex == 0 {
-				let action = policy.action(for: state.sim)
-				let before = encode(state.sim)
-				_ = state.reduce(action)
+			if sim.playerIndex == 0 {
+				let action = policy.action(for: sim)
+				let before = encode(sim)
+				_ = sim.reduce(action)
 				policySteps += 1
 				if action != .end {
-					#expect(encode(state.sim) != before, "policy action was a no-op: \(action)")
+					#expect(encode(sim) != before, "policy action was a no-op: \(action)")
 					mutations += 1
 				}
 				#expect(policy.lastValue.isFinite)
 			} else {
-				_ = state.reduce(state.sim.axis(ai: &ai))
+				_ = sim.reduce(sim.run(ai: &ai))
 			}
 		}
 
@@ -182,14 +182,14 @@ struct PolicyTests {
 	/// sampled non-`.end` action must mutate the encoded state — the reducers
 	/// no-op on illegal input, so mutation is the legality oracle.
 	@Test func maskedRandomActionsAlwaysMutateState() {
-		var state = Self.makeState(seed: 7)
+		var sim = Self.makeSim(seed: 7)
 		var rand = D20(seed: 42)
 		var perTurn = 0
 
 		for _ in 0 ..< 400 {
-			if state.sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
 
-			let masks = state.sim.actionMasks()
+			let masks = sim.actionMasks()
 			var pairs: [(ActionSpace.Kind, Int)] = []
 			for kind in ActionSpace.Kind.allCases where kind != .end {
 				let actors = masks.actors[kind.rawValue]
@@ -207,13 +207,13 @@ struct PolicyTests {
 				var idx = ActionIndices(kind: kind, actor: actor)
 				switch kind {
 				case .move, .embark, .disembark, .attack:
-					let targets = state.sim.targetMask(kind, actor: actor)
+					let targets = sim.targetMask(kind, actor: actor)
 					let legal = targets.indices.filter { targets[$0] }
 					#expect(!legal.isEmpty, "actor masked legal but no target for \(kind)")
 					guard !legal.isEmpty else { continue }
 					idx.target = legal[rand.pick(legal.count)]
 				case .purchase:
-					let slots = state.sim.slotMask(actor: actor)
+					let slots = sim.slotMask(actor: actor)
 					let legal = slots.indices.filter { slots[$0] }
 					#expect(!legal.isEmpty, "purchase masked legal but no affordable slot")
 					guard !legal.isEmpty else { continue }
@@ -221,23 +221,23 @@ struct PolicyTests {
 				case .resupply, .end:
 					break
 				}
-				guard let decoded = state.sim.action(idx) else {
+				guard let decoded = sim.action(idx) else {
 					Issue.record("legal indices failed to decode: \(idx)")
 					continue
 				}
 				action = decoded
 			}
 
-			let turnBefore = state.sim.turn
-			let before = encode(state.sim)
-			_ = state.reduce(action)
+			let turnBefore = sim.turn
+			let before = encode(sim)
+			_ = sim.reduce(action)
 
 			if action != .end {
-				#expect(encode(state.sim) != before, "masked action was a no-op: \(action)")
+				#expect(encode(sim) != before, "masked action was a no-op: \(action)")
 				perTurn += 1
 			} else {
 				perTurn = 0
-				#expect(state.sim.turn != turnBefore || state.sim.aliveTeams.nonzeroBitCount <= 1)
+				#expect(sim.turn != turnBefore || sim.aliveTeams.nonzeroBitCount <= 1)
 			}
 		}
 	}
@@ -249,23 +249,23 @@ struct PolicyTests {
 	/// unbounded. `preplan` must truncate instead of trapping (regression:
 	/// RL collection crashed on a seed-2000 map).
 	@Test func preplanHandlesSettlementOverflow() {
-		var state = Self.makeState(seed: 1)
+		var sim = Self.makeSim(seed: 1)
 
 		// Paint 160 extra cities, alternating own / enemy control, so both
 		// plan buckets overflow their 64-slot capacity.
 		var painted = 0
-		for xy in state.sim.map.indices where state.sim.map[xy] == .field {
-			state.sim.map[xy] = .city
-			state.sim.control[xy] = painted % 2 == 0 ? .ger : .usa
+		for xy in sim.map.indices where sim.map[xy] == .field {
+			sim.map[xy] = .city
+			sim.control[xy] = painted % 2 == 0 ? .ger : .usa
 			painted += 1
 			if painted == 160 { break }
 		}
-		state.sim.indexSettlements()
+		sim.indexSettlements()
 		#expect(painted == 160)
 
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 		for _ in 0 ..< 5 {
-			_ = state.reduce(state.sim.axis(ai: &ai))
+			_ = sim.reduce(sim.run(ai: &ai))
 		}
 		#expect(ai.ownSettlements.count == 64)
 		#expect(ai.enemySettlements.count == 64)

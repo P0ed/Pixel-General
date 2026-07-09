@@ -19,8 +19,8 @@ extension LSTMWeights {
 extension TacticalMode {
 
 	static var tactical: Self {
-		let heuristic = TacticalSim.ai
-		let lstm = TacticalSim.ai(lstm: .bundled)
+		let heuristic = AI.heuristic
+		let lstm = AI.lstm(.bundled)
 		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },

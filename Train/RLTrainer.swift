@@ -287,7 +287,7 @@ enum RLTrainer {
 		var replay = config(index: index, seat: seat, level: level)
 		var sim = replay.makeSim()
 		var policy = LSTMPolicy(weights: weights)
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 		var rng = D20(seed: 0x5DEE_CE66 &+ UInt64(bitPattern: Int64(index)))
 		var episode = Episode(replay: replay, seat: seat, level: level)
 

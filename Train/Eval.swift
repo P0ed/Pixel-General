@@ -123,7 +123,7 @@ enum Eval {
 	/// same budgets as the rollout generator. Returns a single-battle tally.
 	static func play(_ config: Replay, policySeat: Int, policy: inout LSTMPolicy) -> Tally {
 		var sim = config.makeSim()
-		var ai = TacticalSim.AI()
+		var ai = AI.Plan()
 		policy.reset()
 
 		var tally = Tally()
