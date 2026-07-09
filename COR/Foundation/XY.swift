@@ -33,10 +33,6 @@ public extension XY {
 		2 * max(abs(x), abs(y)) + min(abs(x), abs(y))
 	}
 
-	var manhattanComparator: (XY, XY) -> Bool {
-		{ a, b in (a - self).manhattan < (b - self).manhattan }
-	}
-
 	var stepComparator: (XY, XY) -> Bool {
 		{ a, b in stepDistance(to: a) < stepDistance(to: b) }
 	}

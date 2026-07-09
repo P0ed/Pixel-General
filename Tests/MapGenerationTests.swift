@@ -82,6 +82,36 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func roadsConnectAllCities() {
+		// MST-based road building links every terrain-reachable city into
+		// one network; on these seeds all cities share one landmass, so a
+		// flood along road tiles from any city must reach every other.
+		for (size, seed) in [(32, 0), (32, 7), (32, 21), (32, 42), (24, 5), (24, 11), (16, 2)] {
+			let map = Map<32, Terrain>(size: size, seed: seed)
+			var cities = [] as [XY]
+			for xy in map.indices where map[xy] == .city { cities.append(xy) }
+			guard let first = cities.first else {
+				Issue.record("No cities for seed \(seed) size \(size)")
+				continue
+			}
+			var seen = Set([first])
+			var stack = [first]
+			while let xy = stack.popLast() {
+				let n4 = xy.n4
+				for i in n4.indices {
+					let p = n4[i]
+					if map.contains(p), map[p].hasRoad, !seen.contains(p) {
+						seen.insert(p)
+						stack.append(p)
+					}
+				}
+			}
+			for c in cities where !seen.contains(c) {
+				Issue.record("City \(c) off the road network for seed \(seed) size \(size)")
+			}
+		}
+	}
+
 	@Test func riversAreContiguousAndOrthogonal() {
 		// A river tile must touch another river/bridge through one of its 4
 		// orthogonal neighbors. Diagonal-only adjacency would mean the river

@@ -149,7 +149,10 @@ struct PolicyTests {
 	/// player: every non-`.end` action it emits mutates the state (reducers
 	/// no-op on illegal input), and its turns always terminate.
 	@Test func randomWeightPolicyPlaysLegally() {
-		var sim = Self.makeSim(seed: 9)
+		// The sim seed must give a battle that survives past the 20-step
+		// floor below; regenerated maps can shift pacing, so repick the seed
+		// if this stalls after a map-generation change.
+		var sim = Self.makeSim(seed: 8)
 		var policy = LSTMPolicy(weights: .random(seed: 13))
 		var ai = AI.Plan()
 

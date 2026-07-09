@@ -225,46 +225,127 @@ public extension Map<32, Terrain> {
 		return true
 	}
 
+	/// Cities join a road network shaped the way real ones grow: a minimum
+	/// spanning forest over terrain-aware travel costs links every reachable
+	/// city without redundant spaghetti, short links carve first so longer
+	/// routes reuse them as trunks, and a few extra edges then close the
+	/// worst detours into loops.
 	private mutating func connectCities(cities: [XY]) {
 		let cities = cities.filter { xy in self[xy] == .city }
 		guard cities.count > 1 else { return }
 
-		var connected = [] as [[XY]]
-
-		let isConnected = { xy in
-			connected.contains { $0.contains(xy) }
+		let costs = travelCosts(between: cities)
+		var carved = [] as [(a: Int, b: Int)]
+		spanningEdges(costs: costs)
+			.sorted { lhs, rhs in (lhs.w, lhs.a, lhs.b) < (rhs.w, rhs.a, rhs.b) }
+			.forEach { e in
+				if connect(cities[e.a], cities[e.b]) { carved.append((e.a, e.b)) }
+			}
+		detourEdges(costs: costs, carved: carved).forEach { e in
+			_ = connect(cities[e.a], cities[e.b])
 		}
-		cities.forEach { xy in
-			if !isConnected(xy) {
-				let nxt = cities
-					.filter { ij in ij != xy && !isConnected(ij) }
-					.min(by: xy.manhattanComparator)
-				if let nxt, connect(xy, nxt) {
-					connected.append([xy, nxt])
+	}
+
+	/// Cheapest travel cost between every pair of cities on the pristine
+	/// (pre-road) map, from one Dijkstra flood per city. `.max` marks pairs
+	/// with no route at all — opposite banks of an unbridgable river — that
+	/// no road should attempt.
+	private func travelCosts(between cities: [XY]) -> [[UInt16]] {
+		var costs = Array(
+			repeating: Array(repeating: UInt16.max, count: cities.count),
+			count: cities.count
+		)
+		cities.indices.forEach { i in costs[i][i] = 0 }
+		cities.indices.dropLast().forEach { i in
+			let dist = distances(from: cities[i])
+			(i + 1 ..< cities.count).forEach { j in
+				costs[i][j] = dist[cities[j]]
+				costs[j][i] = dist[cities[j]]
+			}
+		}
+		return costs
+	}
+
+	/// Prim's minimum spanning forest over the travel-cost matrix. When
+	/// rivers split the map each side grows its own tree, so every city
+	/// still joins the cheapest network available to it.
+	private func spanningEdges(costs: [[UInt16]]) -> [(a: Int, b: Int, w: UInt16)] {
+		let n = costs.count
+		var linkW = Array(repeating: UInt16.max, count: n)
+		var linkTo = Array(repeating: -1, count: n)
+		var inTree = Array(repeating: false, count: n)
+		var edges = [] as [(a: Int, b: Int, w: UInt16)]
+		linkW[0] = 0
+
+		(0 ..< n).forEach { _ in
+			guard let u = (0 ..< n)
+				.filter({ i in !inTree[i] })
+				.min(by: { a, b in linkW[a] < linkW[b] })
+			else { return }
+			if linkTo[u] >= 0 {
+				edges.append((linkTo[u], u, linkW[u]))
+			}
+			inTree[u] = true
+			(0 ..< n).forEach { v in
+				if !inTree[v], costs[u][v] < linkW[v] {
+					linkW[v] = costs[u][v]
+					linkTo[v] = u
 				}
 			}
 		}
+		return edges
+	}
 
-		guard connected.count > 1 else { return }
+	/// Non-tree city pairs whose route through the carved network runs far
+	/// longer than a direct road, worst first — the loops real networks grow
+	/// once trunks exist. Network distances run over the abstract carved
+	/// graph (Floyd–Warshall over at most 16 cities), refreshed after each
+	/// pick so one new link can cure several detours.
+	private func detourEdges(
+		costs: [[UInt16]],
+		carved: [(a: Int, b: Int)]
+	) -> [(a: Int, b: Int)] {
+		let n = costs.count
+		let far = 1 << 20
+		var net = Array(repeating: Array(repeating: far, count: n), count: n)
+		(0 ..< n).forEach { i in net[i][i] = 0 }
 
-		for i in connected.indices {
-			let cs = connected[i]
-			cities
-				.filter { c in !cs.contains(c) }
-				.min(by: XY((cs[0].x + cs[1].x) / 2, (cs[0].y + cs[1].y) / 2).manhattanComparator)
-				.map { c in
-					let csm = cs.min(by: c.manhattanComparator)
-					if let csm, (c - csm).manhattan < 22, connect(c, csm) {
-						connected.firstIndex { cs in cs.contains(c) }
-							.map { j in
-								let ds = connected[j]
-								connected[j].append(contentsOf: cs)
-								connected[i].append(contentsOf: ds)
-							}
-						?? connected[i].append(c)
+		func relax() {
+			(0 ..< n).forEach { k in
+				(0 ..< n).forEach { i in
+					(0 ..< n).forEach { j in
+						net[i][j] = min(net[i][j], net[i][k] + net[k][j])
 					}
 				}
+			}
 		}
+		carved.forEach { e in
+			net[e.a][e.b] = Int(costs[e.a][e.b])
+			net[e.b][e.a] = net[e.a][e.b]
+		}
+		relax()
+
+		var extras = [] as [(a: Int, b: Int)]
+		(0 ..< max(1, n / 5)).forEach { _ in
+			var pick = nil as (a: Int, b: Int)?
+			var worst = 1.8
+			(0 ..< n).forEach { i in
+				(i + 1 ..< n).forEach { j in
+					guard costs[i][j] < .max, net[i][j] < far else { return }
+					let detour = Double(net[i][j]) / Double(costs[i][j])
+					if detour > worst {
+						worst = detour
+						pick = (i, j)
+					}
+				}
+			}
+			guard let pick else { return }
+			extras.append(pick)
+			net[pick.a][pick.b] = Int(costs[pick.a][pick.b])
+			net[pick.b][pick.a] = net[pick.a][pick.b]
+			relax()
+		}
+		return extras
 	}
 
 	mutating func shapeRoads() {
@@ -349,9 +430,7 @@ public extension Map<32, Terrain> {
 
 	/// Dijkstra over 4-neighbors from `start` until a tile satisfying
 	/// `reached` is finalized, following `cost(from, to)` (`nil` =
-	/// impassable). Returns the path including both endpoints. Lazy deletion
-	/// pushes one heap entry per relaxation — at most the grid's directed
-	/// edge count, 3969 for 32×32 — so 4096 never overflows.
+	/// impassable). Returns the path including both endpoints.
 	private func shortestPath(
 		from start: XY,
 		reached: (XY) -> Bool,
@@ -359,6 +438,48 @@ public extension Map<32, Terrain> {
 	) -> [XY]? {
 		var dist = Map<32, UInt16>(size: size, zero: .max)
 		var prev = Map<32, UInt16>(size: size, zero: 0)
+		guard let goal = dijkstra(from: start, reached: reached, cost: cost, dist: &dist, prev: &prev)
+		else { return nil }
+
+		var path = [goal]
+		var head = goal
+		while head != start {
+			let packed = prev[head]
+			guard packed != 0 else { break }
+			let idx = Int(packed) - 1
+			head = XY(idx % size, idx / size)
+			path.append(head)
+		}
+		return path
+	}
+
+	/// Travel cost from `start` to every tile over `stepCost` terrain,
+	/// flooded to exhaustion; `.max` = unreachable.
+	private func distances(from start: XY) -> Map<32, UInt16> {
+		var dist = Map<32, UInt16>(size: size, zero: .max)
+		var prev = Map<32, UInt16>(size: size, zero: 0)
+		_ = dijkstra(
+			from: start,
+			reached: { _ in false },
+			cost: { from, to in stepCost(to: to, from: from) },
+			dist: &dist,
+			prev: &prev
+		)
+		return dist
+	}
+
+	/// Core of `shortestPath`/`distances`: relaxes `dist`/`prev` outward
+	/// from `start` and returns the first finalized tile satisfying
+	/// `reached`, or `nil` once the flood exhausts. Lazy deletion pushes one
+	/// heap entry per relaxation — at most the grid's directed edge count,
+	/// 3969 for 32×32 — so 4096 never overflows.
+	private func dijkstra(
+		from start: XY,
+		reached: (XY) -> Bool,
+		cost: (XY, XY) -> UInt16?,
+		dist: inout Map<32, UInt16>,
+		prev: inout Map<32, UInt16>
+	) -> XY? {
 		dist[start] = 0
 
 		var heapD = CArray<4096, UInt16>(head: 0, tail: 0)
@@ -399,18 +520,7 @@ public extension Map<32, Terrain> {
 				siftDown(0)
 			}
 			if topD != dist[topL] { continue }
-			if reached(topL) {
-				var path = [topL]
-				var head = topL
-				while head != start {
-					let packed = prev[head]
-					guard packed != 0 else { break }
-					let idx = Int(packed) - 1
-					head = XY(idx % size, idx / size)
-					path.append(head)
-				}
-				return path
-			}
+			if reached(topL) { return topL }
 
 			let n4 = topL.n4
 			for i in n4.indices {
