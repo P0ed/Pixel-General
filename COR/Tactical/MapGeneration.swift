@@ -20,7 +20,7 @@ public extension Map<32, Terrain> {
 			humidity: humidity,
 			bias: 0.25 * Float(terrain.elevationLevel)
 		)
-		placeRivers(height: height)
+		placeRivers(height: height, d20: &d20)
 		let cities = placeCities(d20: &d20, players: players)
 		connectCities(cities: cities)
 		shapeRoads()
@@ -35,61 +35,119 @@ public extension Map<32, Terrain> {
 		}
 	}
 
-	private mutating func placeRivers(height: GKNoiseMap) {
+	/// Rivers enter and leave at seed-chosen edge points and follow valleys of
+	/// a low-passed height field instead of cutting straight across ridges.
+	/// Rivers after the first may join an earlier one as a tributary instead
+	/// of exiting at an edge; a river whose mouths or path can't be placed is
+	/// skipped without cancelling the rest.
+	private mutating func placeRivers(height: GKNoiseMap, d20: inout D20) {
 		let riversCount = max(1, count / 288)
-
-		let setups: [(XY, XY)] = riversCount == 1
-		? [
-			(XY(0, size / 3), XY(size - 1, size * 2 / 3))
-		]
-		: [
-			(XY(0, size * 2 / 3), XY(size * 2 / 3, size - 1)),
-			(XY(size / 3, 0), XY(size - 1, size / 3)),
-			(XY(0, size / 3), XY(size - 1, size * 2 / 3)),
-		]
+			+ (count >= 576 ? Int.random(in: 0 ... 1, using: &d20) : 0)
+		var mouths = [] as [XY]
 
 		(0 ..< riversCount).forEach { idx in
-			let (start, end) = setups[idx]
+			guard
+				let edge = Edge.allCases.randomElement(using: &d20),
+				let source = riverMouth(on: edge, height: height, d20: &d20, apart: mouths)
+			else { return }
 
-			var front = CArray<1024, XY>(head: start, tail: .zero)
-			var next = CArray<1024, XY>(tail: .zero)
-			var pressure = Map<32, UInt16>(size: size, zero: 0)
-			pressure[start] = 1
-
-			while true {
-				next.erase()
-				front.forEach { _, xy in
-					xy.n4.forEach { [p = pressure[xy]] xy in
-						let nh = UInt16(height.value(at: xy.simd) + 1.0)
-						let dh = xy != end && edge(at: xy) != nil ? 2 : 0 as UInt16
-						let h = (nh * 2 + dh) * 3
-						if contains(xy), pressure[xy] == 0, p > h, hasNoRivers(at: xy) {
-							pressure[xy] = 1
-							next.add(xy)
-						}
-					}
-				}
-				if next.contains(end) { break }
-				front.forEach { _, xy in pressure[xy] += 1 }
-				next.forEach { _, xy in front.add(xy) }
-				if pressure[start] >= 1024 { return }
+			let salt = d20.next()
+			let meander = GKNoiseMap.meander(
+				size: SIMD2<Int32>(Int32(size), Int32(size)),
+				seed: Int32(truncatingIfNeeded: salt)
+			)
+			var mouth = nil as XY?
+			if idx == 0 || d20() >= 8 {
+				let across = d20() < 14
+					? edge.opposite
+					: Edge.allCases.filter { e in e != edge && e != edge.opposite }
+						.randomElement(using: &d20) ?? edge.opposite
+				mouth = riverMouth(on: across, height: height, d20: &d20, apart: mouths, across: source)
+					?? riverMouth(on: edge.opposite, height: height, d20: &d20, apart: mouths, across: source)
+				guard mouth != nil else { return }
 			}
-			var head = end
-			self[end] = .water
-			while head != start {
-				let xy = head.n4.compactMap { xy in
-					contains(xy) && self[xy] != .water ? xy : nil
-				}
-				.max { a, b in pressure[a] < pressure[b] }
 
-				if let xy {
-					head = xy
-					self[xy] = .water
-				} else {
-					break
-				}
-			}
+			let path = shortestPath(
+				from: source,
+				reached: { xy in mouth.map { m in xy == m } ?? self[xy].isRiver },
+				cost: { _, xy in riverStep(to: xy, mouth: mouth, height: height, meander: meander, salt: salt) }
+			)
+			guard let path else { return }
+			path.forEach { xy in self[xy] = .water }
+			mouths.append(source)
+			mouth.map { m in mouths.append(m) }
 		}
+	}
+
+	/// Lowest-lying of a few random candidates on `edge`, so mouths favor
+	/// valleys. Mouths keep apart from other rivers' mouths, and an exit must
+	/// be far enough from its `source` that the river genuinely crosses the
+	/// map rather than clipping a corner.
+	private func riverMouth(
+		on edge: Edge,
+		height: GKNoiseMap,
+		d20: inout D20,
+		apart mouths: [XY],
+		across source: XY? = nil
+	) -> XY? {
+		var best = nil as XY?
+		(0 ..< 3).forEach { _ in
+			let t = Int.random(in: size / 6 ... size - 1 - size / 6, using: &d20)
+			let p = onEdge(edge, t)
+			guard
+				hasNoRivers(at: p),
+				mouths.allSatisfy({ xy in xy.stepDistance(to: p) >= size / 2 }),
+				source.map({ xy in xy.manhattanDistance(to: p) >= size - 1 }) ?? true,
+				best.map({ xy in height.value(at: p.simd) < height.value(at: xy.simd) }) ?? true
+			else { return }
+			best = p
+		}
+		return best
+	}
+
+	private func onEdge(_ edge: Edge, _ t: Int) -> XY {
+		switch edge {
+		case .bottom: XY(t, 0)
+		case .left: XY(0, t)
+		case .top: XY(t, size - 1)
+		case .right: XY(size - 1, t)
+		}
+	}
+
+	/// Cost of carving a river through `xy`: low-passed height squared, so
+	/// macro ridges repel the river strongly while flat ground is nearly
+	/// free, plus a per-river `meander` field that bends the path even where
+	/// the terrain is flat, and a penalty for hugging the map border. Land
+	/// next to an existing river is impassable so parallel rivers keep a gap
+	/// — a tributary (`mouth == nil`) instead pays a penalty there and
+	/// terminates on the first river tile it touches.
+	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt16? {
+		guard contains(xy) else { return nil }
+		if self[xy].isRiver { return mouth == nil ? 1 : nil }
+		let near = !hasNoRivers(at: xy)
+		if near, mouth != nil { return nil }
+		let macro = lowpass(height, at: xy)
+		let local = height.value(at: xy.simd)
+		let lift = max(0, min(2, 0.75 * macro + 0.25 * local + 1))
+		let bend = max(0, min(2, meander.value(at: xy.simd) + 1))
+		var cost = UInt16(3 + lift * lift * 16 + bend * bend * 24) + wiggle(xy, salt)
+		if near { cost += 40 }
+		if edge(at: xy) != nil, xy != mouth { cost += 40 }
+		return cost
+	}
+
+	private func lowpass(_ height: GKNoiseMap, at xy: XY) -> Float {
+		xy.s9.reduce(into: 0 as Float) { acc, p in
+			acc += height.value(at: p.clamped(size).simd)
+		} / 9
+	}
+
+	/// Per-tile jitter hashed from coordinates and a per-river salt — meander
+	/// that doesn't depend on RNG draw order, so carving stays reproducible
+	/// for a given seed.
+	private func wiggle(_ xy: XY, _ salt: UInt64) -> UInt16 {
+		var mix = D20(seed: salt &+ UInt64(bitPattern: Int64(xy.y &* 64 &+ xy.x)))
+		return UInt16(mix.next() & 3)
 	}
 
 	private func hasNoRivers(at xy: XY) -> Bool {
@@ -248,10 +306,6 @@ public extension Map<32, Terrain> {
 		}
 	}
 
-	private func crossesRiver(_ start: XY, _ end: XY) -> Bool {
-		start.line(to: end).contains { xy in self[xy].isRiver }
-	}
-
 	private func bridgableRiver(at r: XY, from l: XY) -> Bool {
 		let n4 = r.n4
 		return self[r].isRiver
@@ -279,12 +333,36 @@ public extension Map<32, Terrain> {
 	}
 
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
+		let path = shortestPath(
+			from: start,
+			reached: { xy in xy == end },
+			cost: { from, to in stepCost(to: to, from: from) }
+		)
+		guard let path else { return false }
+		path.forEach { xy in
+			if !self[xy].isSettlement {
+				self[xy] = self[xy].isRiver || self[xy].isBridge ? .bridgeWE : .roadX
+			}
+		}
+		return true
+	}
+
+	/// Dijkstra over 4-neighbors from `start` until a tile satisfying
+	/// `reached` is finalized, following `cost(from, to)` (`nil` =
+	/// impassable). Returns the path including both endpoints. Lazy deletion
+	/// pushes one heap entry per relaxation — at most the grid's directed
+	/// edge count, 3969 for 32×32 — so 4096 never overflows.
+	private func shortestPath(
+		from start: XY,
+		reached: (XY) -> Bool,
+		cost: (XY, XY) -> UInt16?
+	) -> [XY]? {
 		var dist = Map<32, UInt16>(size: size, zero: .max)
 		var prev = Map<32, UInt16>(size: size, zero: 0)
 		dist[start] = 0
 
-		var heapD = CArray<1024, UInt16>(head: 0, tail: 0)
-		var heapL = CArray<1024, XY>(head: start, tail: .zero)
+		var heapD = CArray<4096, UInt16>(head: 0, tail: 0)
+		var heapL = CArray<4096, XY>(head: start, tail: .zero)
 
 		func siftUp(_ from: Int) {
 			var i = from
@@ -321,12 +399,23 @@ public extension Map<32, Terrain> {
 				siftDown(0)
 			}
 			if topD != dist[topL] { continue }
-			if topL == end { break }
+			if reached(topL) {
+				var path = [topL]
+				var head = topL
+				while head != start {
+					let packed = prev[head]
+					guard packed != 0 else { break }
+					let idx = Int(packed) - 1
+					head = XY(idx % size, idx / size)
+					path.append(head)
+				}
+				return path
+			}
 
 			let n4 = topL.n4
 			for i in n4.indices {
 				let nb = n4[i]
-				guard contains(nb), let w = stepCost(to: nb, from: topL) else { continue }
+				guard contains(nb), let w = cost(topL, nb) else { continue }
 				let nd = topD &+ w
 				if nd < dist[nb] {
 					dist[nb] = nd
@@ -337,21 +426,7 @@ public extension Map<32, Terrain> {
 				}
 			}
 		}
-
-		guard dist[end] != .max else { return false }
-
-		var head = end
-		while true {
-			if !self[head].isSettlement {
-				self[head] = self[head].isRiver || self[head].isBridge ? .bridgeWE : .roadX
-			}
-			if head == start { break }
-			let packed = prev[head]
-			guard packed != 0 else { break }
-			let idx = Int(packed) - 1
-			head = XY(idx % size, idx / size)
-		}
-		return true
+		return nil
 	}
 }
 
@@ -422,6 +497,16 @@ extension GKNoiseMap {
 			octaveCount: 6,
 			persistence: 0.47,
 			lacunarity: 1.5,
+			seed: seed
+		))
+	}
+
+	static func meander(size: SIMD2<Int32>, seed: Int32) -> GKNoiseMap {
+		.map(size: size, source: GKPerlinNoiseSource(
+			frequency: 5.0,
+			octaveCount: 2,
+			persistence: 0.5,
+			lacunarity: 2.0,
 			seed: seed
 		))
 	}

@@ -84,8 +84,8 @@ struct MapGenerationTests {
 
 	@Test func riversAreContiguousAndOrthogonal() {
 		// A river tile must touch another river/bridge through one of its 4
-		// orthogonal neighbors (after `shapeRivers`). Diagonal-only adjacency
-		// would mean the river was disconnected.
+		// orthogonal neighbors. Diagonal-only adjacency would mean the river
+		// was disconnected.
 		for seed in [3, 11, 23] {
 			let map = Map<32, Terrain>(size: 32, seed: seed)
 			for xy in map.indices where map[xy].isRiver {
@@ -101,6 +101,19 @@ struct MapGenerationTests {
 					Issue.record("Isolated river tile at \(xy) for seed \(seed)")
 				}
 			}
+		}
+	}
+
+	@Test func riversReachTheMapEdge() {
+		// River mouths sit on map edges by construction, so every generated
+		// map must have at least one river tile on its border.
+		for seed in [3, 11, 23] {
+			let map = Map<32, Terrain>(size: 32, seed: seed)
+			var touches = false
+			for xy in map.indices where map[xy].isRiver && map.edge(at: xy) != nil {
+				touches = true; break
+			}
+			#expect(touches, "No river touches the map edge for seed \(seed)")
 		}
 	}
 }
