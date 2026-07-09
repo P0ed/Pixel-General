@@ -101,7 +101,7 @@ private enum Help {
 	  Shift-Tab / [    Select previous unit
 	  Esc              Open the menu
 	  Z / X / C        Zoom  1× / 2× / 4×
-	  §                Cycle map mode (terrain · political · supply)
+	  §                Cycle map mode
 
 	GAMEPAD
 

@@ -16,7 +16,12 @@ extension SKScene {
 	}
 
 	static var strategic: SKScene {
-		Scene(mode: .strategic, state: StrategicState(sim: clone(core.strategic!)))
+		let sim = clone(core.strategic!)
+		let centroid = sim.centroid(for: sim.human)
+		return Scene(
+			mode: .strategic,
+			state: StrategicState(sim: sim, ui: StrategicUI(cursor: centroid, camera: centroid))
+		)
 	}
 
 	static var tactical: SKScene {

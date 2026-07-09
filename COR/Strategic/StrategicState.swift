@@ -28,14 +28,27 @@ public struct StrategicSim: ~Copyable {
 	}
 }
 
+@frozen public enum StrategicMapMode: UInt8, Hashable {
+	case team, country
+}
+
 /// Presentation-only strategic state. Never read by `reduce`; may diverge per peer.
 public struct StrategicUI {
 	public var cursor: XY
 	public var camera: XY
+	public var scale: Int
+	public var mapMode: StrategicMapMode
 
-	public init(cursor: XY = .zero, camera: XY = .zero) {
+	public init(
+		cursor: XY = .zero,
+		camera: XY = .zero,
+		scale: Int = 2,
+		mapMode: StrategicMapMode = .team
+	) {
 		self.cursor = cursor
 		self.camera = camera
+		self.scale = scale
+		self.mapMode = mapMode
 	}
 }
 
@@ -100,15 +113,22 @@ public extension StrategicSim {
 				if let t = Terrain(legend: ch) { terrain[XY(x, y)] = t }
 			}
 		}
-		// Centre the cursor on the player's territory. Accumulate in `Int` —
-		// `XY` is backed by `Int8` and would overflow summing many tiles.
+		return StrategicSim(owner: owner, terrain: terrain, human: human)
+	}
+
+	/// The average tile position of every province owned by `country` — used
+	/// to centre the initial camera/cursor. Accumulates in `Int` (`XY` is
+	/// backed by `Int8` and would overflow summing many tiles); falls back to
+	/// the map's centre when `country` owns nothing.
+	func centroid(for country: Country) -> XY {
 		var sx = 0, sy = 0, count = 0
-		for xy in owner.indices where owner[xy] == human {
+		for xy in owner.indices where owner[xy] == country {
 			sx += xy.x
 			sy += xy.y
 			count += 1
 		}
-		return StrategicSim(owner: owner, terrain: terrain, human: human)
+		guard count > 0 else { return XY(owner.size / 2, owner.size / 2) }
+		return XY(sx / count, sy / count)
 	}
 }
 

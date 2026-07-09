@@ -48,7 +48,7 @@ public struct TacticalState: ~Copyable {
 }
 
 @frozen public enum MapMode: UInt8, Hashable {
-	case terrain, political, supply
+	case terrain, political, supply, country
 }
 
 public extension TacticalSim {

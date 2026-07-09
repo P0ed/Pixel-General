@@ -6,24 +6,36 @@ public extension StrategicState {
 		case .tile(let xy): select(xy)
 		case .action(.a): attack(at: ui.cursor)
 		case .menu: .events([.menu])
+		case .mode: toggleMapMode()
+		case .scale(let value): { ui.scale = value; return .none }()
+		case .pan(let dxy): handlePan(dxy)
 		default: .none
 		}
 	}
 
 	private mutating func moveCursor(_ direction: Direction) -> StrategicReaction {
 		let xy = ui.cursor.neighbor(direction)
-		if sim.owner.contains(xy) { ui.cursor = xy; ui.camera = xy }
+		if sim.owner.contains(xy) { ui.cursor = xy }
 		return .none
 	}
 
 	private mutating func select(_ xy: XY) -> StrategicReaction {
 		guard sim.owner.contains(xy) else { return .none }
 		ui.cursor = xy
-		ui.camera = xy
 		return attack(at: xy)
 	}
 
 	private func attack(at xy: XY) -> StrategicReaction {
 		sim.canAttack(xy) ? .action(.attack(xy)) : .none
+	}
+
+	private mutating func toggleMapMode() -> StrategicReaction {
+		ui.mapMode = ui.mapMode == .team ? .country : .team
+		return .none
+	}
+
+	private mutating func handlePan(_ dxy: XY) -> StrategicReaction {
+		ui.camera = (ui.camera + dxy).clamped(sim.owner.size)
+		return .none
 	}
 }

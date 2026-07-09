@@ -31,7 +31,8 @@ private extension TacticalState {
 		ui.mapMode = switch ui.mapMode {
 		case .terrain: .political
 		case .political: .supply
-		case .supply: .terrain
+		case .supply: .country
+		case .country: .terrain
 		}
 		return .none
 	}

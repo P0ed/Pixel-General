@@ -10,6 +10,7 @@ enum TileSurface: Hashable {
 	case field, forest, water
 	case political(Int)
 	case supply(UInt8)
+	case country(Country)
 
 	var color: SKColor {
 		switch self {
@@ -22,6 +23,7 @@ enum TileSurface: Hashable {
 		case .political(3): .redSurface
 		case .political: .graySurface
 		case .supply(let level): .redToGreen8(level)
+		case .country(let country): country.color
 		}
 	}
 }
@@ -178,6 +180,9 @@ extension SKTileSet {
 				}
 				for level in 0 ... 7 as ClosedRange<UInt8> {
 					ts.append(.base(surface: .supply(level), elevation: elevation))
+				}
+				for country in Country.allCases {
+					ts.append(.base(surface: .country(country), elevation: elevation))
 				}
 			}
 		},

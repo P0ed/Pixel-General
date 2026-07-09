@@ -83,24 +83,34 @@ extension Country {
 
 	var color: SKColor {
 		switch self {
-		case .usa: .purple
+		// Axis
 		case .swe: .systemYellow
 		case .ukr: .yellow
 		case .den: .white
 		case .ned: .orange
+		case .nor: .systemRed
+		case .fin: .systemTeal
+		case .ger: .darkGray
+		case .est: .systemMint
+		case .lva: .systemIndigo
+		case .ltu: .systemBrown
+		case .pol: .lightGray
+		case .cze: .magenta
+		case .aut: .systemPink
+		// Soviet
 		case .rus: .red
 		case .irn: .cyan
-		case .pak: .green
 		case .ind: .orange
+		case .bel: .systemGreen
+		case .svk: SKColor(red: 0.55, green: 0.35, blue: 0.85, alpha: 1)
+		case .rom: SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1)
+		case .hun: SKColor(red: 0.0, green: 0.5, blue: 0.4, alpha: 1)
+		case .mol: SKColor(red: 0.6, green: 0.2, blue: 0.2, alpha: 1)
+		// Allies
+		case .usa: .purple
 		case .isr: .blue
-		// Placeholder: campaign nations are tinted by team until bespoke colors land.
-		default:
-			switch team {
-			case .axis: .systemYellow
-			case .allies: .blue
-			case .soviet: .red
-			case .none: .gray
-			}
+		case .pak: .green
+		case .none: .gray
 		}
 	}
 

@@ -174,6 +174,11 @@ extension TacticalNodes {
 				surface: .supply(level),
 				elevation: state.sim.map[xy].elevationLevel
 			)
+		case .country:
+			return .base(
+				surface: .country(state.sim.control[xy]),
+				elevation: state.sim.map[xy].elevationLevel
+			)
 		}
 	}
 }
