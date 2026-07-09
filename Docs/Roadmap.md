@@ -14,9 +14,13 @@
 - Bridging engineers.
 - Explosion animations (three levels).
 - Movement sounds depending on unit type (leg, wheel, track, heli, jet).
+- Country map mode.
+- - Add `Country.color`.
 
 ## Campaign
 
+- Zoom, pan controls.
+- Map modes.
 - Dynamic diplomacy.
 - Economy.
 - Tier unlock mechanics.

@@ -3,7 +3,7 @@
 The neural opponent for Tactical battles ([Roadmap](./Roadmap.md) § AI): a convolutional
 LSTM policy that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
 *Neural opponent* in the Tactical menu (heuristic fallback when the resource is missing
-or invalid). It was trained by behavior-cloning the heuristic `axis(ai:)` and then
+or invalid). It was trained by behavior-cloning the heuristic `run(ai:)` and then
 REINFORCE fine-tuning against it — entirely with `MetalPerformanceShadersGraph` (OS
 built-in, no Python, no packages). Inference is dependency-free Swift in COR, so the
 shipping app never touches MPSGraph.
@@ -22,7 +22,7 @@ and regenerated deterministically instead of storing states.
 | `COR/Tactical/AI/ActionSpace.swift` | Factored action heads + legality masks |
 | `COR/Tactical/AI/LSTMWeights.swift` | `PGW1` weight format: IO, spec catalog, seeded random init |
 | `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
-| `COR/Tactical/AI/TacticalAI.swift` | `TacticalState.ai(lstm:)` — the app-side hook |
+| `COR/Tactical/AI/TacticalAI.swift` | `AI.heuristic` / `AI.lstm(_:)` — the app-side hooks |
 | `Train/` | macOS CLI (not shipped): rollouts, BC, RL, parity, eval |
 | `Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
 | `PG/policy.pgw` | Bundled weights (synchronized folder group → app resource) |
@@ -98,7 +98,7 @@ back to `.end`. One inference per action in a turn-based game — perf is a non-
 
 ### App integration
 
-`TacticalState.ai(lstm:)` (`TacticalAI.swift`) mirrors the plain `ai` hook: nil weights
+`AI.lstm(_:)` (`TacticalAI.swift`) mirrors `AI.heuristic`: nil weights
 ⇒ heuristic; otherwise each `.ai` seat gets **its own** `LSTMPolicy` (recurrent state is
 that seat's memory under its own fog and must not mix). `Settings.aiKind` selects
 neural/classic per battle in `TacticalMode.tactical`; `LSTMWeights.bundled` loads
@@ -166,7 +166,7 @@ Reference (160-battle corpus, defaults, ~3 min): held-out accuracy kind 0.66 /
 actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
 
 **`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>]`** — the arena: pure-Swift
-`LSTMPolicy` (the shipping path) vs `axis(ai:)`, each config played from both sides
+`LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
 (⇒ `2n` battles). Reports wins/losses/draws, avg days, and **hard-gates on 0 illegal
 actions** (mutation oracle). `--wseed` plays random weights instead — the sanity floor.
 
