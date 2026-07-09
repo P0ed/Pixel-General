@@ -80,6 +80,16 @@ Parts A and E's colors were both first-pass placeholders (hand-picked ad hoc). F
 - `PG/Tactical/UnitSprites.swift` (`Country.color`) — redone as one hue family per team (axis cool teal→violet, soviet warm red→magenta, allies green), hue/lightness varied within each so all 25 values are distinguishable both as a 10%-blend unit-sprite tint and as an opaque `.country` tile fill. Bespoke values now go through `SKColor.hex(_:)` (`PG/App/Colors.swift`) instead of ad-hoc `SKColor(red:green:blue:)` calls.
 - `PG/App/Colors.swift` / `PG/Scene/TileSprites.swift` (`Team.paletteIndex`) — fixed a latent bug: the 4-slot `.political` palette has slots 0-3, but only 3 teams exist, so slot 3 (`redSurface`) was unreachable from `Team.paletteIndex` (soviet had been on slot 2/green). Re-pointed soviet → slot 3 and repurposed `redSurface` from its old tan/orange (`0xE8B26F`, a misnomer) to an actual red (`0xD5493F`); `blueSurface`/`yellowSurface` were also re-tuned for better separation from `waterSurface`/the country palette. `greenSurface` stays defined (general `.political` infrastructure) but is now intentionally unused by any team — green would clash with `forestSurface`.
 
+## G. Follow-up: flag-derived colors with neighbor separation
+
+Part F's palette encoded *team* in hue (axis cool, soviet warm, allies green), which made every nation's color arbitrary with respect to its real-world identity. Follow-up request: recolor HoI/EU-style — each country gets its flag's most distinctive color, with the hard guarantee that campaign-map neighbors stay clearly distinct.
+
+- Adjacency was computed from `mapASCII` (`COR/Strategic/StrategicState.swift`, 8-neighborhood, matching `canAttack`): 37 border pairs, densest around `pol` (7 neighbors), `rus` (8), `ukr` (7).
+- Constraints validated with CIEDE2000: **ΔE ≥ 16** for every border pair *and* for every on-map country vs the `0x808080` sea/`.none` fill; **ΔE ≥ 8** globally for all 24×24 country pairs (any two can meet in a tactical battle); L* kept mid-tone (33–82) so values still work as a 10% unit-sprite tint. Worst pairs after tuning: lva–rus 16.1 (border), rom–usa 9.0 (global).
+- Europe's flags are mostly red/white/blue, so clashes were resolved by secondary flag colors or tone shifts, favoring the familiar HoI/EU conventions: `nor` salmon-red vs `rus` dark crimson vs `den` bright crimson; `aut` takes its white stripe (EU-game silver) amid red-flagged neighbors; `ger` field-gray from the black stripe; `pol` white-red → rose; `ltu` takes its yellow stripe (ochre) since green went to adjacent `bel`; `est` steel-teal (blue + black) to clear both the blues and the gray sea; `rom` cobalt since yellow went to adjacent `ukr`, leaving `mol` its red (brick).
+- Team is no longer readable from `Country.color` — that's inherent to flag colors and is what the `.team` map mode is for.
+- File touched: `PG/Tactical/UnitSprites.swift` (`Country.color`) only; the part-F team palette (`Team.paletteIndex`, `blueSurface`/`redSurface`/…) is unchanged.
+
 ## Verification
 
 - Build the app target and run in the simulator.
