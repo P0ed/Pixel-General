@@ -33,10 +33,10 @@ extension SKColor {
 	static var darkSurface: SKColor { .hex(0x8F8F8F) }
 	static var graySurface: SKColor { .hex(0xAFAFAF) }
 
-	static var blueSurface: SKColor { .hex(0x75CDFF) }
-	static var yellowSurface: SKColor { .hex(0xF7EF73) }
+	static var blueSurface: SKColor { .hex(0x5AAAEE) }
+	static var yellowSurface: SKColor { .hex(0xF1D04B) }
+	static var redSurface: SKColor { .hex(0xD5493F) }
 	static var greenSurface: SKColor { .hex(0x64B738) }
-	static var redSurface: SKColor { .hex(0xE8B26F) }
 
 	static func redToGreen8(_ level: UInt8) -> SKColor {
 		let cl = UInt32(min(level, 7))

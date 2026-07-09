@@ -61,21 +61,9 @@ extension StrategicNodes {
 		let elevation = state.sim.terrain[xy].elevationLevel
 		switch state.ui.mapMode {
 		case .team:
-			return politicalByTeam(state.sim.owner[xy], elevation: elevation)
+			return .team(state.sim.owner[xy].team, elevation: elevation)
 		case .country:
 			return .base(surface: .country(state.sim.owner[xy]), elevation: elevation)
 		}
-	}
-
-	/// Colour a province by its owner's team (axis/allies/soviet); .none is gray.
-	/// `elevation` raises hill/mountain provinces like tactical highground.
-	private static func politicalByTeam(_ country: Country, elevation: Int) -> SKTileGroup {
-		let index: Int = switch country.team {
-		case .axis: 0
-		case .allies: 1
-		case .soviet: 2
-		case .none: -1
-		}
-		return .political(playerIndex: index, elevation: elevation)
 	}
 }

@@ -34,7 +34,7 @@ public struct Player {
 	case usa, isr, pak
 }
 
-@frozen public enum Team: UInt8, Hashable, Sendable {
+@frozen public enum Team: UInt8, Hashable, CaseIterable, Sendable {
 	case none, axis, allies, soviet
 }
 

@@ -79,38 +79,55 @@ extension Unit {
 	}
 }
 
-extension Country {
-
+extension Team {
 	var color: SKColor {
 		switch self {
-		// Axis
-		case .swe: .systemYellow
-		case .ukr: .yellow
-		case .den: .white
-		case .ned: .orange
-		case .nor: .systemRed
-		case .fin: .systemTeal
-		case .ger: .darkGray
-		case .est: .systemMint
-		case .lva: .systemIndigo
-		case .ltu: .systemBrown
-		case .pol: .lightGray
-		case .cze: .magenta
-		case .aut: .systemPink
-		// Soviet
-		case .rus: .red
-		case .irn: .cyan
-		case .ind: .orange
-		case .bel: .systemGreen
-		case .svk: SKColor(red: 0.55, green: 0.35, blue: 0.85, alpha: 1)
-		case .rom: SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1)
-		case .hun: SKColor(red: 0.0, green: 0.5, blue: 0.4, alpha: 1)
-		case .mol: SKColor(red: 0.6, green: 0.2, blue: 0.2, alpha: 1)
-		// Allies
-		case .usa: .purple
-		case .isr: .blue
-		case .pak: .green
-		case .none: .gray
+		case .axis: .blueSurface
+		case .allies: .yellowSurface
+		case .soviet: .redSurface
+		case .none: .greenSurface
+		}
+	}
+}
+
+extension Country {
+
+	/// Per-nation identity color. Read two ways, both must hold up: a subtle 10%
+	/// tint over grayscale unit sprites, and a full opaque fill in "country" map
+	/// mode. So: mid-tone, moderate saturation (no neon, no near-black/white), and
+	/// clear of the muted terrain + gray. Each team gets a hue family — axis cool
+	/// (teal→blue→violet), soviet warm (red→orange→magenta), allies green — with
+	/// hue/lightness varied within so every nation stays distinct. Ordered by hue.
+	var color: SKColor {
+		switch self {
+		// Axis — cool: teal → blue → indigo → violet
+		case .est: .hex(0x2DA9A5) // dark teal
+		case .den: .hex(0x26A5C5) // cyan-teal
+		case .fin: .hex(0x8BD0DA) // light aqua
+		case .nor: .hex(0x2986BC) // cerulean
+		case .swe: .hex(0x458FE3) // sky blue
+		case .ned: .hex(0x2467DB) // royal blue
+		case .ger: .hex(0x394593) // deep navy
+		case .ukr: .hex(0x6C73DA) // periwinkle
+		case .lva: .hex(0x5943C7) // indigo
+		case .ltu: .hex(0xA886E4) // light violet
+		case .pol: .hex(0x8E38C7) // violet
+		case .cze: .hex(0x8E2A9D) // purple
+		case .aut: .hex(0xD987D9) // orchid
+		// Soviet — warm: red → orange → amber → rose → magenta
+		case .rus: .hex(0xBC3329) // crimson
+		case .ind: .hex(0xA55431) // terracotta
+		case .rom: .hex(0xE16D33) // scarlet-orange
+		case .mol: .hex(0xEA9A3E) // pumpkin orange
+		case .hun: .hex(0xCDA82D) // amber gold
+		case .bel: .hex(0xA38043) // khaki brown
+		case .svk: .hex(0xD67471) // dusty rose
+		case .irn: .hex(0xC43B80) // raspberry magenta
+		// Allies — green: emerald → grass → olive
+		case .isr: .hex(0x2EA378) // emerald
+		case .pak: .hex(0x55AE37) // grass green
+		case .usa: .hex(0xAABF40) // olive
+		case .none: .hex(0x808080) // neutral / unowned
 		}
 	}
 

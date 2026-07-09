@@ -7,23 +7,20 @@ import COR
 /// political ownership, or supply level. Decorations and fog are separate
 /// layers, so adding a mode only adds surfaces here.
 enum TileSurface: Hashable {
-	case field, forest, water
-	case political(Int)
-	case supply(UInt8)
+	case none, field, forest, water
+	case team(Team)
 	case country(Country)
+	case supply(UInt8)
 
 	var color: SKColor {
 		switch self {
+		case .none: .graySurface
 		case .field: .fieldSurface
 		case .forest: .forestSurface
 		case .water: .waterSurface
-		case .political(0): .blueSurface
-		case .political(1): .yellowSurface
-		case .political(2): .greenSurface
-		case .political(3): .redSurface
-		case .political: .graySurface
-		case .supply(let level): .redToGreen8(level)
+		case .team(let team): team.color
 		case .country(let country): country.color
+		case .supply(let level): .redToGreen8(level)
 		}
 	}
 }
@@ -63,11 +60,11 @@ extension Terrain {
 @MainActor
 extension SKTileGroup {
 
-	static let gray = base(surface: .political(-1), elevation: 0)
-	static let blue = base(surface: .political(0), elevation: 0)
-	static let yellow = base(surface: .political(1), elevation: 0)
-	static let green = base(surface: .political(2), elevation: 0)
-	static let red = base(surface: .political(3), elevation: 0)
+	static let gray = base(surface: .none, elevation: 0)
+	static let blue = base(surface: .team(.axis), elevation: 0)
+	static let yellow = base(surface: .team(.allies), elevation: 0)
+	static let green = base(surface: .team(.none), elevation: 0)
+	static let red = base(surface: .team(.soviet), elevation: 0)
 
 	private struct BaseKey: Hashable {
 		let surface: TileSurface
@@ -92,8 +89,8 @@ extension SKTileGroup {
 		base(surface: terrain.tileSurface, elevation: terrain.elevationLevel)
 	}
 
-	static func political(playerIndex: Int, elevation: Int) -> SKTileGroup {
-		base(surface: .political(playerIndex), elevation: elevation)
+	static func team(_ team: Team, elevation: Int) -> SKTileGroup {
+		base(surface: .team(team), elevation: elevation)
 	}
 
 	private struct DecorationKey: Hashable {
@@ -175,8 +172,8 @@ extension SKTileSet {
 				for surface in [TileSurface.field, .forest, .water] {
 					ts.append(.base(surface: surface, elevation: elevation))
 				}
-				for idx in -1 ... 3 {
-					ts.append(.political(playerIndex: idx, elevation: elevation))
+				for team in Team.allCases {
+					ts.append(.team(team, elevation: elevation))
 				}
 				for level in 0 ... 7 as ClosedRange<UInt8> {
 					ts.append(.base(surface: .supply(level), elevation: elevation))
@@ -205,7 +202,7 @@ extension SKTileSet {
 	)
 
 	static let colors = SKTileSet(
-		tileGroups: [.gray, .blue, .yellow, .green, .red],
+		tileGroups: [/*.gray, */.blue, .yellow, .green, .red],
 		tileSetType: .isometric
 	)
 }

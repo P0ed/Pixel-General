@@ -152,11 +152,9 @@ extension TacticalNodes {
 		switch state.ui.mapMode {
 		case .terrain:
 			return .base(terrain: state.sim.map[xy])
-		case .political:
-			let country = state.sim.control[xy]
-			let idx = state.sim.players.firstMap { i, p in p.country == country ? i : nil } ?? -1
-			return .political(
-				playerIndex: idx,
+		case .team:
+			return .team(
+				state.sim.control[xy].team,
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		case .supply:

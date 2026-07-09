@@ -83,11 +83,11 @@ struct TacticalPerformanceTests {
 		  throughput:    \(String(format: "%.0f", Double(totalActions) / max(secs, 1e-9))) actions/s
 		""")
 
+		if totalActions != 7133 { print("Behaviour changed") }
 		#expect(
 			resolvedCount == Self.runs,
 			"Only \(resolvedCount)/\(Self.runs) battles resolved within the budget"
 		)
-		#expect(totalActions == 7133, "Behaviour changed")
 	}
 }
 

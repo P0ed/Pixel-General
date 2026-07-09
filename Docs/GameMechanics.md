@@ -349,9 +349,11 @@ surviving defender or `nil` (a player-driven abandon/draw).
 ### Map mode
 
 `TacticalUI.mapMode` (presentation-only; `state.ui.mapMode`) cycles
-`.terrain` → `.political` → `.supply` — political recolors tiles by `control`
-(country/team); supply shades tiles on a red-to-green gradient by the human
-player's resupply grade (`TacticalSim.supplySources(for:)` +
+`.terrain` → `.team` → `.supply` → `.country` — team recolors tiles by the
+controlling country's team (axis/allies/soviet); country recolors by the
+controlling `Country` itself (`Country.color`, distinct per nation); supply
+shades tiles on a red-to-green gradient by the human player's resupply grade
+(`TacticalSim.supplySources(for:)` +
 `SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +2 on or next to a
 friendly-team supply truck, +3 in the `.c5` plus-shape of an owned settlement,
 minus the rough-terrain and enemy-control supply penalties (ground-unit
