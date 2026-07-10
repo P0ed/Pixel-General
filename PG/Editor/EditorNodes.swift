@@ -121,6 +121,7 @@ extension Terrain {
 		case .villageW: .tile(.villageW)
 		case .villageS: .tile(.villageS)
 		case .roadX: .tile(.roadX)
+		case .fort: .tile(.fort)
 		case .none: .clear
 		}
 	}

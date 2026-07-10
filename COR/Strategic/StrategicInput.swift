@@ -5,6 +5,7 @@ public extension StrategicState {
 		case .direction(let direction?): moveCursor(direction)
 		case .tile(let xy): select(xy)
 		case .action(.a): attack(at: ui.cursor)
+		case .action(.b): build(at: ui.cursor)
 		case .menu: .events([.menu])
 		case .mode: toggleMapMode()
 		case .scale(let value): { ui.scale = value; return .none }()
@@ -27,6 +28,10 @@ public extension StrategicState {
 
 	private func attack(at xy: XY) -> StrategicReaction {
 		sim.canAttack(xy) ? .action(.attack(xy)) : .none
+	}
+
+	private func build(at xy: XY) -> StrategicReaction {
+		sim.canBuild(xy) ? .action(.build(xy)) : .none
 	}
 
 	private mutating func toggleMapMode() -> StrategicReaction {

@@ -16,6 +16,7 @@ extension HQNodes {
 			}
 		}
 		var size = 0
+		var forts: UInt8 = 0
 		let sizes: [UIImage] = [.sizeS, .sizeM, .sizeL]
 
 		let countries = (0..<4).map { idx in
@@ -116,14 +117,22 @@ extension HQNodes {
 					m.items[28].status.text = "Size: \(16 + size * 8)"
 				}
 			}),
-			.space, .space,
+			.init(icon: .toggle4(forts), status: .init(text: "Forts: \(forts)"), update: { m in
+				modifying(m) { m in
+					forts.toggle4()
+					m.items[29].icon = .toggle4(forts)
+					m.items[29].status.text = "Forts: \(forts)"
+				}
+			}),
+			.space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 				core.startScenario(TacticalSim(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: scene.state.sim.units.compactMap { u in u.alive ? u : nil },
 					size: 16 + size * 8,
-					seed: .random(in: 0..<128)
+					seed: .random(in: 0..<128),
+					forts: Int(forts)
 				))
 				core.save()
 				view.present(.auto)

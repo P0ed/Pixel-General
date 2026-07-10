@@ -193,7 +193,7 @@ extension Terrain {
 		case .hill: Plane.hill
 		case .forestHill: Plane.forestHill
 		case .mountain: Plane.mountain
-		case .city: Plane.city
+		case .city, .fort: Plane.city
 		case .airfield: Plane.airfield
 		case .villageE, .villageN, .villageW, .villageS: Plane.village
 		case .roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX: Plane.road

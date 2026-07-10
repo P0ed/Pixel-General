@@ -6,9 +6,10 @@ public extension TacticalSim {
 		size: Int,
 		seed: Int,
 		terrain: Terrain = .field,
-		objective: Objective = .none
+		objective: Objective = .none,
+		forts: Int = 0
 	) {
-		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain)
+		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain, forts: forts)
 		let cities = Self.cities(
 			countries: players.map { p in p.country },
 			objective: objective,

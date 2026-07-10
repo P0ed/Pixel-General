@@ -6,6 +6,7 @@ extension StrategicNodes {
 	func process(_ event: StrategicEvent, _ state: borrowing StrategicState) async {
 		switch event {
 		case .attack(let xy): processAttack(xy)
+		case .build(let xy): break
 		case .menu: processMenu(state)
 		}
 	}

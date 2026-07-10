@@ -6,6 +6,8 @@ public struct StrategicSim: ~Copyable {
 	/// Per-tile dominant terrain (`.field`/`.hill`/`.mountain`) — drawn as
 	/// elevation on the political map and passed to tactical map generation.
 	public var terrain: Map<32, Terrain>
+	/// Per-tile fortification and factory levels — the campaign economy.
+	public var provinces: Map<32, Province>
 	/// The country the player commands this campaign.
 	public var human: Country
 	public var turn: UInt32
@@ -16,12 +18,14 @@ public struct StrategicSim: ~Copyable {
 	public init(
 		owner: consuming Map<32, Country>,
 		terrain: consuming Map<32, Terrain> = Map(size: 32, zero: .field),
+		provinces: consuming Map<32, Province> = Map(size: 32, zero: Province()),
 		human: Country = .default,
 		turn: UInt32 = 0,
 		battle: XY? = nil
 	) {
 		self.owner = owner
 		self.terrain = terrain
+		self.provinces = provinces
 		self.human = human
 		self.turn = turn
 		self.battle = battle
@@ -94,7 +98,8 @@ public extension StrategicSim {
 
 public extension StrategicSim {
 
-	/// Build the European campaign map from the docs/Map.md legend.
+	/// Build the European campaign map from the docs/Map.md legend and place
+	/// the starting factories — deterministic, identical output every call.
 	static func europe(human: Country) -> StrategicSim {
 		var owner = Map<32, Country>(size: 32, zero: .none)
 		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
@@ -113,7 +118,9 @@ public extension StrategicSim {
 				if let t = Terrain(legend: ch) { terrain[XY(x, y)] = t }
 			}
 		}
-		return StrategicSim(owner: owner, terrain: terrain, human: human)
+		var sim = StrategicSim(owner: owner, terrain: terrain, human: human)
+		sim.placeStartingFactories()
+		return sim
 	}
 
 	/// The average tile position of every province owned by `country` — used

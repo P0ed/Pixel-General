@@ -6,6 +6,7 @@
 	case city, airfield
 	case villageE, villageN, villageW, villageS
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
+	case fort
 }
 
 public extension Terrain {
@@ -85,7 +86,7 @@ public extension Terrain {
 		case .inf, .aa, .art:
 			switch self {
 			case _ where hasRoad: 1
-			case .field: 1
+			case .field, .fort: 1
 			case .forest, .hill: min(stats.mov, 2)
 			case .forestHill: min(stats.mov, 3)
 			case .mountain: stats.mov
@@ -96,7 +97,7 @@ public extension Terrain {
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 2
-			case .forest, .hill: 3
+			case .forest, .hill, .fort: 3
 			case .forestHill: stats.mov
 			case _ where isRiver: stats.mov
 			default: 0x10
@@ -105,7 +106,7 @@ public extension Terrain {
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 1
-			case .forest, .hill: 2
+			case .forest, .hill, .fort: 2
 			case .forestHill: stats.mov
 			case _ where isRiver: stats.mov
 			default: 0x10
@@ -120,7 +121,7 @@ public extension Terrain {
 		case .field: 0
 		case .hill, .airfield: 1
 		case .forest, .forestHill, .mountain, .villageE, .villageN, .villageW, .villageS: 2
-		case .city: 3
+		case .city, .fort: 3
 		default: 0
 		}
 	}
@@ -134,7 +135,7 @@ public extension Terrain {
 		return switch self {
 		case .hill, .airfield: penalty * 1
 		case .forest, .villageE, .villageN, .villageW, .villageS: penalty * 2
-		case .city, .mountain, .forestHill: penalty * 3
+		case .city, .mountain, .forestHill, .fort: penalty * 3
 		default: 0
 		}
 	}
@@ -165,7 +166,7 @@ public extension Terrain {
 			case .trackAA, .trackArt: 1
 			default: 0
 			}
-		case .city, .mountain, .forestHill:
+		case .city, .mountain, .forestHill, .fort:
 			switch type {
 			case .inf, .art, .aa: 3
 			case .supply, .wheelArt, .wheelAA: 2

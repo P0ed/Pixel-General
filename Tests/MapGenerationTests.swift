@@ -134,6 +134,63 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func defaultGenerationPlacesNoForts() {
+		for seed in [0, 7, 42, 100] {
+			let map = Map<32, Terrain>(size: 32, seed: seed)
+			for xy in map.indices where map[xy] == .fort {
+				Issue.record("Fort at \(xy) for seed \(seed) with forts omitted")
+				break
+			}
+		}
+	}
+
+	@Test func fortsReplaceOnlyOpenTerrain() {
+		// `placeForts` runs last and level 0 draws nothing from the RNG, so
+		// the fort-free map is exactly the pre-fort state: every fort must
+		// sit where field/forest/hill used to be, and every other tile must
+		// be untouched.
+		for (size, seed) in [(32, 0), (32, 7), (24, 5), (16, 2)] {
+			let base = Map<32, Terrain>(size: size, seed: seed)
+			let map = Map<32, Terrain>(size: size, seed: seed, forts: 3)
+			var forts = 0
+			for xy in map.indices {
+				if map[xy] == .fort {
+					forts += 1
+					switch base[xy] {
+					case .field, .forest, .hill: break
+					default: Issue.record("Fort replaced \(base[xy]) at \(xy) for seed \(seed) size \(size)")
+					}
+				} else if map[xy] != base[xy] {
+					Issue.record("Fort placement disturbed \(base[xy]) at \(xy) for seed \(seed) size \(size)")
+				}
+			}
+			#expect(forts > 0, "No forts for seed \(seed) size \(size)")
+		}
+	}
+
+	@Test func fortCountScalesWithLevel() {
+		for seed in [0, 7, 42] {
+			func forts(_ level: Int) -> Int {
+				let map = Map<32, Terrain>(size: 32, seed: seed, forts: level)
+				var count = 0
+				for xy in map.indices where map[xy] == .fort { count += 1 }
+				return count
+			}
+			#expect(forts(3) >= forts(1), "Level 3 placed fewer forts than level 1 for seed \(seed)")
+		}
+	}
+
+	@Test func fortPlacementIsDeterministic() {
+		for seed in [0, 7, 999] {
+			let a = Map<32, Terrain>(size: 32, seed: seed, forts: 3)
+			let b = Map<32, Terrain>(size: 32, seed: seed, forts: 3)
+			for xy in a.indices where a[xy] != b[xy] {
+				Issue.record("Map differs at \(xy) for seed \(seed): \(a[xy]) vs \(b[xy])")
+				break
+			}
+		}
+	}
+
 	@Test func riversReachTheMapEdge() {
 		// River mouths sit on map edges by construction, so every generated
 		// map must have at least one river tile on its border.

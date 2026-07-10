@@ -173,7 +173,7 @@ extension Terrain {
 	static let palette: [Terrain] = [
 		.field, .forest, .hill, .forestHill,
 		.mountain, .water, .city,
-		.airfield, .roadWE, .bridgeWE
+		.airfield, .roadWE, .bridgeWE, .fort
 	]
 
 	var code: Character {
@@ -188,6 +188,7 @@ extension Terrain {
 		case .bridgeWE, .bridgeSN: "B"
 		case .city: "C"
 		case .airfield: "A"
+		case .fort: "T"
 		case _ where isRoad: "R"
 		default: "."
 		}
@@ -205,6 +206,7 @@ extension Terrain {
 		case "B": self = .bridgeWE
 		case "C": self = .city
 		case "A": self = .airfield
+		case "T": self = .fort
 		case "R": self = .roadWE
 		default: return nil
 		}

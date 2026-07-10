@@ -155,6 +155,7 @@ extension Terrain: CustomStringConvertible {
 		case .city: "city"
 		case .airfield: "airfield"
 		case .villageE, .villageN, .villageW, .villageS: "village"
+		case .fort: "fort"
 		case _ where isRoad: "road"
 		default: ""
 		}

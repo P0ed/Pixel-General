@@ -44,6 +44,46 @@ public extension [Unit] {
 		return units.compactMap { u in u }
 	}
 
+	/// Campaign aux army shaped by the country's factory totals (each clamped
+	/// 0...4): `army` fields infantry and artillery, `armor` vehicles, `air`
+	/// aircraft, `aa` flak; a total of 3+ makes that class veteran. Capped at
+	/// 16 units. Scenario battles keep the fixed `aux(_:tier:)` template.
+	static func aux(
+		_ country: Country,
+		tier: UInt8 = 3,
+		army: Int,
+		armor: Int,
+		air: Int,
+		aa: Int
+	) -> [Unit] {
+		let shop = Shop(country: country, tier: tier)
+		let army = Swift.min(Swift.max(army, 0), 4)
+		let armor = Swift.min(Swift.max(armor, 0), 4)
+		let air = Swift.min(Swift.max(air, 0), 4)
+		let aa = Swift.min(Swift.max(aa, 0), 4)
+
+		var units: [Unit?] = [Unit(model: .truck, country: country)]
+		if army + armor >= 4 {
+			units.append(Unit(model: .truck, country: country))
+		}
+
+		func add(_ total: Int, from cycle: [Unit?]) {
+			for i in 0 ..< total {
+				let u = cycle[i % cycle.count]
+				units.append(total >= 3 ? u?.veteran : u)
+			}
+		}
+
+		add(army, from: [shop.inf1, shop.inf2])
+		if army >= 2 { units.append(army >= 3 ? shop.art1?.veteran : shop.art1) }
+		if army >= 3 { units.append(shop.art2?.veteran) }
+		add(armor, from: [shop.ifv1, shop.tank1, shop.ifv2, shop.tank2])
+		add(air, from: [shop.air1, shop.air2])
+		add(aa, from: [shop.aa1, shop.aa2])
+
+		return Array(units.compactMap { u in u?.aux }.prefix(16))
+	}
+
 	static func aux(_ country: Country, tier: UInt8 = 3) -> [Unit] {
 		let shop = Shop(country: country, tier: tier)
 		let units: [Unit?] = [

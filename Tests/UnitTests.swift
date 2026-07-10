@@ -37,4 +37,16 @@ struct UnitTests {
 			#expect(Self.unit(exp: exp).subLvl <= 9)
 		}
 	}
+
+	@Test func fortDefendsLikeACity() {
+		#expect(Terrain.fort.baseEntrenchment == 3)
+		#expect(Terrain.fort.def(.inf) == Terrain.city.def(.inf))
+		#expect(Terrain.fort.closeCombat(.heavyTrack) == Terrain.city.closeCombat(.heavyTrack))
+	}
+
+	@Test func fortMoveCostsPenalizeWheelsAndTracks() {
+		#expect(Terrain.fort.moveCost(Unit(model: .regular, country: .ger)) == 1)
+		#expect(Terrain.fort.moveCost(Unit(model: .truck, country: .ger)) == 3)
+		#expect(Terrain.fort.moveCost(Unit(model: .leo1, country: .ger)) == 2)
+	}
 }

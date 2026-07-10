@@ -53,6 +53,7 @@ extension Terrain {
 		case .villageW: .villageW
 		case .villageS: .villageS
 		case .roadX: .roadX
+		case .fort: .fort
 		}
 	}
 }
@@ -160,7 +161,7 @@ private extension CGContext {
 extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
-		.city, .airfield, .bridgeWE, .bridgeSN,
+		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX,
 		.villageE, .villageN, .villageW, .villageS,
 	]
