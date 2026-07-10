@@ -155,7 +155,7 @@ extension Shop {
 		switch country.team {
 		case .axis: Unit(model: .art155, country: country)
 		case .allies: Unit(model: .m777, country: country)
-		case .soviet: Unit(model: .art105, country: country)
+		case .soviet: Unit(model: tier > 1 ? .sp105 : .art105, country: country)
 		case .none: nil
 		}
 	}

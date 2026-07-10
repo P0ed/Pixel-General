@@ -138,6 +138,7 @@ public extension UnitStats {
 		case .t72: .t72
 		case .t90m: .t90m
 		case .art105: .art105
+		case .sp105: .sp105
 		case .neva: .neva
 		case .s300: .s300
 		case .tunguska: .tunguska

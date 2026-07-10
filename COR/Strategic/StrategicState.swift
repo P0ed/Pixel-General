@@ -33,7 +33,7 @@ public struct StrategicSim: ~Copyable {
 }
 
 @frozen public enum StrategicMapMode: UInt8, Hashable {
-	case team, country
+	case country, team
 }
 
 /// Presentation-only strategic state. Never read by `reduce`; may diverge per peer.
@@ -46,8 +46,8 @@ public struct StrategicUI {
 	public init(
 		cursor: XY = .zero,
 		camera: XY = .zero,
-		scale: Int = 2,
-		mapMode: StrategicMapMode = .team
+		scale: Int = 1,
+		mapMode: StrategicMapMode = .country
 	) {
 		self.cursor = cursor
 		self.camera = camera

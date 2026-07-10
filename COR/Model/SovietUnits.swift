@@ -96,6 +96,17 @@ extension UnitStats {
 		airDef: 4
 	)
 
+	@safe nonisolated(unsafe) static let sp105 = UnitStats(
+		type: .trackArt,
+		mov: 5,
+		rng: 2,
+		ini: 1,
+		softAtk: 9,
+		hardAtk: 5,
+		groundDef: 5,
+		airDef: 4
+	)
+
 	// MARK: Anti-Air
 	@safe nonisolated(unsafe) static let neva = UnitStats(
 		type: .wheelAA,

@@ -7,6 +7,7 @@
 - - - Set base entrenchment to 3.
 - - - Def bonus and close combat same as city.
 - - - Add move cost penalty for tracks and wheels.
+- Do not transfer prestige after scenario to HQ. Instead pay fixed reward on victory.
 - Finetune the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
@@ -30,9 +31,25 @@
 - - - Civil factories affect overal income and starting scenario prestige.
 - - - Display province stats in status string.
 - - - Place starting factories at new campaign phase.
+- Continue campaign menu action `if` stored state exists `else` New campaign.
 - Dynamic diplomacy.
-- Economy.
+- - Rename `Country` to `Flag` [or `Tag`?].
+- - Add `struct Country { var flag: Flag, var team: Team }`.
+- - - Bitpack into `rawValue: UInt8`, 64 flags, 4 teams.
+- - - Allow to select a team in new scenario / LAN lobby.
+- - Allow to join a team if current team is `.none`.  
 - Tier unlock mechanics.
+- - Has enough factories/buildings + fixed cost.
+- Turn scope.
+- - What actions allowed per turn?
+- Add army (up to 16 units).
+- - main army stored to / loaded from `Core.hq`. 
+- - has limited move speed.
+- - allows attack enemy tiles in `.n4`.
+- - when defending, nearest army (if not too far) joins aux forces.
+- - use HQMode to display / update an army.
+- Battle autoresolve option.
+- Simple AI.
 
 ## Multiplayer
 
@@ -40,8 +57,9 @@
   the stock `.base` roster of their assigned country.
 - `resync(state)` sender: the message and the client handler exist, but the
   host never emits it yet (late join / desync recovery).
-- Optimistic client-side apply to hide LAN latency.
+- Remove `.takeover`, require to reconnect.
 - Allow to choose a port when hosting a game.
+- Optimistic client-side apply to hide LAN latency.
 - Bonjour discovery so clients pick a host instead of typing `ip:port`.
 
 ## Editor
@@ -52,9 +70,13 @@
 
 ## Controls
 
-- Display action hints depending on current input method (gamepad is connected / fallback to keyboard).
-- Camera pan controls other than trackpad scrolling.
-- On-screen touch controls for iOS.
+- Detect button pressed state to allow use combos.
+- - `L + Dpad`: Move camera.
+- - `R + action`: Map mode.
+- - `R + Dpad up/down`: Zoom.
+- Bind map mode to `1, 2, 3, 4` keys, remove `§` binding.
+- Display action hints depending on current input method
+  (gamepad is connected / fallback to keyboard).
 
 ## [AI](./LSTM-AI.md)
 

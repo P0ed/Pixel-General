@@ -29,10 +29,10 @@ private extension TacticalState {
 
 	mutating func toggleMapMode() -> TacticalReaction {
 		ui.mapMode = switch ui.mapMode {
-		case .terrain: .team
-		case .team: .supply
+		case .terrain: .supply
 		case .supply: .country
-		case .country: .terrain
+		case .country: .team
+		case .team: .terrain
 		}
 		return .none
 	}

@@ -84,6 +84,7 @@ public extension Unit {
 		// Artillery
 		case .art105: "105mm"
 		case .art155: "155mm"
+		case .sp105: "Akatsiya"
 		case .m777: "M777"
 		case .m270: "M270"
 		case .pzh: "PzH 2000"

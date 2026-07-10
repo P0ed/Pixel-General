@@ -15,13 +15,8 @@ state these build on.
 
 ## Design pillars
 
-- **Fixed teams for now.** The dynamic-diplomacy / `Country`→`Team` redesign is
-  deferred (see [Open items](#open-items--prerequisites)). Campaign teams use
-  the existing hardcoded `Country.team`.
 - **Every campaign battle is 1v1** (two teams). Free-for-all is reserved for
   scenario and multiplayer.
-- **Fronts, not stacks.** No movable strategic army pieces. A country attacks
-  across a border; strength *is* the roster + predeployed aux units from current front.
 - **Multiple simultaneous fronts** are allowed and are a core pressure source.
 - **The roster is permanent and precious.** Survivors carry forward; the dead
   stay dead; losing the campaign can cost it entirely.
@@ -99,9 +94,7 @@ extra **leveled `aux` units** drawn from the existing `.aux(country:)` pool.
 Both modes you want already exist in the engine
 (`COR/Tactical/UnitResupply.swift`) — they only need exposing:
 
-- **Slow regen, no exp loss** — the end-of-turn / `regen`-style heal (+1 HP near
-  supply). In-battle, with a supply truck adjacent, over a couple of days. The
-  "let veterans recover" path.
+- **Slow regen, no exp loss** — `regen`-style heal (+2 if not frontline else +1 HP per turn).
 - **Quick replacements, costs prestige + exp** — the current player-initiated
   `resupply` heal (`3 << lvl` exp + `cost/32` prestige per HP). Reframe it as
   *replacements dilute your veterans* — green troops refill the ranks and
