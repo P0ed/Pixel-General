@@ -90,12 +90,11 @@ public extension Core {
 	}
 
 	mutating func startScenario(_ sim: borrowing TacticalSim) {
-		tactical = clone(sim)
-		location = .tactical
+		store(sim)
 	}
 
 	mutating func startCampaignBattle(at tile: XY) {
-		guard let defender = strategic?.owner[tile],
+		guard let defender = strategic?.owner(at: tile),
 			  let slot = strategic?.attackingArmy(at: tile)
 		else { return }
 
@@ -124,9 +123,9 @@ public extension Core {
 			units: units,
 			size: 24,
 			seed: tile.x + tile.y * 32,
-			terrain: strategic?.terrain[tile] ?? .field,
+			terrain: strategic?.terrain(at: tile) ?? .field,
 			objective: .survive(defender.team, day: 20),
-			forts: Int(strategic?.provinces[tile][.fort] ?? 0),
+			forts: strategic?.fortLevel(at: tile) ?? 0,
 			buildingsMask: buildingsMask
 		)
 		location = .tactical

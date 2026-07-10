@@ -1,7 +1,7 @@
 import Foundation
 
 /// `Train eval` — the arena. The pure-Swift `LSTMPolicy` (the exact code path
-/// the app ships) plays the frozen heuristic `axis(ai:)`. Each battle config
+/// the app ships) plays the frozen heuristic `run(ai:)`. Each battle config
 /// from `Rollouts.replay(index:)` is played twice with sides swapped, so map
 /// generation, economy, and roster asymmetries cancel out of the win rate.
 ///

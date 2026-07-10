@@ -27,6 +27,9 @@ extension D20: RandomNumberGenerator {
 		case .sum: modifying(0) { r in for _ in 0 ..< cnt { r += self() } }
 		}
 	}
+
+	/// Uniform float in `[0, 1)` from the top 24 bits of `next()`.
+	public mutating func uniform() -> Float { Float(next() >> 40) * 0x1p-24 }
 }
 
 public extension D20 {

@@ -203,7 +203,7 @@ extension TacticalSim {
 		from p: XY,
 		_ ai: borrowing AI.Plan
 	) -> XY? {
-		if let c = ai.enemySettlements.min(by: { p.stepDistance(to: $0) < p.stepDistance(to: $1) }) {
+		if let c = ai.enemySettlements.min(by: p.stepComparator) {
 			return c
 		}
 		return ai.enemies
@@ -288,9 +288,7 @@ extension TacticalSim {
 	/// Distance from a buildable tile to the front (nearest enemy settlement,
 	/// else nearest visible enemy). Used to spawn units where they are needed.
 	private func frontDistance(_ xy: XY, _ ai: borrowing AI.Plan) -> Int {
-		if let d = ai.enemySettlements.min(
-			by: { a, b in xy.stepDistance(to: a) < xy.stepDistance(to: b) }
-		) {
+		if let d = ai.enemySettlements.min(by: xy.stepComparator) {
 			return xy.stepDistance(to: d)
 		}
 
@@ -441,9 +439,7 @@ extension TacticalSim {
 		let u = units[uid]
 		let p = position[uid]
 		switch ai.role[uid] {
-		case .retreat:
-			return pick(uid, toward: ai.target[uid.index], defensive: true)
-		case .defend:
+		case .retreat, .defend:
 			return pick(uid, toward: ai.target[uid.index], defensive: true)
 		case .support:
 			let anchor = nearestFriendlyCombat(to: p, exclude: uid) ?? ai.target[uid.index]

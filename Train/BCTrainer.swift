@@ -2,7 +2,7 @@ import Foundation
 import Metal
 import MetalPerformanceShadersGraph
 
-/// `Train bc` — behavior-clones axisAI from a replay corpus. Truncated BPTT
+/// `Train bc` — behavior-clones the heuristic AI from a replay corpus. Truncated BPTT
 /// over `Batcher` windows on the `Net` graph, masked cross-entropy per head
 /// weighted by applicability (target only where the kind takes a target, …),
 /// autodiff + Adam with global-norm gradient clipping, PGW1 checkpoints.

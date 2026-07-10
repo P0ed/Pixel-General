@@ -40,10 +40,10 @@ do {
 		  bc [--data <dir>] [--out <dir>] [--steps <n>] [--b <streams>]
 		     [--t <bptt>] [--lr <rate>] [--holdout <nth>] [--ckpt <every>]
 		     [--resume <pgw>]
-		      Behavior-clone axisAI from a replay corpus; writes PGW1
+		      Behavior-clone the heuristic AI from a replay corpus; writes PGW1
 		      checkpoints and a CSV loss/accuracy log.
 		  eval --weights <pgw> [--n <configs>] [--seed <base>] [--wseed <n>]
-		      Arena: the pure-Swift LSTMPolicy vs axisAI, each config played
+		      Arena: the pure-Swift LSTMPolicy vs the heuristic AI, each config played
 		      from both sides; reports win rate and gates on 0 illegal actions.
 		  rl --weights <pgw> [--out <dir>] [--iters <n>] [--episodes <per iter>]
 		     [--b <streams>] [--t <bptt>] [--lr <rate>] [--temp <sampling>]

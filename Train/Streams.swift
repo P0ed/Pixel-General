@@ -18,7 +18,7 @@ struct Sample {
 }
 
 /// Replays one battle through `reduce` and yields one seat's samples in
-/// order — the teacher (axisAI) drove both seats, so every action of the
+/// order — the teacher (the heuristic AI) drove both seats, so every action of the
 /// seat is a label, observed under that seat's fog.
 final class SampleStream {
 	private var sim: TacticalSim

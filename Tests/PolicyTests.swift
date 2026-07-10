@@ -90,7 +90,7 @@ struct PolicyTests {
 			let action = sim.run(ai: &ai)
 			let idx = sim.actionIndices(action)
 			guard let idx else {
-				Issue.record("axisAI emitted an unencodable action: \(action)")
+				Issue.record("heuristic AI emitted an unencodable action: \(action)")
 				break
 			}
 

@@ -1,8 +1,8 @@
 import Foundation
 
 /// Generates heuristic-vs-heuristic battles and stores them as replays.
-/// Both seats are driven by `axis(ai:)` directly (the perf-test pattern), so
-/// the corpus is uniform axisAI play regardless of country teams. Every battle
+/// Both seats are driven by the heuristic `run(ai:)` directly (the perf-test
+/// pattern), so the corpus is uniform heuristic play. Every battle
 /// is fully determined by its index: re-running produces byte-identical files.
 enum Rollouts {
 

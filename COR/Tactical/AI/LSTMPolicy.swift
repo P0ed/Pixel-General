@@ -2,7 +2,7 @@ import Accelerate
 import Foundation
 
 /// Dependency-free (Accelerate-only) inference for the trained LSTM opponent.
-/// One call per action, mirroring `axis(ai:)`: encode the observation, run the
+/// One call per action, mirroring `run(ai:)`: encode the observation, run the
 /// network, and pick the best *legal* action by hierarchical masked argmax —
 /// kind, then actor tile, then target tile or shop slot. Deterministic and
 /// RNG-free, so multiplayer and replay determinism are untouched; the masks

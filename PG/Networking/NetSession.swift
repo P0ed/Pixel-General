@@ -255,10 +255,10 @@ final class NetSession {
 			self.seats = seats
 			onLobby()
 		case .start(let data), .resync(let data):
-			guard var state: TacticalSim = decode(data) else { return hostLost() }
-			localize(&state)
+			guard var sim: TacticalSim = decode(data) else { return hostLost() }
+			localize(&sim)
 			started = true
-			core.startScenario(state)
+			core.startScenario(sim)
 			core.save()
 			view.present(.auto)
 		case .action(let data):
@@ -273,8 +273,7 @@ final class NetSession {
 	}
 
 	/// Make the decoded host state peer-relative: our seat is `.human`,
-	/// everything else `.remote`. UI fields are reset — they are never read
-	/// by `reduce` and may freely diverge between peers.
+	/// everything else `.remote`.
 	private func localize(_ sim: inout TacticalSim) {
 		let mySeat = mySeat
 		sim.players.modifyEach { i, p in

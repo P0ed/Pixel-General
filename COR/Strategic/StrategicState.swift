@@ -76,6 +76,13 @@ public extension StrategicSim {
 
 	static var captureRadius: Int { 2 }
 
+	// Field reads for callers holding `StrategicSim?` — projecting stored
+	// fields out of the noncopyable sim through optional chains hangs the
+	// compiler, so outside access goes through methods.
+	func owner(at xy: XY) -> Country { owner[xy] }
+	func terrain(at xy: XY) -> Terrain { terrain[xy] }
+	func fortLevel(at xy: XY) -> Int { Int(provinces[xy][.fort]) }
+
 	func canAttack(_ xy: XY) -> Bool {
 		guard owner.contains(xy) else { return false }
 		let target = owner[xy]
