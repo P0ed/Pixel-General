@@ -313,7 +313,6 @@ extension TacticalSim {
 		if u.isAir { s += 8 }
 		if u[.transport] { s += 6 }
 		if u.type == .supply { s += 8 }
-		if u[.aux] { s += 12 }
 		s -= Int(u.cost / 64)
 		return s
 	}

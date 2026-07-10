@@ -108,12 +108,11 @@ public extension Core {
 			Player(country: defender, type: .ai, prestige: .poor + civilBonus(for: defender)),
 		]
 		let units = armyRoster(slot)
+			+ (strategic?.reinforcement(for: defender, near: tile) ?? [])
+			+ campaignAux(for: human)
+			+ campaignAux(for: defender)
 		strategic?.launchBattle(at: tile, by: slot)
-		let aux = [
-			campaignAux(for: human),
-			campaignAux(for: defender)
-				+ (strategic?.reinforcement(for: defender, near: tile) ?? []),
-		]
+
 		let buildingsMask = [
 			strategic?.buildingsMask(of: human) ?? 0xFF,
 			strategic?.buildingsMask(of: defender) ?? 0xFF,
@@ -128,7 +127,6 @@ public extension Core {
 			terrain: strategic?.terrain[tile] ?? .field,
 			objective: .survive(defender.team, day: 20),
 			forts: Int(strategic?.provinces[tile][.fort] ?? 0),
-			aux: aux,
 			buildingsMask: buildingsMask
 		)
 		location = .tactical

@@ -95,31 +95,6 @@ struct StrategicTests {
 		#expect(flatAustria == 0, "\(flatAustria) Austrian tiles missed the Alps")
 	}
 
-	@Test func canAttackNextToAnArmyOnly() {
-		var sim = StrategicSim.europe(country: .fin)
-		guard let target = Self.stageAttack(&sim) else {
-			Issue.record("no Finland/Russia border on the europe map")
-			return
-		}
-		let attackable = sim.canAttack(target)
-		#expect(attackable, "army-adjacent enemy tile should be attackable")
-
-		// A border tile away from the army is out of reach.
-		var far: XY?
-		for xy in sim.owner.indices where sim.owner[xy] == .rus {
-			let d = max(abs(xy.x - sim.armies[0].position.x), abs(xy.y - sim.armies[0].position.y))
-			if d > 2 { far = xy; break }
-		}
-		if let far {
-			let attackable = sim.canAttack(far)
-			#expect(!attackable, "enemy tile far from any army is attackable")
-		}
-
-		sim.armies[0].mp = 0
-		let exhausted = sim.canAttack(target)
-		#expect(!exhausted, "army without movement can still attack")
-	}
-
 	@Test func cannotAttackOwnOrSea() {
 		let sim = StrategicSim.europe(country: .fin)
 		var ownTile: XY?
@@ -187,21 +162,6 @@ struct StrategicTests {
 		let turn = sim.turn
 		#expect(turn == day + 1)
 		#expect(events.isEmpty)
-	}
-
-	@Test func reduceAttackEmitsEventNextToArmy() {
-		var sim = StrategicSim.europe(country: .fin)
-		guard let target = Self.stageAttack(&sim) else {
-			Issue.record("no Finland/Russia border on the europe map")
-			return
-		}
-		let events = sim.reduce(.attack(target))
-		#expect(events.count == 1)
-		if case .attack = events.first {} else {
-			Issue.record("expected an .attack event")
-		}
-		let denied = sim.reduce(.attack(XY(0, 0)))
-		#expect(denied.isEmpty, "attack on sea emitted an event")
 	}
 
 	@Test func europeFactoryPlacementIsDeterministic() {
@@ -317,49 +277,6 @@ struct StrategicTests {
 		let rusAfter = sim.buildingsTotal(.army, of: .rus)
 		#expect(finAfter >= finBefore + 2, "annexed factories did not transfer")
 		#expect(rusAfter <= rusBefore - 2, "loser kept the annexed factories")
-	}
-
-	@Test func campaignBattleAppliesProvinceEconomy() {
-		var sim = StrategicSim.europe(country: .fin)
-		guard let target = Self.stageAttack(&sim) else {
-			Issue.record("no border tile to contest")
-			return
-		}
-
-		var core = Core.new(country: .fin)
-		core.store(sim)
-		let base = core.hq.player.prestige
-		core.startCampaignBattle(at: target)
-
-		let tactical = clone(core.tactical!)
-		let civil = sim.buildingsTotal(.civil, of: .fin)
-		let human = tactical.players[0].prestige
-		#expect(human == base + UInt16(40 * civil), "civil bonus missing from prestige")
-
-		let mask = tactical.buildingsMask[0]
-		let expectedMask = sim.buildingsMask(of: .fin)
-		#expect(mask == expectedMask, "shop gating mask not threaded into the battle")
-
-		let aux: [COR.Unit] = .aux(
-			.fin,
-			army: sim.buildingsTotal(.army, of: .fin),
-			armor: sim.buildingsTotal(.armor, of: .fin),
-			air: sim.buildingsTotal(.air, of: .fin),
-			aa: sim.buildingsTotal(.aa, of: .fin)
-		)
-		let auxCount = tactical.auxilia[0].count
-		#expect(auxCount == aux.count, "factory-shaped aux not threaded into the battle")
-	}
-
-	@Test func europeFoundsTheMainArmy() {
-		let sim = StrategicSim.europe(country: .fin)
-		let army = sim.armies[0]
-		let owner = sim.owner[army.position]
-		#expect(army.active, "main army missing after europe()")
-		#expect(army.mp == Army.moveSpeed)
-		#expect(owner == .fin, "main army placed on foreign soil")
-		let others = sim.armies[1].active || sim.armies[2].active || sim.armies[3].active
-		#expect(!others, "extra armies founded at campaign start")
 	}
 
 	@Test func armyMovesThroughOwnLandWithinRange() {

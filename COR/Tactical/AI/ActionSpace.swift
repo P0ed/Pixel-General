@@ -9,7 +9,9 @@
 public enum ActionSpace {
 	public static let kinds = 7
 	public static let tiles = SimObservation.planeSize
-	/// Shop head capacity: `Shop.units` tops out at 20 rows + 16 auxilia.
+	/// Shop head capacity. `Shop.units` tops out at 20 rows; the headroom
+	/// (auxilia rows before predeploy) stays — trained policy heads and the
+	/// `Train/` tensor shapes are sized by it.
 	public static let slots = 40
 
 	@frozen public enum Kind: Int, CaseIterable {

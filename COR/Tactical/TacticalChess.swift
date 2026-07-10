@@ -54,7 +54,6 @@ public extension TacticalSim {
 			unitsMap: Map<32, UID>(size: 8, zero: .none),
 			players: .init(head: [players[0], players[1]], tail: .none),
 			vision: .init(repeating: .empty),
-			auxilia: .init { i in .init(tail: .empty) },
 			units: .init(head: units, tail: .empty),
 			position: .init(repeating: .zero),
 			cargo: .init(repeating: .none)

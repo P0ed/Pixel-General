@@ -16,5 +16,5 @@ xcodebuild test -scheme PG -destination 'platform=macOS'
 - [Architecture](./Docs/Architecture.md)
 - [Mechanics](./Docs/GameMechanics.md)
 - [Campaign](./Docs/Campaign.md)
-- [AI](./Docs/LSTM-AI.md)
+- [AI](./Docs/AI.md)
 - [Roadmap](./Docs/Roadmap.md)

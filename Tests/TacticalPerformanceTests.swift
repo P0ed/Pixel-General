@@ -34,10 +34,14 @@ struct TacticalPerformanceTests {
 						country: c,
 						type: .ai,
 						prestige: c == .fin ? .rich : .poor,
-						baseLevel: c == .fin ? 5 : 0
+						baseLevel: c == .fin ? 5 : 0,
+						tier: 3
 					)
 				},
-				units: .base(Self.countries[0], lvl: 5) + .base(Self.countries[1]),
+				units: .base(Self.countries[0], lvl: 5)
+				+ .aux(Self.countries[0], lvl: 5)
+				+ .base(Self.countries[1])
+				+ .aux(Self.countries[1]),
 				size: Self.mapSize,
 				seed: seed
 			)
@@ -83,7 +87,6 @@ struct TacticalPerformanceTests {
 		  throughput:    \(String(format: "%.0f", Double(totalActions) / max(secs, 1e-9))) actions/s
 		""")
 
-		if totalActions != 7133 { print("Behaviour changed") }
 		#expect(
 			resolvedCount == Self.runs,
 			"Only \(resolvedCount)/\(Self.runs) battles resolved within the budget"

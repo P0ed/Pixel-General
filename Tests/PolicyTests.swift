@@ -18,7 +18,7 @@ struct PolicyTests {
 				Player(country: .ger, type: .ai, prestige: .rich, baseLevel: 0),
 				Player(country: .usa, type: .ai, prestige: .rich, baseLevel: 0),
 			],
-			units: .base(.ger),
+			units: .base(.ger) + .aux(.ger) + .base(.usa) + .aux(.usa),
 			size: size,
 			seed: seed
 		)

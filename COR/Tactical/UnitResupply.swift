@@ -14,17 +14,18 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	}
 
 	public func level(at xy: XY, terrain: Terrain) -> Int8 {
-		Int8(trucks[xy] ? 2 : 0) + Int8(buildings[xy] ? 3 : 0)
-		- Int8(terrain.supplyPenalty) - Int8(hostile[xy] ? 1 : 0)
+		Int8(trucks[xy] ? 2 : 0) + Int8(buildings[xy] ? 2 : 0)
+		+ terrain.supply - Int8(hostile[xy] ? 1 : 0)
 	}
 }
 
 extension Terrain {
 
-	var supplyPenalty: UInt8 {
+	var supply: Int8 {
 		switch self {
-		case .forest, .hill: 1
-		case .forestHill, .mountain, .water: 2
+		case .forest, .hill: -1
+		case .forestHill, .mountain, .water: -2
+		case _ where hasRoad: 1
 		default: 0
 		}
 	}
@@ -59,9 +60,8 @@ public extension TacticalSim {
 
 extension TacticalSim {
 
-	func supplyPenalty(at xy: XY, for unit: Unit) -> UInt8 {
-		(unit.isAir ? 0 : map[xy].supplyPenalty)
-		+ (control[xy].team != unit.country.team ? 1 : 0)
+	func supply(at xy: XY, for unit: Unit) -> Int8 {
+		unit.isAir ? 0 : map[xy].supply
 	}
 
 	/// Mirror of the player-initiated `.resupply` reducer guard — shared by
@@ -95,26 +95,24 @@ extension TacticalSim {
 			units[n].country.team == country.team
 			&& units[n].type == .supply
 		}
-		let supply: UInt8 = (hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0)
-		let penalty = supplyPenalty(at: position, for: unit)
+		let supply = UInt8(
+			clamping: (noEnemy ? 2 : 1) * ((hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0))
+			+ supply(at: position, for: unit)
+		)
 
 		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
 			if unit.untouched {
-				var restock = (noEnemy ? 2 : 1) * (supply + 1)
-				restock.decrement(by: penalty)
-				unit.ammo.increment(by: restock, cap: unit.maxAmmo)
+				unit.ammo.increment(by: supply, cap: unit.maxAmmo)
 			}
 			if endOfTurn {
 				unit.ammo.increment(
-					by: noEnemy && supply > penalty ? 1 : 0,
+					by: noEnemy && supply > 0 ? 1 : 0,
 					cap: unit.maxAmmo
 				)
 			}
 		}
 		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {
-			var healCap: UInt8 = (noEnemy ? 3 : 2) * (supply + 1)
-			healCap.decrement(by: penalty)
-			let healed = unit.heal(healCap)
+			let healed = unit.heal((noEnemy ? 3 : 2) * (supply + 1))
 			unit.exp.decrement(by: UInt16(healed) * 4 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}

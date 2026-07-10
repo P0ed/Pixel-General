@@ -61,6 +61,44 @@ struct TacticalTests {
 		#expect(cityBadCountry.isEmpty, "Cities with unexpected country: \(cityBadCountry)")
 	}
 
+	@Test func auxDeploysAtStartAndLeavesTheShop() {
+		let players = Self.players()
+		let sim = TacticalSim(
+			players: players,
+			units: players.flatMap { Array<Unit>.small($0.country) + .aux($0.country) },
+			size: 32,
+			seed: 0
+		)
+
+		// Every seat fields its full default aux template, on the map and
+		// ready to act on day 1, at no prestige cost.
+		var deployed = [Int](repeating: 0, count: players.count)
+		var unplaced = 0
+		var notReady = 0
+		sim.units.forEachAlive { i, u in
+			guard u[.aux] else { return }
+			if sim.offMap(unit: i.uid) { unplaced += 1 }
+			if u.mp != u.maxMP || u.ap != u.maxAP { notReady += 1 }
+			if let p = players.firstIndex(where: { $0.country == u.country }) {
+				deployed[p] += 1
+			}
+		}
+		#expect(unplaced == 0, "aux units left undeployed")
+		#expect(notReady == 0, "aux units cannot act on day 1")
+		for (i, p) in players.enumerated() {
+			let expected = [Unit].aux(p.country).count
+			#expect(deployed[i] == expected, "seat \(i) fields \(deployed[i]) of \(expected) aux")
+		}
+		#expect(sim.players[0].prestige == 0xF00, "predeploy charged prestige")
+
+		// The shop sells only the core catalogue.
+		var auxRows = 0
+		for xy in sim.map.indices {
+			for u in sim.shopUnits(at: xy) where u[.aux] { auxRows += 1 }
+		}
+		#expect(auxRows == 0, "shop still sells aux units")
+	}
+
 	@Test func cursorMovementStaysInBounds() {
 		var state = TacticalState(sim: TacticalSim(
 			players: Self.players(),
@@ -113,29 +151,29 @@ struct TacticalTests {
 
 		var ai = AI.Plan()
 
-		var state = TacticalState(sim: TacticalSim(
+		var sim = TacticalSim(
 			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
 			size: 32,
 			seed: 0
-		))
+		)
 
-		let initialTurn = state.sim.turn
+		let initialTurn = sim.turn
 		var iterations = 0
 		let maxIterations = 1024
 
 		while iterations < maxIterations {
-			let action = state.sim.run(ai: &ai)
-			_ = state.reduce(action)
+			let action = sim.run(ai: &ai)
+			_ = sim.reduce(action)
 			iterations += 1
 			if action == .end {
-				if state.sim.turn > initialTurn + 4 {
+				if sim.turn > initialTurn + 4 {
 					break
 				}
 			}
 		}
 
-		#expect(state.sim.turn > initialTurn, "AI never advanced the turn counter")
+		#expect(sim.turn > initialTurn, "AI never advanced the turn counter")
 		#expect(iterations < maxIterations, "AI loop hit iteration cap")
 	}
 

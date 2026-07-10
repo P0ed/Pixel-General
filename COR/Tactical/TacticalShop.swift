@@ -9,28 +9,17 @@ extension TacticalSim {
 		}
 		if enemyAdjacent { return [] }
 
-		let unitSlots = units.reduceAlive(into: [0, 0] as [2 of Int]) { c, i, u in
-			if u.country == country { c[u[.aux] ? 1 : 0] += 1 }
+		let coreSlots = units.reduceAlive(into: 0) { c, i, u in
+			if u.country == country, !u[.aux] { c += 1 }
 		}
+		guard coreSlots < 16 else { return [] }
 
-		let core = unitSlots[0] < 16
-		let aux = unitSlots[1] < 16
-
-		let isAir = map[xy] == .airfield
-		return .make { units in
-			if core {
-				units += Shop(
-					country: country,
-					tier: player.tier,
-					air: isAir,
-					factories: buildingsMask[playerIndex]
-				).units
-			}
-			if aux {
-				units += auxilia[playerIndex]
-					.compactMap { i, u in u.isAir == isAir ? u : nil }
-			}
-		}
+		return Shop(
+			country: country,
+			tier: player.tier,
+			air: map[xy] == .airfield,
+			factories: buildingsMask[playerIndex]
+		).units
 	}
 
 	/// Mirror of the `.purchase` reducer guard for one shop slot — shared by
@@ -60,10 +49,6 @@ extension TacticalSim {
 		}
 		let id = spawn(unit, at: pos)
 		player.prestige.decrement(by: unit.cost)
-		if unit[.aux] {
-			let idx = auxilia[playerIndex].firstMap { i, u in u == template ? i : nil }
-			if let idx { auxilia[playerIndex].remove(at: idx) }
-		}
 		events.append(.spawn(id))
 	}
 }

@@ -8,7 +8,6 @@ public extension TacticalSim {
 		terrain: Terrain = .field,
 		objective: Objective = .none,
 		forts: Int = 0,
-		aux: [[Unit]] = [],
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
 		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain, forts: forts)
@@ -17,20 +16,13 @@ public extension TacticalSim {
 			objective: objective,
 			map: map
 		)
-		let units = (
-			units
-			+ (players.count > 1 ? .base(players[1].country, lvl: players[1].baseLevel) : [])
-			+ (players.count > 2 ? .base(players[2].country, lvl: players[2].baseLevel) : [])
-			+ (players.count > 3 ? .base(players[3].country, lvl: players[3].baseLevel) : [])
-		)
-		.mapInPlace { u in u.reset() }
+		let units = units.mapInPlace { u in u.reset() }
 
 		self.init(
 			map: map,
 			players: players,
 			cities: cities,
 			units: units,
-			aux: aux,
 			buildingsMask: buildingsMask
 		)
 	}

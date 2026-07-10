@@ -84,7 +84,7 @@ public extension [Unit] {
 		return Array(units.compactMap { u in u?.aux }.prefix(16))
 	}
 
-	static func aux(_ country: Country, tier: UInt8 = 3) -> [Unit] {
+	static func aux(_ country: Country, tier: UInt8 = 3, lvl: UInt8 = 0) -> [Unit] {
 		let shop = Shop(country: country, tier: tier)
 		let units: [Unit?] = [
 			Unit(model: .truck, country: country),
@@ -108,6 +108,6 @@ public extension [Unit] {
 			shop.aa2,
 		]
 
-		return units.compactMap { u in u?.aux }
+		return units.compactMap { u in u?.aux.lvl(lvl) }
 	}
 }

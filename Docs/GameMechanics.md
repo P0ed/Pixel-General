@@ -283,13 +283,13 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
   unit if prestige ≥ `unit.cost`. Airfields sell air units; cities (and
   villages) sell ground. Bought units start at `lvl += player.baseLevel`.
-- **Catalogue**: the core list is `Shop(country:air:tier:).units` — the full
-  per-country roster (`COR/Model/Shop.swift`) filtered by the building's
-  air/ground kind and by `player.tier` (units above the player's tech tier are
-  hidden). Auxiliary units come from the per-player `auxilia` pool (seeded from
-  `[Unit].aux(country)`), filtered by air/ground; an aux unit is consumed from
-  the pool when bought.
-- **Slots**: up to 16 core + 16 auxiliary units per player.
+- **Catalogue**: `Shop(country:air:tier:).units` — the full per-country
+  roster (`COR/Model/Shop.swift`) filtered by the building's air/ground kind
+  and by `player.tier` (units above the player's tech tier are hidden).
+- **Auxiliary units** never pass through the shop: each seat's aux force
+  (the `aux:` battle parameter, else the `[Unit].aux(country)` template)
+  deploys free around its cities at battle creation, ready to act on day 1.
+- **Slots**: the shop closes once a player fields 16 core (non-aux) units.
 - **HQ upgrades** (`Shop.upgrades(for:)`, `HQAction.upgrade`): a deployed roster
   unit can be re-equipped with another model in the same shop **family** (inf,
   recon, ifv, tank, art, aa, air) that the current tier unlocks — select the

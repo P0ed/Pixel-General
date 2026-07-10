@@ -127,9 +127,16 @@ extension HQNodes {
 			.space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
+
+				let units: [Unit] = scene.state.sim.units.compactMap { u in u.alive ? u : nil }
+				+ (players[1].alive ? .base(players[1].country, lvl: players[1].baseLevel) : [])
+				+ (players[2].alive ? .base(players[2].country, lvl: players[2].baseLevel) : [])
+				+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
+				+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
+
 				core.startScenario(TacticalSim(
 					players: players.compactMap { $0.alive ? $0 : nil },
-					units: scene.state.sim.units.compactMap { u in u.alive ? u : nil },
+					units: units,
 					size: 16 + size * 8,
 					seed: .random(in: 0..<128),
 					forts: Int(forts)

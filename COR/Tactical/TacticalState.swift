@@ -9,7 +9,6 @@ public struct TacticalSim: ~Copyable {
 
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
-	public var auxilia: [4 of CArray<16, Unit>]
 	/// Per-seat shop gating (bit = `BuildingType.rawValue`) — campaign battles
 	/// set it from the country's factories; `0xFF` opens every class.
 	public var buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
@@ -61,7 +60,6 @@ public extension TacticalSim {
 		players: [Player],
 		cities: [(XY, Country)],
 		units: [Unit],
-		aux: [[Unit]] = [],
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
 		self.map = map
@@ -72,13 +70,6 @@ public extension TacticalSim {
 		cargo = .init(repeating: .none)
 		unitsMap = .init(size: self.map.size, zero: .none)
 		control = .init(size: self.map.size, zero: .default)
-		auxilia = .init { i in
-			CArray(
-				head: i < aux.count ? aux[i]
-					: i < players.count ? .aux(players[i].country) : [],
-				tail: .empty
-			)
-		}
 		self.buildingsMask = buildingsMask
 		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }
@@ -125,10 +116,21 @@ public extension TacticalSim {
 				}
 				k += 1
 			}
-			guard k < placements[player].count else { fatalError() }
+			if k < placements[player].count {
+				place(i.uid, at: placements[player][k])
+				allocatedUnits[player] = k + 1
+				continue
+			}
 
-			place(i.uid, at: placements[player][k])
-			allocatedUnits[player] = k + 1
+			// Rings exhausted — an edge-of-map city offers fewer than the
+			// seat's core + aux can need; any free tile beats crashing.
+			var fallback: XY?
+			for xy in self.map.indices where unitsMap[xy] == .none && !self.map[xy].isRiver {
+				fallback = xy
+				break
+			}
+			guard let fallback else { fatalError() }
+			place(i.uid, at: fallback)
 		}
 
 		let v = self.players.map { i, p in vision(for: p.country) }
