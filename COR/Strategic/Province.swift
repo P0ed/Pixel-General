@@ -20,7 +20,6 @@
 
 public extension StrategicSim {
 
-	/// Country-wide buildings level total of one type — summed over owned tiles.
 	func buildingsTotal(_ t: BuildingType, of c: Country) -> Int {
 		var total = 0
 		for xy in owner.indices where owner[xy] == c {
@@ -39,12 +38,10 @@ public extension StrategicSim {
 		return mask
 	}
 
-	/// A province can be fortified when the player owns it, the fort is below
-	/// the cap, and no battle is running. Cost gating lives in `Core.hq`.
-	func canBuild(_ xy: XY) -> Bool {
+	func canBuild(_ building: BuildingType, at xy: XY) -> Bool {
 		owner.contains(xy)
-			&& owner[xy] == human
-			&& provinces[xy][.fort] < 3
+			&& owner[xy] == player.country
+			&& provinces[xy][building] < 3
 			&& battle == nil
 	}
 

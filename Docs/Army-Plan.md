@@ -118,7 +118,7 @@ AI attacks exist.
   core force, tile in `.n4`) — first match, deterministic; bail if none.
   Set `battleArmy`, zero its `mp`, core units = slot 0 ? `hq.units` :
   `armies[slot].units` (alive only).
-- Defender aux: factory aux + `auxReinforcement(for: defender, near: tile)`
+- Defender aux: factory aux + `reinforcement(for: defender, near: tile)`
   — the defender's nearest active army within `auxJoinRange`, excluding
   the fighting slot, its alive units marked `.aux`, total capped 16. Armies
   belong to the human, so this fires only when the human defends (future
@@ -142,7 +142,7 @@ AI attacks exist.
 - `resolveBattle` win moves the fighting army onto the target tile.
 - Core: `startCampaignBattle` fields `armies[1]`'s roster when slot 1 is
   the adjacent attacker; `complete` writes survivors back to slot 1;
-  `payUpkeep` clamps at zero; `auxReinforcement` returns the nearest
+  `payUpkeep` clamps at zero; `reinforcement` returns the nearest
   army's units marked aux and `[]` beyond `auxJoinRange`.
 - Update existing tests that assumed border attacks
   (`canAttackEnemyBorderTile`, `reduceAttackEmitsEvent`,

@@ -120,7 +120,7 @@ public extension Core {
 		let aux = [
 			campaignAux(for: human),
 			campaignAux(for: defender)
-				+ (strategic?.auxReinforcement(for: defender, near: tile) ?? []),
+				+ (strategic?.reinforcement(for: defender, near: tile) ?? []),
 		]
 		let buildingsMask = [
 			strategic?.buildingsMask(of: human) ?? 0xFF,

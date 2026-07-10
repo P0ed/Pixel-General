@@ -39,7 +39,7 @@ struct StrategicTests {
 			let n4 = xy.n4
 			for i in 0 ..< n4.count {
 				let n = n4[i]
-				if sim.owner.contains(n), sim.owner[n] == sim.human {
+				if sim.owner.contains(n), sim.owner[n] == sim.player.country {
 					sim.armies[0].position = n
 					sim.armies[0].mp = Army.moveSpeed
 					return xy
@@ -50,9 +50,9 @@ struct StrategicTests {
 	}
 
 	@Test func europeFactoryParsesMap() {
-		let sim = StrategicSim.europe(human: .fin)
+		let sim = StrategicSim.europe(country: .fin)
 		let size = sim.owner.size
-		let human = sim.human
+		let human = sim.player.country
 		let inBattle = sim.battle != nil
 		#expect(size == 32)
 		#expect(human == .fin)
@@ -73,7 +73,7 @@ struct StrategicTests {
 	}
 
 	@Test func europeTerrainHasHillsAndMountains() {
-		let sim = StrategicSim.europe(human: .fin)
+		let sim = StrategicSim.europe(country: .fin)
 		var hills = 0, mountains = 0, highgroundOnSea = 0
 		for xy in sim.terrain.indices {
 			switch sim.terrain[xy] {
@@ -96,7 +96,7 @@ struct StrategicTests {
 	}
 
 	@Test func canAttackNextToAnArmyOnly() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no Finland/Russia border on the europe map")
 			return
@@ -121,7 +121,7 @@ struct StrategicTests {
 	}
 
 	@Test func cannotAttackOwnOrSea() {
-		let sim = StrategicSim.europe(human: .fin)
+		let sim = StrategicSim.europe(country: .fin)
 		var ownTile: XY?
 		var seaTile: XY?
 		for xy in sim.owner.indices {
@@ -139,7 +139,7 @@ struct StrategicTests {
 	}
 
 	@Test func resolveBattleAnnexesOnWin() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.borderTile(sim, human: .fin, target: .rus) else {
 			Issue.record("no border tile to contest")
 			return
@@ -153,7 +153,7 @@ struct StrategicTests {
 	}
 
 	@Test func resolveBattleKeepsTileOnLoss() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.borderTile(sim, human: .fin, target: .rus) else {
 			Issue.record("no border tile to contest")
 			return
@@ -167,7 +167,7 @@ struct StrategicTests {
 	}
 
 	@Test func resolveBattleDoesNotFloodSea() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		// Pick a sea tile so the capture radius certainly overlaps water.
 		var seaTile: XY?
 		for xy in sim.owner.indices where sim.owner[xy] == .none {
@@ -181,7 +181,7 @@ struct StrategicTests {
 	}
 
 	@Test func reduceEndTurnAdvancesDay() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		let day = sim.turn
 		let events = sim.reduce(.endTurn)
 		let turn = sim.turn
@@ -190,7 +190,7 @@ struct StrategicTests {
 	}
 
 	@Test func reduceAttackEmitsEventNextToArmy() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no Finland/Russia border on the europe map")
 			return
@@ -205,8 +205,8 @@ struct StrategicTests {
 	}
 
 	@Test func europeFactoryPlacementIsDeterministic() {
-		let a = StrategicSim.europe(human: .fin)
-		let b = StrategicSim.europe(human: .fin)
+		let a = StrategicSim.europe(country: .fin)
+		let b = StrategicSim.europe(country: .fin)
 		// Compare the padding-free maps, not the whole sim — `encode` is a raw
 		// memory copy and struct padding bytes differ between allocations.
 		let bytesA = (encode(a.owner), encode(a.provinces))
@@ -233,7 +233,7 @@ struct StrategicTests {
 	}
 
 	@Test func canBuildOnOwnedLandBelowCap() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		var own: XY?, enemy: XY?, sea: XY?
 		for xy in sim.owner.indices {
 			switch sim.owner[xy] {
@@ -247,25 +247,25 @@ struct StrategicTests {
 			Issue.record("europe map is missing a tile class")
 			return
 		}
-		let buildOwn = sim.canBuild(own)
-		let buildEnemy = sim.canBuild(enemy)
-		let buildSea = sim.canBuild(sea)
+		let buildOwn = sim.canBuild(.fort, at: own)
+		let buildEnemy = sim.canBuild(.fort, at: enemy)
+		let buildSea = sim.canBuild(.fort, at: sea)
 		#expect(buildOwn, "own land tile should be fortifiable")
 		#expect(!buildEnemy, "enemy tile is fortifiable")
 		#expect(!buildSea, "sea tile is fortifiable")
 
 		sim.provinces[own][.fort] = 3
-		let capped = sim.canBuild(own)
+		let capped = sim.canBuild(.fort, at: own)
 		#expect(!capped, "fort level 3 should cap building")
 
 		sim.provinces[own][.fort] = 0
 		sim.battle = enemy
-		let duringBattle = sim.canBuild(own)
+		let duringBattle = sim.canBuild(.fort, at: own)
 		#expect(!duringBattle, "building allowed while a battle is running")
 	}
 
 	@Test func reduceBuildRaisesFort() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		var own: XY?
 		for xy in sim.owner.indices where sim.owner[xy] == .fin {
 			own = xy
@@ -276,7 +276,7 @@ struct StrategicTests {
 			return
 		}
 		let level = sim.provinces[own][.fort]
-		let events = sim.reduce(.build(own))
+		let events = sim.reduce(.build(.fort, at: own))
 		let raised = sim.provinces[own][.fort]
 		#expect(events.count == 1)
 		if case .build(let xy) = events.first {
@@ -293,7 +293,7 @@ struct StrategicTests {
 		}
 		if let denied {
 			let before = encode(sim)
-			let events = sim.reduce(.build(denied))
+			let events = sim.reduce(.build(.fort, at: denied))
 			let after = encode(sim)
 			#expect(events.isEmpty, "building on enemy land emitted an event")
 			#expect(before == after, "denied build mutated the sim")
@@ -301,7 +301,7 @@ struct StrategicTests {
 	}
 
 	@Test func buildingsTotalFollowsAnnexation() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.borderTile(sim, human: .fin, target: .rus) else {
 			Issue.record("no border tile to contest")
 			return
@@ -320,7 +320,7 @@ struct StrategicTests {
 	}
 
 	@Test func campaignBattleAppliesProvinceEconomy() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no border tile to contest")
 			return
@@ -352,7 +352,7 @@ struct StrategicTests {
 	}
 
 	@Test func europeFoundsTheMainArmy() {
-		let sim = StrategicSim.europe(human: .fin)
+		let sim = StrategicSim.europe(country: .fin)
 		let army = sim.armies[0]
 		let owner = sim.owner[army.position]
 		#expect(army.active, "main army missing after europe()")
@@ -363,7 +363,7 @@ struct StrategicTests {
 	}
 
 	@Test func armyMovesThroughOwnLandWithinRange() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		let start = sim.armies[0].position
 		let range = sim.reachable(by: 0)
 
@@ -406,7 +406,7 @@ struct StrategicTests {
 	}
 
 	@Test func foundingArmiesRespectsSlotsAndTiles() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		var tiles: [XY] = []
 		for xy in sim.owner.indices where sim.owner[xy] == .fin
 			&& sim.armyIndex(at: xy) == nil
@@ -435,7 +435,7 @@ struct StrategicTests {
 	}
 
 	@Test func endTurnChargesUpkeepAndDisbandsEmptyArmies() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		var quiet = sim.reduce(.endTurn)
 		#expect(quiet.isEmpty, "the free main army charged upkeep")
 
@@ -465,7 +465,7 @@ struct StrategicTests {
 	}
 
 	@Test func winningBattleAdvancesTheArmy() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no border tile to contest")
 			return
@@ -480,7 +480,7 @@ struct StrategicTests {
 	}
 
 	@Test func auxReinforcementJoinsFromNearbyArmy() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no border tile to contest")
 			return
@@ -491,20 +491,20 @@ struct StrategicTests {
 		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
 		sim.armies[1].units[1] = modifying(Unit(model: .truck, country: .fin)) { u in u.reset() }
 
-		let joined = sim.auxReinforcement(for: .fin, near: target)
+		let joined = sim.reinforcement(for: .fin, near: target)
 		#expect(joined.count == 2, "nearby army did not reinforce")
 		#expect(joined.allSatisfy { $0[.aux] }, "reinforcements not marked aux")
 
-		let foreign = sim.auxReinforcement(for: .rus, near: target)
+		let foreign = sim.reinforcement(for: .rus, near: target)
 		#expect(foreign.isEmpty, "reinforced a country without armies")
 
 		sim.armies[1].position = XY(0, 0)
-		let tooFar = sim.auxReinforcement(for: .fin, near: target)
+		let tooFar = sim.reinforcement(for: .fin, near: target)
 		#expect(tooFar.isEmpty, "army beyond auxJoinRange reinforced")
 	}
 
 	@Test func campaignBattleFieldsTheAttackingArmyRoster() {
-		var sim = StrategicSim.europe(human: .fin)
+		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no border tile to contest")
 			return
@@ -532,18 +532,25 @@ struct StrategicTests {
 	}
 
 	@Test func serializationRoundTrip() {
-		let original = StrategicSim.europe(human: .fin)
+		let original = StrategicSim.europe(country: .fin)
 		let data = encode(original)
 		guard let restored: StrategicSim = decode(data) else {
 			Issue.record("decode failed")
 			return
 		}
-		let human = restored.human
+		let human = restored.player.country
 		let turn = restored.turn
 		let originalTurn = original.turn
 		let bytes = encode(restored)
 		#expect(human == .fin)
 		#expect(turn == originalTurn)
 		#expect(bytes == data, "round-trip is not byte-identical")
+	}
+}
+
+extension StrategicSim {
+
+	static func europe(country: Country) -> Self {
+		StrategicSim.europe(player: Player(country: country, type: .human, prestige: .poor, baseLevel: 0, tier: 0, alive: true))
 	}
 }

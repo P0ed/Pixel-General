@@ -25,15 +25,16 @@ extension StrategicState {
 	/// builds) before the sim reduces them — the treasury lives in `Core.hq`,
 	/// which the sim can't see. Returns `false` to drop an unaffordable action.
 	@MainActor func pay(_ action: StrategicAction) -> Bool {
-		guard case .build(let xy) = action, sim.canBuild(xy) else { return true }
+		guard case .build(let b, let xy) = action, sim.canBuild(b, at: xy) else { return true }
 		return core.payForFort(StrategicSim.fortCost(above: sim.provinces[xy][.fort]))
 	}
 
-	@MainActor var status: Status {
+	@MainActor
+	var status: Status {
 		let xy = ui.cursor
 		let province = sim.provinces[xy]
 		return Status(
-			text: .makeStatus(pad: 9) { add in
+			text: .makeStatus(pad: 12) { add in
 				add("\(sim.owner[xy])")
 				add("day: \(sim.turn + 1)")
 				if let slot = sim.armyIndex(at: xy) {
@@ -69,7 +70,7 @@ extension StrategicState {
 		} else if sim.armyIndex(at: xy) != nil {
 			hints.append("A: select")
 		}
-		if sim.canBuild(xy) {
+		if sim.canBuild(.fort, at: xy) {
 			hints.append("B: fortify (\(StrategicSim.fortCost(above: sim.provinces[xy][.fort])))")
 		}
 		if let slot = sim.armyIndex(at: xy) {

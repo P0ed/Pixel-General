@@ -45,7 +45,7 @@ Replace the `default:`-terminated switch with an exhaustive one (no `default`), 
 
 1. `COR/Strategic/StrategicState.swift`:
    - `StrategicUI` (lines 32-40) — add `public var scale: Int = 2` (matches today's hardcoded `camera.setScale(2)`, so `x` reproduces current behavior; `z`=1 zooms in further, `c`=4 zooms out for a campaign overview — same 1/2/4 range as Tactical, no need to diverge).
-   - `StrategicSim.europe(human:)` (lines ~85-112) already computes a `sx/sy/count` centroid of the human player's territory but never uses it — finish this: expose it so a sensible initial camera position exists.
+   - `StrategicSim.europe(country:)` (lines ~85-112) already computes a `sx/sy/count` centroid of the human player's territory but never uses it — finish this: expose it so a sensible initial camera position exists.
 2. `COR/Strategic/StrategicInput.swift`:
    - Add `case .scale(let value): { ui.scale = value; return .none }()`.
    - Add `case .pan(let dxy): handlePan(dxy)` with a new `handlePan` that updates **only `ui.camera`** (clamped via `.clamped(sim.owner.size)`), leaving `ui.cursor` untouched.

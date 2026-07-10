@@ -1,30 +1,20 @@
 /// Deterministic strategic simulation state — province ownership, the turn
 /// counter, and the reducer. Owns everything `reduce` may touch.
 public struct StrategicSim: ~Copyable {
-	/// Per-tile province ownership — the political map (see docs/Map.md).
 	public var owner: Map<32, Country>
-	/// Per-tile dominant terrain (`.field`/`.hill`/`.mountain`) — drawn as
-	/// elevation on the political map and passed to tactical map generation.
 	public var terrain: Map<32, Terrain>
-	/// Per-tile fortification and factory levels — the campaign economy.
 	public var provinces: Map<32, Province>
-	/// The country the player commands this campaign.
-	public var human: Country
-	/// The human country's field armies, max 4; slot 0 is the main army
-	/// whose roster lives in `Core.hq`.
+	public var player: Player
 	public var armies: [4 of Army]
 	public var turn: UInt32
-	/// The contested tile while a campaign battle is running; `nil` otherwise.
-	/// Set when an offensive launches, read on battle completion to flip control.
 	public var battle: XY?
-	/// The army slot fighting the running battle.
 	public var battleArmy: UInt8
 
 	public init(
 		owner: consuming Map<32, Country>,
 		terrain: consuming Map<32, Terrain> = Map(size: 32, zero: .field),
 		provinces: consuming Map<32, Province> = Map(size: 32, zero: Province()),
-		human: Country = .default,
+		player: Player,
 		armies: [4 of Army] = .init(repeating: Army()),
 		turn: UInt32 = 0,
 		battle: XY? = nil,
@@ -33,7 +23,7 @@ public struct StrategicSim: ~Copyable {
 		self.owner = owner
 		self.terrain = terrain
 		self.provinces = provinces
-		self.human = human
+		self.player = player
 		self.armies = armies
 		self.turn = turn
 		self.battle = battle
@@ -84,21 +74,15 @@ public struct StrategicState: ~Copyable {
 
 public extension StrategicSim {
 
-	/// Tiles within this Chebyshev radius of the attacked tile flip on a win.
 	static var captureRadius: Int { 2 }
 
-	/// A tile is attackable when it belongs to an enemy team and a manned
-	/// army with movement left stands `.n4`-adjacent to it. Sea tiles are
-	/// never attackable.
 	func canAttack(_ xy: XY) -> Bool {
 		guard owner.contains(xy) else { return false }
 		let target = owner[xy]
-		guard target != .none, target.team != human.team else { return false }
+		guard target != .none, target.team != player.country.team else { return false }
 		return attackingArmy(at: xy) != nil
 	}
 
-	/// The army slot an offensive against `xy` launches from — the first
-	/// active, manned army with movement left standing `.n4`-adjacent.
 	func attackingArmy(at xy: XY) -> Int? {
 		let armies = armies
 		for i in 0 ..< 4 where armies[i].active && armies[i].mp > 0 && hasCoreForce(i) {
@@ -110,9 +94,6 @@ public extension StrategicSim {
 		return nil
 	}
 
-	/// Apply a finished campaign battle: on a win, flip ownership of land tiles
-	/// within `captureRadius` of the attacked tile to the victor and advance
-	/// the fighting army onto the contested tile.
 	mutating func resolveBattle(at tile: XY, won: Bool, by country: Country) {
 		battle = nil
 		let slot = Int(battleArmy)
@@ -136,7 +117,7 @@ public extension StrategicSim {
 
 	/// Build the European campaign map from the docs/Map.md legend and place
 	/// the starting factories — deterministic, identical output every call.
-	static func europe(human: Country) -> StrategicSim {
+	static func europe(player: Player) -> StrategicSim {
 		var owner = Map<32, Country>(size: 32, zero: .none)
 		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
 		for (row, line) in rows.enumerated() {
@@ -154,7 +135,7 @@ public extension StrategicSim {
 				if let t = Terrain(legend: ch) { terrain[XY(x, y)] = t }
 			}
 		}
-		var sim = StrategicSim(owner: owner, terrain: terrain, human: human)
+		var sim = StrategicSim(owner: owner, terrain: terrain, player: player)
 		sim.placeStartingFactories()
 		sim.foundMainArmy()
 		return sim
@@ -163,10 +144,10 @@ public extension StrategicSim {
 	/// Activates slot 0 — the `Core.hq`-rostered main army — on the owned
 	/// tile nearest the country centroid. Deterministic (index order).
 	mutating func foundMainArmy() {
-		let center = centroid(for: human)
+		let center = centroid(for: player.country)
 		var best: XY?
 		var bestDistance = Int.max
-		for xy in owner.indices where owner[xy] == human {
+		for xy in owner.indices where owner[xy] == player.country {
 			let d = xy.stepDistance(to: center)
 			if d < bestDistance {
 				best = xy

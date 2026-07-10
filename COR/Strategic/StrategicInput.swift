@@ -49,7 +49,7 @@ public extension StrategicState {
 	}
 
 	private func build(at xy: XY) -> StrategicReaction {
-		sim.canBuild(xy) ? .action(.build(xy)) : .none
+		sim.canBuild(.fort, at: xy) ? .action(.build(.fort, at: xy)) : .none
 	}
 
 	/// C: open the roster of the army on the tile, or muster a new army.

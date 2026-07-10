@@ -17,7 +17,7 @@ extension SKScene {
 
 	static var strategic: SKScene {
 		let sim = clone(core.strategic!)
-		let centroid = sim.centroid(for: sim.human)
+		let centroid = sim.centroid(for: sim.player.country)
 		return Scene(
 			mode: .strategic,
 			state: StrategicState(sim: sim, ui: StrategicUI(cursor: centroid, camera: centroid))

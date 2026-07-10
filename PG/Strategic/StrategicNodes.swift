@@ -6,7 +6,6 @@ struct StrategicNodes {
 	weak var scene: StrategicScene?
 	var camera: SKCameraNode
 	var map: MapNodes
-	/// One flag marker per army slot, shown while the slot is active.
 	var armies: [SKSpriteNode]
 }
 
@@ -17,7 +16,7 @@ extension StrategicNodes {
 			scene: scene,
 			camera: Self.addCamera(root: scene, at: scene.state.ui.camera.point),
 			map: Self.addMap(root: scene, state: scene.state),
-			armies: Self.addArmies(root: scene, country: scene.state.sim.human)
+			armies: Self.addArmies(root: scene, country: scene.state.sim.player.country)
 		)
 		map.selection.isHidden = true
 		update(scene.state)
@@ -25,9 +24,10 @@ extension StrategicNodes {
 
 	private static func addArmies(root: SKNode, country: Country) -> [SKSpriteNode] {
 		(0 ..< 4).map { _ in
-			let flag = SKSpriteNode(texture: .init(image: country.flag))
+			let image = country.flag
+			let flag = SKSpriteNode(texture: .init(image: image))
 			flag.texture?.filteringMode = .nearest
-			flag.size = CGSize(width: 24.0, height: 16.0)
+			flag.size = image.size
 			flag.isHidden = true
 			root.addChild(flag)
 			return flag

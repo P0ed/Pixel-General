@@ -77,7 +77,7 @@ Follow the attack pattern (input → reduce emits event → PG processes with `c
   build are mutually exclusive (enemy vs own tile) — show
   `"A: attack"` or `"B: fortify (\(cost))"` accordingly.
 
-## 3. Starting factories — `StrategicSim.europe(human:)`
+## 3. Starting factories — `StrategicSim.europe(country:)`
 
 After parsing owner/terrain (`StrategicState.swift:98-117`), run a
 deterministic placement pass (fixed-seed `D20`, countries in rawValue order,

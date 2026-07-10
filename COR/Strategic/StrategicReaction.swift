@@ -4,7 +4,7 @@ public typealias StrategicReaction = Reaction<StrategicAction, StrategicEvent>
 	/// Launch an offensive against the enemy province at `XY`.
 	case attack(XY)
 	/// Raise the fortification of the owned province at `XY`.
-	case build(XY)
+	case build(BuildingType, at: XY)
 	/// March the army in the slot to an `XY` within its move range.
 	case move(Int, XY)
 	/// Muster a new army on the owned province at `XY`.
@@ -30,7 +30,10 @@ public extension StrategicSim {
 		var events: [StrategicEvent] = []
 		switch action {
 		case .attack(let xy): if canAttack(xy) { events.append(.attack(xy)) }
-		case .build(let xy): if canBuild(xy) { provinces[xy][.fort] += 1; events.append(.build(xy)) }
+		case .build(let b, let xy): if canBuild(b, at: xy) {
+			provinces[xy][.fort] += 1
+			events.append(.build(xy))
+		}
 		case .move(let slot, let xy): move(slot, to: xy, into: &events)
 		case .found(let xy): if canFound(at: xy) { found(at: xy); events.append(.found(xy)) }
 		case .endTurn: endTurn(into: &events)
