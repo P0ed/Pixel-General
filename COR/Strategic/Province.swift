@@ -45,9 +45,14 @@ public extension StrategicSim {
 			&& battle == nil
 	}
 
-	/// Prestige cost of raising a fort above `level` — 200/400/600.
-	static func fortCost(above level: UInt8) -> UInt16 {
-		200 * (UInt16(level) + 1)
+	func buildingCost(_ building: BuildingType, above level: UInt8, at xy: XY) -> UInt16 {
+		(UInt16(level) + 1) * {
+			switch terrain[xy] {
+			case .mountain: 300
+			case .hill: 240
+			default: 200
+			}
+		}()
 	}
 }
 

@@ -9,7 +9,7 @@ extension StrategicMode {
 		StrategicMode(
 			make: StrategicNodes.init,
 			input: { state, input in state.apply(input) },
-			reduce: { state, action in state.pay(action) ? state.reduce(action) : [] },
+			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
@@ -20,14 +20,6 @@ extension StrategicMode {
 }
 
 extension StrategicState {
-
-	/// Charges the campaign treasury for actions with a prestige cost (fort
-	/// builds) before the sim reduces them — the treasury lives in `Core.hq`,
-	/// which the sim can't see. Returns `false` to drop an unaffordable action.
-	@MainActor func pay(_ action: StrategicAction) -> Bool {
-		guard case .build(let b, let xy) = action, sim.canBuild(b, at: xy) else { return true }
-		return core.payForFort(StrategicSim.fortCost(above: sim.provinces[xy][.fort]))
-	}
 
 	@MainActor
 	var status: Status {
@@ -71,7 +63,7 @@ extension StrategicState {
 			hints.append("A: select")
 		}
 		if sim.canBuild(.fort, at: xy) {
-			hints.append("B: fortify (\(StrategicSim.fortCost(above: sim.provinces[xy][.fort])))")
+			hints.append("B: fortify (\(sim.buildingCost(.fort, above: sim.provinces[xy][.fort], at: xy)))")
 		}
 		if let slot = sim.armyIndex(at: xy) {
 			hints.append("C: army \(slot + 1)")

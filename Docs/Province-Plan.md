@@ -56,7 +56,7 @@ silently reset via the existing `decode` guard. Accepted, no migration.
 
 - `func buildingsTotal(_ t: BuildingType, of c: Country) -> Int` — sum over owned tiles.
 - `func canBuild(_ xy: XY) -> Bool` — `owner[xy] == human`, `provinces[xy].fort < 3`, `battle == nil`.
-- `static func fortCost(above level: UInt8) -> UInt16` — `200 * (level + 1)` (200/400/600 prestige).
+- `func buildingCost(_ building: BuildingType, above level: UInt8, at xy: XY) -> UInt16`.
 
 ## 2. Build-fortification action
 

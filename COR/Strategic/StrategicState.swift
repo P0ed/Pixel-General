@@ -141,8 +141,6 @@ public extension StrategicSim {
 		return sim
 	}
 
-	/// Activates slot 0 — the `Core.hq`-rostered main army — on the owned
-	/// tile nearest the country centroid. Deterministic (index order).
 	mutating func foundMainArmy() {
 		let center = centroid(for: player.country)
 		var best: XY?
@@ -162,10 +160,6 @@ public extension StrategicSim {
 		}
 	}
 
-	/// The average tile position of every province owned by `country` — used
-	/// to centre the initial camera/cursor. Accumulates in `Int` (`XY` is
-	/// backed by `Int8` and would overflow summing many tiles); falls back to
-	/// the map's centre when `country` owns nothing.
 	func centroid(for country: Country) -> XY {
 		var sx = 0, sy = 0, count = 0
 		for xy in owner.indices where owner[xy] == country {
@@ -173,7 +167,7 @@ public extension StrategicSim {
 			sy += xy.y
 			count += 1
 		}
-		guard count > 0 else { return XY(owner.size / 2, owner.size / 2) }
+		guard count > 0 else { return .zero }
 		return XY(sx / count, sy / count)
 	}
 }
@@ -283,9 +277,9 @@ private let terrainASCII = """
 ................................
 ................................
 ...........................nn...
-....nn.nn..................nn...
+.....n.nn..................nn...
 ....nnn^nn......................
-....nnn.n...n^^nnn..............
+....n...n...n^^nnn..............
 .....nn^^^nnn...^^nn............
 ....^^^^^nn....n^^n.............
 ........nnn....^^^n.............

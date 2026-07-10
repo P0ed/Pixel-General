@@ -30,15 +30,21 @@ public extension StrategicSim {
 		var events: [StrategicEvent] = []
 		switch action {
 		case .attack(let xy): if canAttack(xy) { events.append(.attack(xy)) }
-		case .build(let b, let xy): if canBuild(b, at: xy) {
-			provinces[xy][.fort] += 1
-			events.append(.build(xy))
-		}
+		case .build(let b, let xy): return build(b, at: xy)
 		case .move(let slot, let xy): move(slot, to: xy, into: &events)
 		case .found(let xy): if canFound(at: xy) { found(at: xy); events.append(.found(xy)) }
 		case .endTurn: endTurn(into: &events)
 		}
 		return events
+	}
+
+	private mutating func build(_ building: BuildingType, at xy: XY) -> [StrategicEvent] {
+		guard canBuild(building, at: xy) else { return [] }
+		let cost = buildingCost(building, above: provinces[xy][building], at: xy)
+		guard player.prestige >= cost else { return [] }
+		player.prestige.decrement(by: cost)
+		provinces[xy][.fort] += 1
+		return [.build(xy)]
 	}
 
 	private mutating func move(_ slot: Int, to xy: XY, into events: inout [StrategicEvent]) {

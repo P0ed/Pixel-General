@@ -94,14 +94,6 @@ public extension Core {
 		location = .tactical
 	}
 
-	/// Pays the prestige cost of one fortification level from the campaign
-	/// treasury; charges nothing and returns `false` when unaffordable.
-	mutating func payForFort(_ cost: UInt16) -> Bool {
-		guard hq.player.prestige >= cost else { return false }
-		hq.player.prestige -= cost
-		return true
-	}
-
 	mutating func startCampaignBattle(at tile: XY) {
 		guard let defender = strategic?.owner[tile],
 			  let slot = strategic?.attackingArmy(at: tile)
@@ -173,6 +165,12 @@ public extension Core {
 		self.hq = clone(hq)
 		self.strategic = clone(strategic)
 		army = 0
+		location = .strategic
+	}
+
+	mutating func continueCampaign(_ hq: borrowing HQSim) {
+		guard strategic != nil else { return }
+		self.hq = clone(hq)
 		location = .strategic
 	}
 
