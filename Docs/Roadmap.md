@@ -2,6 +2,11 @@
 
 ## Scenario
 
+- Add fortifications at map gen, add 4 value toggle in new scenario menu.
+- - New tile: fortifications (`.fort`). Rendered in decoration layer.
+- - - Set base entrenchment to 3.
+- - - Def bonus and close combat same as city.
+- - - Add move cost penalty for tracks and wheels.
 - Finetune the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
@@ -15,8 +20,16 @@
 - Explosion animations (three levels).
 - Movement sounds depending on unit type (leg, wheel, track, heli, jet).
 
-## Campaign
+## Campaign (HoI lite)
 
+- Add `struct Province`.
+- - Add build fortifications action for province with 0...3 levels.
+- - Add factories 0...3 levels in each province.
+- - - Civil, Army (inf/art), Armor (ifv, tanks, sp art and aa), Air, UAV, AA, Navy types.
+- - - Military factories determine aux army size and quality, available units in `Shop`.
+- - - Civil factories affect overal income and starting scenario prestige.
+- - - Display province stats in status string.
+- - - Place starting factories at new campaign phase.
 - Dynamic diplomacy.
 - Economy.
 - Tier unlock mechanics.
