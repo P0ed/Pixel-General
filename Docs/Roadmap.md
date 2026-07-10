@@ -11,6 +11,7 @@
 - Finetune the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
+- Auto deploy all aux units at no cost at the start of scenario, remove aux from `Shop`.
 - Add unit deployment phase before day 1.
 - Unit surrenders if can't retreat.
 - Defensive AI.
