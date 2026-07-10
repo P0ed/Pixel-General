@@ -5,12 +5,22 @@ public typealias StrategicReaction = Reaction<StrategicAction, StrategicEvent>
 	case attack(XY)
 	/// Raise the fortification of the owned province at `XY`.
 	case build(XY)
+	/// March the army in the slot to an `XY` within its move range.
+	case move(Int, XY)
+	/// Muster a new army on the owned province at `XY`.
+	case found(XY)
 	case endTurn
 }
 
 @frozen public enum StrategicEvent {
 	case attack(XY)
 	case build(XY)
+	case move(Int)
+	case found(XY)
+	/// Prestige owed for armies beyond the first, charged at end of turn.
+	case upkeep(UInt16)
+	/// Open the army slot's roster in HQ. Emitted by the input layer only.
+	case army(Int)
 	case menu
 }
 
@@ -19,11 +29,35 @@ public extension StrategicSim {
 	mutating func reduce(_ action: StrategicAction) -> [StrategicEvent] {
 		var events: [StrategicEvent] = []
 		switch action {
-		case .attack(let xy): events.append(.attack(xy))
-		case .build(let xy): if canBuild(xy) { events.append(.build(xy)) }
-		case .endTurn: turn += 1
+		case .attack(let xy): if canAttack(xy) { events.append(.attack(xy)) }
+		case .build(let xy): if canBuild(xy) { provinces[xy][.fort] += 1; events.append(.build(xy)) }
+		case .move(let slot, let xy): move(slot, to: xy, into: &events)
+		case .found(let xy): if canFound(at: xy) { found(at: xy); events.append(.found(xy)) }
+		case .endTurn: endTurn(into: &events)
 		}
 		return events
+	}
+
+	private mutating func move(_ slot: Int, to xy: XY, into events: inout [StrategicEvent]) {
+		guard (0 ..< 4).contains(slot), let steps = marchCost(by: slot, to: xy) else { return }
+		armies[slot].position = xy
+		armies[slot].mp -= min(steps, armies[slot].mp)
+		events.append(.move(slot))
+	}
+
+	private mutating func endTurn(into events: inout [StrategicEvent]) {
+		turn += 1
+		var upkeep: UInt16 = 0
+		for i in 0 ..< 4 where armies[i].active {
+			if i != 0, !hasCoreForce(i) {
+				// An emptied roster disbands the army and frees the slot.
+				armies[i].active = false
+				continue
+			}
+			armies[i].mp = Army.moveSpeed
+			upkeep += Army.upkeep(slot: i)
+		}
+		if upkeep > 0 { events.append(.upkeep(upkeep)) }
 	}
 }
 

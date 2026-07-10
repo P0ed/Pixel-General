@@ -38,6 +38,42 @@ struct UnitTests {
 		}
 	}
 
+	@Test func campaignAuxScalesWithFactories() {
+		let none: [Unit] = .aux(.ger, army: 0, armor: 0, air: 0, aa: 0)
+		let some: [Unit] = .aux(.ger, army: 2, armor: 2, air: 1, aa: 1)
+		let full: [Unit] = .aux(.ger, army: 4, armor: 4, air: 4, aa: 4)
+		#expect(none.count < some.count)
+		#expect(some.count < full.count)
+		#expect(full.count == 16, "aux must cap at 16 units")
+		#expect(full.allSatisfy { $0[.aux] }, "campaign aux units missing the aux skill")
+	}
+
+	@Test func campaignAuxVeteransAtThreeFactories() {
+		let green: [Unit] = .aux(.ger, army: 2, armor: 0, air: 0, aa: 0)
+		let vets: [Unit] = .aux(.ger, army: 3, armor: 0, air: 0, aa: 0)
+		let greenInf = green.filter { $0.type == .inf }
+		let vetInf = vets.filter { $0.type == .inf }
+		#expect(!greenInf.isEmpty && greenInf.allSatisfy { $0.lvl < 2 })
+		#expect(!vetInf.isEmpty && vetInf.allSatisfy { $0.lvl >= 2 })
+	}
+
+	@Test func shopFactoriesMaskGatesUnitClasses() {
+		let armor: Set<UnitType> = [
+			.lightWheel, .lightTrack, .heavyTrack,
+			.wheelArt, .trackArt, .wheelAA, .trackAA,
+		]
+		let all = Shop(country: .ger, tier: 3).units
+		let noArmor = Shop(
+			country: .ger,
+			tier: 3,
+			factories: ~(1 << BuildingType.armor.rawValue)
+		).units
+		#expect(all.contains { armor.contains($0.type) })
+		#expect(!noArmor.contains { armor.contains($0.type) }, "armor units not gated")
+		#expect(noArmor.contains { $0.type == .inf }, "infantry gated by the armor bit")
+		#expect(noArmor.contains { $0.type == .supply }, "supply gated by the armor bit")
+	}
+
 	@Test func fortDefendsLikeACity() {
 		#expect(Terrain.fort.baseEntrenchment == 3)
 		#expect(Terrain.fort.def(.inf) == Terrain.city.def(.inf))

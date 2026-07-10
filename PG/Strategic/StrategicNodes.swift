@@ -6,6 +6,8 @@ struct StrategicNodes {
 	weak var scene: StrategicScene?
 	var camera: SKCameraNode
 	var map: MapNodes
+	/// One flag marker per army slot, shown while the slot is active.
+	var armies: [SKSpriteNode]
 }
 
 extension StrategicNodes {
@@ -14,10 +16,22 @@ extension StrategicNodes {
 		self = StrategicNodes(
 			scene: scene,
 			camera: Self.addCamera(root: scene, at: scene.state.ui.camera.point),
-			map: Self.addMap(root: scene, state: scene.state)
+			map: Self.addMap(root: scene, state: scene.state),
+			armies: Self.addArmies(root: scene, country: scene.state.sim.human)
 		)
 		map.selection.isHidden = true
 		update(scene.state)
+	}
+
+	private static func addArmies(root: SKNode, country: Country) -> [SKSpriteNode] {
+		(0 ..< 4).map { _ in
+			let flag = SKSpriteNode(texture: .init(image: country.flag))
+			flag.texture?.filteringMode = .nearest
+			flag.size = CGSize(width: 24.0, height: 16.0)
+			flag.isHidden = true
+			root.addChild(flag)
+			return flag
+		}
 	}
 
 	private static func addCamera(root: SKNode, at center: CGPoint) -> SKCameraNode {
@@ -51,6 +65,21 @@ extension StrategicNodes {
 
 		map.cursor.position = state.sim.terrain.point(at: state.ui.cursor)
 		map.cursor.zPosition = map.zPosition(at: state.ui.cursor)
+
+		for slot in 0 ..< 4 {
+			let army = state.sim.armies[slot]
+			armies[slot].isHidden = !army.active
+			guard army.active else { continue }
+			armies[slot].position = state.sim.terrain.point(at: army.position)
+			armies[slot].zPosition = map.zPosition(at: army.position) + TileZ.unit
+		}
+
+		let selected = state.ui.selected.map { slot in state.sim.armies[slot].position }
+		map.selection.isHidden = selected == nil
+		if let selected {
+			map.selection.position = state.sim.terrain.point(at: selected)
+			map.selection.zPosition = map.zPosition(at: selected)
+		}
 
 		state.sim.owner.indices.forEach { xy in
 			map.setBase(Self.baseGroup(for: state, at: xy), at: xy)

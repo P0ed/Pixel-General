@@ -57,6 +57,20 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
+		// Editing an army roster from the campaign: no scenario/LAN items,
+		// just the way back to the strategic map.
+		guard core.army == 0 else {
+			scene?.showMenu(MenuState(items: [
+				.close(icon: .HQ, status: "Back") { _ in
+					guard let scene else { return }
+					core.store(scene.state.sim)
+					core.closeArmy()
+					core.save()
+					view.present(.auto)
+				},
+			]))
+			return
+		}
 		scene?.showMenu(MenuState(items: [
 			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
 				guard let scene else { return nil }

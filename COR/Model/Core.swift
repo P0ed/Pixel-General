@@ -3,6 +3,8 @@ public struct Core: ~Copyable {
 	public internal(set) var strategic: StrategicSim?
 	public internal(set) var tactical: TacticalSim?
 	public internal(set) var location: Location = .hq
+	/// The army slot the `.hq` location edits; 0 is the main roster.
+	public internal(set) var army: UInt8 = 0
 
 	public init(
 		hq: consuming HQSim,
@@ -38,8 +40,43 @@ public extension Core {
 	}
 
 	mutating func store(_ sim: borrowing HQSim) {
-		hq = clone(sim)
+		if army > 0 {
+			// Editing an army roster: prestige is shared, units go back
+			// into the campaign slot; the main HQ roster stays untouched.
+			hq.player = sim.player
+			strategic?.setRoster(sim.units, slot: Int(army))
+		} else {
+			hq = clone(sim)
+		}
 		location = .hq
+	}
+
+	/// The roster the `.hq` location shows — the main HQ for slot 0, an
+	/// army's campaign roster otherwise (sharing the player's prestige).
+	func hqSim() -> HQSim {
+		if army > 0, let units = strategic?.roster(Int(army)) {
+			return HQSim(player: hq.player, units: units)
+		}
+		return clone(hq)
+	}
+
+	/// Opens an army's roster in the HQ screen.
+	mutating func openArmy(_ slot: Int) {
+		guard location == .strategic, (0 ..< 4).contains(slot) else { return }
+		army = UInt8(slot)
+		location = .hq
+	}
+
+	/// Returns from an army roster to the strategic map.
+	mutating func closeArmy() {
+		guard location == .hq, army > 0 else { return }
+		army = 0
+		location = .strategic
+	}
+
+	/// Charges end-of-turn army upkeep, clamping at an empty treasury.
+	mutating func payUpkeep(_ cost: UInt16) {
+		hq.player.prestige.decrement(by: cost)
 	}
 
 	mutating func store(_ sim: borrowing TacticalSim) {
@@ -66,7 +103,9 @@ public extension Core {
 	}
 
 	mutating func startCampaignBattle(at tile: XY) {
-		guard let defender = strategic?.owner[tile] else { return }
+		guard let defender = strategic?.owner[tile],
+			  let slot = strategic?.attackingArmy(at: tile)
+		else { return }
 
 		let human = hq.player.country
 		var prestige = hq.player.prestige
@@ -76,15 +115,19 @@ public extension Core {
 			Player(country: human, type: .human, prestige: prestige),
 			Player(country: defender, type: .ai, prestige: .poor + civilBonus(for: defender)),
 		]
-		let units = hq.units.compactMap { u in u.alive ? u : nil }
-		let aux = [campaignAux(for: human), campaignAux(for: defender)]
+		let units = armyRoster(slot)
+		strategic?.launchBattle(at: tile, by: slot)
+		let aux = [
+			campaignAux(for: human),
+			campaignAux(for: defender)
+				+ (strategic?.auxReinforcement(for: defender, near: tile) ?? []),
+		]
 		let buildingsMask = [
 			strategic?.buildingsMask(of: human) ?? 0xFF,
 			strategic?.buildingsMask(of: defender) ?? 0xFF,
 			0xFF, 0xFF,
 		] as [4 of UInt8]
 
-		strategic?.battle = tile
 		tactical = TacticalSim(
 			players: players,
 			units: units,
@@ -92,9 +135,9 @@ public extension Core {
 			seed: tile.x + tile.y * 32,
 			terrain: strategic?.terrain[tile] ?? .field,
 			objective: .survive(defender.team, day: 20),
-			forts: Int(strategic?.provinces[tile][.fort] ?? 0)//,
-//			aux: aux,
-//			buildingsMask: buildingsMask
+			forts: Int(strategic?.provinces[tile][.fort] ?? 0),
+			aux: aux,
+			buildingsMask: buildingsMask
 		)
 		location = .tactical
 	}
@@ -103,6 +146,15 @@ public extension Core {
 	/// civil factory level the country owns.
 	private func civilBonus(for country: Country) -> UInt16 {
 		UInt16(40 * (strategic?.buildingsTotal(.civil, of: country) ?? 0))
+	}
+
+	/// The alive core force an army slot fields — the HQ roster for the
+	/// main army, the campaign roster otherwise.
+	private func armyRoster(_ slot: Int) -> [Unit] {
+		if slot > 0, let units = strategic?.roster(slot) {
+			return units.compactMap { u in u.alive ? u : nil }
+		}
+		return hq.units.compactMap { u in u.alive ? u : nil }
 	}
 
 	/// The auxilia a country fields in a campaign battle, sized by its
@@ -120,6 +172,7 @@ public extension Core {
 	mutating func startCampaign(_ hq: borrowing HQSim, _ strategic: borrowing StrategicSim) {
 		self.hq = clone(hq)
 		self.strategic = clone(strategic)
+		army = 0
 		location = .strategic
 	}
 
@@ -131,22 +184,33 @@ public extension Core {
 					u.reset()
 				}
 			}
-		hq.units = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
+		let roster = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
 		hq.player.prestige = sim[c].prestige
 
 		tactical = nil
 
 		if let tile = strategic?.battle {
+			// Survivors return to the army that fought; a wiped side army
+			// disbands. Read the slot before `resolveBattle` clears it.
+			let slot = strategic?.fightingSlot() ?? 0
+			if slot > 0 {
+				strategic?.setRoster(roster, slot: slot)
+				strategic?.disbandIfWipedOut(slot)
+			} else {
+				hq.units = roster
+			}
 			let won = sim.winner == c.team
 			strategic?.resolveBattle(at: tile, won: won, by: c)
 			location = .strategic
 		} else {
+			hq.units = roster
 			location = .hq
 		}
 	}
 
 	mutating func goHQ() {
 		guard location == .strategic else { return }
+		army = 0
 		location = .hq
 	}
 }

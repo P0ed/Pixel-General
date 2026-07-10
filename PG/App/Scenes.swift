@@ -12,7 +12,7 @@ extension SKScene {
 	}
 
 	static var hq: SKScene {
-		Scene(mode: .hq, state: HQState(sim: clone(core.hq)))
+		Scene(mode: .hq, state: HQState(sim: core.hqSim()))
 	}
 
 	static var strategic: SKScene {

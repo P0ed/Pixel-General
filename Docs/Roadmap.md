@@ -24,14 +24,6 @@
 
 ## Campaign (HoI lite)
 
-- Add `struct Province`.
-- - Add build fortifications action for province with 0...3 levels.
-- - Add factories 0...3 levels in each province.
-- - - Civil, Army (inf/art), Armor (ifv, tanks, sp art and aa), Air, UAV, AA, Navy types.
-- - - Military factories determine aux army size and quality, available units in `Shop`.
-- - - Civil factories affect overal income and starting scenario prestige.
-- - - Display province stats in status string.
-- - - Place starting factories at new campaign phase.
 - Continue campaign menu action `if` stored state exists `else` New campaign.
 - Dynamic diplomacy.
 - - Rename `Country` to `Flag` [or `Tag`?].
@@ -41,14 +33,6 @@
 - - Allow to join a team if current team is `.none`.
 - Tier unlock mechanics.
 - - Has enough factories/buildings + fixed cost.
-- Add army (up to 16 units).
-- - max 4 armies per country.
-- - each new army costs more to maintain.
-- - main army stored to / loaded from `Core.hq`.
-- - has limited move speed.
-- - allows attack enemy tiles in `.n4`.
-- - when defending, nearest army (if not too far) joins aux forces.
-- - use HQMode to display / update an army.
 - Turn scope.
 - - What actions allowed per turn?
 - Battle autoresolve option.

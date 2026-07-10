@@ -10,25 +10,34 @@ public struct StrategicSim: ~Copyable {
 	public var provinces: Map<32, Province>
 	/// The country the player commands this campaign.
 	public var human: Country
+	/// The human country's field armies, max 4; slot 0 is the main army
+	/// whose roster lives in `Core.hq`.
+	public var armies: [4 of Army]
 	public var turn: UInt32
 	/// The contested tile while a campaign battle is running; `nil` otherwise.
 	/// Set when an offensive launches, read on battle completion to flip control.
 	public var battle: XY?
+	/// The army slot fighting the running battle.
+	public var battleArmy: UInt8
 
 	public init(
 		owner: consuming Map<32, Country>,
 		terrain: consuming Map<32, Terrain> = Map(size: 32, zero: .field),
 		provinces: consuming Map<32, Province> = Map(size: 32, zero: Province()),
 		human: Country = .default,
+		armies: [4 of Army] = .init(repeating: Army()),
 		turn: UInt32 = 0,
-		battle: XY? = nil
+		battle: XY? = nil,
+		battleArmy: UInt8 = 0
 	) {
 		self.owner = owner
 		self.terrain = terrain
 		self.provinces = provinces
 		self.human = human
+		self.armies = armies
 		self.turn = turn
 		self.battle = battle
+		self.battleArmy = battleArmy
 	}
 }
 
@@ -42,17 +51,24 @@ public struct StrategicUI {
 	public var camera: XY
 	public var scale: Int
 	public var mapMode: StrategicMapMode
+	/// The army slot picked for a move order, with its move range.
+	public var selected: Int?
+	public var selectable: SetXY?
 
 	public init(
 		cursor: XY = .zero,
 		camera: XY = .zero,
 		scale: Int = 1,
-		mapMode: StrategicMapMode = .country
+		mapMode: StrategicMapMode = .country,
+		selected: Int? = nil,
+		selectable: SetXY? = nil
 	) {
 		self.cursor = cursor
 		self.camera = camera
 		self.scale = scale
 		self.mapMode = mapMode
+		self.selected = selected
+		self.selectable = selectable
 	}
 }
 
@@ -71,20 +87,40 @@ public extension StrategicSim {
 	/// Tiles within this Chebyshev radius of the attacked tile flip on a win.
 	static var captureRadius: Int { 2 }
 
-	/// A tile is attackable when it belongs to an enemy team and borders a tile
-	/// the player owns. Sea tiles are never attackable.
+	/// A tile is attackable when it belongs to an enemy team and a manned
+	/// army with movement left stands `.n4`-adjacent to it. Sea tiles are
+	/// never attackable.
 	func canAttack(_ xy: XY) -> Bool {
 		guard owner.contains(xy) else { return false }
 		let target = owner[xy]
 		guard target != .none, target.team != human.team else { return false }
-		return xy.n8.firstMap { n in owner.contains(n) && owner[n] == human ? n : nil } != nil
+		return attackingArmy(at: xy) != nil
+	}
+
+	/// The army slot an offensive against `xy` launches from — the first
+	/// active, manned army with movement left standing `.n4`-adjacent.
+	func attackingArmy(at xy: XY) -> Int? {
+		let armies = armies
+		for i in 0 ..< 4 where armies[i].active && armies[i].mp > 0 && hasCoreForce(i) {
+			let n4 = armies[i].position.n4
+			for k in 0 ..< n4.count where n4[k] == xy {
+				return i
+			}
+		}
+		return nil
 	}
 
 	/// Apply a finished campaign battle: on a win, flip ownership of land tiles
-	/// within `captureRadius` of the attacked tile to the victor.
+	/// within `captureRadius` of the attacked tile to the victor and advance
+	/// the fighting army onto the contested tile.
 	mutating func resolveBattle(at tile: XY, won: Bool, by country: Country) {
 		battle = nil
+		let slot = Int(battleArmy)
+		battleArmy = 0
 		guard won else { return }
+		if armies[slot].active {
+			armies[slot].position = tile
+		}
 		let r = Self.captureRadius
 		for xy in owner.indices where owner[xy] != .none
 			&& owner[xy].team == owner[tile].team
@@ -120,7 +156,29 @@ public extension StrategicSim {
 		}
 		var sim = StrategicSim(owner: owner, terrain: terrain, human: human)
 		sim.placeStartingFactories()
+		sim.foundMainArmy()
 		return sim
+	}
+
+	/// Activates slot 0 — the `Core.hq`-rostered main army — on the owned
+	/// tile nearest the country centroid. Deterministic (index order).
+	mutating func foundMainArmy() {
+		let center = centroid(for: human)
+		var best: XY?
+		var bestDistance = Int.max
+		for xy in owner.indices where owner[xy] == human {
+			let d = xy.stepDistance(to: center)
+			if d < bestDistance {
+				best = xy
+				bestDistance = d
+			}
+		}
+		guard let best else { return }
+		armies[0] = modifying(Army()) { a in
+			a.position = best
+			a.mp = Army.moveSpeed
+			a.active = true
+		}
 	}
 
 	/// The average tile position of every province owned by `country` — used

@@ -7,7 +7,9 @@ public extension TacticalSim {
 		seed: Int,
 		terrain: Terrain = .field,
 		objective: Objective = .none,
-		forts: Int = 0
+		forts: Int = 0,
+		aux: [[Unit]] = [],
+		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
 		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain, forts: forts)
 		let cities = Self.cities(
@@ -27,7 +29,9 @@ public extension TacticalSim {
 			map: map,
 			players: players,
 			cities: cities,
-			units: units
+			units: units,
+			aux: aux,
+			buildingsMask: buildingsMask
 		)
 	}
 

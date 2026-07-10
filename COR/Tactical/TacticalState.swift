@@ -10,6 +10,9 @@ public struct TacticalSim: ~Copyable {
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
 	public var auxilia: [4 of CArray<16, Unit>]
+	/// Per-seat shop gating (bit = `BuildingType.rawValue`) — campaign battles
+	/// set it from the country's factories; `0xFF` opens every class.
+	public var buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 
 	public var units: Speicher<128, Unit>
 	public var position: [128 of XY]
@@ -53,7 +56,14 @@ public struct TacticalState: ~Copyable {
 
 public extension TacticalSim {
 
-	init(map: consuming Map<32, Terrain>, players: [Player], cities: [(XY, Country)], units: [Unit]) {
+	init(
+		map: consuming Map<32, Terrain>,
+		players: [Player],
+		cities: [(XY, Country)],
+		units: [Unit],
+		aux: [[Unit]] = [],
+		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
+	) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
 		self.units = .init(head: units, tail: .empty)
@@ -64,10 +74,12 @@ public extension TacticalSim {
 		control = .init(size: self.map.size, zero: .default)
 		auxilia = .init { i in
 			CArray(
-				head: i < players.count ? .aux(players[i].country) : [],
+				head: i < aux.count ? aux[i]
+					: i < players.count ? .aux(players[i].country) : [],
 				tail: .empty
 			)
 		}
+		self.buildingsMask = buildingsMask
 		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }
 		settlements.forEach { xy in
