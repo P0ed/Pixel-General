@@ -38,17 +38,19 @@
 - - Add `struct Country { var flag: Flag, var team: Team }`.
 - - - Bitpack into `rawValue: UInt8`, 64 flags, 4 teams.
 - - - Allow to select a team in new scenario / LAN lobby.
-- - Allow to join a team if current team is `.none`.  
+- - Allow to join a team if current team is `.none`.
 - Tier unlock mechanics.
 - - Has enough factories/buildings + fixed cost.
-- Turn scope.
-- - What actions allowed per turn?
 - Add army (up to 16 units).
-- - main army stored to / loaded from `Core.hq`. 
+- - max 4 armies per country.
+- - each new army costs more to maintain.
+- - main army stored to / loaded from `Core.hq`.
 - - has limited move speed.
 - - allows attack enemy tiles in `.n4`.
 - - when defending, nearest army (if not too far) joins aux forces.
 - - use HQMode to display / update an army.
+- Turn scope.
+- - What actions allowed per turn?
 - Battle autoresolve option.
 - Simple AI.
 
