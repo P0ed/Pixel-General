@@ -64,9 +64,6 @@ extension TacticalSim {
 		unit.isAir ? 0 : map[xy].supply
 	}
 
-	/// Mirror of the player-initiated `.resupply` reducer guard — shared by
-	/// `resupply`, the action masks, and the AIs. The end-of-turn pass inside
-	/// `resupply` has its own relaxed guard.
 	func canResupply(unit id: UID) -> Bool {
 		let unit = units[id]
 		return unit.country == country && unit.untouched
@@ -104,11 +101,8 @@ extension TacticalSim {
 			if unit.untouched {
 				unit.ammo.increment(by: supply, cap: unit.maxAmmo)
 			}
-			if endOfTurn {
-				unit.ammo.increment(
-					by: noEnemy && supply > 0 ? 1 : 0,
-					cap: unit.maxAmmo
-				)
+			if endOfTurn, noEnemy && (hasSupply || hasBuildings) {
+				unit.ammo.increment(by: 1, cap: unit.maxAmmo)
 			}
 		}
 		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {

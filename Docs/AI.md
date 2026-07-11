@@ -1,7 +1,7 @@
 # LSTM AI
 
-The neural opponent for Tactical battles ([Roadmap](./Roadmap.md) § AI): a convolutional
-LSTM policy that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
+The neural opponent for Tactical battles: a convolutional LSTM policy
+that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
 *Neural opponent* in the Tactical menu (heuristic fallback when the resource is missing
 or invalid). It was trained by behavior-cloning the heuristic `run(ai:)` and then
 REINFORCE fine-tuning against it — entirely with `MetalPerformanceShadersGraph` (OS
