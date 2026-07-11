@@ -6,7 +6,7 @@ public extension Map<32, Terrain> {
 	/// the plains baseline, `.hill`/`.mountain` lift the height field so
 	/// highground dominates. Campaign battles pass the contested province's
 	/// strategic terrain here.
-	init(size: Int, seed: Int, players: Int = 4, terrain: Terrain = .field, forts: Int = 0) {
+	init(size: Int, seed: Int, players: Int = 4, terrain: Terrain = .field) {
 		self = Map(size: size, zero: .none)
 
 		let size = SIMD2<Int32>(Int32(size), Int32(size))
@@ -24,7 +24,6 @@ public extension Map<32, Terrain> {
 		let cities = placeCities(d20: &d20, players: players)
 		connectCities(cities: cities)
 		shapeRoads()
-		placeForts(d20: &d20, level: forts)
 	}
 
 	private mutating func generateTerrain(height: GKNoiseMap, humidity: GKNoiseMap, bias: Float) {
@@ -370,39 +369,24 @@ public extension Map<32, Terrain> {
 		}
 	}
 
-	/// Forts land last, after roads, as short N–S or W–E defensive lines on
-	/// open ground away from settlements. `level` 0 returns before touching
-	/// `d20`, so default generation stays byte-identical for a given seed.
-	private mutating func placeForts(d20: inout D20, level: Int) {
-		guard level > 0 else { return }
-
-		func eligible(_ xy: XY) -> Bool {
-			guard contains(xy) else { return false }
-			switch self[xy] {
-			case .field, .forest, .hill: break
-			default: return false
-			}
-			return xy.n8.firstMap { xy in self[xy].isSettlement ? .some(xy) : .none } == .none
-		}
-
-		let target = level * size / 8
-		var placed = 0
-		var attempts = target * 8
-		while placed < target, attempts > 0 {
-			attempts -= 1
-			let anchor = XY(
-				Int.random(in: 0 ..< size, using: &d20),
-				Int.random(in: 0 ..< size, using: &d20)
-			)
-			guard eligible(anchor) else { continue }
-			let step = d20() < 10 ? XY(1, 0) : XY(0, 1)
-			var length = Int.random(in: 2 ... 4, using: &d20)
-			var xy = anchor
-			while length > 0, eligible(xy) {
-				self[xy] = .fort
-				placed += 1
-				length -= 1
-				xy = xy + step
+	/// Forts land last, after generation, as defensive rings `.r12` around
+	/// `centers` — the defending side's cities.
+	/// Only open ground (field/forest/hill) turns into fort, so roads keep
+	/// their gaps through the ring and rivers/settlements stay untouched.
+	/// At most `level * size / 4` tiles land in total, centers served in
+	/// order. No RNG — placement is a pure function of the map and inputs.
+	mutating func placeForts(around centers: [XY], level: Int) {
+		var budget = level * size / 4
+		for center in centers {
+			let ring = center.r12
+			for i in ring.indices {
+				guard budget > 0 else { return }
+				switch self[ring[i]] {
+				case .field, .forest, .hill:
+					self[ring[i]] = .fort
+					budget -= 1
+				default: break
+				}
 			}
 		}
 	}

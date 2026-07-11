@@ -10,11 +10,23 @@ public extension TacticalSim {
 		forts: Int = 0,
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
-		let map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain, forts: forts)
+		var map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain)
+		let defending: Team? = switch objective {
+		case .survive(let team, _): team
+		case .none: nil
+		}
 		let cities = Self.cities(
 			countries: players.map { p in p.country },
-			objective: objective,
+			defending: defending,
 			map: map
+		)
+		// Fort rings guard the defender's cities; without a defending team
+		// (sandbox scenarios) every city gets one.
+		map.placeForts(
+			around: cities.compactMap { xy, c in
+				defending.map { team in c.team == team } ?? true ? xy : nil
+			},
+			level: forts
 		)
 		let units = units.mapInPlace { u in u.reset() }
 
@@ -29,7 +41,7 @@ public extension TacticalSim {
 
 	private static func cities(
 		countries: [Country],
-		objective: Objective,
+		defending: Team?,
 		map: borrowing Map<32, Terrain>
 	) -> [(XY, Country)] {
 		let cityXYs: [XY] = map.indices.compactMap { xy in
@@ -37,10 +49,6 @@ public extension TacticalSim {
 		}
 		let n = cityXYs.count
 
-		let defending: Team? = switch objective {
-		case .survive(let team, _): team
-		case .none: nil
-		}
 		let weights = countries.map { $0.team == defending ? 2 : 1 }
 		let total = weights.reduce(0, +)
 		let thresholds = weights.reduce(into: [Int]()) { acc, w in

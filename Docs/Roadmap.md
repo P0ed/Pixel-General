@@ -2,11 +2,6 @@
 
 ## Scenario
 
-- Add fortifications at map gen, add 4 value toggle in new scenario menu.
-- - New tile: fortifications (`.fort`). Rendered in decoration layer.
-- - - Set base entrenchment to 3.
-- - - Def bonus and close combat same as city.
-- - - Add move cost penalty for tracks and wheels.
 - Do not transfer prestige after scenario to HQ.
   Instead pay fixed reward on victory.
 - Finetune the damage curve.
@@ -24,6 +19,7 @@
 
 ## Campaign (HoI lite)
 
+- Add next turn action in menu similar to Tactical menu.
 - Dynamic diplomacy.
 - - Rename `Country` to `Flag` [or `Tag`?].
 - - Add `struct Country { var flag: Flag, var team: Team }`.
@@ -45,6 +41,7 @@
     which snaps to `.zero` at the end of the user interaction. 
 
 - Detect button pressed state to allow use combos.
+- - Pass `modifiers` bitmask along a pressed button. 
 - - `L + Dpad`: Move camera.
 - - `R + action`: Map mode.
 - - `R + Dpad up/down`: Zoom.

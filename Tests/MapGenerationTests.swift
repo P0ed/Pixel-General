@@ -138,20 +138,20 @@ struct MapGenerationTests {
 		for seed in [0, 7, 42, 100] {
 			let map = Map<32, Terrain>(size: 32, seed: seed)
 			for xy in map.indices where map[xy] == .fort {
-				Issue.record("Fort at \(xy) for seed \(seed) with forts omitted")
+				Issue.record("Fort at \(xy) for seed \(seed) before placeForts")
 				break
 			}
 		}
 	}
 
 	@Test func fortsReplaceOnlyOpenTerrain() {
-		// `placeForts` runs last and level 0 draws nothing from the RNG, so
-		// the fort-free map is exactly the pre-fort state: every fort must
-		// sit where field/forest/hill used to be, and every other tile must
-		// be untouched.
+		// Rings only overwrite field/forest/hill, so every fort must sit
+		// where open ground used to be, and every other tile must be
+		// untouched — roads, rivers and settlements survive.
 		for (size, seed) in [(32, 0), (32, 7), (24, 5), (16, 2)] {
 			let base = Map<32, Terrain>(size: size, seed: seed)
-			let map = Map<32, Terrain>(size: size, seed: seed, forts: 3)
+			var map = clone(base)
+			map.placeForts(around: cities(of: base), level: 3)
 			var forts = 0
 			for xy in map.indices {
 				if map[xy] == .fort {
@@ -168,27 +168,54 @@ struct MapGenerationTests {
 		}
 	}
 
-	@Test func fortCountScalesWithLevel() {
+	@Test func fortsRingCitiesAtChebyshevTwo() {
+		// Every fort must lie on some city's ring: Chebyshev distance
+		// exactly 2 with the four corners cut.
+		for seed in [0, 7, 42] {
+			var map = Map<32, Terrain>(size: 32, seed: seed)
+			let centers = cities(of: map)
+			map.placeForts(around: centers, level: 3)
+			for xy in map.indices where map[xy] == .fort {
+				let onRing = centers.contains { c in
+					let dx = abs(xy.x - c.x), dy = abs(xy.y - c.y)
+					return max(dx, dy) == 2 && dx + dy < 4
+				}
+				#expect(onRing, "Fort at \(xy) off every city ring for seed \(seed)")
+			}
+		}
+	}
+
+	@Test func fortCountScalesWithLevelAndCaps() {
 		for seed in [0, 7, 42] {
 			func forts(_ level: Int) -> Int {
-				let map = Map<32, Terrain>(size: 32, seed: seed, forts: level)
+				var map = Map<32, Terrain>(size: 32, seed: seed)
+				let centers = cities(of: map)
+				map.placeForts(around: centers, level: level)
 				var count = 0
 				for xy in map.indices where map[xy] == .fort { count += 1 }
 				return count
 			}
 			#expect(forts(3) >= forts(1), "Level 3 placed fewer forts than level 1 for seed \(seed)")
+			#expect(forts(3) <= 3 * 32 / 4, "Level 3 exceeded the fort cap for seed \(seed)")
 		}
 	}
 
 	@Test func fortPlacementIsDeterministic() {
 		for seed in [0, 7, 999] {
-			let a = Map<32, Terrain>(size: 32, seed: seed, forts: 3)
-			let b = Map<32, Terrain>(size: 32, seed: seed, forts: 3)
+			var a = Map<32, Terrain>(size: 32, seed: seed)
+			var b = Map<32, Terrain>(size: 32, seed: seed)
+			let centers = cities(of: a)
+			a.placeForts(around: centers, level: 3)
+			b.placeForts(around: centers, level: 3)
 			for xy in a.indices where a[xy] != b[xy] {
 				Issue.record("Map differs at \(xy) for seed \(seed): \(a[xy]) vs \(b[xy])")
 				break
 			}
 		}
+	}
+
+	private func cities(of map: borrowing Map<32, Terrain>) -> [XY] {
+		map.indices.compactMap { xy in map[xy] == .city ? xy : nil }
 	}
 
 	@Test func riversReachTheMapEdge() {
