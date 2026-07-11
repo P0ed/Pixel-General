@@ -12,6 +12,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private(set) var pan: CGPoint = .zero
 	private(set) var cameraTracking = false
 	private var panOrigin: CGPoint?
+	private var panTranslation: CGPoint?
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
@@ -235,17 +236,22 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 			camera.removeAction(forKey: SKAction.cameraPositionKey)
 			panOrigin = camera.position
 			pan = .zero
+			panTranslation = .zero
 			cameraTracking = true
 		case .changed:
-			guard let panOrigin else { return }
+			guard let panOrigin, let panTranslation else { return }
 			let translation = gesture.translation(in: view)
-			pan = cameraOffset(for: translation, camera: camera)
+			pan = pan + cameraOffset(for: translation - panTranslation, camera: camera)
+			self.panTranslation = translation
 			camera.position = panOrigin + pan
 		case .ended, .cancelled, .failed:
-			guard panOrigin != nil else { return }
+			guard panOrigin != nil, let panTranslation else { return }
 			let velocity = gesture.state == .ended ? gesture.velocity(in: view) : .zero
-			let projected = gesture.translation(in: view) + velocity * 0.18
-			let projectedOffset = cameraOffset(for: projected, camera: camera)
+			let remaining = gesture.translation(in: view) - panTranslation
+			let projectedOffset = pan + cameraOffset(
+				for: remaining + velocity * 0.18,
+				camera: camera
+			)
 			let dxy = gridOffset(for: projectedOffset)
 			let speed = cameraOffset(for: velocity, camera: camera).length
 			apply(.pan(dxy))
@@ -285,6 +291,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private func finishCameraPan() {
 		pan = .zero
 		panOrigin = nil
+		panTranslation = nil
 		cameraTracking = false
 	}
 }
