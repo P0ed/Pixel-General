@@ -11,6 +11,7 @@ extension EditorMode {
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
+			cameraPosition: { state in state.camera.point },
 			mouse: { nodes, point in nodes.map.tile(at: point) }
 		)
 	}

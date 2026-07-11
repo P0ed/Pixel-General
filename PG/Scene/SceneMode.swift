@@ -14,6 +14,7 @@ struct SceneMode<State: ~Copyable, Action, Event, Nodes> {
 	var process: @MainActor (Event, Nodes, borrowing State) async -> Void
 	var update: @MainActor (Nodes, borrowing State) -> Void
 	var status: @MainActor (borrowing State) -> Status
+	var cameraPosition: @MainActor (borrowing State) -> CGPoint? = { _ in nil }
 	var keyboard: @MainActor (Nodes, UIKey) -> Input? = { _, k in Input(key: k) }
 	/// The point is in scene coordinates.
 	var mouse: @MainActor (Nodes, CGPoint) -> Input? = { _, _ in .none }

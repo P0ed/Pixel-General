@@ -35,23 +35,6 @@
 
 ## Controls
 
-- Smooth camera pan with deceleration and quantized only at the end of deceleration
-  or even just before at `didEndTracking willDecelerate: true` adjusting target position.
-- - UI might need to store one more XY representing granular offset within a cell,
-    which snaps to `.zero` at the end of the user interaction. 
-
-- Detect button pressed state to allow use combos.
-- - Pass `modifiers` bitmask along a pressed button. 
-- - `L + Dpad`: Move camera.
-- - `R + action`: Map mode.
-- - `R + Dpad up/down`: Zoom.
-
-- Bind map mode to `1, 2, 3, 4` keys, remove `§` binding.
-- - `1` | `R + A` — `.terrain`.
-- - `2` | `R + B` — toggle between `.country` and `.team`.
-- - `3` | `R + C` — `.supply`.
-- - `4` | `R + D` — not utilized yet.
-
 - Display action hints depending on current input method
   (gamepad is connected / fallback to keyboard).
 

@@ -5,55 +5,78 @@ import COR
 struct HIDController {
 	@IO private var lifetime: Any?
 	@IO var send: (Input) -> Void = ø
+	@IO private var modifiers: InputModifiers = []
+	@IO private var usedModifiers: InputModifiers = []
 
 	init() {
 		lifetime = NotificationCenter.default.addMainActorObserver(
 			forName: .GCControllerDidBecomeCurrent,
-			using: { [_send] notification in
+			using: { [_send, _modifiers, _usedModifiers] notification in
+				_modifiers.wrappedValue = []
+				_usedModifiers.wrappedValue = []
 				guard let gamepad = (notification.object as? GCController)?.extendedGamepad
 				else { return }
 
 				let send = { input in _send.wrappedValue(input) }
+				let sendDirection = { direction in
+					let current = _modifiers.wrappedValue
+					_usedModifiers.wrappedValue.formUnion(current)
+					send(.direction(direction, modifiers: current))
+				}
+				let sendAction = { action in
+					let current = _modifiers.wrappedValue
+					_usedModifiers.wrappedValue.formUnion(current)
+					send(.action(action, modifiers: current))
+				}
+				let shoulder = { modifier, target, pressed in
+					if pressed {
+						_modifiers.wrappedValue.insert(modifier)
+						_usedModifiers.wrappedValue.remove(modifier)
+					} else {
+						let used = _usedModifiers.wrappedValue.contains(modifier)
+						_modifiers.wrappedValue.remove(modifier)
+						_usedModifiers.wrappedValue.remove(modifier)
+						if !used { send(.target(target)) }
+					}
+				}
 
 				gamepad.dpad.left.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.direction(.left))
+					sendDirection(.left)
 				}
 				gamepad.dpad.right.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.direction(.right))
+					sendDirection(.right)
 				}
 				gamepad.dpad.down.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.direction(.down))
+					sendDirection(.down)
 				}
 				gamepad.dpad.up.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.direction(.up))
+					sendDirection(.up)
 				}
 				gamepad.leftShoulder.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					send(.target(.prev))
+					shoulder(.left, .prev, pressed)
 				}
 				gamepad.rightShoulder.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					send(.target(.next))
+					shoulder(.right, .next, pressed)
 				}
 				gamepad.buttonA.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.action(.a))
+					sendAction(.a)
 				}
 				gamepad.buttonB.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.action(.b))
+					sendAction(.b)
 				}
 				gamepad.buttonX.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.action(.c))
+					sendAction(.c)
 				}
 				gamepad.buttonY.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.action(.d))
+					sendAction(.d)
 				}
 				gamepad.buttonMenu.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }

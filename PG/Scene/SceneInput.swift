@@ -54,6 +54,10 @@ extension Input {
 		case .keyboardUpArrow: self = .direction(.up)
 
 		default: switch key.charactersIgnoringModifiers {
+		case "1": self = .action(.a, modifiers: .right)
+		case "2": self = .action(.b, modifiers: .right)
+		case "3": self = .action(.c, modifiers: .right)
+		case "4": self = .action(.d, modifiers: .right)
 		case "[": self = .target(.prev)
 		case "]": self = .target(.next)
 		case "a": self = .action(.a)
@@ -63,7 +67,6 @@ extension Input {
 		case "z": self = .scale(1)
 		case "x": self = .scale(2)
 		case "c": self = .scale(4)
-		case "§": self = .mode
 		default: return nil
 		}
 		}

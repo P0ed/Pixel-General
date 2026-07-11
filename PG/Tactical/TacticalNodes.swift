@@ -105,8 +105,11 @@ extension TacticalNodes {
 
 	private func updateView(_ state: borrowing TacticalState) {
 		let cameraPosition = state.ui.camera.point
-		if camera.position != cameraPosition {
-			camera.run(.move(to: cameraPosition, duration: 0.15))
+		if scene?.cameraTracking != true, camera.position != cameraPosition {
+			camera.run(
+				.move(to: cameraPosition, duration: 0.15),
+				withKey: SKAction.cameraPositionKey
+			)
 		}
 		let cameraScale = CGFloat(state.ui.scale)
 		if camera.xScale != cameraScale {

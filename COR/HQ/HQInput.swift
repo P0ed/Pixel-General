@@ -2,11 +2,12 @@ public extension HQState {
 
 	mutating func apply(_ input: Input) -> HQReaction {
 		switch input {
-		case .direction(let direction?): moveCursor(direction)
-		case .action(.a): mainAction()
-		case .action(.b): secondaryAction()
-		case .action(.c): upgradeAction()
-		case .action(.d): sellAction()
+		case .direction(let direction?, modifiers: let modifiers) where modifiers.isEmpty:
+			moveCursor(direction)
+		case .action(.a, modifiers: let modifiers) where modifiers.isEmpty: mainAction()
+		case .action(.b, modifiers: let modifiers) where modifiers.isEmpty: secondaryAction()
+		case .action(.c, modifiers: let modifiers) where modifiers.isEmpty: upgradeAction()
+		case .action(.d, modifiers: let modifiers) where modifiers.isEmpty: sellAction()
 		case .menu: .events([.menu])
 		case .tile(let xy): select(xy)
 		default: .none

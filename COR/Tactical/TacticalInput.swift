@@ -8,13 +8,12 @@ public extension TacticalState {
 		}
 
 		return switch input {
-		case .direction(let direction?): moveCursor(direction)
+		case .direction(let direction?, modifiers: let modifiers):
+			directionalAction(direction, modifiers: modifiers)
 		case .menu: .events([.menu])
 		case .mode: toggleMapMode()
-		case .action(.a): primaryAction()
-		case .action(.b): secondaryAction()
-		case .action(.c): squareAction()
-		case .action(.d): triangleAction()
+		case .action(let action?, modifiers: let modifiers):
+			buttonAction(action, modifiers: modifiers)
 		case .target(.prev): prevUnit()
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)
@@ -26,6 +25,52 @@ public extension TacticalState {
 }
 
 private extension TacticalState {
+
+	mutating func directionalAction(
+		_ direction: Direction,
+		modifiers: InputModifiers
+	) -> TacticalReaction {
+		if modifiers.contains(.right) { return zoom(direction) }
+		if modifiers.contains(.left) { return moveCamera(direction) }
+		return moveCursor(direction)
+	}
+
+	mutating func buttonAction(
+		_ action: Action,
+		modifiers: InputModifiers
+	) -> TacticalReaction {
+		if modifiers.contains(.right) { return setMapMode(action) }
+		return switch action {
+		case .a: primaryAction()
+		case .b: secondaryAction()
+		case .c: squareAction()
+		case .d: triangleAction()
+		}
+	}
+
+	mutating func setMapMode(_ action: Action) -> TacticalReaction {
+		switch action {
+		case .a: ui.mapMode = .terrain
+		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
+		case .c: ui.mapMode = .supply
+		case .d: break
+		}
+		return .none
+	}
+
+	mutating func zoom(_ direction: Direction) -> TacticalReaction {
+		switch direction {
+		case .up: ui.scale = max(1, ui.scale / 2)
+		case .down: ui.scale = min(4, ui.scale * 2)
+		case .left, .right: break
+		}
+		return .none
+	}
+
+	mutating func moveCamera(_ direction: Direction) -> TacticalReaction {
+		ui.camera = (ui.camera.neighbor(direction)).clamped(sim.map.size)
+		return .none
+	}
 
 	mutating func toggleMapMode() -> TacticalReaction {
 		ui.mapMode = switch ui.mapMode {
@@ -133,7 +178,6 @@ private extension TacticalState {
 	}
 
 	mutating func handlePan(_ dxy: XY) -> TacticalReaction {
-		ui.cursor = (ui.cursor + dxy).clamped(sim.map.size)
 		ui.camera = (ui.camera + dxy).clamped(sim.map.size)
 		return .none
 	}

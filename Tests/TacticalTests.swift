@@ -121,6 +121,48 @@ struct TacticalTests {
 		#expect(state.ui.cursor == XY(5, 6))
 	}
 
+	@Test func shoulderModifiersControlTheCameraAndMapView() {
+		var state = TacticalState(sim: TacticalSim(
+			players: Self.players(),
+			units: Array<Unit>.small(.swe),
+			size: 32,
+			seed: 0
+		))
+
+		state.ui.cursor = XY(5, 5)
+		state.ui.camera = XY(5, 5)
+		_ = state.apply(.direction(.right, modifiers: .left))
+		let movedCamera = state.ui.camera
+		let stationaryCursor = state.ui.cursor
+		#expect(movedCamera == XY(6, 5))
+		#expect(stationaryCursor == XY(5, 5))
+
+		state.ui.scale = 2
+		_ = state.apply(.direction(.up, modifiers: .right))
+		let zoomedIn = state.ui.scale
+		_ = state.apply(.direction(.down, modifiers: .right))
+		let zoomedOut = state.ui.scale
+		#expect(zoomedIn == 1)
+		#expect(zoomedOut == 2)
+
+		state.ui.mapMode = .supply
+		_ = state.apply(.action(.a, modifiers: .right))
+		let terrain = state.ui.mapMode
+		_ = state.apply(.action(.b, modifiers: .right))
+		let country = state.ui.mapMode
+		_ = state.apply(.action(.b, modifiers: .right))
+		let team = state.ui.mapMode
+		_ = state.apply(.action(.c, modifiers: .right))
+		let supply = state.ui.mapMode
+		_ = state.apply(.action(.d, modifiers: .right))
+		let unused = state.ui.mapMode
+		#expect(terrain == .terrain)
+		#expect(country == .country)
+		#expect(team == .team)
+		#expect(supply == .supply)
+		#expect(unused == .supply)
+	}
+
 	@Test func selectingOwnUnitSetsSelectableMoves() {
 		var state = TacticalState(sim: TacticalSim(
 			players: Self.players(),

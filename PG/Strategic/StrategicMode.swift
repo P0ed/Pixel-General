@@ -13,6 +13,7 @@ extension StrategicMode {
 			process: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
+			cameraPosition: { state in state.ui.camera.point },
 			mouse: { nodes, point in nodes.map.tile(at: point) },
 			save: { state in core.store(state.sim); core.save() }
 		)
@@ -30,11 +31,10 @@ extension StrategicState {
 				add("\(sim.owner[xy])")
 				add("day: \(sim.turn + 1)")
 				if let slot = sim.armyIndex(at: xy) {
-					add("army \(slot + 1): \(unitCount(slot))/16 mp \(sim.armies[slot].mp)")
+					add("\(unitCount(slot))/16 mp \(sim.armies[slot].mp)")
 				}
 				guard sim.owner[xy] != .none else { return }
-				if province[.fort] > 0 { add("fort: \(province[.fort])") }
-				for t in BuildingType.allCases where t != .fort && province[t] > 0 {
+				for t in BuildingType.allCases where province[t] > 0 {
 					add("\(t.tag) \(province[t])")
 				}
 			},

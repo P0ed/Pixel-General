@@ -2,17 +2,58 @@ public extension StrategicState {
 
 	mutating func apply(_ input: Input) -> StrategicReaction {
 		switch input {
-		case .direction(let direction?): moveCursor(direction)
+		case .direction(let direction?, modifiers: let modifiers):
+			directionalAction(direction, modifiers: modifiers)
 		case .tile(let xy): select(xy)
-		case .action(.a): primary(at: ui.cursor)
-		case .action(.b): build(at: ui.cursor)
-		case .action(.c): army(at: ui.cursor)
+		case .action(let action?, modifiers: let modifiers):
+			buttonAction(action, modifiers: modifiers)
 		case .menu: .events([.menu])
 		case .mode: toggleMapMode()
 		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let dxy): handlePan(dxy)
 		default: .none
 		}
+	}
+
+	private mutating func directionalAction(
+		_ direction: Direction,
+		modifiers: InputModifiers
+	) -> StrategicReaction {
+		if modifiers.contains(.right) { return zoom(direction) }
+		if modifiers.contains(.left) { return moveCamera(direction) }
+		return moveCursor(direction)
+	}
+
+	private mutating func buttonAction(
+		_ action: Action,
+		modifiers: InputModifiers
+	) -> StrategicReaction {
+		if modifiers.contains(.right) {
+			return switch action {
+			case .b: toggleMapMode()
+			case .a, .c, .d: .none
+			}
+		}
+		return switch action {
+		case .a: primary(at: ui.cursor)
+		case .b: build(at: ui.cursor)
+		case .c: army(at: ui.cursor)
+		case .d: .none
+		}
+	}
+
+	private mutating func zoom(_ direction: Direction) -> StrategicReaction {
+		switch direction {
+		case .up: ui.scale = max(1, ui.scale / 2)
+		case .down: ui.scale = min(4, ui.scale * 2)
+		case .left, .right: break
+		}
+		return .none
+	}
+
+	private mutating func moveCamera(_ direction: Direction) -> StrategicReaction {
+		ui.camera = ui.camera.neighbor(direction).clamped(sim.owner.size)
+		return .none
 	}
 
 	private mutating func moveCursor(_ direction: Direction) -> StrategicReaction {

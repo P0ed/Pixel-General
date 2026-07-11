@@ -10,7 +10,8 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private var processing = false
 	private var pending: Input?
 	private(set) var pan: CGPoint = .zero
-	private var lastPan: CGPoint = .zero
+	private(set) var cameraTracking = false
+	private var panOrigin: CGPoint?
 	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
@@ -85,15 +86,17 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	func apply(_ input: Input) {
 		if alertState != nil {
 			switch input {
-			case .action(.a): fireAlert(0)
-			case .action(.b): fireAlert(1)
-			case .action(.c): fireAlert(2)
-			case .action(.d): fireAlert(3)
+			case .action(.a, modifiers: _): fireAlert(0)
+			case .action(.b, modifiers: _): fireAlert(1)
+			case .action(.c, modifiers: _): fireAlert(2)
+			case .action(.d, modifiers: _): fireAlert(3)
 			case .menu: alertState = nil
 			default: break
 			}
 		} else if menuState != nil {
 			menuState?.apply(input)
+		} else if processing, case .pan = input {
+			_ = mode.input(&state, input)
 		} else if processing {
 			pending = input
 		} else {
@@ -225,38 +228,69 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	}
 
 	@objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-		guard let view = gesture.view else { return }
+		guard let view = gesture.view, let camera else { return }
 		switch gesture.state {
 		case .began:
-			lastPan = .zero
-		case .changed:
-			let translation = gesture.translation(in: view)
-			let x = translation.x - lastPan.x
-			let y = translation.y - lastPan.y
-			lastPan = translation
-			pan.x += x
-			pan.y += y
-
-			if pan.x > 64 {
-				pan.x -= 64
-				apply(.pan(.zero.neighbor(.left).neighbor(.down)))
-			} else if pan.x < -64 {
-				pan.x += 64
-				apply(.pan(.zero.neighbor(.right).neighbor(.up)))
-			} else if pan.y > 32 {
-				pan.y -= 32
-				apply(.pan(.zero.neighbor(.up).neighbor(.left)))
-			} else if pan.y < -32 {
-				pan.y += 32
-				apply(.pan(.zero.neighbor(.down).neighbor(.right)))
-			}
-		case .ended, .cancelled, .failed:
+			guard mode.cameraPosition(state) != nil else { return }
+			camera.removeAction(forKey: SKAction.cameraPositionKey)
+			panOrigin = camera.position
 			pan = .zero
-			lastPan = .zero
+			cameraTracking = true
+		case .changed:
+			guard let panOrigin else { return }
+			let translation = gesture.translation(in: view)
+			pan = cameraOffset(for: translation, camera: camera)
+			camera.position = panOrigin + pan
+		case .ended, .cancelled, .failed:
+			guard panOrigin != nil else { return }
+			let velocity = gesture.state == .ended ? gesture.velocity(in: view) : .zero
+			let projected = gesture.translation(in: view) + velocity * 0.18
+			let projectedOffset = cameraOffset(for: projected, camera: camera)
+			let dxy = gridOffset(for: projectedOffset)
+			let speed = cameraOffset(for: velocity, camera: camera).length
+			apply(.pan(dxy))
+
+			guard let target = mode.cameraPosition(state) else {
+				finishCameraPan()
+				return
+			}
+			camera.removeAction(forKey: SKAction.cameraPositionKey)
+			let distance = (target - camera.position).length
+			let duration = min(0.45, max(0.12, distance / max(speed, 200) * 2))
+			let move = SKAction.move(to: target, duration: duration)
+			move.timingMode = .easeOut
+			camera.run(
+				.sequence([move, .run { [weak self] in self?.finishCameraPan() }]),
+				withKey: SKAction.cameraPositionKey
+			)
 		default:
 			break
 		}
 	}
+
+	private func cameraOffset(for translation: CGPoint, camera: SKCameraNode) -> CGPoint {
+		CGPoint(
+			x: -translation.x * camera.xScale,
+			y: translation.y * camera.yScale
+		)
+	}
+
+	private func gridOffset(for point: CGPoint) -> XY {
+		XY(
+			Int((point.x / 64.0 - point.y / 32.0).rounded()),
+			Int((point.x / 64.0 + point.y / 32.0).rounded())
+		)
+	}
+
+	private func finishCameraPan() {
+		pan = .zero
+		panOrigin = nil
+		cameraTracking = false
+	}
+}
+
+extension SKAction {
+	static let cameraPositionKey = "camera.position"
 }
 
 extension MenuState {

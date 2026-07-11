@@ -35,11 +35,14 @@ extension EditorState {
 	mutating func apply(_ input: Input) -> Reaction<EditorAction, EditorEvent> {
 		var events: [EditorEvent] = []
 		let action: EditorAction? = switch input {
-		case .direction(let direction?): moveCursor(direction)
-		case .action(.a): .paint(cursor, brush)
-		case .action(.b): cycleBrush(reversed: false)
-		case .action(.c): nil
-		case .action(.d): nil
+		case .direction(let direction?, modifiers: let modifiers):
+			directionalAction(direction, modifiers: modifiers)
+		case .action(.a, modifiers: let modifiers) where !modifiers.contains(.right):
+			.paint(cursor, brush)
+		case .action(.b, modifiers: let modifiers) where !modifiers.contains(.right):
+			cycleBrush(reversed: false)
+		case .action(.c, modifiers: _): nil
+		case .action(.d, modifiers: _): nil
 		case .target(.next): cycleBrush(reversed: false)
 		case .target(.prev): cycleBrush(reversed: true)
 		case .menu: { events.append(.menu); return nil }()
@@ -77,6 +80,25 @@ extension EditorState {
 
 private extension EditorState {
 
+	mutating func directionalAction(
+		_ direction: Direction,
+		modifiers: InputModifiers
+	) -> EditorAction? {
+		if modifiers.contains(.right) {
+			switch direction {
+			case .up: scale = max(1, scale / 2)
+			case .down: scale = min(4, scale * 2)
+			case .left, .right: break
+			}
+			return nil
+		}
+		if modifiers.contains(.left) {
+			camera = camera.neighbor(direction).clamped(map.size)
+			return nil
+		}
+		return moveCursor(direction)
+	}
+
 	mutating func moveCursor(_ direction: Direction) -> EditorAction? {
 		let xy = cursor.neighbor(direction)
 		if map.contains(xy) { cursor = xy }
@@ -90,7 +112,6 @@ private extension EditorState {
 	}
 
 	mutating func handlePan(_ dxy: XY) -> EditorAction? {
-		cursor = (cursor + dxy).clamped(map.size)
 		camera = (camera + dxy).clamped(map.size)
 		return nil
 	}

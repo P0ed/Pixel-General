@@ -40,8 +40,11 @@ extension EditorNodes {
 
 	func update(_ state: borrowing EditorState) {
 		let cameraPosition = state.camera.point
-		if camera.position != cameraPosition {
-			camera.run(.move(to: cameraPosition, duration: 0.15))
+		if scene?.cameraTracking != true, camera.position != cameraPosition {
+			camera.run(
+				.move(to: cameraPosition, duration: 0.15),
+				withKey: SKAction.cameraPositionKey
+			)
 		}
 		map.update(map: state.map, cursor: state.cursor, selected: nil)
 
