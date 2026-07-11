@@ -17,7 +17,9 @@ struct HIDController {
 				guard let gamepad = (notification.object as? GCController)?.extendedGamepad
 				else { return }
 
-				let send = { input in _send.wrappedValue(input) }
+				let send = { input in
+					if !controller.gamepadHandler(input) { _send.wrappedValue(input) }
+				}
 				let sendDirection = { direction in
 					let current = _modifiers.wrappedValue
 					_usedModifiers.wrappedValue.formUnion(current)

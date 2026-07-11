@@ -1,8 +1,10 @@
 import UIKit
+import COR
 
 final class ViewController: UIViewController {
 
 	var keyHandler: @MainActor (UIKey) -> Bool = { _ in false }
+	var gamepadHandler: @MainActor (Input) -> Bool = { _ in false }
 
 	override func loadView() {
 		self.view = PG.view
