@@ -238,26 +238,36 @@ combat is reproducible.
 
 `COR/Tactical/UnitResupply.swift`
 
-The `resupply(unit:endOfTurn:into:)` routine drives both the player-initiated
-`.resupply` action *and* the per-unit end-of-turn pass. Behavior differs:
+`SupplySources` is the single source of truth for supply: five per-tile masks
+computed by `supplySources(for:)` — `trucks` (`.s9` around friendly-team
+`type == .supply` units), `buildings` (`.c5` around every owned settlement,
+airfields included — they feed ground units like any other building),
+`airfields` (`.c5` around owned airfields, the air-only gate), `hostile`
+(enemy-team controlled tiles), and `enemies` (`.n8` around enemy units,
+painted only where the country's vision reaches — an adjacent enemy is always
+inside the unit's own vision, so resupply never misses one, and the supply
+map mode leaks nothing through fog). The map mode displays the same masks the
+resupply math consumes.
 
-- **Supply penalty**. Every resupply is throttled by the tile the unit
-  stands on: `supplyPenalty` = rough terrain (forest/hill 1;
-  forest-hill/mountain/river 2; roads, bridges, and settlements 0) plus 1
-  if the tile is enemy-controlled (`control[xy]` belongs to another team).
-  Air units ignore the terrain half.
-- **Ammo**. Player-initiated (untouched only) restores
-  `(noEnemy ? 2 : 1) * (supplyBonus + 1) − supplyPenalty`. End-of-turn
-  restores 1 only when `noEnemy && supplyBonus > supplyPenalty`.
-  `supplyBonus` = (adjacent friendly `type == .supply` ? 1 : 0) +
-  (adjacent owned settlement of matching airfield/non-airfield kind
-  ? 1 : 0). Air units only gain ammo adjacent to such a building.
+The `resupply(unit:sources:endOfTurn:into:)` routine drives both the
+player-initiated `.resupply` action *and* the per-unit end-of-turn pass
+(`endTurn` computes the sources once per player); it reads only the masks —
+no per-unit neighbor scanning. Behavior:
+
+- **Supply level**. Ground: `level(at:terrain:)` = +2 truck, +2 building,
+  plus terrain (`Terrain.supply`: roads and bridges +1; forest/hill −1;
+  forest-hill/mountain/river −2), −1 enemy-controlled tile, −2 adjacent
+  enemy. Air: `airLevel(at:)` = nothing without an owned airfield in the
+  `.c5` plus; otherwise 2, +2 truck, −2 adjacent enemy — terrain and tile
+  control never matter to air.
+- **Ammo**. Player-initiated (untouched only) restores `level + 2`.
+  End-of-turn restores 1 only when fed (truck or building at the tile;
+  airfield for air) with no adjacent enemy.
 - **Healing**. *Only* on the player-initiated path (untouched units).
-  Heal cap = `(noEnemy ? 3 : 2) * (supplyBonus + 1) − supplyPenalty`.
-  Each HP healed spends `3 << lvl` exp and `cost/32` prestige. Air heals
-  only adjacent to an owned building.
+  Heal cap = `level + 3`. Each HP healed spends `4 << lvl` exp and
+  `cost/32` prestige. Air heals only at an airfield.
 - **Regen**. End-of-turn only; the `regen` skill grants +1 HP (air
-  needs a building).
+  needs an airfield).
 - **Entrench**. End-of-turn only; ground units `ent ← min(base+20, max(base, ent + entRate))`
   where `base = terrain.baseEntrenchment * 4`.
 - **Rest**. End-of-turn only; `ap`/`mp` refresh to max.
@@ -356,10 +366,11 @@ HoI/EU-style, with campaign-map neighbors guaranteed distinct); supply
 shades tiles on a red-to-green gradient by the human player's resupply grade
 (`TacticalSim.supplySources(for:)` +
 `SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +2 on or next to a
-friendly-team supply truck, +3 in the `.c5` plus-shape of an owned settlement,
-minus the rough-terrain and enemy-control supply penalties (ground-unit
-perspective — airfields serve air units only and are not shown; the shading
-weighs sources heavier than the +1/+1 of the actual `resupply(unit:)` math).
+friendly-team supply truck, +2 in the `.c5` plus-shape of an owned settlement,
++1 on roads and bridges, −1/−2 rough terrain, −1 on enemy-controlled tiles,
+−2 next to a visible enemy unit (owned airfields count as settlements — they
+supply ground units too). The shading is exact: `resupply` restores
+`level + 2` ammo and heals up to `level + 3` from the same masks.
 Bound to the `.mode` input event.
 
 Only the base tile changes with the mode: buildings/roads/bridges
@@ -380,13 +391,3 @@ mode (`PG/Scene/MapNodes.swift`, `TileZ`).
 - `mhtn`: −1 defMod when the attack is along a row/column (`dx == 0` or
   `dy == 0`).
 - `diag`: −1 defMod when the attack is on a pure diagonal (`|dx| == |dy|`).
-
-
-### Proposed skills:
-
-- `armor`: only takes dmg that is > 1 per round.
-- `pillage`: prestige on dmg.
-
-### Proposed traits:
-
-- `atgm`, `aam`: boosts hard/air attack of the unit at the expence of higher ammo consumption.

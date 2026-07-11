@@ -1,21 +1,37 @@
 public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	public var trucks: SetXY
 	public var buildings: SetXY
+	public var airfields: SetXY
 	public var hostile: SetXY
+	public var enemies: SetXY
 
 	public static var empty: SupplySources {
-		SupplySources(trucks: .empty, buildings: .empty, hostile: .empty)
+		SupplySources(
+			trucks: .empty,
+			buildings: .empty,
+			airfields: .empty,
+			hostile: .empty,
+			enemies: .empty
+		)
 	}
 
 	public mutating func combine(_ other: SupplySources) {
 		trucks.formUnion(other.trucks)
 		buildings.formUnion(other.buildings)
+		airfields.formUnion(other.airfields)
 		hostile.formUnion(other.hostile)
+		enemies.formUnion(other.enemies)
 	}
 
 	public func level(at xy: XY, terrain: Terrain) -> Int8 {
 		Int8(trucks[xy] ? 2 : 0) + Int8(buildings[xy] ? 2 : 0)
-		+ terrain.supply - Int8(hostile[xy] ? 1 : 0)
+		+ terrain.supply - Int8(hostile[xy] ? 1 : 0) - Int8(enemies[xy] ? 2 : 0)
+	}
+
+	public func airLevel(at xy: XY) -> Int8 {
+		airfields[xy]
+		? 2 + Int8(trucks[xy] ? 2 : 0) - Int8(enemies[xy] ? 2 : 0)
+		: 0
 	}
 }
 
@@ -34,19 +50,27 @@ extension Terrain {
 public extension TacticalSim {
 
 	func supplySources(for country: Country) -> SupplySources {
+		let vision = vision(for: country)
 		var sources = SupplySources.empty
 		settlements.forEach { xy in
-			if map[xy] != .airfield, control[xy] == country {
-				xy.c5.forEach { n in sources.buildings[n] = true }
+			guard control[xy] == country else { return }
+			xy.c5.forEach { n in sources.buildings[n] = true }
+			if map[xy] == .airfield {
+				xy.c5.forEach { n in sources.airfields[n] = true }
 			}
 		}
 		for xy in map.indices where control[xy].team != country.team {
 			sources.hostile[xy] = true
 		}
 		units.forEachAlive { i, u in
-			guard u.type == .supply, u.country.team == country.team, !offMap(unit: i.uid)
-			else { return }
-			position[i].s9.forEach { n in sources.trucks[n] = true }
+			guard !offMap(unit: i.uid) else { return }
+			if u.country.team == country.team {
+				if u.type == .supply {
+					position[i].s9.forEach { n in sources.trucks[n] = true }
+				}
+			} else if vision[position[i]] {
+				position[i].n8.forEach { n in sources.enemies[n] = true }
+			}
 		}
 		return sources
 	}
@@ -60,10 +84,6 @@ public extension TacticalSim {
 
 extension TacticalSim {
 
-	func supply(at xy: XY, for unit: Unit) -> Int8 {
-		unit.isAir ? 0 : map[xy].supply
-	}
-
 	func canResupply(unit id: UID) -> Bool {
 		let unit = units[id]
 		return unit.country == country && unit.untouched
@@ -72,6 +92,15 @@ extension TacticalSim {
 	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
+		resupply(unit: id, sources: supplySources(for: units[id].country), endOfTurn: endOfTurn, into: &events)
+	}
+
+	mutating func resupply(
+		unit id: UID,
+		sources: SupplySources,
+		endOfTurn: Bool = false,
+		into events: inout [TacticalEvent]
+	) {
 		var unit = units[id]
 
 		guard endOfTurn
@@ -79,42 +108,33 @@ extension TacticalSim {
 			: canResupply(unit: id)
 		else { return }
 
-		let hasBuildings = hasBuildings(near: id)
+		let xy = position[id.index]
+		let serviced = !unit.isAir || sources.airfields[xy]
+		let fed = unit.isAir
+			? sources.airfields[xy]
+			: sources.trucks[xy] || sources.buildings[xy]
+		let level = unit.isAir
+			? sources.airLevel(at: xy)
+			: sources.level(at: xy, terrain: map[xy])
 
-		let country = unit.country
-		let position = position[id.index]
-		let neighbors = neighbors(at: position)
-
-		let noEnemy = !neighbors.contains { n in
-			units[n].country.team != country.team
-		}
-		let hasSupply = neighbors.contains { n in
-			units[n].country.team == country.team
-			&& units[n].type == .supply
-		}
-		let supply = UInt8(
-			clamping: (noEnemy ? 2 : 1) * ((hasSupply ? 1 : 0) + (hasBuildings ? 1 : 0))
-			+ supply(at: position, for: unit)
-		)
-
-		if unit.maxAmmo > 0, !unit.isAir || hasBuildings {
+		if unit.maxAmmo > 0, serviced {
 			if unit.untouched {
-				unit.ammo.increment(by: supply, cap: unit.maxAmmo)
+				unit.ammo.increment(by: UInt8(clamping: level + 2), cap: unit.maxAmmo)
 			}
-			if endOfTurn, noEnemy && (hasSupply || hasBuildings) {
+			if endOfTurn, fed, !sources.enemies[xy] {
 				unit.ammo.increment(by: 1, cap: unit.maxAmmo)
 			}
 		}
-		if !unit.isAir || hasBuildings, unit.untouched, !endOfTurn {
-			let healed = unit.heal((noEnemy ? 3 : 2) * (supply + 1))
+		if serviced, unit.untouched, !endOfTurn {
+			let healed = unit.heal(UInt8(clamping: level + 3))
 			unit.exp.decrement(by: UInt16(healed) * 4 << unit.lvl)
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
 		}
-		if endOfTurn, unit[.regen], !unit.isAir || hasBuildings {
+		if endOfTurn, unit[.regen], serviced {
 			unit.hp.increment(by: 1, cap: unit.maxHP)
 		}
 		if endOfTurn, !unit.isAir {
-			let base = map[position].baseEntrenchment * 4
+			let base = map[xy].baseEntrenchment * 4
 			unit.ent = min(base + 5 * 4, max(base, unit.ent + unit.entRate))
 		}
 		unit.ap = endOfTurn ? unit.maxAP : 0

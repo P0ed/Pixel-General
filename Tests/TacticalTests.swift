@@ -479,11 +479,24 @@ struct TacticalTests {
 		sim.spawn(truck, at: XY(1, 5))
 		let uid = sim.spawn(Self.infantry(), at: XY(1, 4))
 		sim.resupply(unit: uid, into: &events)
-		#expect(sim.units[uid].ammo == 2 * 2 - 2)
-		#expect(sim.units[uid].hp == 1 + 3 * 2 - 2)
+		#expect(sim.units[uid].ammo == 2 + 2 - 2)
+		#expect(sim.units[uid].hp == 1 + 3 + 2 - 2)
 	}
 
-	@Test func endOfTurnTrickleBlockedByPenalty() {
+	@Test func adjacentEnemyPenalisesResupply() {
+		var sim = Self.supplySim()
+		var events: [TacticalEvent] = []
+
+		var enemy = Unit(model: .regular, country: .rus)
+		enemy.reset()
+		sim.spawn(enemy, at: XY(3, 2))
+		let uid = sim.spawn(Self.infantry(), at: XY(2, 2))
+		sim.resupply(unit: uid, into: &events)
+		#expect(sim.units[uid].ammo == 0, "Adjacent enemy costs −2")
+		#expect(sim.units[uid].hp == 1 + 3 - 2)
+	}
+
+	@Test func endOfTurnTrickleNeedsUncontestedSource() {
 		var sim = Self.supplySim()
 		var events: [TacticalEvent] = []
 
@@ -499,13 +512,19 @@ struct TacticalTests {
 		sim.resupply(unit: field, endOfTurn: true, into: &events)
 		#expect(sim.units[field].ammo == 1, "Truck-fed trickle on open ground")
 
-		sim.map[XY(5, 1)] = .forest
+		let lone = sim.spawn(moved, at: XY(4, 1))
+		sim.resupply(unit: lone, endOfTurn: true, into: &events)
+		#expect(sim.units[lone].ammo == 0, "No source, no trickle")
+
 		var truck2 = Unit(model: .truck, country: .swe)
 		truck2.reset()
 		sim.spawn(truck2, at: XY(5, 2))
-		let forest = sim.spawn(moved, at: XY(5, 1))
-		sim.resupply(unit: forest, endOfTurn: true, into: &events)
-		#expect(sim.units[forest].ammo == 0, "Rough terrain chokes the trickle")
+		var enemy = Unit(model: .regular, country: .rus)
+		enemy.reset()
+		sim.spawn(enemy, at: XY(6, 1))
+		let contested = sim.spawn(moved, at: XY(5, 1))
+		sim.resupply(unit: contested, endOfTurn: true, into: &events)
+		#expect(sim.units[contested].ammo == 0, "Adjacent enemy blocks the trickle")
 	}
 
 	@Test func supplyLevelWeighsSourcesAndPenalties() {
@@ -515,9 +534,90 @@ struct TacticalTests {
 
 		#expect(!sources.hostile[XY(2, 2)])
 		#expect(sources.hostile[XY(5, 5)], "rus-controlled ground is hostile for swe")
-		#expect(sources.level(at: XY(0, 1), terrain: .field) == 3, "In the owned city's c5")
+		#expect(sources.level(at: XY(0, 1), terrain: .field) == 2, "In the owned city's c5")
 		#expect(sources.level(at: XY(2, 2), terrain: .field) == 0)
 		#expect(sources.level(at: XY(1, 4), terrain: .mountain) == -2)
 		#expect(sources.level(at: XY(5, 5), terrain: .field) == -1)
+	}
+
+	@Test func foggedEnemiesDontMarkSupply() {
+		var sim = Self.supplySim()
+		var enemy = Unit(model: .regular, country: .rus)
+		enemy.reset()
+		sim.spawn(enemy, at: XY(6, 6))
+		sim.spawn(Self.infantry(), at: XY(2, 2))
+
+		let fogged = sim.supplySources(for: .swe)
+		#expect(!fogged.enemies[XY(5, 6)], "Fogged enemy leaks into supply sources")
+
+		sim.spawn(enemy, at: XY(3, 3))
+		let spotted = sim.supplySources(for: .swe)
+		#expect(spotted.enemies[XY(2, 2)], "Visible enemy marks its n8")
+		#expect(spotted.level(at: XY(2, 2), terrain: .field) == -2)
+	}
+
+	// MARK: Air supply
+
+	/// `supplySim` plus a swe airfield at (1, 1).
+	private static func airfieldSim() -> TacticalSim {
+		var sim = supplySim()
+		sim.map[XY(1, 1)] = .airfield
+		sim.settlements[XY(1, 1)] = true
+		return sim
+	}
+
+	private static func fighter(ammo: UInt8 = 0, hp: UInt8 = 1) -> Unit {
+		var u = Unit(model: .gripen, country: .swe)
+		u.reset()
+		u.ammo = ammo
+		u.hp = hp
+		return u
+	}
+
+	@Test func airResuppliesOnlyAtAirfields() {
+		var sim = Self.airfieldSim()
+		var events: [TacticalEvent] = []
+
+		#expect(sim.supplySources(for: .swe).airfields[XY(1, 2)], "Airfield feeds its c5")
+
+		let away = sim.spawn(Self.fighter(), at: XY(4, 4))
+		sim.resupply(unit: away, into: &events)
+		#expect(sim.units[away].ammo == 0, "No airfield in reach — no resupply")
+		#expect(sim.units[away].hp == 1)
+
+		let based = sim.spawn(Self.fighter(), at: XY(1, 2))
+		sim.resupply(unit: based, into: &events)
+		#expect(sim.units[based].ammo == 2, "Capped at maxAmmo")
+		#expect(sim.units[based].hp == 1 + 2 + 3, "Airfield level 2 plus base heal 3")
+	}
+
+	@Test func airfieldsFeedGroundUnitsToo() {
+		var sim = Self.airfieldSim()
+		var events: [TacticalEvent] = []
+
+		let uid = sim.spawn(Self.infantry(), at: XY(1, 2))
+		sim.resupply(unit: uid, into: &events)
+		#expect(sim.units[uid].ammo == 2 + 2, "Airfield feeds ground like a settlement")
+		#expect(sim.units[uid].hp == 1 + 3 + 2)
+	}
+
+	@Test func airfieldSupplyWeighsTrucksAndEnemies() {
+		var events: [TacticalEvent] = []
+
+		var fed = Self.airfieldSim()
+		var truck = Unit(model: .truck, country: .swe)
+		truck.reset()
+		fed.spawn(truck, at: XY(2, 2))
+		let supplied = fed.spawn(Self.fighter(), at: XY(1, 2))
+		fed.resupply(unit: supplied, into: &events)
+		#expect(fed.units[supplied].hp == 1 + 4 + 3, "Truck adds +2 at the airfield")
+
+		var contested = Self.airfieldSim()
+		var enemy = Unit(model: .regular, country: .rus)
+		enemy.reset()
+		contested.spawn(enemy, at: XY(0, 2))
+		let pinned = contested.spawn(Self.fighter(), at: XY(1, 2))
+		contested.resupply(unit: pinned, into: &events)
+		#expect(contested.units[pinned].hp == 1 + 3, "Adjacent enemy cancels the airfield bonus")
 	}
 }

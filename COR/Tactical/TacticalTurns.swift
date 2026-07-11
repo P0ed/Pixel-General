@@ -19,8 +19,9 @@ extension TacticalSim {
 
 		player.prestige.increment(by: income(for: player.country))
 
+		let sources = supplySources(for: player.country)
 		for i in units.indices where units[i].alive && units[i].country == player.country {
-			resupply(unit: i.uid, endOfTurn: true, into: &events)
+			resupply(unit: i.uid, sources: sources, endOfTurn: true, into: &events)
 		}
 
 		guard nextTurn() else { return events.append(.end) }

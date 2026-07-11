@@ -196,7 +196,7 @@ public extension Unit {
 	}
 
 	var cost: UInt16 {
-		(typeCost + traitCost + skillCost + weightedStats) / (self[.aux] ? 11 : 7)
+		(typeCost + traitCost + skillCost + weightedStats) / 7
 	}
 
 	private var traitCost: UInt16 {

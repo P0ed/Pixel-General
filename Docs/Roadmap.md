@@ -7,7 +7,8 @@
 - - - Set base entrenchment to 3.
 - - - Def bonus and close combat same as city.
 - - - Add move cost penalty for tracks and wheels.
-- Do not transfer prestige after scenario to HQ. Instead pay fixed reward on victory.
+- Do not transfer prestige after scenario to HQ.
+  Instead pay fixed reward on victory.
 - Finetune the damage curve.
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
@@ -36,6 +37,31 @@
 - Battle autoresolve option.
 - Simple AI.
 
+## Controls
+
+- Smooth camera pan with deceleration and quantized only at the end of deceleration
+  or even just before at `didEndTracking willDecelerate: true` adjusting target position.
+- - UI might need to store one more XY representing granular offset within a cell. 
+
+- Detect button pressed state to allow use combos.
+- - `L + Dpad`: Move camera.
+- - `R + action`: Map mode.
+- - `R + Dpad up/down`: Zoom.
+
+- Bind map mode to `1, 2, 3, 4` keys, remove `§` binding.
+- - `1` | `R + A` — `.terrain`.
+- - `2` | `R + B` — toggle between `.country` and `.team`.
+- - `3` | `R + C` — `.supply`.
+- - `4` | `R + D` — not utilized yet.
+
+- Display action hints depending on current input method
+  (gamepad is connected / fallback to keyboard).
+
+## AI
+
+- Strengthen the neural opponent: value-head baseline / entropy bonus if REINFORCE
+  variance stalls; self-play once it consistently beats the heuristic.
+
 ## Multiplayer
 
 - Ship the joining player's HQ roster in `joinRequest` — clients currently play
@@ -51,19 +77,5 @@
 
 - Replace/Bucket tool replaces the same tiles under cursor with the selected tile.
 - Undo stack for tile edits.
-- Map validation on save — refuse maps that violate gen invariants (orphan rivers, isolated cities, no spawn tiles per country).
-
-## Controls
-
-- Detect button pressed state to allow use combos.
-- - `L + Dpad`: Move camera.
-- - `R + action`: Map mode.
-- - `R + Dpad up/down`: Zoom.
-- Bind map mode to `1, 2, 3, 4` keys, remove `§` binding.
-- Display action hints depending on current input method
-  (gamepad is connected / fallback to keyboard).
-
-## [AI](./LSTM-AI.md)
-
-- Strengthen the neural opponent: value-head baseline / entropy bonus if REINFORCE
-  variance stalls; self-play once it consistently beats the heuristic.
+- Map validation on save — refuse maps that violate gen invariants
+  (orphan rivers, isolated cities, no spawn tiles per country).
