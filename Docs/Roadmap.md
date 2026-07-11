@@ -41,7 +41,8 @@
 
 - Smooth camera pan with deceleration and quantized only at the end of deceleration
   or even just before at `didEndTracking willDecelerate: true` adjusting target position.
-- - UI might need to store one more XY representing granular offset within a cell. 
+- - UI might need to store one more XY representing granular offset within a cell,
+    which snaps to `.zero` at the end of the user interaction. 
 
 - Detect button pressed state to allow use combos.
 - - `L + Dpad`: Move camera.
