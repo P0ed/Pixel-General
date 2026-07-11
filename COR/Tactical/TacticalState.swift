@@ -23,34 +23,9 @@ public struct TacticalSim: ~Copyable {
 	public var objective: Objective = .none
 }
 
-public struct TacticalUI: ~Copyable {
-	public var cursor: XY = .zero
-	public var camera: XY = .zero
-	public var selectedUnit: UID = .none
-	public var selectable: SetXY?
-	public var scale: Int = 1
-	public var mapMode: MapMode = .terrain
-
-	public init() {}
-}
-
-public struct TacticalState: ~Copyable {
-	public var sim: TacticalSim
-	public var ui: TacticalUI
-
-	public init(sim: consuming TacticalSim, ui: consuming TacticalUI = TacticalUI()) {
-		self.sim = sim
-		self.ui = ui
-	}
-}
-
 @frozen public enum Objective: Equatable, BitwiseCopyable {
 	case none
 	case survive(Team, day: UInt16)
-}
-
-@frozen public enum MapMode: UInt8, Hashable {
-	case terrain, supply, country, team
 }
 
 public extension TacticalSim {

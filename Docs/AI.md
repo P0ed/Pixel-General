@@ -121,8 +121,8 @@ xcodebuild -project PG.xcodeproj -target Train -configuration Release \
   SYMROOT=tmp/build OBJROOT=tmp/build build
 ```
 
-Binary: `tmp/build/Release/Train`. The Train target compiles the COR sources directly
-(a macOS tool can't link the Catalyst framework) and builds `-O` in both configurations
+Binary: `tmp/build/Release/Train`. The Train target imports the same `COR`
+product from the local `GameCore` package as PG and the tests, and builds `-O` in both configurations
 (`-Onone` InlineArray code is 10–30× slower). Stdout is line-buffered even when
 redirected, so `tail -f run.log` works and nothing is lost on a kill.
 

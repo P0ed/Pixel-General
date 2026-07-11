@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// `Train parity` — proves the MPSGraph `Model` and the pure-Swift
 /// `LSTMPolicy` compute the same function. Plays battles with the Swift

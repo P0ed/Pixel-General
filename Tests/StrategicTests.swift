@@ -5,7 +5,7 @@ import Foundation
 /// Phase-1 campaign layer: the European map factory, province adjacency/attack
 /// rules, the annex-on-win flip, and serialization of the strategic state.
 ///
-/// `StrategicState` is noncopyable, so every value read by `#expect` is hoisted
+/// `StrategicSim` is noncopyable, so every value read by `#expect` is hoisted
 /// into a local first — the macro captures its expression and would otherwise
 /// require `Copyable`.
 struct StrategicTests {

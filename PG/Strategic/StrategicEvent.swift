@@ -8,6 +8,11 @@ extension StrategicNodes {
 		case .attack(let xy): processAttack(xy)
 		case .build, .move, .found: persist()
 		case .upkeep(let cost): processUpkeep(cost)
+		}
+	}
+
+	func present(_ intent: StrategicPresentationIntent, _ state: borrowing StrategicState) async {
+		switch intent {
 		case .army(let slot): processArmy(slot)
 		case .menu: processMenu(state)
 		}

@@ -6,7 +6,7 @@ import COR
 
 /// Coordinator for a LAN battle: a deterministic action relay over the
 /// length-prefixed TCP `Connection`. The host generates the battle once and
-/// ships the whole encoded `TacticalState`; afterwards only `TacticalAction`s
+/// ships the whole encoded `TacticalSim`; afterwards only `TacticalAction`s
 /// travel, applied by every peer through the deterministic `reduce`.
 ///
 /// The host is the single authority: clients send their actions as intents

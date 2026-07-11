@@ -1,7 +1,7 @@
 import COR
 
-typealias HQMode = SceneMode<HQState, HQAction, HQEvent, HQNodes>
-typealias HQScene = Scene<HQState, HQAction, HQEvent, HQNodes>
+typealias HQMode = SceneMode<HQState, HQAction, HQEvent, HQPresentationIntent, HQNodes>
+typealias HQScene = Scene<HQState, HQAction, HQEvent, HQPresentationIntent, HQNodes>
 
 extension HQMode {
 
@@ -11,6 +11,7 @@ extension HQMode {
 			input: { state, input in state.apply(input) },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
+			present: { intent, nodes, state in await nodes.present(intent, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			mouse: { nodes, point in nodes.map.tile(at: point) },

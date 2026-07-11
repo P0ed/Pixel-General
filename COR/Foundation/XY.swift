@@ -53,15 +53,6 @@ public extension XY {
 		XY(max(0, min(size - 1, x)), max(0, min(size - 1, y)))
 	}
 
-	func neighbor(_ direction: Direction) -> XY {
-		switch direction {
-		case .right: XY(1, 0) + self
-		case .up: XY(0, 1) + self
-		case .left: XY(-1, 0) + self
-		case .down: XY(0, -1) + self
-		}
-	}
-
 	var mirror: [4 of XY] {
 		[XY(x, y), XY(y, -x), XY(-x, -y), XY(-y, x)]
 	}

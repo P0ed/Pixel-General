@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// One BC example: the observation the teacher saw, the factored labels of
 /// the action it chose, and the legality masks at that state (the same masks

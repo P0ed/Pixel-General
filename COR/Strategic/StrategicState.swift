@@ -31,47 +31,6 @@ public struct StrategicSim: ~Copyable {
 	}
 }
 
-@frozen public enum StrategicMapMode: UInt8, Hashable {
-	case country, team
-}
-
-/// Presentation-only strategic state. Never read by `reduce`; may diverge per peer.
-public struct StrategicUI {
-	public var cursor: XY
-	public var camera: XY
-	public var scale: Int
-	public var mapMode: StrategicMapMode
-	/// The army slot picked for a move order, with its move range.
-	public var selected: Int?
-	public var selectable: SetXY?
-
-	public init(
-		cursor: XY = .zero,
-		camera: XY = .zero,
-		scale: Int = 1,
-		mapMode: StrategicMapMode = .country,
-		selected: Int? = nil,
-		selectable: SetXY? = nil
-	) {
-		self.cursor = cursor
-		self.camera = camera
-		self.scale = scale
-		self.mapMode = mapMode
-		self.selected = selected
-		self.selectable = selectable
-	}
-}
-
-public struct StrategicState: ~Copyable {
-	public var sim: StrategicSim
-	public var ui: StrategicUI
-
-	public init(sim: consuming StrategicSim, ui: StrategicUI = StrategicUI()) {
-		self.sim = sim
-		self.ui = ui
-	}
-}
-
 public extension StrategicSim {
 
 	static var captureRadius: Int { 2 }

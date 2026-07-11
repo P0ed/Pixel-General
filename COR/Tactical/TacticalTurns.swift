@@ -2,7 +2,7 @@ extension TacticalSim {
 
 	public var day: Int { Int(turn) / players.count + 1 }
 
-	var aliveTeams: UInt8 {
+	public var aliveTeams: UInt8 {
 		players.reduce(into: 0) { r, _, p in
 			if p.alive {
 				r |= 1 << p.country.team.rawValue
@@ -43,7 +43,7 @@ extension TacticalSim {
 		return false
 	}
 
-	var winner: Team? {
+	public var winner: Team? {
 		let teams = aliveTeams
 		return switch objective {
 		case .none:

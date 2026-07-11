@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// `Train rl` — REINFORCE fine-tune of a BC checkpoint against the frozen
 /// heuristic. Each iteration plays a batch of episodes with masked-softmax

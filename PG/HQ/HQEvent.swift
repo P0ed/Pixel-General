@@ -8,6 +8,11 @@ extension HQNodes {
 		case .move(let uid, let xy): processMove(uid, xy)
 		case .spawn(let uid): processSpawn(uid, state)
 		case .remove(let uid): removeUnit(uid)
+		}
+	}
+
+	func present(_ intent: HQPresentationIntent, _ state: borrowing HQState) async {
+		switch intent {
 		case .shop: processShop(state)
 		case .upgrade(let uid): processUpgrade(uid, state)
 		case .menu: processMenu()

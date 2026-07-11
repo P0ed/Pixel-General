@@ -32,8 +32,8 @@ extension EditorState {
 		map = Map(size: 32, zero: .field)
 	}
 
-	mutating func apply(_ input: Input) -> Reaction<EditorAction, EditorEvent> {
-		var events: [EditorEvent] = []
+	mutating func apply(_ input: Input) -> InputReaction<EditorAction, EditorEvent> {
+		var intent: EditorEvent?
 		let action: EditorAction? = switch input {
 		case .direction(let direction?, modifiers: let modifiers):
 			directionalAction(direction, modifiers: modifiers)
@@ -45,13 +45,13 @@ extension EditorState {
 		case .action(.d, modifiers: _): nil
 		case .target(.next): cycleBrush(reversed: false)
 		case .target(.prev): cycleBrush(reversed: true)
-		case .menu: { events.append(.menu); return nil }()
+		case .menu: { intent = .menu; return nil }()
 		case .tile(let xy): tileTap(xy)
 		case .scale(let value): { scale = value; return nil }()
 		case .pan(let dxy): handlePan(dxy)
 		default: nil
 		}
-		if !events.isEmpty { return .events(events) }
+		if let intent { return .presentation(intent) }
 		guard let action else { return .none }
 		return .action(action)
 	}

@@ -1,6 +1,6 @@
 extension TacticalSim {
 
-	func canEmbark(unit: UID, transport: UID) -> Bool {
+	public func canEmbark(unit: UID, transport: UID) -> Bool {
 		let u = units[unit]
 		let up = position[unit.index]
 		let t = units[transport]
@@ -30,7 +30,7 @@ extension TacticalSim {
 		events.append(.move(unit, Path(count: path.count, path: path.mem)))
 	}
 
-	func canDisembark(unit: UID, to xy: XY) -> Bool {
+	public func canDisembark(unit: UID, to xy: XY) -> Bool {
 		map.contains(xy)
 		&& units[unit].country == country
 		&& units[unit][.transport] && cargo[unit.index] != .none

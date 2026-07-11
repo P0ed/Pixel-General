@@ -58,7 +58,7 @@ public struct LSTMWeights: Sendable {
 
 	/// Trainer-side assembly of a checkpoint from tensors read back off the
 	/// graph; the caller supplies a spec-complete dictionary.
-	init(values: [String: [Float]]) {
+	public init(values: [String: [Float]]) {
 		self.values = values
 	}
 

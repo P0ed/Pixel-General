@@ -1,6 +1,40 @@
-public extension HQState {
+import COR
 
-	mutating func apply(_ input: Input) -> HQReaction {
+struct HQUI {
+	var cursor: XY
+	var selected: UID
+
+	init(cursor: XY = .zero, selected: UID = .none) {
+		self.cursor = cursor
+		self.selected = selected
+	}
+}
+
+struct HQState: ~Copyable {
+	var sim: HQSim
+	var ui: HQUI
+
+	init(sim: consuming HQSim, ui: HQUI = HQUI()) {
+		self.sim = sim
+		self.ui = ui
+	}
+
+	mutating func reduce(_ action: HQAction) -> [HQEvent] {
+		sim.reduce(action)
+	}
+}
+
+enum HQPresentationIntent {
+	case shop
+	case upgrade(UID)
+	case menu
+}
+
+typealias HQInputReaction = InputReaction<HQAction, HQPresentationIntent>
+
+extension HQState {
+
+	mutating func apply(_ input: Input) -> HQInputReaction {
 		switch input {
 		case .direction(let direction?, modifiers: let modifiers) where modifiers.isEmpty:
 			moveCursor(direction)
@@ -8,29 +42,25 @@ public extension HQState {
 		case .action(.b, modifiers: let modifiers) where modifiers.isEmpty: secondaryAction()
 		case .action(.c, modifiers: let modifiers) where modifiers.isEmpty: upgradeAction()
 		case .action(.d, modifiers: let modifiers) where modifiers.isEmpty: sellAction()
-		case .menu: .events([.menu])
+		case .menu: .presentation(.menu)
 		case .tile(let xy): select(xy)
 		default: .none
 		}
 	}
-}
 
-extension HQState {
-
-	mutating func select(_ xy: XY) -> HQReaction {
+	private mutating func select(_ xy: XY) -> HQInputReaction {
 		guard sim.map.contains(xy) else { return .none }
-
 		ui.cursor = xy
 		return mainAction()
 	}
 
-	mutating func moveCursor(_ direction: Direction) -> HQReaction {
+	private mutating func moveCursor(_ direction: Direction) -> HQInputReaction {
 		let xy = ui.cursor.neighbor(direction)
 		if sim.map.contains(xy) { ui.cursor = xy }
 		return .none
 	}
 
-	mutating func mainAction() -> HQReaction {
+	private mutating func mainAction() -> HQInputReaction {
 		if ui.selected != .none {
 			if ui.selected == sim.units[ui.cursor]?.0 {
 				ui.selected = .none
@@ -44,25 +74,22 @@ extension HQState {
 		return .none
 	}
 
-	mutating func secondaryAction() -> HQReaction {
+	private mutating func secondaryAction() -> HQInputReaction {
 		ui.selected = .none
 		return .none
 	}
 
-	/// `.c` opens the upgrade menu for the *selected* unit; with nothing
-	/// selected it falls back to the purchase shop on an empty slot.
-	mutating func upgradeAction() -> HQReaction {
+	private mutating func upgradeAction() -> HQInputReaction {
 		if ui.selected != .none {
-			return .events([.upgrade(ui.selected)])
+			.presentation(.upgrade(ui.selected))
 		} else if sim.units[ui.cursor] == nil {
-			return .events([.shop])
+			.presentation(.shop)
 		} else {
-			return .none
+			.none
 		}
 	}
 
-	/// `.d` sells the selected unit.
-	mutating func sellAction() -> HQReaction {
+	private mutating func sellAction() -> HQInputReaction {
 		guard ui.selected != .none else { return .none }
 		defer { ui.selected = .none }
 		return .action(.sell(ui.selected.index))

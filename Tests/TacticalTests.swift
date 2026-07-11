@@ -1,5 +1,6 @@
 import Testing
 @testable import COR
+@testable import PG
 
 struct TacticalTests {
 
@@ -86,7 +87,7 @@ struct TacticalTests {
 		#expect(unplaced == 0, "aux units left undeployed")
 		#expect(notReady == 0, "aux units cannot act on day 1")
 		for (i, p) in players.enumerated() {
-			let expected = [Unit].aux(p.country).count
+			let expected = [COR.Unit].aux(p.country).count
 			#expect(deployed[i] == expected, "seat \(i) fields \(deployed[i]) of \(expected) aux")
 		}
 		#expect(sim.players[0].prestige == 0xF00, "predeploy charged prestige")

@@ -27,23 +27,3 @@ public extension HQSim {
 		return Shop(country: country, tier: player.tier).upgrades(for: unit)
 	}
 }
-
-public struct HQUI {
-	public var cursor: XY
-	public var selected: UID
-
-	public init(cursor: XY = .zero, selected: UID = .none) {
-		self.cursor = cursor
-		self.selected = selected
-	}
-}
-
-public struct HQState: ~Copyable {
-	public var sim: HQSim
-	public var ui: HQUI
-
-	public init(sim: consuming HQSim, ui: HQUI = HQUI()) {
-		self.sim = sim
-		self.ui = ui
-	}
-}

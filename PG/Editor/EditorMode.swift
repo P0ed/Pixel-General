@@ -1,5 +1,5 @@
-typealias EditorMode = SceneMode<EditorState, EditorAction, EditorEvent, EditorNodes>
-typealias EditorScene = Scene<EditorState, EditorAction, EditorEvent, EditorNodes>
+typealias EditorMode = SceneMode<EditorState, EditorAction, EditorEvent, EditorEvent, EditorNodes>
+typealias EditorScene = Scene<EditorState, EditorAction, EditorEvent, EditorEvent, EditorNodes>
 
 extension EditorMode {
 
@@ -9,6 +9,7 @@ extension EditorMode {
 			input: { state, input in state.apply(input) },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
+			present: { event, nodes, state in await nodes.process(event, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			cameraPosition: { state in state.camera.point },

@@ -1,7 +1,7 @@
 import COR
 
-typealias StrategicMode = SceneMode<StrategicState, StrategicAction, StrategicEvent, StrategicNodes>
-typealias StrategicScene = Scene<StrategicState, StrategicAction, StrategicEvent, StrategicNodes>
+typealias StrategicMode = SceneMode<StrategicState, StrategicAction, StrategicEvent, StrategicPresentationIntent, StrategicNodes>
+typealias StrategicScene = Scene<StrategicState, StrategicAction, StrategicEvent, StrategicPresentationIntent, StrategicNodes>
 
 extension StrategicMode {
 
@@ -11,6 +11,7 @@ extension StrategicMode {
 			input: { state, input in state.apply(input) },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
+			present: { intent, nodes, state in await nodes.present(intent, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			cameraPosition: { state in state.ui.camera.point },

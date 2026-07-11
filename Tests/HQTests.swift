@@ -1,5 +1,6 @@
 import Testing
 @testable import COR
+@testable import PG
 
 /// HQ roster management: **unit upgrades within a family**. An upgrade swaps the
 /// platform of a deployed unit for a costlier sibling in the same shop category
@@ -104,8 +105,7 @@ struct HQTests {
 		let reaction = state.apply(.action(.c))
 
 		var opened = false
-		if case .events(let events) = reaction,
-		   case .upgrade(let uid)? = events.first, uid == 0.uid { opened = true }
+		if case .presentation(.upgrade(let uid)) = reaction, uid == 0.uid { opened = true }
 		let stillSelected = state.ui.selected == 0.uid
 
 		#expect(opened, "`.c` opens the upgrade menu for the selected unit")
@@ -117,7 +117,7 @@ struct HQTests {
 		let reaction = state.apply(.action(.c)) // cursor on the unit, nothing selected
 
 		var inert = false
-		if case .events(let events) = reaction, events.isEmpty { inert = true }
+		if case .none = reaction { inert = true }
 		#expect(inert, "upgrades are offered only for the selected unit")
 	}
 
@@ -127,7 +127,7 @@ struct HQTests {
 		let reaction = state.apply(.action(.c))
 
 		var shop = false
-		if case .events(let events) = reaction, case .shop? = events.first { shop = true }
+		if case .presentation(.shop) = reaction { shop = true }
 		#expect(shop, "`.c` still opens the purchase shop on an empty slot")
 	}
 
@@ -149,7 +149,7 @@ struct HQTests {
 		let reaction = state.apply(.action(.d))
 
 		var inert = false
-		if case .events(let events) = reaction, events.isEmpty { inert = true }
+		if case .none = reaction { inert = true }
 		#expect(inert, "`.d` does nothing when no unit is selected")
 	}
 }
