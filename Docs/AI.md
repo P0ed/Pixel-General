@@ -9,7 +9,7 @@ built-in, no Python, no packages). Inference is dependency-free Swift in COR, so
 shipping app never touches MPSGraph.
 
 Training rests on properties of the core: `reduce` is a pure function of
-`(sim, action)` (test-proven, `Tests/MultiplayerTests.swift`), a whole battle
+`(sim, action)` (test-proven, `COR/Tests/MultiplayerTests.swift`), a whole battle
 bitwise-serializes via `encode`/`decode`, and the AI interface is one `TacticalAction`
 per call — exactly a policy's step function. Battles are therefore stored as *replays*
 and regenerated deterministically instead of storing states.
@@ -24,7 +24,7 @@ and regenerated deterministically instead of storing states.
 | `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
 | `COR/Tactical/AI/TacticalAI.swift` | `AI.heuristic` / `AI.lstm(_:)` — the app-side hooks |
 | `Train/` | macOS CLI (not shipped): rollouts, BC, RL, parity, eval |
-| `Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
+| `COR/Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
 | `PG/policy.pgw` | Bundled weights (synchronized folder group → app resource) |
 
 ## Architecture
@@ -246,7 +246,7 @@ the reached `--curriculum` level explicitly when continuing an annealed run).
 
 - **Contracts are append-only**: `Plane`/`Global`, `ActionSpace` indices, and
   `LSTMWeights.spec` — a change invalidates weights and corpora. Re-run `parity` and
-  `Tests/PolicyTests` after touching them.
+  `COR/Tests/PolicyTests` after touching them.
 - **MPSGraph autodiff gaps** (macOS 26.5): `split` and `broadcast` have no registered
   gradient, and `gradients(of:with:)` asserts on variables that aren't predecessors of
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via

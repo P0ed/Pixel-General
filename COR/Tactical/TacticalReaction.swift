@@ -25,7 +25,7 @@ extension TacticalSim {
 	/// Contract: an **illegal action leaves the sim bitwise-unchanged** and
 	/// emits no events. Three subsystems rely on that no-op guarantee: the
 	/// LSTM masks use "state mutated" as their legality oracle
-	/// (`Tests/PolicyTests`), the multiplayer host re-validates client
+	/// (`COR/Tests/PolicyTests`), the multiplayer host re-validates client
 	/// intents by simply applying them, and the AI drivers may propose
 	/// actions that turn out illegal. Each reducer therefore opens with a
 	/// guard on its legality predicate — `canMove` / `canAttack` /

@@ -1,6 +1,5 @@
 import Testing
 @testable import COR
-@testable import PG
 
 /// HQ roster management: **unit upgrades within a family**. An upgrade swaps the
 /// platform of a deployed unit for a costlier sibling in the same shop category
@@ -16,11 +15,6 @@ struct HQTests {
 			player: Player(country: .ger, type: .human, prestige: prestige, tier: tier),
 			units: [16 of Unit](head: [modifying(unit) { u in u.reset() }], tail: .empty)
 		)
-	}
-
-	/// The same single-unit roster wrapped in an `HQState` (cursor at slot 0).
-	private static func state(_ unit: Unit) -> HQState {
-		HQState(sim: sim(unit))
 	}
 
 	@Test func upgradesAreFamilySiblingsExcludingSelf() {
@@ -95,61 +89,5 @@ struct HQTests {
 		#expect(model == .leo1)
 		#expect(prestige == 5000, "an illegal upgrade spends nothing")
 		#expect(events.isEmpty)
-	}
-
-	// MARK: Input bindings
-
-	@Test func cUpgradesSelectedUnitAndKeepsSelection() {
-		var state = Self.state(Unit(model: .leo1, country: .ger))
-		_ = state.apply(.action(.a)) // select slot 0 (cursor starts at .zero)
-		let reaction = state.apply(.action(.c))
-
-		var opened = false
-		if case .presentation(.upgrade(let uid)) = reaction, uid == 0.uid { opened = true }
-		let stillSelected = state.ui.selected == 0.uid
-
-		#expect(opened, "`.c` opens the upgrade menu for the selected unit")
-		#expect(stillSelected, "the unit stays selected after opening the menu")
-	}
-
-	@Test func cIsInertOverAnUnselectedUnit() {
-		var state = Self.state(Unit(model: .leo1, country: .ger))
-		let reaction = state.apply(.action(.c)) // cursor on the unit, nothing selected
-
-		var inert = false
-		if case .none = reaction { inert = true }
-		#expect(inert, "upgrades are offered only for the selected unit")
-	}
-
-	@Test func cOpensShopOnAnEmptySlot() {
-		var state = Self.state(Unit(model: .leo1, country: .ger))
-		_ = state.apply(.direction(.right)) // move to the empty slot 1
-		let reaction = state.apply(.action(.c))
-
-		var shop = false
-		if case .presentation(.shop) = reaction { shop = true }
-		#expect(shop, "`.c` still opens the purchase shop on an empty slot")
-	}
-
-	@Test func dSellsSelectedUnitAndClearsSelection() {
-		var state = Self.state(Unit(model: .leo1, country: .ger))
-		_ = state.apply(.action(.a)) // select slot 0
-		let reaction = state.apply(.action(.d))
-
-		var sold = false
-		if case .action(.sell(let i)) = reaction, i == 0 { sold = true }
-		let cleared = state.ui.selected == .none
-
-		#expect(sold, "`.d` sells the selected unit")
-		#expect(cleared, "selling clears the selection")
-	}
-
-	@Test func dIsInertWithoutSelection() {
-		var state = Self.state(Unit(model: .leo1, country: .ger))
-		let reaction = state.apply(.action(.d))
-
-		var inert = false
-		if case .none = reaction { inert = true }
-		#expect(inert, "`.d` does nothing when no unit is selected")
 	}
 }

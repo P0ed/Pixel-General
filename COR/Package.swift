@@ -12,6 +12,18 @@ let package = Package(
 		.library(name: "COR", type: .dynamic, targets: ["COR"]),
 	],
 	targets: [
-		.target(name: "COR", path: "."),
+		.target(
+			name: "COR",
+			path: ".",
+			exclude: ["Tests"],
+			swiftSettings: [
+				.unsafeFlags(["-O"], .when(configuration: .debug)),
+			]
+		),
+		.testTarget(
+			name: "CORTests",
+			dependencies: ["COR"],
+			path: "Tests"
+		),
 	]
 )

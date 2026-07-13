@@ -89,7 +89,7 @@ relay**, coordinated by `NetSession` (`PG/Networking/NetSession.swift`, global
 applies the same action stream through `reduce`. Because `reduce` is a pure
 function of `(state, action)` — the only randomness is the in-state seeded
 `D20` — all peers stay identical, combat rolls included. The invariant is
-guarded by `Tests/MultiplayerTests.swift`.
+guarded by `COR/Tests/MultiplayerTests.swift`.
 
 - **Topology** — star, host-authoritative. The game is strictly turn-rotated
   (`playerIndex = turn % players.count`), so exactly one seat acts at a time.

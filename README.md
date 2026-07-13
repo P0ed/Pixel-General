@@ -8,8 +8,8 @@
 # Build
 xcodebuild build -scheme PG -configuration Release -destination 'platform=macOS,variant=Mac Catalyst'
 
-# Run tests
-xcodebuild test -scheme PG -destination 'platform=macOS'
+# Run the COR package tests
+swift test --package-path COR
 ```
 
 ## Docs

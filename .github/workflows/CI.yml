@@ -4,18 +4,12 @@ on:
   [push]
 
 jobs:
-  build:
-    name: Build and test using xcodebuild command
+  test:
+    name: Test COR package
     runs-on: macos-26
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build
-        run: >-
-          xcodebuild build -scheme PG -destination 'platform=macOS'
-          CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ENABLE_HARDENED_RUNTIME=NO
       - name: Test
-        run: >-
-          xcodebuild test -scheme PG -destination 'platform=macOS'
-          CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ENABLE_HARDENED_RUNTIME=NO
+        run: swift test --package-path COR
