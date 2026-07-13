@@ -125,8 +125,8 @@ public extension StrategicSim {
 		freeArmySlot(for: player.country)
 	}
 
-	/// Tiles the army can move to this turn: a BFS through its country's land
-	/// over `.n4`, one mp per step, skipping every occupied army tile.
+	/// Tiles the army can move to this turn: a BFS through friendly land over
+	/// `.n4`, one mp per step, skipping every occupied army tile.
 	func reachable(by slot: Int, for country: Country) -> SetXY {
 		var result = SetXY.empty
 		march(by: slot, for: country) { xy, _ in result[xy] = true }
@@ -164,7 +164,9 @@ public extension StrategicSim {
 				let n4 = xy.n4
 				for i in 0 ..< n4.count {
 					let n = n4[i]
-					guard owner.contains(n), owner[n] == country, !seen[n] else { continue }
+					guard owner.contains(n), owner[n] != .none,
+						owner[n].team == country.team, !seen[n]
+					else { continue }
 					seen[n] = true
 					guard army(at: n) == nil else { continue }
 					visit(n, UInt8(step))

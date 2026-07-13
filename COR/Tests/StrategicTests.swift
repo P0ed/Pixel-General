@@ -314,7 +314,7 @@ struct StrategicTests {
 		#expect(rusAfter <= rusBefore - 2, "loser kept the annexed factories")
 	}
 
-	@Test func armyMovesThroughOwnLandWithinRange() {
+	@Test func armyMovesThroughFriendlyLandWithinRange() {
 		var sim = StrategicSim.europe(country: .fin)
 		let start = sim.armies[Int(Country.fin.rawValue)][0].position
 		let range = sim.reachable(by: 0)
@@ -322,8 +322,8 @@ struct StrategicTests {
 		var reachCount = 0
 		for xy in sim.owner.indices where range[xy] {
 			reachCount += 1
-			let own = sim.owner[xy] == .fin
-			#expect(own, "move range leaves own territory")
+			let friendly = sim.owner[xy] != .none && sim.owner[xy].team == Country.fin.team
+			#expect(friendly, "move range enters neutral or hostile territory")
 		}
 		#expect(reachCount > 0, "main army has nowhere to go")
 		#expect(!range[start], "standing still is not a move")
@@ -355,6 +355,37 @@ struct StrategicTests {
 			#expect(denied.isEmpty, "out-of-range move emitted an event")
 			#expect(held == oneStep, "out-of-range move happened")
 		}
+	}
+
+	@Test func armyCanCrossAlliedCountryWithoutChangingOwnership() {
+		var owner = Map<32, Country>(size: 32, zero: .none)
+		owner[XY(1, 1)] = .fin
+		owner[XY(2, 1)] = .swe
+		owner[XY(3, 1)] = .ger
+		owner[XY(4, 1)] = .rus
+		var sim = StrategicSim(
+			owner: owner,
+			player: Player(country: .fin, type: .human)
+		)
+		let fin = Int(Country.fin.rawValue)
+		sim.armies[fin][0].active = true
+		sim.armies[fin][0].position = XY(1, 1)
+		sim.armies[fin][0].mp = Army.moveSpeed
+
+		let range = sim.reachable(by: 0)
+		let alliedCost = sim.marchCost(by: 0, to: XY(3, 1))
+		let hostileCost = sim.marchCost(by: 0, to: XY(4, 1))
+		#expect(range[XY(2, 1)] && range[XY(3, 1)], "allied provinces are not reachable")
+		#expect(!range[XY(4, 1)], "hostile province is reachable without a battle")
+		#expect(alliedCost == 2)
+		#expect(hostileCost == nil)
+
+		let events = sim.reduce(.move(0, XY(3, 1)))
+		let position = sim.armies[fin][0].position
+		#expect(events.count == 1)
+		#expect(position == XY(3, 1))
+		#expect(sim.owner[XY(2, 1)] == .swe && sim.owner[XY(3, 1)] == .ger,
+			"marching through allies changed province ownership")
 	}
 
 	@Test func foundingArmiesRespectsSlotsAndTiles() {

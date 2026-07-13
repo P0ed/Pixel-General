@@ -189,16 +189,19 @@ public extension StrategicSim {
 	}
 
 	/// Captures may engulf nearby army tiles. Move each displaced force to the
-	/// nearest province its country still owns, or disband it if none remains.
+	/// nearest friendly province, or disband it if none remains.
 	private mutating func retreatDisplacedArmies(except winner: ArmyID) {
 		for country in Country.playable where country != winner.country {
 			let countryIndex = Int(country.rawValue)
 			for slot in 0 ..< 4 {
 				let fieldArmy = armies[countryIndex][slot]
-				guard fieldArmy.active, owner[fieldArmy.position] != country else { continue }
+				guard fieldArmy.active, owner[fieldArmy.position].team != country.team else { continue }
 				var best: XY?
 				var distance = Int.max
-				for xy in owner.indices where owner[xy] == country && army(at: xy) == nil {
+				for xy in owner.indices where owner[xy] != .none
+					&& owner[xy].team == country.team
+					&& army(at: xy) == nil
+				{
 					let d = fieldArmy.position.stepDistance(to: xy)
 					if d < distance { best = xy; distance = d }
 				}

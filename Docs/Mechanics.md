@@ -334,7 +334,8 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   roster lives in `StrategicSim.armies`; `Core.hq` is only a temporary editor
   for the selected human army while the HQ scene is open. Each other country
   begins with an active main army using its stock roster.
-- An active army can march up to 2 orthogonal tiles per turn through owned land.
+- An active army can march up to its movement allowance in orthogonal steps
+  through provinces controlled by any country on its team.
   It can attack an orthogonally adjacent enemy province only while it has
   movement points and at least one living core unit. Winning advances the army
   and annexes same-team enemy provinces in a Chebyshev radius of 2 around the
