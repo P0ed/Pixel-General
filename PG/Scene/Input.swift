@@ -19,7 +19,7 @@ enum Input: Equatable {
 	case direction(Direction?, modifiers: InputModifiers)
 	case target(Target?)
 	case action(InputAction?, modifiers: InputModifiers)
-	case menu, mode
+	case menu
 	case tile(XY)
 	case scale(Int)
 	case pan(XY)

@@ -84,10 +84,6 @@ struct HIDController {
 					guard pressed else { return }
 					send(.menu)
 				}
-				gamepad.buttonOptions?.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					send(.mode)
-				}
 			}
 		)
 	}

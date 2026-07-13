@@ -82,6 +82,24 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func terrainBiasRaisesForestCoverage() {
+		for seed in [1, 5, 42] {
+			func forests(_ terrain: Terrain) -> Int {
+				let map = Map<32, Terrain>(size: 24, seed: seed, terrain: terrain)
+				var result = 0
+				for xy in map.indices {
+					switch map[xy] {
+					case .forest, .forestHill: result += 1
+					default: break
+					}
+				}
+				return result
+			}
+			#expect(forests(.field) < forests(.forest), "forest bias had no effect for seed \(seed)")
+			#expect(forests(.hill) < forests(.forestHill), "forest-hill bias had no effect for seed \(seed)")
+		}
+	}
+
 	@Test func roadsConnectAllCities() {
 		// MST-based road building links every terrain-reachable city into
 		// one network; on these seeds all cities share one landmass, so a

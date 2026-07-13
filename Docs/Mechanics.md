@@ -416,7 +416,12 @@ friendly-team supply truck, +2 in the `.c5` plus-shape of an owned settlement,
 −2 next to a visible enemy unit (owned airfields count as settlements — they
 supply ground units too). The shading is exact: `resupply` restores
 `level + 2` ammo and heals up to `level + 3` from the same masks.
-Bound to the `.mode` input event.
+Map modes use the right modifier: Right+A selects terrain, Right+B toggles
+country/team, and Right+C selects supply.
+
+The strategic layer uses the same controls for terrain and country/team; it has
+no supply view. Its terrain view shows the campaign's field, forest, hill, and
+mountain overlay while retaining water for ownerless sea tiles.
 
 Only the base tile changes with the mode: buildings/roads/bridges
 (decorations) and fog of war render on separate tile-map layers in every

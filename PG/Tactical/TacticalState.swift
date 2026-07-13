@@ -92,7 +92,6 @@ extension TacticalState {
 		case .direction(let direction?, modifiers: let modifiers):
 			directionalAction(direction, modifiers: modifiers)
 		case .menu: .presentation(.menu)
-		case .mode: toggleMapMode()
 		case .action(let action?, modifiers: let modifiers):
 			buttonAction(action, modifiers: modifiers)
 		case .target(.prev): prevUnit()
@@ -147,16 +146,6 @@ extension TacticalState {
 
 	private mutating func moveCamera(_ direction: Direction) -> TacticalInputReaction {
 		ui.camera = ui.camera.neighbor(direction).clamped(sim.map.size)
-		return .none
-	}
-
-	private mutating func toggleMapMode() -> TacticalInputReaction {
-		ui.mapMode = switch ui.mapMode {
-		case .terrain: .supply
-		case .supply: .country
-		case .country: .team
-		case .team: .terrain
-		}
 		return .none
 	}
 

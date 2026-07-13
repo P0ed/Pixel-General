@@ -31,7 +31,7 @@
 
 public extension Army {
 
-	static var moveSpeed: UInt8 { 2 }
+	static var moveSpeed: UInt8 { 3 }
 
 	static var defRange: Int { 2 }
 

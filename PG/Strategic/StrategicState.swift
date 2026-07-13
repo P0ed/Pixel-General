@@ -1,7 +1,7 @@
 import COR
 
 enum StrategicMapMode: UInt8, Hashable {
-	case country, team
+	case terrain, country, team
 }
 
 struct StrategicUI {
@@ -64,7 +64,6 @@ extension StrategicState {
 		case .action(let action?, modifiers: let modifiers):
 			buttonAction(action, modifiers: modifiers)
 		case .menu: .presentation(.menu)
-		case .mode: toggleMapMode()
 		case .target(.prev): selectArmy(reversed: true)
 		case .target(.next): selectArmy()
 		case .scale(let value): { ui.scale = value; return .none }()
@@ -86,18 +85,22 @@ extension StrategicState {
 		_ action: InputAction,
 		modifiers: InputModifiers
 	) -> StrategicInputReaction {
-		if modifiers.contains(.right) {
-			return switch action {
-			case .b: toggleMapMode()
-			case .a, .c, .d: .none
-			}
-		}
+		if modifiers.contains(.right) { return setMapMode(action) }
 		return switch action {
 		case .a: primary(at: ui.cursor)
 		case .b: build(at: ui.cursor)
 		case .c: army(at: ui.cursor)
 		case .d: .none
 		}
+	}
+
+	private mutating func setMapMode(_ action: InputAction) -> StrategicInputReaction {
+		switch action {
+		case .a: ui.mapMode = .terrain
+		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
+		case .c, .d: break
+		}
+		return .none
 	}
 
 	private mutating func zoom(_ direction: Direction) -> StrategicInputReaction {
@@ -172,11 +175,6 @@ extension StrategicState {
 		} else {
 			.none
 		}
-	}
-
-	private mutating func toggleMapMode() -> StrategicInputReaction {
-		ui.mapMode = ui.mapMode == .team ? .country : .team
-		return .none
 	}
 
 	private mutating func handlePan(_ dxy: XY) -> StrategicInputReaction {

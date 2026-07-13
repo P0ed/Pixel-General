@@ -100,20 +100,22 @@ struct StrategicTests {
 		#expect(sea > 0, "water tiles missing from the map")
 	}
 
-	@Test func europeTerrainHasHillsAndMountains() {
+	@Test func europeTerrainHasForestsHillsAndMountains() {
 		let sim = StrategicSim.europe(country: .fin)
-		var hills = 0, mountains = 0, highgroundOnSea = 0
+		var forests = 0, hills = 0, mountains = 0, roughTerrainOnSea = 0
 		for xy in sim.terrain.indices {
 			switch sim.terrain[xy] {
+			case .forest: forests += 1
 			case .hill: hills += 1
 			case .mountain: mountains += 1
-			default: continue
+			default: break
 			}
-			if sim.owner[xy] == .none { highgroundOnSea += 1 }
+			if sim.owner[xy] == .none, sim.terrain[xy] != .field { roughTerrainOnSea += 1 }
 		}
+		#expect(forests > 0, "no forests on the europe map")
 		#expect(hills > 0, "no hills on the europe map")
 		#expect(mountains > 0, "no mountains on the europe map")
-		#expect(highgroundOnSea == 0, "elevation placed on sea tiles")
+		#expect(roughTerrainOnSea == 0, "rough terrain placed on sea tiles")
 
 		// The Alps: every Austrian province is hill or mountain.
 		var flatAustria = 0
@@ -630,6 +632,33 @@ struct StrategicTests {
 		#expect(fielded == 1, "battle did not field the army's own roster")
 		#expect(tactical.players[0].country == .fin, "battle used the stale standalone HQ player")
 		#expect(tactical.players[0].tier == 2, "battle discarded the campaign player's progression")
+	}
+
+	@Test func campaignBattleUsesStrategicForestTerrain() {
+		let target = XY(2, 1)
+		var sim = Self.borderSim(russianUnits: 1)
+		sim.terrain[target] = .forest
+		var core = Core.new(country: .ger)
+		core.store(sim)
+		core.startCampaignBattle(at: target)
+
+		let tactical = clone(core.tactical!)
+		let plains = Map<32, Terrain>(
+			size: 24,
+			seed: target.x + target.y * 32,
+			players: 2,
+			terrain: .field
+		)
+		var tacticalForests = 0, plainsForests = 0
+		for xy in tactical.map.indices {
+			if tactical.map[xy] == .forest || tactical.map[xy] == .forestHill {
+				tacticalForests += 1
+			}
+			if plains[xy] == .forest || plains[xy] == .forestHill {
+				plainsForests += 1
+			}
+		}
+		#expect(tacticalForests > plainsForests, "strategic forest did not reach tactical generation")
 	}
 
 	@Test func campaignBattleCompletesIntoStrategicRatherThanStaleHQ() {

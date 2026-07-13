@@ -120,6 +120,9 @@ extension StrategicNodes {
 	private static func baseGroup(for state: borrowing StrategicState, at xy: XY) -> SKTileGroup {
 		let elevation = state.sim.terrain[xy].elevationLevel
 		switch state.ui.mapMode {
+		case .terrain:
+			let terrain: Terrain = state.sim.owner[xy] == .none ? .water : state.sim.terrain[xy]
+			return .base(terrain: terrain)
 		case .team:
 			return .team(state.sim.owner[xy].team, elevation: elevation)
 		case .country:
