@@ -161,7 +161,12 @@ struct StrategicTests {
 		let events = sim.reduce(.endTurn)
 		let turn = sim.turn
 		#expect(turn == day + 1)
-		#expect(events.isEmpty)
+		#expect(events.count == 1)
+		if case .endTurn = events.first {
+			// The event persists the reducer mutation even when upkeep is zero.
+		} else {
+			Issue.record("expected an .endTurn event")
+		}
 	}
 
 	@Test func europeFactoryPlacementIsDeterministic() {
@@ -354,7 +359,7 @@ struct StrategicTests {
 	@Test func endTurnChargesUpkeepAndDisbandsEmptyArmies() {
 		var sim = StrategicSim.europe(country: .fin)
 		var quiet = sim.reduce(.endTurn)
-		#expect(quiet.isEmpty, "the free main army charged upkeep")
+		#expect(quiet.count == 1, "end turn should always emit its persistence event")
 
 		var tile: XY?
 		for xy in sim.owner.indices where sim.owner[xy] == .fin && sim.armyIndex(at: xy) == nil {
@@ -366,19 +371,71 @@ struct StrategicTests {
 		// An empty roster disbands at end of turn before charging upkeep.
 		quiet = sim.reduce(.endTurn)
 		let disbanded = !sim.armies[1].active
-		#expect(quiet.isEmpty, "an empty army charged upkeep")
+		#expect(quiet.count == 1)
 		#expect(disbanded, "an empty army survived the turn")
 
 		_ = sim.reduce(.found(tile))
 		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		let prestige = sim.player.prestige
 		let events = sim.reduce(.endTurn)
 		let mp = sim.armies[1].mp
+		let remaining = sim.player.prestige
 		#expect(mp == Army.moveSpeed, "endTurn should restore movement")
-		if case .upkeep(let cost) = events.first {
-			#expect(cost == Army.upkeep(slot: 1))
+		#expect(remaining == prestige - Army.upkeep(slot: 1), "the reducer did not charge upkeep")
+		if case .endTurn = events.first {
 		} else {
-			Issue.record("expected an .upkeep event for the second army")
+			Issue.record("expected an .endTurn event")
 		}
+	}
+
+	@Test func startCampaignMakesStrategicMainRosterAuthoritative() {
+		let unit = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		let hq = HQSim(
+			player: Player(country: .fin, type: .human, prestige: 1234, tier: 2),
+			units: [16 of COR.Unit](head: [unit], tail: .empty)
+		)
+		let strategic = StrategicSim.europe(country: .fin)
+		var core = Core.new(country: .ger)
+
+		core.startCampaign(hq, strategic)
+
+		let campaign = clone(core.strategic!)
+		let country = campaign.player.country
+		let prestige = campaign.player.prestige
+		let model = campaign.roster(0)[0].model
+		#expect(core.location == .strategic)
+		#expect(country == .fin)
+		#expect(prestige == 1234)
+		#expect(model == .regular, "the standalone HQ roster was not assigned to army 0")
+	}
+
+	@Test func campaignHQEditsAnyArmyIncludingSlotZero() {
+		var strategic = StrategicSim.europe(country: .fin)
+		strategic.player.prestige = 900
+		strategic.armies[0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		var core = Core.new(country: .ger)
+		core.store(strategic)
+
+		core.openArmy(0)
+		var editor = clone(core.hq)
+		let openedCountry = editor.player.country
+		let openedModel = editor.units[0].model
+		#expect(core.location == .hq)
+		#expect(editor.army == 0)
+		#expect(openedCountry == .fin, "campaign player did not populate the HQ editor")
+		#expect(openedModel == .regular)
+
+		editor.player.prestige = 700
+		editor.units[0] = modifying(Unit(model: .truck, country: .fin)) { u in u.reset() }
+		core.store(editor)
+		core.closeArmy()
+
+		let campaign = clone(core.strategic!)
+		let storedPrestige = campaign.player.prestige
+		let storedModel = campaign.roster(0)[0].model
+		#expect(core.location == .strategic)
+		#expect(storedPrestige == 700)
+		#expect(storedModel == .truck, "army 0 was not synchronized from the HQ editor")
 	}
 
 	@Test func winningBattleAdvancesTheArmy() {
@@ -434,8 +491,11 @@ struct StrategicTests {
 		sim.armies[1].position = sim.armies[0].position
 		sim.armies[0].position = XY(0, 0)
 		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		sim.player.tier = 2
 
-		var core = Core.new(country: .fin)
+		// Deliberately give Core.hq a different country: once a campaign is
+		// active, StrategicSim is the source of truth.
+		var core = Core.new(country: .ger)
 		core.store(sim)
 		core.startCampaignBattle(at: target)
 
@@ -446,6 +506,34 @@ struct StrategicTests {
 		}
 		#expect(slot == 1, "second army was not picked as the attacker")
 		#expect(fielded == 1, "battle did not field the army's own roster")
+		#expect(tactical.players[0].country == .fin, "battle used the stale standalone HQ player")
+		#expect(tactical.players[0].tier == 2, "battle discarded the campaign player's progression")
+	}
+
+	@Test func campaignBattleCompletesIntoStrategicRatherThanStaleHQ() {
+		var sim = StrategicSim.europe(country: .fin)
+		guard let target = Self.stageAttack(&sim) else {
+			Issue.record("no border tile to contest")
+			return
+		}
+		sim.armies[0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+
+		var core = Core.new(country: .ger)
+		core.store(sim)
+		core.startCampaignBattle(at: target)
+		var battle = clone(core.tactical!)
+		battle[.fin].prestige = 777
+
+		core.complete(battle)
+
+		let campaign = clone(core.strategic!)
+		let prestige = campaign.player.prestige
+		let survivor = campaign.roster(0)[0]
+		let staleCountry = core.hq.player.country
+		#expect(core.location == .strategic)
+		#expect(prestige == 777, "remaining battle prestige did not return to the campaign")
+		#expect(survivor.alive && survivor.country == .fin)
+		#expect(staleCountry == .ger, "campaign completion incorrectly treated Core.hq as authoritative")
 	}
 
 	@Test func serializationRoundTrip() {

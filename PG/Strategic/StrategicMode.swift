@@ -43,14 +43,9 @@ extension StrategicState {
 		)
 	}
 
-	/// Alive units in an army slot — the main army's roster lives in
-	/// `Core.hq`, the others in the sim.
-	@MainActor private func unitCount(_ slot: Int) -> Int {
-		if slot == 0 {
-			core.hq.units.reduce(into: 0) { n, u in n += u.alive ? 1 : 0 }
-		} else {
-			sim.armies[slot].units.reduce(into: 0) { n, u in n += u.alive ? 1 : 0 }
-		}
+	/// Alive units in an army slot.
+	private func unitCount(_ slot: Int) -> Int {
+		sim.armies[slot].units.reduce(into: 0) { n, u in n += u.alive ? 1 : 0 }
 	}
 
 	private var actionHint: String {

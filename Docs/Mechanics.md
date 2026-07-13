@@ -319,6 +319,37 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   - `lvl + 7` makes veterans (and the skills they earn) linearly pricier; `aux`
     divides by 11 instead of 7.
 
+## Campaign
+
+`COR/Strategic/StrategicState.swift`, `COR/Strategic/Army.swift`,
+`COR/Strategic/StrategicReaction.swift`, `COR/Model/Core.swift`
+
+- The 32×32 European map stores country ownership, terrain, province building
+  levels, four army slots, the campaign player, turn, and pending battle in
+  `StrategicSim`.
+- Starting a campaign assigns the standalone HQ roster to army slot 0. From
+  then on `StrategicSim.player` is the campaign treasury and all four rosters
+  live in `StrategicSim.armies`; `Core.hq` is only a temporary editor for the
+  selected army while the HQ scene is open.
+- An active army can march up to 2 orthogonal tiles per turn through owned land.
+  It can attack an orthogonally adjacent enemy province only while it has
+  movement points and at least one living core unit. Winning advances the army
+  and annexes same-team enemy provinces in a Chebyshev radius of 2 around the
+  target.
+- Army 0 has no upkeep. Active armies 1–3 cost `50 * slot` prestige at the end
+  of every campaign turn. `StrategicSim.reduce(.endTurn)` charges the campaign
+  player directly (clamped at zero), restores movement, and disbands empty side
+  armies before calculating the charge.
+- Select an army and open HQ to purchase, sell, upgrade, or rearrange that
+  army's roster. Leaving HQ synchronizes both its roster and treasury back to
+  `StrategicSim`; there is no campaign HQ without a selected army.
+- A campaign battle fields the attacking army's living roster. When the
+  campaign player defends, its nearest non-fighting army within range 2 may
+  join as auxiliary units; owned military factory totals also add country
+  auxiliary forces. Civil factories add 40 prestige per level to each side's
+  battle treasury. On completion, non-auxiliary survivors and remaining
+  prestige return to the fighting army and campaign player.
+
 ## Players & Victory
 
 `COR/Model/Player.swift`, `COR/Tactical/TacticalTurns.swift`
@@ -327,8 +358,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   three `Team`s via `Country.team`: **axis** (swe/den/ned/ukr/ger/pol/cze/aut/nor),
   **allies** (isr/pak/usa/fin/ltu/svk/hun), **soviet** (ind/irn/rus/est/lva/bel/rom/mol).
   `.none` maps to `Team.none`. Friendly fire is impossible within a team; combat
-  requires cross-team. The European nations back the campaign map (see
-  [Campaign](./Campaign.md)).
+  requires cross-team. The European nations back the [campaign map](#campaign).
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
   reflags it to the unit's country. A player with no remaining

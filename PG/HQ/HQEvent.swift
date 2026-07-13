@@ -62,6 +62,20 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
+		// During a campaign, HQ edits the selected army rather than acting
+		// as a standalone game mode.
+		guard core.strategic == nil else {
+			scene?.showMenu(MenuState(items: [
+				.close(icon: .HQ, status: "Back") { _ in
+					guard let scene else { return }
+					core.store(scene.state.sim)
+					core.closeArmy()
+					core.save()
+					view.present(.auto)
+				},
+			]))
+			return
+		}
 		scene?.showMenu(MenuState(items: [
 			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
 				guard let scene else { return nil }

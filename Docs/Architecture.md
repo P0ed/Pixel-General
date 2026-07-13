@@ -68,7 +68,19 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 ### State
 
-The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strategic/tactical sims, and a `.location` enum that drives which scene is active. The single live instance is the global `core: Core` in `PG/App.swift`; `Core.complete`/`startCampaignBattle`/`store` are the load-bearing transitions between modes.
+The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strategic/tactical sims, and a `.location` enum that drives which scene is active. The single live instance is the global `core: Core` in `PG/App.swift`; `Core.complete`/`startCampaignBattle`/`openArmy`/`store` are the load-bearing transitions between modes.
+
+`Core.hq` does not permanently own the main campaign army. State ownership depends on both campaign presence and the active location:
+
+| `strategic` | `location` | Source of truth |
+|---|---|---|
+| `nil` | `.hq` | `Core.hq` owns the standalone roster and player treasury. |
+| `nil` | `.tactical` | `Core.tactical` owns the running scenario; `complete` writes survivors and prestige back to `Core.hq`. |
+| non-`nil` | `.strategic` | `Core.strategic` owns the campaign player and all four army rosters, including slot 0. |
+| non-`nil` | `.hq` | `Core.hq` is the selected army's editor snapshot (`HQSim.army` identifies the slot); `store` synchronizes its player and roster back into `Core.strategic`. |
+| non-`nil` | `.tactical` | `Core.tactical` owns the running battle; `complete` writes prestige and survivors back to the fighting army in `Core.strategic`. |
+
+Starting a campaign moves the standalone HQ roster into strategic army 0. An HQ screen inside a campaign is therefore opened only through an army (`openArmy`); there is no context-free Strategic → HQ transition. Saving or leaving that screen stores the edited roster before returning to the map. Campaign upkeep is likewise a `StrategicSim.reduce(.endTurn)` mutation, not a side effect applied later through `Core.hq`.
 
 App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
 
