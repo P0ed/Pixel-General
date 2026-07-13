@@ -2,7 +2,7 @@
 
 The codebase is split into two modules:
 
-- **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI. It is the `COR` product of the local `GameCore` Swift package in `COR/`, with no UI/SpriteKit dependency.
+- **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI, with no UI/SpriteKit dependency.
 - **PG** — the app/presentation layer: composite scene state, input interpretation, presentation intents, SpriteKit scenes and nodes, rendering, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`.
 
 A third target, **Train**, is a macOS-only command-line tool for the LSTM opponent's
@@ -125,7 +125,7 @@ guarded by `COR/Tests/MultiplayerTests.swift`.
 ## Module Map
 
 ```
-COR/                  Local GameCore package; shared COR product, no UI dependency
+COR/                  Local package; shared COR product, no UI dependency
   Package.swift       One module/product consumed by PG, Train, and tests
   Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20;
                       Swift.swift = clone / encode / decode for ~Copyable state

@@ -122,7 +122,7 @@ xcodebuild -project PG.xcodeproj -target Train -configuration Release \
 ```
 
 Binary: `tmp/build/Release/Train`. The Train target imports the same `COR`
-product from the local `GameCore` package as PG and the tests, and builds `-O` in both configurations
+product from the local `COR` package as PG and the tests, and builds `-O` in both configurations
 (`-Onone` InlineArray code is 10–30× slower). Stdout is line-buffered even when
 redirected, so `tail -f run.log` works and nothing is lost on a kill.
 
