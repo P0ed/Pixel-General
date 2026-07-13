@@ -43,11 +43,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5FD7B3732FE7356100CA6557 /* COR */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = COR;
-			sourceTree = "<group>";
-		};
 		5FD7B3DE2FE7356600CA6557 /* PG */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -101,7 +96,6 @@
 				5FB297482E79A39000FA039B /* README.md */,
 				5FD7B4182FE7356A00CA6557 /* Docs */,
 				5FD7B3DE2FE7356600CA6557 /* PG */,
-				5FD7B3732FE7356100CA6557 /* COR */,
 				D0D0000000000000000000A1 /* Train */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,
 				5FCB86362E77041800C2C69E /* Products */,

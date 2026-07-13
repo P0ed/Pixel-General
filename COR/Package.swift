@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-	name: "GameCore",
+	name: "COR",
 	platforms: [
 		.iOS(.v26),
 		.macOS(.v26),
