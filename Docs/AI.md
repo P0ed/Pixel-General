@@ -124,25 +124,31 @@ neural/classic per battle in `TacticalMode.tactical`; `LSTMWeights.bundled` load
 
 ### Replays — `PGRP` (`Train/Replay.swift`)
 
-Version 2 stores magic, version, `MemoryLayout<TacticalAction>.size`,
+Version 3 stores magic, version, `MemoryLayout<TacticalAction>.size`,
 size/seats/winner/days/seed, the objective kind/team/deadline, fort level, and then the
 raw `encode(action)` stream (~10–100 KB).
 `makeSim()` rebuilds the exact initial state; `check()` = rebuild + replay + compare
 outcome. Replays are **same-build artifacts** — the versioned header guards toolchain
-drift, and regeneration is cheap. Version-1 files are deliberately rejected: all
-existing corpora must be regenerated before BC or RL so demonstrations from the old
-and new teachers cannot be mixed.
+drift, and regeneration is cheap. Older versions are deliberately rejected: all
+existing corpora must be regenerated before BC or RL so demonstrations from different
+teachers or battle recipes cannot be mixed. v3 (same layout as v2) marks the factory
+contract change (`a25d286`): the factory places exactly the units it is given, so
+`makeSim()` composes every seat's `.base` roster itself (training battles carry no aux).
 
 ## Training runs
 
 ### Build
 
 ```
-xcodebuild -project PG.xcodeproj -target Train -configuration Release \
-  SYMROOT=tmp/build OBJROOT=tmp/build build
+xcodebuild -project PG.xcodeproj -scheme Train -configuration Release -destination 'platform=macOS' \
+  SYMROOT=$PWD/tmp/build OBJROOT=$PWD/tmp/build build
 ```
 
-Binary: `tmp/build/Release/Train`. The Train target imports the same `COR`
+Binary: `tmp/build/Release/Train` (links `COR.framework` from
+`tmp/build/Release/PackageFrameworks` via `@executable_path/PackageFrameworks` rpath).
+SYMROOT/OBJROOT must be **absolute**: a relative path is resolved per-project, so the
+`COR` package would build into `COR/tmp/build` and the Train link step would not find it.
+The Train target imports the same `COR`
 product from the local `COR` package as PG and the tests, and builds `-O` in both configurations
 (`-Onone` InlineArray code is 10–30× slower). Stdout is line-buffered even when
 redirected, so `tail -f run.log` works and nothing is lost on a kill.
@@ -277,10 +283,11 @@ the reached `--curriculum` level explicitly when continuing an annealed run).
 - **Contracts are append-only**: `Plane`/`Global`, `ActionSpace` indices, and
   `LSTMWeights.spec` — a change invalidates weights and corpora. Re-run `parity` and
   `COR/Tests/PolicyTests` after touching them.
-- **Replay v2 is a hard corpus boundary**: objective and fort configuration are part
-  of the deterministic recipe. Regenerate every v1 corpus; do not combine old teacher
-  demonstrations with v2 data. This format change does not alter PGW1, observations,
-  or action indices, and the bundled `PG/policy.pgw` is not automatically replaced.
+- **The replay version is a hard corpus boundary**: objective, fort configuration,
+  and the roster recipe are part of the deterministic battle recipe. Regenerate every
+  older corpus; do not combine demonstrations across versions. Format changes do not
+  alter PGW1, observations, or action indices, and the bundled `PG/policy.pgw` is not
+  automatically replaced.
 - **MPSGraph autodiff gaps** (macOS 26.5): `split` and `broadcast` have no registered
   gradient, and `gradients(of:with:)` asserts on variables that aren't predecessors of
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via

@@ -9,7 +9,9 @@ struct Replay {
 
 	/// Bump when the recipe changes (factory, `.base` rosters, `TacticalAction`
 	/// layout): stale files are rejected — regeneration is cheap.
-	static let version: UInt16 = 2
+	/// v3: the factory no longer appends seats-1+ rosters (a25d286) —
+	/// `makeSim()` composes the full unit list itself.
+	static let version: UInt16 = 3
 	static let magic: UInt32 = 0x50475250 // "PGRP"
 
 	struct Seat {
@@ -32,8 +34,9 @@ struct Replay {
 extension Replay {
 
 	/// Rebuilds the battle's initial state, identical to what the generator saw.
-	/// The factory appends `.base` rosters for seats 1+ itself; seat 0's roster
-	/// is passed explicitly with the same recipe.
+	/// The factory places exactly the units it is given (app callers compose
+	/// campaign rosters + aux themselves), so every seat's `.base` roster is
+	/// composed here; training battles carry no aux.
 	func makeSim() -> TacticalSim {
 		TacticalSim(
 			players: seats.map { s in
@@ -45,7 +48,7 @@ extension Replay {
 					tier: s.tier
 				)
 			},
-			units: .base(seats[0].country, lvl: seats[0].baseLevel),
+			units: seats.flatMap { s -> [COR.Unit] in .base(s.country, lvl: s.baseLevel) },
 			size: Int(size),
 			seed: Int(seed),
 			objective: objective,
