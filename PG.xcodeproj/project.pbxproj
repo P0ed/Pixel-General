@@ -28,7 +28,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4C8C3E8D3004F1BE0036FB8E /* PG.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = PG.xctestplan; sourceTree = "<group>"; };
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C0B000000000000000000002 /* CORTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CORTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,6 +39,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				PG.xctestplan,
 			);
 			target = 5F919D2B2EA9564A0037A208 /* PG */;
 		};
@@ -115,7 +115,6 @@
 				D0D0000000000000000000A1 /* Train */,
 				C0B000000000000000000003 /* Tests */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,
-				4C8C3E8D3004F1BE0036FB8E /* PG.xctestplan */,
 				5FB297482E79A39000FA039B /* README.md */,
 				5FCB86362E77041800C2C69E /* Products */,
 			);

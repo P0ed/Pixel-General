@@ -20,18 +20,21 @@
 ## Campaign (HoI lite)
 
 - Add next turn action in menu similar to Tactical menu.
+- Make `armies: [4 of Army]` -> `armies: CArray<64, CArray<4, Army>>` keyed by `Country.rawValue`.
+- Army selection same as unit selection in Tactical with cursor and move range displayed by fog layer.
+- Simple AI.
+- - Makes armies, moves and attacks if has 3 to 1 advantage localy.
+- Battle autoresolve option.
+
 - Dynamic diplomacy.
 - - Rename `Country` to `Flag` [or `Tag`?].
 - - Add `struct Country { var flag: Flag, var team: Team }`.
 - - - Bitpack into `rawValue: UInt8`, 64 flags, 4 teams.
 - - - Allow to select a team in new scenario / LAN lobby.
 - - Allow to join a team if current team is `.none`.
+
 - Tier unlock mechanics.
 - - Has enough factories/buildings + fixed cost.
-- Turn scope.
-- - What actions allowed per turn?
-- Battle autoresolve option.
-- Simple AI.
 
 ## Controls
 
