@@ -28,7 +28,7 @@ extension StrategicNodes {
 
 	private func processAttack(_ xy: XY) {
 		guard let scene else { return }
-		core.store(scene.state.sim) // persist the strategic map before the battle
+		core.store(scene.state.sim)
 		core.startCampaignBattle(at: xy)
 		core.save()
 		view.present(.auto)

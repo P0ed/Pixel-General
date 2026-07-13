@@ -52,8 +52,8 @@ extension EditorState {
 		default: nil
 		}
 		if let intent { return .presentation(intent) }
-		guard let action else { return .none }
-		return .action(action)
+		if let action { return .action(action) }
+		return .none
 	}
 
 	mutating func reduce(_ action: EditorAction) -> [EditorEvent] {

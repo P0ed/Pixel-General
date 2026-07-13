@@ -358,9 +358,8 @@ surviving defender or `nil` (a player-driven abandon/draw).
 
 ### Map mode
 
-`TacticalUI.mapMode` (`PG/Tactical/TacticalState.swift`, presentation-only) cycles
-`.terrain` → `.team` → `.supply` → `.country` — team recolors tiles by the
-controlling country's team (axis/allies/soviet); country recolors by the
+`TacticalUI.mapMode` (`PG/Tactical/TacticalState.swift`, presentation-only)
+— team recolors tiles by the controlling country's team; country recolors by the
 controlling `Country` itself (`Country.color` — flag-derived per nation,
 HoI/EU-style, with campaign-map neighbors guaranteed distinct); supply
 shades tiles on a red-to-green gradient by the human player's resupply grade

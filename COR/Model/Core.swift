@@ -3,8 +3,6 @@ public struct Core: ~Copyable {
 	public internal(set) var strategic: StrategicSim?
 	public internal(set) var tactical: TacticalSim?
 	public internal(set) var location: Location = .hq
-	/// The army slot the `.hq` location edits; 0 is the main roster.
-	public internal(set) var army: UInt8 = 0
 
 	public init(
 		hq: consuming HQSim,
@@ -40,42 +38,32 @@ public extension Core {
 	}
 
 	mutating func store(_ sim: borrowing HQSim) {
-		if army > 0 {
-			// Editing an army roster: prestige is shared, units go back
-			// into the campaign slot; the main HQ roster stays untouched.
-			hq.player = sim.player
-			strategic?.setRoster(sim.units, slot: Int(army))
+		if strategic != nil {
+			strategic?.player.prestige = sim.player.prestige
+			strategic?.setRoster(sim.units, slot: sim.army)
 		} else {
 			hq = clone(sim)
 		}
 		location = .hq
 	}
 
-	/// The roster the `.hq` location shows — the main HQ for slot 0, an
-	/// army's campaign roster otherwise (sharing the player's prestige).
-	func hqSim() -> HQSim {
-		if army > 0, let units = strategic?.roster(Int(army)) {
-			return HQSim(player: hq.player, units: units)
-		}
-		return clone(hq)
-	}
-
 	/// Opens an army's roster in the HQ screen.
 	mutating func openArmy(_ slot: Int) {
-		guard location == .strategic, (0 ..< 4).contains(slot) else { return }
-		army = UInt8(slot)
+		guard location == .strategic else { return }
+		hq.army = slot
+		hq.units = strategic!.roster(slot)
 		location = .hq
 	}
 
 	/// Returns from an army roster to the strategic map.
 	mutating func closeArmy() {
-		guard location == .hq, army > 0 else { return }
-		army = 0
+		guard location == .hq else { return }
 		location = .strategic
 	}
 
 	/// Charges end-of-turn army upkeep, clamping at an empty treasury.
 	mutating func payUpkeep(_ cost: UInt16) {
+		// TODO: Move to StrategicSim.reduce
 		hq.player.prestige.decrement(by: cost)
 	}
 
@@ -161,7 +149,6 @@ public extension Core {
 	mutating func startCampaign(_ hq: borrowing HQSim, _ strategic: borrowing StrategicSim) {
 		self.hq = clone(hq)
 		self.strategic = clone(strategic)
-		army = 0
 		location = .strategic
 	}
 
@@ -204,8 +191,9 @@ public extension Core {
 	}
 
 	mutating func goHQ() {
+		// TODO: You only go to the HQ with an army.
+		// `Core.hq` makes no sense on it's own when Core.strategic is non-nil
 		guard location == .strategic else { return }
-		army = 0
 		location = .hq
 	}
 }
