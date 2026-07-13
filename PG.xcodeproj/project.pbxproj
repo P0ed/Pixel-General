@@ -10,6 +10,7 @@
 		4CBA4EDA30029DF600B7D4BF /* COR in Embed Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C0A000000000000000000001 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; };
 		C0A000000000000000000003 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000013 /* COR */; };
+		C0B000000000000000000001 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0B000000000000000000008 /* COR */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,8 +28,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C8C3E8D3004F1BE0036FB8E /* PG.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = PG.xctestplan; sourceTree = "<group>"; };
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		C0B000000000000000000002 /* CORTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CORTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0D0000000000000000000A5 /* Train */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Train; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -56,6 +59,12 @@
 			path = Docs;
 			sourceTree = "<group>";
 		};
+		C0B000000000000000000003 /* Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = Tests;
+			path = COR/Tests;
+			sourceTree = "<group>";
+		};
 		D0D0000000000000000000A1 /* Train */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Train;
@@ -69,6 +78,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A000000000000000000001 /* COR in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0B000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0B000000000000000000001 /* COR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -93,11 +110,13 @@
 		5FCB86272E77041300C2C69E = {
 			isa = PBXGroup;
 			children = (
-				5FB297482E79A39000FA039B /* README.md */,
 				5FD7B4182FE7356A00CA6557 /* Docs */,
 				5FD7B3DE2FE7356600CA6557 /* PG */,
 				D0D0000000000000000000A1 /* Train */,
+				C0B000000000000000000003 /* Tests */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,
+				4C8C3E8D3004F1BE0036FB8E /* PG.xctestplan */,
+				5FB297482E79A39000FA039B /* README.md */,
 				5FCB86362E77041800C2C69E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -106,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				5F919D2C2EA9564A0037A208 /* PG.app */,
+				C0B000000000000000000002 /* CORTests.xctest */,
 				D0D0000000000000000000A5 /* Train */,
 			);
 			name = Products;
@@ -138,6 +158,29 @@
 			productName = Hex;
 			productReference = 5F919D2C2EA9564A0037A208 /* PG.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C0B000000000000000000007 /* CORTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0B00000000000000000000B /* Build configuration list for PBXNativeTarget "CORTests" */;
+			buildPhases = (
+				C0B000000000000000000006 /* Sources */,
+				C0B000000000000000000004 /* Frameworks */,
+				C0B000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C0B000000000000000000003 /* Tests */,
+			);
+			name = CORTests;
+			packageProductDependencies = (
+				C0B000000000000000000008 /* COR */,
+			);
+			productName = CORTests;
+			productReference = C0B000000000000000000002 /* CORTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		D0D0000000000000000000A2 /* Train */ = {
 			isa = PBXNativeTarget;
@@ -174,6 +217,9 @@
 					5F919D2B2EA9564A0037A208 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
+					C0B000000000000000000007 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = 5FCB862B2E77041300C2C69E /* Build configuration list for PBXProject "PG" */;
@@ -195,6 +241,7 @@
 			targets = (
 				5F919D2B2EA9564A0037A208 /* PG */,
 				D0D0000000000000000000A2 /* Train */,
+				C0B000000000000000000007 /* CORTests */,
 			);
 		};
 /* End PBXProject section */
@@ -207,10 +254,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C0B000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5F919D282EA9564A0037A208 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0B000000000000000000006 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -432,6 +493,52 @@
 			};
 			name = Release;
 		};
+		C0B000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = p0.CORTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Debug;
+		};
+		C0B00000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = p0.CORTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Release;
+		};
 		D0D0000000000000000000A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -483,6 +590,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C0B00000000000000000000B /* Build configuration list for PBXNativeTarget "CORTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0B000000000000000000009 /* Debug */,
+				C0B00000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D0D0000000000000000000A6 /* Build configuration list for PBXNativeTarget "Train" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -513,6 +629,11 @@
 			productName = COR;
 		};
 		C0A000000000000000000013 /* COR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;
+			productName = COR;
+		};
+		C0B000000000000000000008 /* COR */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;
 			productName = COR;

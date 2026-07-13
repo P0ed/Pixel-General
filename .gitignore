@@ -1,7 +1,12 @@
 .DS_Store
+
 *.xcuserstate
 *.xcbkptlist
 *.xcodeproj/xcshareddata/*.xcodeproj/xcuserdata/
 *.xcuserdatad/
+
+.build/
+.swiftpm/
+
 build/
 tmp/
