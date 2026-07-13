@@ -1,13 +1,65 @@
-public extension StrategicState {
+import COR
 
-	mutating func apply(_ input: Input) -> StrategicReaction {
+enum StrategicMapMode: UInt8, Hashable {
+	case country, team
+}
+
+struct StrategicUI {
+	var cursor: XY
+	var camera: XY
+	var scale: Int
+	var mapMode: StrategicMapMode
+	var selected: Int?
+	var selectable: SetXY?
+
+	init(
+		cursor: XY = .zero,
+		camera: XY = .zero,
+		scale: Int = 1,
+		mapMode: StrategicMapMode = .country,
+		selected: Int? = nil,
+		selectable: SetXY? = nil
+	) {
+		self.cursor = cursor
+		self.camera = camera
+		self.scale = scale
+		self.mapMode = mapMode
+		self.selected = selected
+		self.selectable = selectable
+	}
+}
+
+struct StrategicState: ~Copyable {
+	var sim: StrategicSim
+	var ui: StrategicUI
+
+	init(sim: consuming StrategicSim, ui: StrategicUI = StrategicUI()) {
+		self.sim = sim
+		self.ui = ui
+	}
+
+	mutating func reduce(_ action: StrategicAction) -> [StrategicEvent] {
+		sim.reduce(action)
+	}
+}
+
+enum StrategicPresentationIntent {
+	case army(Int)
+	case menu
+}
+
+typealias StrategicInputReaction = InputReaction<StrategicAction, StrategicPresentationIntent>
+
+extension StrategicState {
+
+	mutating func apply(_ input: Input) -> StrategicInputReaction {
 		switch input {
 		case .direction(let direction?, modifiers: let modifiers):
 			directionalAction(direction, modifiers: modifiers)
 		case .tile(let xy): select(xy)
 		case .action(let action?, modifiers: let modifiers):
 			buttonAction(action, modifiers: modifiers)
-		case .menu: .events([.menu])
+		case .menu: .presentation(.menu)
 		case .mode: toggleMapMode()
 		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let dxy): handlePan(dxy)
@@ -18,16 +70,16 @@ public extension StrategicState {
 	private mutating func directionalAction(
 		_ direction: Direction,
 		modifiers: InputModifiers
-	) -> StrategicReaction {
+	) -> StrategicInputReaction {
 		if modifiers.contains(.right) { return zoom(direction) }
 		if modifiers.contains(.left) { return moveCamera(direction) }
 		return moveCursor(direction)
 	}
 
 	private mutating func buttonAction(
-		_ action: Action,
+		_ action: InputAction,
 		modifiers: InputModifiers
-	) -> StrategicReaction {
+	) -> StrategicInputReaction {
 		if modifiers.contains(.right) {
 			return switch action {
 			case .b: toggleMapMode()
@@ -42,7 +94,7 @@ public extension StrategicState {
 		}
 	}
 
-	private mutating func zoom(_ direction: Direction) -> StrategicReaction {
+	private mutating func zoom(_ direction: Direction) -> StrategicInputReaction {
 		switch direction {
 		case .up: ui.scale = max(1, ui.scale / 2)
 		case .down: ui.scale = min(4, ui.scale * 2)
@@ -51,25 +103,24 @@ public extension StrategicState {
 		return .none
 	}
 
-	private mutating func moveCamera(_ direction: Direction) -> StrategicReaction {
+	private mutating func moveCamera(_ direction: Direction) -> StrategicInputReaction {
 		ui.camera = ui.camera.neighbor(direction).clamped(sim.owner.size)
 		return .none
 	}
 
-	private mutating func moveCursor(_ direction: Direction) -> StrategicReaction {
+	private mutating func moveCursor(_ direction: Direction) -> StrategicInputReaction {
 		let xy = ui.cursor.neighbor(direction)
 		if sim.owner.contains(xy) { ui.cursor = xy }
 		return .none
 	}
 
-	private mutating func select(_ xy: XY) -> StrategicReaction {
+	private mutating func select(_ xy: XY) -> StrategicInputReaction {
 		guard sim.owner.contains(xy) else { return .none }
 		ui.cursor = xy
 		return primary(at: xy)
 	}
 
-	/// A: order a selected army to march, toggle army selection, or attack.
-	private mutating func primary(at xy: XY) -> StrategicReaction {
+	private mutating func primary(at xy: XY) -> StrategicInputReaction {
 		if let slot = ui.selected {
 			deselect()
 			if let cost = sim.marchCost(by: slot, to: xy), cost > 0 {
@@ -89,14 +140,13 @@ public extension StrategicState {
 		ui.selectable = nil
 	}
 
-	private func build(at xy: XY) -> StrategicReaction {
+	private func build(at xy: XY) -> StrategicInputReaction {
 		sim.canBuild(.fort, at: xy) ? .action(.build(.fort, at: xy)) : .none
 	}
 
-	/// C: open the roster of the army on the tile, or muster a new army.
-	private func army(at xy: XY) -> StrategicReaction {
+	private func army(at xy: XY) -> StrategicInputReaction {
 		if let slot = sim.armyIndex(at: xy) {
-			.events([.army(slot)])
+			.presentation(.army(slot))
 		} else if sim.canFound(at: xy) {
 			.action(.found(xy))
 		} else {
@@ -104,12 +154,12 @@ public extension StrategicState {
 		}
 	}
 
-	private mutating func toggleMapMode() -> StrategicReaction {
+	private mutating func toggleMapMode() -> StrategicInputReaction {
 		ui.mapMode = ui.mapMode == .team ? .country : .team
 		return .none
 	}
 
-	private mutating func handlePan(_ dxy: XY) -> StrategicReaction {
+	private mutating func handlePan(_ dxy: XY) -> StrategicInputReaction {
 		ui.camera = (ui.camera + dxy).clamped(sim.owner.size)
 		return .none
 	}

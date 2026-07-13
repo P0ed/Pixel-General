@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// Generates heuristic-vs-heuristic battles and stores them as replays.
 /// Both seats are driven by the heuristic `run(ai:)` directly (the perf-test

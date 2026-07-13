@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// Shared `--flag value` CLI parsing for the `Train` subcommands: each
 /// command supplies only its option table via `handle`, keeping the

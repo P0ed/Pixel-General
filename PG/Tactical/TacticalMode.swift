@@ -3,8 +3,8 @@ import COR
 
 typealias Unit = COR.Unit
 
-typealias TacticalMode = SceneMode<TacticalState, TacticalAction, TacticalEvent, TacticalNodes>
-typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, TacticalNodes>
+typealias TacticalMode = SceneMode<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
+typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
 
 extension LSTMWeights {
 
@@ -32,6 +32,7 @@ extension TacticalMode {
 			relay: { state, action in net?.relay(state.sim, action) ?? false },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
+			present: { intent, nodes, state in await nodes.present(intent, state) },
 			update: { nodes, state in nodes.update(state) },
 			status: { state in state.status },
 			cameraPosition: { state in state.ui.camera.point },

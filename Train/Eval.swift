@@ -1,4 +1,5 @@
 import Foundation
+import COR
 
 /// `Train eval` — the arena. The pure-Swift `LSTMPolicy` (the exact code path
 /// the app ships) plays the frozen heuristic `run(ai:)`. Each battle config

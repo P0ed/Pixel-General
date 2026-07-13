@@ -1,4 +1,5 @@
 import Foundation
+import COR
 import Metal
 import MetalPerformanceShadersGraph
 

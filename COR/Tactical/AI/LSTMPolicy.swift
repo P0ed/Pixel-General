@@ -14,8 +14,8 @@ public struct LSTMPolicy {
 	public static let maxActionsPerTurn = 256
 
 	let w: LSTMWeights
-	var h = [Float](repeating: 0, count: LSTMWeights.hidden)
-	var c = [Float](repeating: 0, count: LSTMWeights.hidden)
+	public private(set) var h = [Float](repeating: 0, count: LSTMWeights.hidden)
+	public private(set) var c = [Float](repeating: 0, count: LSTMWeights.hidden)
 	var lastTurn = UInt32.max
 	var actionsThisTurn = 0
 
@@ -39,19 +39,19 @@ public struct LSTMPolicy {
 	/// One forward pass's head outputs, for the parity harness (`Train parity`)
 	/// to compare against the MPSGraph model. Heads the chosen kind never ran
 	/// are `nil`.
-	struct Trace {
-		var kind: [Float]
-		var actor: [Float]?
-		var target: [Float]?
-		var slot: [Float]?
-		var actorTile = -1
+	public struct Trace {
+		public var kind: [Float]
+		public var actor: [Float]?
+		public var target: [Float]?
+		public var slot: [Float]?
+		public var actorTile = -1
 	}
 
 	/// `action(for:)` plus the trace; the trace is `nil` only on the
 	/// runaway-turn guard, where no forward pass runs. `select` picks the
 	/// index at every head — masked argmax for play, masked sampling in the
 	/// RL trainer; whatever it returns must respect the mask.
-	mutating func traced(
+	public mutating func traced(
 		for sim: borrowing TacticalSim,
 		select: ([Float], [Bool]) -> Int? = LSTMPolicy.argmax
 	) -> (TacticalAction, Trace?) {
@@ -234,7 +234,7 @@ public struct LSTMPolicy {
 	}
 
 	/// Index of the maximum logit among set mask bits; `nil` if none is set.
-	static func argmax(_ logits: [Float], _ mask: [Bool]) -> Int? {
+	public static func argmax(_ logits: [Float], _ mask: [Bool]) -> Int? {
 		var best: Int?
 		for i in logits.indices where mask[i] {
 			if let b = best, logits[b] >= logits[i] { continue }

@@ -77,7 +77,7 @@ struct TacticalPerformanceTests {
 
 		let secs = totalDuration.seconds
 		unsafe print("""
-		── TacticalMode AI-battle performance ──
+		── TacticalSim AI-battle performance ──
 		  match-up:      \(Self.countries.map(String.init(describing:)).joined(separator: " vs "))
 		  map:           \(Self.mapSize)×\(Self.mapSize), \(Self.runs) runs
 		  resolved:      \(resolvedCount)/\(Self.runs)

@@ -10,9 +10,14 @@ extension TacticalNodes {
 		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp, state: state)
 		case let .update(id): update(id, state)
 		case .ruggedDefence: sounds.ruggedDefence.play()
+		case .end: endGame(state)
+		}
+	}
+
+	func present(_ intent: TacticalPresentationIntent, _ state: borrowing TacticalState) async {
+		switch intent {
 		case .shop: processShop(state)
 		case .menu: processMenu(state)
-		case .end: endGame(state)
 		}
 	}
 

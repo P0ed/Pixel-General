@@ -1,8 +1,8 @@
 import Foundation
+import COR
 
 // Train — headless data-generation / training CLI for the LSTM AI.
-// Compiles the COR sources directly (a macOS tool cannot link the Catalyst
-// framework), so internal core symbols are visible without `@testable`.
+// Consumes the same local GameCore package product as the app and tests.
 // See Docs/LSTM-AI.md.
 
 // Line-buffer stdout even when redirected to a file, so long runs

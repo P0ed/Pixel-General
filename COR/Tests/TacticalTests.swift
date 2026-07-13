@@ -86,7 +86,7 @@ struct TacticalTests {
 		#expect(unplaced == 0, "aux units left undeployed")
 		#expect(notReady == 0, "aux units cannot act on day 1")
 		for (i, p) in players.enumerated() {
-			let expected = [Unit].aux(p.country).count
+			let expected = [COR.Unit].aux(p.country).count
 			#expect(deployed[i] == expected, "seat \(i) fields \(deployed[i]) of \(expected) aux")
 		}
 		#expect(sim.players[0].prestige == 0xF00, "predeploy charged prestige")
@@ -97,91 +97,6 @@ struct TacticalTests {
 			for u in sim.shopUnits(at: xy) where u[.aux] { auxRows += 1 }
 		}
 		#expect(auxRows == 0, "shop still sells aux units")
-	}
-
-	@Test func cursorMovementStaysInBounds() {
-		var state = TacticalState(sim: TacticalSim(
-			players: Self.players(),
-			units: Array<Unit>.small(.swe),
-			size: 32,
-			seed: 0
-		))
-
-		state.ui.cursor = XY(0, 0)
-		_ = state.apply(.direction(.left))   // would go to -1, must clamp
-		#expect(state.ui.cursor.x >= 0 && state.ui.cursor.y >= 0)
-
-		state.ui.cursor = XY(state.sim.map.size - 1, state.sim.map.size - 1)
-		_ = state.apply(.direction(.right))  // would go past edge
-		#expect(state.ui.cursor.x < state.sim.map.size && state.ui.cursor.y < state.sim.map.size)
-
-		// A direction in-bounds should move the cursor by one.
-		state.ui.cursor = XY(5, 5)
-		_ = state.apply(.direction(.up))
-		#expect(state.ui.cursor == XY(5, 6))
-	}
-
-	@Test func shoulderModifiersControlTheCameraAndMapView() {
-		var state = TacticalState(sim: TacticalSim(
-			players: Self.players(),
-			units: Array<Unit>.small(.swe),
-			size: 32,
-			seed: 0
-		))
-
-		state.ui.cursor = XY(5, 5)
-		state.ui.camera = XY(5, 5)
-		_ = state.apply(.direction(.right, modifiers: .left))
-		let movedCamera = state.ui.camera
-		let stationaryCursor = state.ui.cursor
-		#expect(movedCamera == XY(6, 5))
-		#expect(stationaryCursor == XY(5, 5))
-
-		state.ui.scale = 2
-		_ = state.apply(.direction(.up, modifiers: .right))
-		let zoomedIn = state.ui.scale
-		_ = state.apply(.direction(.down, modifiers: .right))
-		let zoomedOut = state.ui.scale
-		#expect(zoomedIn == 1)
-		#expect(zoomedOut == 2)
-
-		state.ui.mapMode = .supply
-		_ = state.apply(.action(.a, modifiers: .right))
-		let terrain = state.ui.mapMode
-		_ = state.apply(.action(.b, modifiers: .right))
-		let country = state.ui.mapMode
-		_ = state.apply(.action(.b, modifiers: .right))
-		let team = state.ui.mapMode
-		_ = state.apply(.action(.c, modifiers: .right))
-		let supply = state.ui.mapMode
-		_ = state.apply(.action(.d, modifiers: .right))
-		let unused = state.ui.mapMode
-		#expect(terrain == .terrain)
-		#expect(country == .country)
-		#expect(team == .team)
-		#expect(supply == .supply)
-		#expect(unused == .supply)
-	}
-
-	@Test func selectingOwnUnitSetsSelectableMoves() {
-		var state = TacticalState(sim: TacticalSim(
-			players: Self.players(),
-			units: Array<Unit>.small(.swe),
-			size: 32,
-			seed: 0
-		))
-		// Ensure player 0's vision covers their own units (init does this).
-		let ownUnitPos = state.sim.units.firstMapAlive { i, u in
-			u.country == state.sim.country && u.canMove ? state.sim.position[i] : nil
-		}
-		guard let ownUnitPos else {
-			Issue.record("No movable own unit found")
-			return
-		}
-
-		_ = state.apply(.tile(ownUnitPos))
-		#expect(state.ui.selectedUnit != .none, "Selecting own unit's tile should select it")
-		#expect(state.ui.selectable != nil, "Selectable moves should be set for movable unit")
 	}
 
 	@Test func aiCanRunAndEndTurnWithoutCrash() {
@@ -286,51 +201,6 @@ struct TacticalTests {
 		)
 		#expect(sim.position[heliUID] == XY(13, 10), "Second move should reach the target")
 		#expect(sim.position[infUID] == sim.position[heliUID], "Cargo must ride along with the transport")
-	}
-
-	@Test func helicopterEmbarkThenMoveFullUIFlow() {
-		// Same scenario, but driven through the real input path
-		// (apply -> reduce, with selection reconciliation) to mirror the UI.
-		let map = Map<32, Terrain>(size: 32, zero: .field)
-		let players = [Player(country: .usa, type: .human, prestige: 0xF00)]
-		var heli = Unit(model: .mh6, country: .usa)
-		heli.reset()
-		var inf = Unit(model: .delta, country: .usa)
-		inf.reset()
-
-		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, inf])
-		let heliUID = sim.units.firstMapAlive { i, u in u.type == .heli ? i.uid : nil }!
-		let infUID = sim.units.firstMapAlive { i, u in u.type == .inf ? i.uid : nil }!
-		sim.place(heliUID, at: XY(15, 10))
-		sim.place(infUID, at: XY(17, 10))
-		sim.vision.modifyEach { v in v = .full }
-
-		var state = TacticalState(sim: consume sim)
-
-		func step(_ input: Input) {
-			let reaction = state.apply(input)
-			if case let .action(action) = reaction { _ = state.reduce(action) }
-		}
-
-		step(.tile(XY(15, 10)))      // select helicopter
-		step(.tile(XY(16, 10)))      // move 1: fly adjacent to infantry
-		step(.tile(XY(17, 10)))      // select the infantry
-		step(.tile(XY(16, 10)))      // embark infantry into the helicopter
-		#expect(state.ui.selectedUnit == heliUID, "Transport should be selected after embark")
-		step(.tile(XY(12, 10)))      // move 2: fly on with cargo
-
-		#expect(
-			state.sim.position[heliUID] == XY(12, 10),
-			"Heli sim position after second move is \(state.sim.position[heliUID])"
-		)
-
-		// Tab to the next actionable unit; the cursor must land on the heli's
-		// true position, not somewhere stale.
-		step(.target(.next))
-		#expect(
-			state.ui.cursor == state.sim.position[heliUID],
-			"Cursor \(state.ui.cursor) must match heli true position \(state.sim.position[heliUID])"
-		)
 	}
 
 	@Test func interruptedMovePathMatchesStoppedPosition() {

@@ -26,6 +26,8 @@ public enum AI {
 			case attack		// ground unit pushing to capture a settlement
 			case support	// supply trailing the main force
 		}
+
+		public init() {}
 	}
 
 	public static var heuristic: (borrowing TacticalSim) -> TacticalAction? {
@@ -55,7 +57,7 @@ extension TacticalSim {
 	/// One AI action. The plan is rebuilt whenever the turn changes; the
 	/// generators below then translate that plan into a single concrete action,
 	/// applied in priority order: spend money, patch up, shoot, ferry, manoeuvre.
-	func run(ai: inout AI.Plan) -> TacticalAction {
+	public func run(ai: inout AI.Plan) -> TacticalAction {
 		preplan(&ai)
 		if ai.turn != turn { plan(&ai) }
 

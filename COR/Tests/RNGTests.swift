@@ -71,8 +71,8 @@ struct RNGTests {
 	@Test func damageCurveTable() throws {
 		// The tuning view of the curve: the exact per-round damage distribution
 		// for each `dif`, derived from `Duel.thresholds` (faces of the d20 above
-		// each threshold — no dice involved). Written to `tmp/damage-curve.md`
-		// so a threshold tweak in `Duel` shows up as a table diff.
+		// each threshold — no dice involved). Written to the repository-level
+		// `tmp/damage-curve.md` so a threshold tweak in `Duel` shows up as a table diff.
 		var md = """
 		# Duel damage curve
 
@@ -107,6 +107,7 @@ struct RNGTests {
 		}
 
 		let url = URL(fileURLWithPath: #filePath)
+			.deletingLastPathComponent()
 			.deletingLastPathComponent()
 			.deletingLastPathComponent()
 			.appendingPathComponent("tmp/damage-curve.md")

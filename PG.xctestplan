@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "41947F45-6A67-4F83-BCA8-FDDA01D29F24",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:PG.xcodeproj",
+      "identifier" : "5F919D2B2EA9564A0037A208",
+      "name" : "PG"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:PG.xcodeproj",
+        "identifier" : "C0B000000000000000000007",
+        "name" : "CORTests"
+      }
+    }
+  ],
+  "version" : 1
+}

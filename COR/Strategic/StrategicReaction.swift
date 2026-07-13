@@ -1,5 +1,3 @@
-public typealias StrategicReaction = Reaction<StrategicAction, StrategicEvent>
-
 @frozen public enum StrategicAction {
 	/// Launch an offensive against the enemy province at `XY`.
 	case attack(XY)
@@ -19,9 +17,6 @@ public typealias StrategicReaction = Reaction<StrategicAction, StrategicEvent>
 	case found(XY)
 	/// Prestige owed for armies beyond the first, charged at end of turn.
 	case upkeep(UInt16)
-	/// Open the army slot's roster in HQ. Emitted by the input layer only.
-	case army(Int)
-	case menu
 }
 
 public extension StrategicSim {
@@ -67,15 +62,5 @@ public extension StrategicSim {
 			upkeep += Army.upkeep(slot: i)
 		}
 		if upkeep > 0 { events.append(.upkeep(upkeep)) }
-	}
-}
-
-extension StrategicState {
-
-	/// Mirrors `TacticalState.reduce`: the mode always reduces through `State`,
-	/// which delegates the deterministic mutation to `sim`. Strategic has no UI
-	/// to reconcile afterwards.
-	public mutating func reduce(_ action: StrategicAction) -> [StrategicEvent] {
-		sim.reduce(action)
 	}
 }

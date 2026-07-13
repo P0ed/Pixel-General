@@ -3,8 +3,8 @@ import AVFAudio
 import UIKit
 import COR
 
-final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
-	let mode: SceneMode<State, Action, Event, Nodes>
+final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: SKScene {
+	let mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>
 	private let hid = HIDController()
 
 	private var processing = false
@@ -21,7 +21,7 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 	private var enterBackground: Any?
 	private var panRecognizer: UIPanGestureRecognizer?
 
-	init(mode: SceneMode<State, Action, Event, Nodes>, state: consuming State, size: CGSize = .scene) {
+	init(mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>, state: consuming State, size: CGSize = .scene) {
 		self.state = state
 		self.mode = mode
 		super.init(size: size)
@@ -109,21 +109,35 @@ final class Scene<State: ~Copyable, Action, Event, Nodes>: SKScene {
 		react(.action(action))
 	}
 
-	private func react(_ reaction: Reaction<Action, Event>) {
+	private func react(_ reaction: InputReaction<Action, PresentationIntent>) {
 		guard let nodes, !processing else { return }
-		processing = true
-		let events: [Event] = switch reaction {
-		case .action(let action): mode.relay(state, action) ? [] : mode.reduce(&state, action)
-		case .events(let events): events
-		}
-		Task {
-			for event in events {
-				await mode.process(event, nodes, state)
-			}
-			processing = false
+
+		switch reaction {
+		case .none:
 			didSetState()
 			advance()
+		case .action(let action):
+			processing = true
+			let events = mode.relay(state, action) ? [] : mode.reduce(&state, action)
+			Task {
+				for event in events {
+					await mode.process(event, nodes, state)
+				}
+				finishReaction()
+			}
+		case .presentation(let intent):
+			processing = true
+			Task {
+				await mode.present(intent, nodes, state)
+				finishReaction()
+			}
 		}
+	}
+
+	private func finishReaction() {
+		processing = false
+		didSetState()
+		advance()
 	}
 
 	/// Also poked by `NetSession` when actions arrive over the wire.
