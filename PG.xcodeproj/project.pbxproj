@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4CBA4EDA30029DF600B7D4BF /* COR in Embed Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C0A000000000000000000001 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; };
 		C0A000000000000000000002 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000012 /* COR */; };
 		C0A000000000000000000003 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000013 /* COR */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		5FD7B33D2FE7348E00CA6557 /* PBXContainerItemProxy */ = {
+		4CBA4EE03002A0B500B7D4BF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5FCB86282E77041300C2C69E /* Project object */;
 			proxyType = 1;
@@ -21,6 +22,30 @@
 			remoteInfo = PG;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4CBA4EDB30029DF600B7D4BF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				4CBA4EDA30029DF600B7D4BF /* COR in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4CBA4EDD30029E1400B7D4BF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -139,10 +164,12 @@
 				5F919D282EA9564A0037A208 /* Sources */,
 				5F919D292EA9564A0037A208 /* Frameworks */,
 				5F919D2A2EA9564A0037A208 /* Resources */,
+				4CBA4EDB30029DF600B7D4BF /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4CBA4EE33002A16F00B7D4BF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5FD7B3DE2FE7356600CA6557 /* PG */,
@@ -162,11 +189,13 @@
 				5FD7B3252FE7337F00CA6557 /* Sources */,
 				5FD7B3262FE7337F00CA6557 /* Frameworks */,
 				5FD7B3272FE7337F00CA6557 /* Resources */,
+				4CBA4EDD30029E1400B7D4BF /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				5FD7B33E2FE7348E00CA6557 /* PBXTargetDependency */,
+				4CBA4EE13002A0B500B7D4BF /* PBXTargetDependency */,
+				4CBA4EDF3002A0A100B7D4BF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5FD7B32A2FE7337F00CA6557 /* Tests */,
@@ -216,6 +245,7 @@
 					};
 					5FD7B3282FE7337F00CA6557 = {
 						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 5F919D2B2EA9564A0037A208;
 					};
 				};
 			};
@@ -285,10 +315,18 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		5FD7B33E2FE7348E00CA6557 /* PBXTargetDependency */ = {
+		4CBA4EDF3002A0A100B7D4BF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 4CBA4EDE3002A0A100B7D4BF /* COR */;
+		};
+		4CBA4EE13002A0B500B7D4BF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5F919D2B2EA9564A0037A208 /* PG */;
-			targetProxy = 5FD7B33D2FE7348E00CA6557 /* PBXContainerItemProxy */;
+			targetProxy = 4CBA4EE03002A0B500B7D4BF /* PBXContainerItemProxy */;
+		};
+		4CBA4EE33002A16F00B7D4BF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 4CBA4EE23002A16F00B7D4BF /* COR */;
 		};
 /* End PBXTargetDependency section */
 
@@ -494,7 +532,6 @@
 		5FD7B3312FE7337F00CA6557 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -503,15 +540,14 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				TARGETED_DEVICE_FAMILY = 2;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PG.app/PG";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PG.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PG";
 				XROS_DEPLOYMENT_TARGET = 26.5;
 			};
 			name = Debug;
@@ -519,7 +555,6 @@
 		5FD7B3322FE7337F00CA6557 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -528,15 +563,14 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = p0.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				TARGETED_DEVICE_FAMILY = 2;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PG.app/PG";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PG.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PG";
 				XROS_DEPLOYMENT_TARGET = 26.5;
 			};
 			name = Release;
@@ -620,6 +654,16 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4CBA4EDE3002A0A100B7D4BF /* COR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;
+			productName = COR;
+		};
+		4CBA4EE23002A16F00B7D4BF /* COR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;
+			productName = COR;
+		};
 		C0A000000000000000000011 /* COR */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;

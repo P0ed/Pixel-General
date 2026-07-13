@@ -162,6 +162,9 @@ private enum Help {
 	Battles feed a strategic campaign across Europe: a persistent roster of \
 	veterans carries forward from fight to fight, growing in strength — and \
 	that you can later stake against other commanders in multiplayer.
+
+	Made by Konstantin Sukharev
+	poed@me.com
 	"""
 
 	static let controls = """
