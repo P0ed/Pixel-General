@@ -31,8 +31,9 @@ extension StrategicState {
 			text: .makeStatus(pad: 12) { add in
 				add("\(sim.owner[xy])")
 				add("day: \(sim.turn + 1)")
-				if let slot = sim.armyIndex(at: xy) {
-					add("\(unitCount(slot))/16 mp \(sim.armies[slot].mp)")
+				if let army = sim.army(at: xy) {
+					let fieldArmy = sim.army(army)
+					add("\(army.country) \(unitCount(army))/16 mp \(fieldArmy.mp)")
 				}
 				guard sim.owner[xy] != .none else { return }
 				for t in BuildingType.allCases where province[t] > 0 {
@@ -44,25 +45,33 @@ extension StrategicState {
 	}
 
 	/// Alive units in an army slot.
-	private func unitCount(_ slot: Int) -> Int {
-		sim.armies[slot].units.reduce(into: 0) { n, u in n += u.alive ? 1 : 0 }
+	private func unitCount(_ army: ArmyID) -> Int {
+		sim.roster(army.index, for: army.country).reduce(into: 0) { n, unit in
+			n += unit.alive ? 1 : 0
+		}
 	}
 
 	private var actionHint: String {
 		let xy = ui.cursor
 		var hints: [String] = []
-		if let slot = ui.selected, let cost = sim.marchCost(by: slot, to: xy), cost > 0 {
-			hints.append("A: move (\(cost))")
-		} else if sim.canAttack(xy) {
+		if let army = ui.selected,
+			army.country == sim.player.country,
+			sim.canAttack(xy, with: army)
+		{
 			hints.append("A: attack")
-		} else if sim.armyIndex(at: xy) != nil {
+		} else if let army = ui.selected,
+			army.country == sim.player.country,
+			let cost = sim.marchCost(by: army.index, to: xy), cost > 0
+		{
+			hints.append("A: move (\(cost))")
+		} else if sim.army(at: xy) != nil {
 			hints.append("A: select")
 		}
 		if sim.canBuild(.fort, at: xy) {
 			hints.append("B: fortify (\(sim.buildingCost(.fort, above: sim.provinces[xy][.fort], at: xy)))")
 		}
-		if let slot = sim.armyIndex(at: xy) {
-			hints.append("C: army \(slot + 1)")
+		if let army = sim.army(at: xy), army.country == sim.player.country {
+			hints.append("C: army \(army.index + 1)")
 		} else if sim.canFound(at: xy) {
 			hints.append("C: found army")
 		}

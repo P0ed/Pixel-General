@@ -8,6 +8,7 @@ import Foundation
 /// `StrategicSim` is noncopyable, so every value read by `#expect` is hoisted
 /// into a local first — the macro captures its expression and would otherwise
 /// require `Copyable`.
+@MainActor
 struct StrategicTests {
 
 	/// Finds an enemy `target`-owned tile that borders a `human`-owned tile —
@@ -40,13 +41,40 @@ struct StrategicTests {
 			for i in 0 ..< n4.count {
 				let n = n4[i]
 				if sim.owner.contains(n), sim.owner[n] == sim.player.country {
-					sim.armies[0].position = n
-					sim.armies[0].mp = Army.moveSpeed
+					sim.armies[Int(sim.player.country.rawValue)][0].position = n
+					sim.armies[Int(sim.player.country.rawValue)][0].mp = Army.moveSpeed
 					return xy
 				}
 			}
 		}
 		return nil
+	}
+
+	private static func infantry(_ country: Country) -> COR.Unit {
+		modifying(COR.Unit(model: .regular, country: country)) { unit in unit.reset() }
+	}
+
+	private static func borderSim(russianUnits: Int) -> StrategicSim {
+		var owner = Map<32, Country>(size: 32, zero: .none)
+		owner[XY(1, 1)] = .fin
+		owner[XY(2, 1)] = .rus
+		var sim = StrategicSim(
+			owner: owner,
+			player: Player(country: .fin, type: .human)
+		)
+		let fin = Int(Country.fin.rawValue)
+		let rus = Int(Country.rus.rawValue)
+		sim.armies[fin][0].active = true
+		sim.armies[fin][0].position = XY(1, 1)
+		sim.armies[fin][0].mp = Army.moveSpeed
+		sim.armies[fin][0].units[0] = infantry(.fin)
+		sim.armies[rus][0].active = true
+		sim.armies[rus][0].position = XY(2, 1)
+		sim.armies[rus][0].mp = Army.moveSpeed
+		for index in 0 ..< russianUnits {
+			sim.armies[rus][0].units[index] = infantry(.rus)
+		}
+		return sim
 	}
 
 	@Test func europeFactoryParsesMap() {
@@ -286,7 +314,7 @@ struct StrategicTests {
 
 	@Test func armyMovesThroughOwnLandWithinRange() {
 		var sim = StrategicSim.europe(country: .fin)
-		let start = sim.armies[0].position
+		let start = sim.armies[Int(Country.fin.rawValue)][0].position
 		let range = sim.reachable(by: 0)
 
 		var reachCount = 0
@@ -309,8 +337,8 @@ struct StrategicTests {
 			return
 		}
 		let events = sim.reduce(.move(0, oneStep))
-		let position = sim.armies[0].position
-		let mp = sim.armies[0].mp
+		let position = sim.armies[Int(Country.fin.rawValue)][0].position
+		let mp = sim.armies[Int(Country.fin.rawValue)][0].mp
 		#expect(events.count == 1)
 		#expect(position == oneStep)
 		#expect(mp == Army.moveSpeed - 1, "one step should cost one mp")
@@ -321,7 +349,7 @@ struct StrategicTests {
 		}
 		if let farAway {
 			let denied = sim.reduce(.move(0, farAway))
-			let held = sim.armies[0].position
+			let held = sim.armies[Int(Country.fin.rawValue)][0].position
 			#expect(denied.isEmpty, "out-of-range move emitted an event")
 			#expect(held == oneStep, "out-of-range move happened")
 		}
@@ -340,7 +368,7 @@ struct StrategicTests {
 			return
 		}
 
-		let occupied = sim.canFound(at: sim.armies[0].position)
+		let occupied = sim.canFound(at: sim.armies[Int(Country.fin.rawValue)][0].position)
 		#expect(!occupied, "founding on top of an army allowed")
 
 		for i in 0 ..< 3 {
@@ -370,15 +398,15 @@ struct StrategicTests {
 		_ = sim.reduce(.found(tile))
 		// An empty roster disbands at end of turn before charging upkeep.
 		quiet = sim.reduce(.endTurn)
-		let disbanded = !sim.armies[1].active
+		let disbanded = !sim.armies[Int(Country.fin.rawValue)][1].active
 		#expect(quiet.count == 1)
 		#expect(disbanded, "an empty army survived the turn")
 
 		_ = sim.reduce(.found(tile))
-		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		sim.armies[Int(Country.fin.rawValue)][1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
 		let prestige = sim.player.prestige
 		let events = sim.reduce(.endTurn)
-		let mp = sim.armies[1].mp
+		let mp = sim.armies[Int(Country.fin.rawValue)][1].mp
 		let remaining = sim.player.prestige
 		#expect(mp == Army.moveSpeed, "endTurn should restore movement")
 		#expect(remaining == prestige - Army.upkeep(slot: 1), "the reducer did not charge upkeep")
@@ -386,6 +414,76 @@ struct StrategicTests {
 		} else {
 			Issue.record("expected an .endTurn event")
 		}
+	}
+
+	@Test func armiesAreStoredByCountryRawValue() {
+		let sim = StrategicSim.europe(country: .fin)
+		let fin = Int(Country.fin.rawValue)
+		let rus = Int(Country.rus.rawValue)
+		let countryBuckets = sim.armies.count
+		let slots = sim.armies[rus].count
+		let humanMain = sim.armies[fin][0]
+		let russianMain = sim.armies[rus][0]
+
+		#expect(countryBuckets == 64)
+		#expect(slots == 4)
+		#expect(humanMain.active && sim.owner[humanMain.position] == .fin)
+		#expect(russianMain.active && sim.owner[russianMain.position] == .rus)
+		#expect(russianMain.strength > 0, "AI main army did not receive a roster")
+	}
+
+	@Test func strategicAIRequiresThreeToOneLocalAdvantage() {
+		var twoToOne = Self.borderSim(russianUnits: 2)
+		twoToOne.runStrategicAI()
+		let held = twoToOne.owner[XY(1, 1)]
+		#expect(held == .fin, "AI attacked below the required 3:1 advantage")
+
+		var threeToOne = Self.borderSim(russianUnits: 3)
+		threeToOne.runStrategicAI()
+		let captured = threeToOne.owner[XY(1, 1)]
+		let attacker = threeToOne.armies[Int(Country.rus.rawValue)][0]
+		#expect(captured == .rus, "AI did not take a battle at exactly 3:1")
+		#expect(attacker.position == XY(1, 1))
+	}
+
+	@Test func strategicAIMustersAndMovesArmies() {
+		var owner = Map<32, Country>(size: 32, zero: .none)
+		owner[XY(1, 1)] = .rus
+		owner[XY(2, 1)] = .rus
+		owner[XY(3, 1)] = .rus
+		owner[XY(4, 1)] = .fin
+		var sim = StrategicSim(
+			owner: owner,
+			player: Player(country: .fin, type: .human)
+		)
+		let rus = Int(Country.rus.rawValue)
+		sim.armies[rus][0].active = true
+		sim.armies[rus][0].position = XY(1, 1)
+		sim.armies[rus][0].mp = Army.moveSpeed
+		sim.armies[rus][0].units[0] = Self.infantry(.rus)
+
+		sim.runStrategicAI()
+
+		let main = sim.armies[rus][0]
+		let second = sim.armies[rus][1]
+		#expect(second.active && second.strength > 0, "AI did not muster a free army slot")
+		#expect(main.position != XY(1, 1), "AI main army did not advance toward enemy land")
+	}
+
+	@Test func campaignBattleCanAutoresolveWithoutTacticalState() {
+		var sim = Self.borderSim(russianUnits: 1)
+		let fin = Int(Country.fin.rawValue)
+		sim.armies[fin][0].units[1] = Self.infantry(.fin)
+		let result = sim.autoResolveAttack(
+			at: XY(2, 1),
+			by: ArmyID(country: .fin, slot: 0)
+		)
+		let owner = sim.owner[XY(2, 1)]
+		let mp = sim.armies[fin][0].mp
+		#expect(result == true)
+		#expect(owner == .fin)
+		#expect(mp == 0)
+		#expect(sim.battle == nil)
 	}
 
 	@Test func startCampaignMakesStrategicMainRosterAuthoritative() {
@@ -412,7 +510,7 @@ struct StrategicTests {
 	@Test func campaignHQEditsAnyArmyIncludingSlotZero() {
 		var strategic = StrategicSim.europe(country: .fin)
 		strategic.player.prestige = 900
-		strategic.armies[0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		strategic.armies[Int(Country.fin.rawValue)][0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
 		var core = Core.new(country: .ger)
 		core.store(strategic)
 
@@ -447,34 +545,58 @@ struct StrategicTests {
 		sim.battle = target
 		sim.battleArmy = 0
 		sim.resolveBattle(at: target, won: true, by: .fin)
-		let position = sim.armies[0].position
+		let position = sim.armies[Int(Country.fin.rawValue)][0].position
 		let cleared = sim.battleArmy == 0
 		#expect(position == target, "winning army did not advance")
 		#expect(cleared)
 	}
 
-	@Test func auxReinforcementJoinsFromNearbyArmy() {
+	@Test func nearbyArmyProvidesTheDefendingCoreForce() {
 		var sim = StrategicSim.europe(country: .fin)
 		guard let target = Self.stageAttack(&sim) else {
 			Issue.record("no border tile to contest")
 			return
 		}
 		// A manned second army right next to the contested tile.
-		sim.armies[1].active = true
-		sim.armies[1].position = sim.armies[0].position
-		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
-		sim.armies[1].units[1] = modifying(Unit(model: .truck, country: .fin)) { u in u.reset() }
+		sim.armies[Int(Country.fin.rawValue)][1].active = true
+		sim.armies[Int(Country.fin.rawValue)][1].position = sim.armies[Int(Country.fin.rawValue)][0].position
+		sim.armies[Int(Country.fin.rawValue)][1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		sim.armies[Int(Country.fin.rawValue)][1].units[1] = modifying(Unit(model: .truck, country: .fin)) { u in u.reset() }
 
-		let joined = sim.reinforcement(for: .fin, near: target)
-		#expect(joined.count == 2, "nearby army did not reinforce")
-		#expect(joined.allSatisfy { $0[.aux] }, "reinforcements not marked aux")
+		let defendingArmy = sim.defendingArmy(for: .fin, near: target)
+		let joined = sim.defendingCore(for: .fin, near: target)
+		#expect(defendingArmy?.index == 1)
+		#expect(joined.count == 2, "nearby army did not provide the core force")
+		#expect(joined.allSatisfy { !$0[.aux] }, "defending army was incorrectly marked auxiliary")
 
-		let foreign = sim.reinforcement(for: .rus, near: target)
-		#expect(foreign.isEmpty, "reinforced a country without armies")
+		let foreign = sim.defendingCore(for: .rus, near: target)
+		#expect(foreign.isEmpty, "selected an army outside defence range")
 
-		sim.armies[1].position = XY(0, 0)
-		let tooFar = sim.reinforcement(for: .fin, near: target)
-		#expect(tooFar.isEmpty, "army beyond auxJoinRange reinforced")
+		sim.armies[Int(Country.fin.rawValue)][1].position = XY(0, 0)
+		let tooFar = sim.defendingCore(for: .fin, near: target)
+		#expect(tooFar.isEmpty, "army beyond defence range joined")
+	}
+
+	@Test func defendingCoreSurvivorsReturnToTheirArmy() {
+		let target = XY(2, 1)
+		var core = Core.new(country: .ger)
+		core.store(Self.borderSim(russianUnits: 2))
+		core.startCampaignBattle(at: target)
+		var battle = clone(core.tactical!)
+		let russianCore = battle.units.reduceAlive(into: [] as [Int]) { result, index, unit in
+			if unit.country == .rus, !unit[.aux] { result.append(index) }
+		}
+		#expect(russianCore.count == 2, "defending army was not fielded as the core force")
+		guard let casualty = russianCore.first else { return }
+		battle.units[casualty].hp = 0
+
+		core.complete(battle)
+
+		let campaign = clone(core.strategic!)
+		let survivors = campaign.roster(0, for: .rus).reduce(into: 0) { count, unit in
+			count += unit.alive ? 1 : 0
+		}
+		#expect(survivors == 1, "defending core casualties were not written back")
 	}
 
 	@Test func campaignBattleFieldsTheAttackingArmyRoster() {
@@ -485,12 +607,12 @@ struct StrategicTests {
 		}
 		// Park a manned second army next to the target and exhaust the main
 		// army so slot 1 is the attacker.
-		sim.armies[0].mp = 0
-		sim.armies[1].active = true
-		sim.armies[1].mp = Army.moveSpeed
-		sim.armies[1].position = sim.armies[0].position
-		sim.armies[0].position = XY(0, 0)
-		sim.armies[1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		sim.armies[Int(Country.fin.rawValue)][0].mp = 0
+		sim.armies[Int(Country.fin.rawValue)][1].active = true
+		sim.armies[Int(Country.fin.rawValue)][1].mp = Army.moveSpeed
+		sim.armies[Int(Country.fin.rawValue)][1].position = sim.armies[Int(Country.fin.rawValue)][0].position
+		sim.armies[Int(Country.fin.rawValue)][0].position = XY(0, 0)
+		sim.armies[Int(Country.fin.rawValue)][1].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
 		sim.player.tier = 2
 
 		// Deliberately give Core.hq a different country: once a campaign is
@@ -516,7 +638,7 @@ struct StrategicTests {
 			Issue.record("no border tile to contest")
 			return
 		}
-		sim.armies[0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
+		sim.armies[Int(Country.fin.rawValue)][0].units[0] = modifying(Unit(model: .regular, country: .fin)) { u in u.reset() }
 
 		var core = Core.new(country: .ger)
 		core.store(sim)

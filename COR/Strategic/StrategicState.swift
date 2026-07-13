@@ -5,7 +5,8 @@ public struct StrategicSim: ~Copyable {
 	public var terrain: Map<32, Terrain>
 	public var provinces: Map<32, Province>
 	public var player: Player
-	public var armies: [4 of Army]
+	/// Four army slots for each possible `Country.rawValue`.
+	public var armies: CArray<64, CArray<4, Army>>
 	public var turn: UInt32
 	public var battle: XY?
 	public var battleArmy: UInt8
@@ -15,7 +16,7 @@ public struct StrategicSim: ~Copyable {
 		terrain: consuming Map<32, Terrain> = Map(size: 32, zero: .field),
 		provinces: consuming Map<32, Province> = Map(size: 32, zero: Province()),
 		player: Player,
-		armies: [4 of Army] = .init(repeating: Army()),
+		armies: consuming CArray<64, CArray<4, Army>> = StrategicSim.emptyArmies(),
 		turn: UInt32 = 0,
 		battle: XY? = nil,
 		battleArmy: UInt8 = 0
@@ -28,6 +29,47 @@ public struct StrategicSim: ~Copyable {
 		self.turn = turn
 		self.battle = battle
 		self.battleArmy = battleArmy
+	}
+
+	public static func emptyArmies() -> CArray<64, CArray<4, Army>> {
+		let countries: [64 of CArray<4, Army>] = .init { _ in
+			CArray([4 of Army].init(repeating: Army()))
+		}
+		return CArray(countries)
+	}
+
+	/// In-place campaign construction keeps the 64×4 inline army store out of
+	/// factory-function temporary return buffers (notably Swift Testing's small
+	/// worker stacks).
+	public init(europe player: Player) {
+		owner = Map<32, Country>(size: 32, zero: .none)
+		terrain = Map<32, Terrain>(size: 32, zero: .field)
+		provinces = Map<32, Province>(size: 32, zero: Province())
+		self.player = player
+		armies = CArray([64 of CArray<4, Army>].init { _ in
+			CArray([4 of Army].init(repeating: Army()))
+		})
+		turn = 0
+		battle = nil
+		battleArmy = 0
+
+		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
+		for (row, line) in rows.enumerated() {
+			// Flip the row so north (top of the ASCII) maps to higher `y`.
+			let y = 31 - row
+			for (x, ch) in line.enumerated() where x < 32 {
+				if let country = Country(legend: ch) { owner[XY(x, y)] = country }
+			}
+		}
+		let terrainRows = terrainASCII.split(separator: "\n", omittingEmptySubsequences: false)
+		for (row, line) in terrainRows.enumerated() {
+			let y = 31 - row
+			for (x, ch) in line.enumerated() where x < 32 {
+				if let tile = Terrain(legend: ch) { terrain[XY(x, y)] = tile }
+			}
+		}
+		placeStartingFactories()
+		foundStartingArmies()
 	}
 }
 
@@ -43,18 +85,42 @@ public extension StrategicSim {
 	func fortLevel(at xy: XY) -> Int { Int(provinces[xy][.fort]) }
 
 	func canAttack(_ xy: XY) -> Bool {
+		canAttack(xy, by: player.country)
+	}
+
+	func canAttack(_ xy: XY, by country: Country) -> Bool {
 		guard owner.contains(xy) else { return false }
 		let target = owner[xy]
-		guard target != .none, target.team != player.country.team else { return false }
-		return attackingArmy(at: xy) != nil
+		guard target != .none, target.team != country.team else { return false }
+		return attackingArmy(at: xy, for: country) != nil
+	}
+
+	func canAttack(_ xy: XY, with army: ArmyID) -> Bool {
+		guard owner.contains(xy),
+			owner[xy] != .none,
+			owner[xy].team != army.country.team,
+			armyIsActive(army.index, for: army.country),
+			hasCoreForce(army.index, for: army.country)
+		else { return false }
+		let fieldArmy = self.army(army)
+		guard fieldArmy.mp > 0 else { return false }
+		let n4 = fieldArmy.position.n4
+		for index in 0 ..< n4.count where n4[index] == xy { return true }
+		return false
 	}
 
 	func attackingArmy(at xy: XY) -> Int? {
-		let armies = armies
-		for i in 0 ..< 4 where armies[i].active && armies[i].mp > 0 && hasCoreForce(i) {
-			let n4 = armies[i].position.n4
+		attackingArmy(at: xy, for: player.country)
+	}
+
+	func attackingArmy(at xy: XY, for country: Country) -> Int? {
+		let countryIndex = Int(country.rawValue)
+		for slot in 0 ..< 4 {
+			let army = armies[countryIndex][slot]
+			guard army.active, army.mp > 0, hasCoreForce(slot, for: country) else { continue }
+			let n4 = army.position.n4
 			for k in 0 ..< n4.count where n4[k] == xy {
-				return i
+				return slot
 			}
 		}
 		return nil
@@ -65,16 +131,84 @@ public extension StrategicSim {
 		let slot = Int(battleArmy)
 		battleArmy = 0
 		guard won else { return }
-		if armies[slot].active {
-			armies[slot].position = tile
+		capture(at: tile, by: ArmyID(country: country, slot: slot))
+	}
+
+	/// Deterministically resolves a strategic battle without entering Tactical.
+	/// The stronger local force wins; AI callers separately require a 3:1 edge.
+	@discardableResult
+	mutating func autoResolveAttack(at tile: XY, by army: ArmyID) -> Bool? {
+		guard canAttack(tile, with: army) else { return nil }
+
+		let defender = owner[tile]
+		let attack = localStrength(of: army.country, near: tile)
+		let defence = localStrength(of: defender, near: tile)
+		armies[Int(army.country.rawValue)][army.index].mp = 0
+		let won = attack >= max(1, defence)
+		if won { capture(at: tile, by: army) }
+		return won
+	}
+
+	func hasLocalAdvantage(_ army: ArmyID, attacking tile: XY, ratio: Int = 3) -> Bool {
+		guard owner.contains(tile), owner[tile] != .none else { return false }
+		let attack = localStrength(of: army.country, near: tile)
+		let defence = localStrength(of: owner[tile], near: tile)
+		return attack >= max(1, defence) * ratio
+	}
+
+	func localStrength(of country: Country, near tile: XY) -> Int {
+		let countryIndex = Int(country.rawValue)
+		var strength = 0
+		for slot in 0 ..< 4 {
+			let army = armies[countryIndex][slot]
+			guard army.active,
+				max(abs(army.position.x - tile.x), abs(army.position.y - tile.y)) <= Army.defRange
+			else { continue }
+			strength += army.strength
 		}
+		return strength
+	}
+
+	private mutating func capture(at tile: XY, by army: ArmyID) {
+		guard owner.contains(tile), owner[tile] != .none else { return }
+		let country = army.country
+		let countryIndex = Int(country.rawValue)
+		if armies[countryIndex][army.index].active {
+			armies[countryIndex][army.index].position = tile
+		}
+		let defeatedTeam = owner[tile].team
 		let r = Self.captureRadius
 		for xy in owner.indices where owner[xy] != .none
-			&& owner[xy].team == owner[tile].team
+			&& owner[xy].team == defeatedTeam
 			&& abs(xy.x - tile.x) <= r
 			&& abs(xy.y - tile.y) <= r
 		{
 			owner[xy] = country
+		}
+		retreatDisplacedArmies(except: army)
+	}
+
+	/// Captures may engulf nearby army tiles. Move each displaced force to the
+	/// nearest province its country still owns, or disband it if none remains.
+	private mutating func retreatDisplacedArmies(except winner: ArmyID) {
+		for country in Country.playable where country != winner.country {
+			let countryIndex = Int(country.rawValue)
+			for slot in 0 ..< 4 {
+				let fieldArmy = armies[countryIndex][slot]
+				guard fieldArmy.active, owner[fieldArmy.position] != country else { continue }
+				var best: XY?
+				var distance = Int.max
+				for xy in owner.indices where owner[xy] == country && army(at: xy) == nil {
+					let d = fieldArmy.position.stepDistance(to: xy)
+					if d < distance { best = xy; distance = d }
+				}
+				if let best {
+					armies[countryIndex][slot].position = best
+					armies[countryIndex][slot].mp = 0
+				} else {
+					armies[countryIndex][slot].active = false
+				}
+			}
 		}
 	}
 }
@@ -84,34 +218,32 @@ public extension StrategicSim {
 	/// Build the European campaign map from the docs/Map.md legend and place
 	/// the starting factories — deterministic, identical output every call.
 	static func europe(player: Player) -> StrategicSim {
-		var owner = Map<32, Country>(size: 32, zero: .none)
-		let rows = mapASCII.split(separator: "\n", omittingEmptySubsequences: false)
-		for (row, line) in rows.enumerated() {
-			// Flip the row so north (top of the ASCII) maps to higher `y`.
-			let y = 31 - row
-			for (x, ch) in line.enumerated() where x < 32 {
-				if let c = Country(legend: ch) { owner[XY(x, y)] = c }
-			}
+		StrategicSim(europe: player)
+	}
+
+	mutating func foundStartingArmies() {
+		for country in Country.playable {
+			foundMainArmy(for: country)
+			guard country != player.country, armyIsActive(0, for: country) else { continue }
+			var base = [Unit].base(country)
+			base.modifyEach { unit in unit.reset() }
+			setRoster(
+				[16 of Unit](head: Array(base.prefix(16)), tail: .empty),
+				slot: 0,
+				for: country
+			)
 		}
-		var terrain = Map<32, Terrain>(size: 32, zero: .field)
-		let terrainRows = terrainASCII.split(separator: "\n", omittingEmptySubsequences: false)
-		for (row, line) in terrainRows.enumerated() {
-			let y = 31 - row
-			for (x, ch) in line.enumerated() where x < 32 {
-				if let t = Terrain(legend: ch) { terrain[XY(x, y)] = t }
-			}
-		}
-		var sim = StrategicSim(owner: owner, terrain: terrain, player: player)
-		sim.placeStartingFactories()
-		sim.foundMainArmy()
-		return sim
 	}
 
 	mutating func foundMainArmy() {
-		let center = centroid(for: player.country)
+		foundMainArmy(for: player.country)
+	}
+
+	mutating func foundMainArmy(for country: Country) {
+		let center = centroid(for: country)
 		var best: XY?
 		var bestDistance = Int.max
-		for xy in owner.indices where owner[xy] == player.country {
+		for xy in owner.indices where owner[xy] == country {
 			let d = xy.stepDistance(to: center)
 			if d < bestDistance {
 				best = xy
@@ -119,7 +251,7 @@ public extension StrategicSim {
 			}
 		}
 		guard let best else { return }
-		armies[0] = modifying(Army()) { a in
+		armies[Int(country.rawValue)][0] = modifying(Army()) { a in
 			a.position = best
 			a.mp = Army.moveSpeed
 			a.active = true

@@ -1,6 +1,8 @@
 @frozen public enum StrategicAction {
 	/// Launch an offensive against the enemy province at `XY`.
 	case attack(XY)
+	/// Launch specifically with the selected human army slot.
+	case attackFrom(Int, XY)
 	/// Raise the fortification of the owned province at `XY`.
 	case build(BuildingType, at: XY)
 	/// March the army in the slot to an `XY` within its move range.
@@ -11,7 +13,7 @@
 }
 
 @frozen public enum StrategicEvent {
-	case attack(XY)
+	case attack(Int, XY)
 	case build(XY)
 	case move(Int)
 	case found(XY)
@@ -23,7 +25,11 @@ public extension StrategicSim {
 	mutating func reduce(_ action: StrategicAction) -> [StrategicEvent] {
 		var events: [StrategicEvent] = []
 		switch action {
-		case .attack(let xy): if canAttack(xy) { events.append(.attack(xy)) }
+		case .attack(let xy):
+			if let slot = attackingArmy(at: xy) { events.append(.attack(slot, xy)) }
+		case .attackFrom(let slot, let xy):
+			let id = ArmyID(country: player.country, slot: slot)
+			if canAttack(xy, with: id) { events.append(.attack(slot, xy)) }
 		case .build(let b, let xy): return build(b, at: xy)
 		case .move(let slot, let xy): move(slot, to: xy, into: &events)
 		case .found(let xy): if canFound(at: xy) { found(at: xy); events.append(.found(xy)) }
@@ -43,24 +49,27 @@ public extension StrategicSim {
 
 	private mutating func move(_ slot: Int, to xy: XY, into events: inout [StrategicEvent]) {
 		guard (0 ..< 4).contains(slot), let steps = marchCost(by: slot, to: xy) else { return }
-		armies[slot].position = xy
-		armies[slot].mp -= min(steps, armies[slot].mp)
+		let countryIndex = Int(player.country.rawValue)
+		armies[countryIndex][slot].position = xy
+		armies[countryIndex][slot].mp -= min(steps, armies[countryIndex][slot].mp)
 		events.append(.move(slot))
 	}
 
 	private mutating func endTurn(into events: inout [StrategicEvent]) {
 		turn += 1
 		var upkeep: UInt16 = 0
-		for i in 0 ..< 4 where armies[i].active {
-			if i != 0, !hasCoreForce(i) {
+		let countryIndex = Int(player.country.rawValue)
+		for slot in 0 ..< 4 where armies[countryIndex][slot].active {
+			if slot != 0, !hasCoreForce(slot) {
 				// An emptied roster disbands the army and frees the slot.
-				armies[i].active = false
+				armies[countryIndex][slot].active = false
 				continue
 			}
-			armies[i].mp = Army.moveSpeed
-			upkeep += Army.upkeep(slot: i)
+			armies[countryIndex][slot].mp = Army.moveSpeed
+			upkeep += Army.upkeep(slot: slot)
 		}
 		player.prestige.decrement(by: upkeep)
+		runStrategicAI()
 		events.append(.endTurn)
 	}
 }

@@ -325,30 +325,46 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Strategic/StrategicReaction.swift`, `COR/Model/Core.swift`
 
 - The 32×32 European map stores country ownership, terrain, province building
-  levels, four army slots, the campaign player, turn, and pending battle in
-  `StrategicSim`.
+  levels, the campaign player, turn, and pending battle in `StrategicSim`.
+  Every country has four inline army slots in
+  `CArray<64, CArray<4, Army>>`, keyed first by `Country.rawValue` and then by
+  army slot.
 - Starting a campaign assigns the standalone HQ roster to army slot 0. From
-  then on `StrategicSim.player` is the campaign treasury and all four rosters
-  live in `StrategicSim.armies`; `Core.hq` is only a temporary editor for the
-  selected army while the HQ scene is open.
+  then on `StrategicSim.player` is the human campaign treasury and every
+  roster lives in `StrategicSim.armies`; `Core.hq` is only a temporary editor
+  for the selected human army while the HQ scene is open. Each other country
+  begins with an active main army using its stock roster.
 - An active army can march up to 2 orthogonal tiles per turn through owned land.
   It can attack an orthogonally adjacent enemy province only while it has
   movement points and at least one living core unit. Winning advances the army
   and annexes same-team enemy provinces in a Chebyshev radius of 2 around the
-  target.
+  target; engulfed enemy armies retreat to their nearest remaining unoccupied
+  province or disband if none remains.
+- Army input mirrors Tactical unit selection: `A` selects/deselects the army
+  under the cursor, then moves or attacks with that exact army. Previous/next
+  target input cycles the human armies. While an army with movement remaining
+  is selected, the fog layer reveals only its legal movement range.
 - Army 0 has no upkeep. Active armies 1–3 cost `50 * slot` prestige at the end
   of every campaign turn. `StrategicSim.reduce(.endTurn)` charges the campaign
   player directly (clamped at zero), restores movement, and disbands empty side
-  armies before calculating the charge.
+  armies before calculating the charge. The Strategic menu's **Next turn**
+  action runs this reducer.
+- After the human ends a turn, each non-human country deterministically musters
+  at most one free army, moves its armies toward the nearest hostile province,
+  and attacks an adjacent province only when its local strength within range 2
+  is at least three times the defender's. AI campaign battles autoresolve.
 - Select an army and open HQ to purchase, sell, upgrade, or rearrange that
   army's roster. Leaving HQ synchronizes both its roster and treasury back to
   `StrategicSim`; there is no campaign HQ without a selected army.
-- A campaign battle fields the attacking army's living roster. When the
-  campaign player defends, its nearest non-fighting army within range 2 may
-  join as auxiliary units; owned military factory totals also add country
-  auxiliary forces. Civil factories add 40 prestige per level to each side's
-  battle treasury. On completion, non-auxiliary survivors and remaining
-  prestige return to the fighting army and campaign player.
+- A campaign battle fields the attacking army's living roster. The defender's
+  nearest manned army within range 2 supplies its core roster; factory totals
+  are the sole source of auxiliary units. Civil factories add 40 prestige per
+  level to each side's battle treasury. On completion, non-auxiliary survivors
+  return to their respective armies and remaining prestige returns to the
+  campaign player. The persistent
+  **Battle autoresolve** menu option instead resolves a human attack on the
+  campaign map by comparing both sides' local strength, without creating a
+  Tactical battle.
 
 ## Players & Victory
 

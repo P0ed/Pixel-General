@@ -9,7 +9,7 @@ struct StrategicUI {
 	var camera: XY
 	var scale: Int
 	var mapMode: StrategicMapMode
-	var selected: Int?
+	var selected: ArmyID?
 	var selectable: SetXY?
 
 	init(
@@ -17,7 +17,7 @@ struct StrategicUI {
 		camera: XY = .zero,
 		scale: Int = 1,
 		mapMode: StrategicMapMode = .country,
-		selected: Int? = nil,
+		selected: ArmyID? = nil,
 		selectable: SetXY? = nil
 	) {
 		self.cursor = cursor
@@ -39,7 +39,10 @@ struct StrategicState: ~Copyable {
 	}
 
 	mutating func reduce(_ action: StrategicAction) -> [StrategicEvent] {
-		sim.reduce(action)
+		let events = sim.reduce(action)
+		if case .endTurn = action { deselect() }
+		refreshSelectable()
+		return events
 	}
 }
 
@@ -53,7 +56,8 @@ typealias StrategicInputReaction = InputReaction<StrategicAction, StrategicPrese
 extension StrategicState {
 
 	mutating func apply(_ input: Input) -> StrategicInputReaction {
-		switch input {
+		defer { refreshSelectable() }
+		return switch input {
 		case .direction(let direction?, modifiers: let modifiers):
 			directionalAction(direction, modifiers: modifiers)
 		case .tile(let xy): select(xy)
@@ -61,6 +65,8 @@ extension StrategicState {
 			buttonAction(action, modifiers: modifiers)
 		case .menu: .presentation(.menu)
 		case .mode: toggleMapMode()
+		case .target(.prev): selectArmy(reversed: true)
+		case .target(.next): selectArmy()
 		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let dxy): handlePan(dxy)
 		default: .none
@@ -121,18 +127,28 @@ extension StrategicState {
 	}
 
 	private mutating func primary(at xy: XY) -> StrategicInputReaction {
-		if let slot = ui.selected {
+		if let selected = ui.selected {
+			if sim.army(selected).position == xy {
+				deselect()
+				return .none
+			}
 			deselect()
-			if let cost = sim.marchCost(by: slot, to: xy), cost > 0 {
-				return .action(.move(slot, xy))
+			if selected.country == sim.player.country,
+				sim.canAttack(xy, with: selected)
+			{
+				return .action(.attackFrom(selected.index, xy))
+			}
+			if selected.country == sim.player.country,
+				let cost = sim.marchCost(by: selected.index, to: xy), cost > 0
+			{
+				return .action(.move(selected.index, xy))
 			}
 		}
-		if let slot = sim.armyIndex(at: xy) {
-			ui.selected = slot
-			ui.selectable = sim.reachable(by: slot)
+		if let army = sim.army(at: xy) {
+			ui.selected = army
 			return .none
 		}
-		return sim.canAttack(xy) ? .action(.attack(xy)) : .none
+		return .none
 	}
 
 	private mutating func deselect() {
@@ -140,13 +156,17 @@ extension StrategicState {
 		ui.selectable = nil
 	}
 
-	private func build(at xy: XY) -> StrategicInputReaction {
-		sim.canBuild(.fort, at: xy) ? .action(.build(.fort, at: xy)) : .none
+	private mutating func build(at xy: XY) -> StrategicInputReaction {
+		if ui.selected != nil {
+			deselect()
+			return .none
+		}
+		return sim.canBuild(.fort, at: xy) ? .action(.build(.fort, at: xy)) : .none
 	}
 
 	private func army(at xy: XY) -> StrategicInputReaction {
-		if let slot = sim.armyIndex(at: xy) {
-			.presentation(.army(slot))
+		if let army = sim.army(at: xy), army.country == sim.player.country {
+			.presentation(.army(army.index))
 		} else if sim.canFound(at: xy) {
 			.action(.found(xy))
 		} else {
@@ -161,6 +181,34 @@ extension StrategicState {
 
 	private mutating func handlePan(_ dxy: XY) -> StrategicInputReaction {
 		ui.camera = (ui.camera + dxy).clamped(sim.owner.size)
+		return .none
+	}
+
+	private mutating func refreshSelectable() {
+		guard let selected = ui.selected,
+			sim.armyIsActive(selected.index, for: selected.country)
+		else {
+			deselect()
+			return
+		}
+		let fieldArmy = sim.army(selected)
+		ui.selectable = fieldArmy.mp > 0
+			? sim.reachable(by: selected.index, for: selected.country)
+			: nil
+	}
+
+	private mutating func selectArmy(reversed: Bool = false) -> StrategicInputReaction {
+		let country = sim.player.country
+		let start = ui.selected?.country == country ? ui.selected!.index : (reversed ? 0 : 3)
+		for offset in 1 ... 4 {
+			let slot = reversed ? (start - offset + 8) % 4 : (start + offset) % 4
+			guard sim.armyIsActive(slot, for: country) else { continue }
+			let army = ArmyID(country: country, slot: slot)
+			ui.selected = army
+			ui.cursor = sim.army(army).position
+			return .none
+		}
+		deselect()
 		return .none
 	}
 }

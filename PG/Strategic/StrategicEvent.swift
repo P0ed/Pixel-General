@@ -5,7 +5,7 @@ extension StrategicNodes {
 
 	func process(_ event: StrategicEvent, _ state: borrowing StrategicState) async {
 		switch event {
-		case .attack(let xy): processAttack(xy)
+		case .attack(let slot, let xy): processAttack(xy, by: slot)
 		case .build, .move, .found, .endTurn: persist()
 		}
 	}
@@ -25,10 +25,14 @@ extension StrategicNodes {
 		core.save()
 	}
 
-	private func processAttack(_ xy: XY) {
+	private func processAttack(_ xy: XY, by slot: Int) {
 		guard let scene else { return }
 		core.store(scene.state.sim)
-		core.startCampaignBattle(at: xy)
+		if settings.campaignAutoresolve {
+			core.autoResolveCampaignBattle(at: xy, by: slot)
+		} else {
+			core.startCampaignBattle(at: xy, by: slot)
+		}
 		core.save()
 		view.present(.auto)
 	}
@@ -48,10 +52,20 @@ extension StrategicNodes {
 
 		scene.showMenu(MenuState(
 			items: [
-				.space,
+				.close(icon: .start, status: "Next turn", action: .endTurn),
 				.space,
 				.load { [weak scene] in scene?.saveState() },
 				.space,
+				MenuItem(
+					icon: .toggle4(settings.campaignAutoresolve ? 3 : 0),
+					status: .init(text: "Battle autoresolve"),
+					update: { menu in
+						modifying(menu) { menu in
+							settings.toggleCampaignAutoresolve()
+							menu.items[4].icon = .toggle4(settings.campaignAutoresolve ? 3 : 0)
+						}
+					}
+				),
 			]
 		))
 	}

@@ -7,6 +7,9 @@ struct Settings {
 	/// Tactical AI opponent: 0 = classic heuristic, 1 = neural (LSTM),
 	/// falling back to classic when no weights are bundled.
 	var aiKind: UInt8 = 0
+	/// Resolve human campaign attacks on the strategic map instead of opening
+	/// a Tactical battle.
+	var campaignAutoresolve: Bool = false
 }
 
 extension Settings {
@@ -29,6 +32,10 @@ extension Settings {
 
 	mutating func toggleAI() {
 		aiKind = aiKind == 0 ? 1 : 0
+	}
+
+	mutating func toggleCampaignAutoresolve() {
+		campaignAutoresolve.toggle()
 	}
 
 	var animationScale: Double {

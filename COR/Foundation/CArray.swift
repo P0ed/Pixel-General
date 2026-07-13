@@ -1,15 +1,28 @@
-public struct CArray<let capacity: Int, Element>: ~Copyable {
+public struct CArray<let capacity: Int, Element: ~Copyable>: ~Copyable {
 	public private(set) var count: Int
 	public private(set) var mem: InlineArray<capacity, Element>
 }
 
-public extension CArray {
+public extension CArray where Element: ~Copyable {
 
 	var indices: CountableRange<Int> { 0 ..< count }
 
 	var isEmpty: Bool { count == 0 }
 
 	var isFull: Bool { count == capacity }
+
+	init(_ array: consuming InlineArray<capacity, Element>) {
+		mem = array
+		count = capacity
+	}
+
+	subscript(_ index: Int) -> Element {
+		_read { yield mem[index] }
+		_modify { yield &mem[index] }
+	}
+}
+
+public extension CArray where Element: Copyable {
 
 	init(tail: Element) {
 		mem = .init(repeating: tail)
@@ -21,11 +34,6 @@ public extension CArray {
 		count = 1
 	}
 
-	init(_ array: consuming InlineArray<capacity, Element>) {
-		mem = array
-		count = capacity
-	}
-
 	init<let length: Int>(head: consuming InlineArray<length, Element>, tail: Element) {
 		mem = .init { i in i < length ? head[i] : tail }
 		count = length
@@ -34,11 +42,6 @@ public extension CArray {
 	init(head: [Element], tail: Element) {
 		mem = .init(head: head, tail: tail)
 		count = head.count
-	}
-
-	subscript(_ index: Int) -> Element {
-		_read { yield mem[index] }
-		_modify { yield &mem[index] }
 	}
 
 	mutating func add(_ element: Element) {

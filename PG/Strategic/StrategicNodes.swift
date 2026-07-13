@@ -6,7 +6,8 @@ struct StrategicNodes {
 	weak var scene: StrategicScene?
 	var camera: SKCameraNode
 	var map: MapNodes
-	var armies: [SKSpriteNode]
+	var armies: [SKSpriteNode?]
+	@IO var lit: SetXY = .empty
 }
 
 extension StrategicNodes {
@@ -16,22 +17,26 @@ extension StrategicNodes {
 			scene: scene,
 			camera: Self.addCamera(root: scene, at: scene.state.ui.camera.point),
 			map: Self.addMap(root: scene, state: scene.state),
-			armies: Self.addArmies(root: scene, country: scene.state.sim.player.country)
+			armies: Self.addArmies(root: scene)
 		)
 		map.selection.isHidden = true
 		update(scene.state)
 	}
 
-	private static func addArmies(root: SKNode, country: Country) -> [SKSpriteNode] {
-		(0 ..< 4).map { _ in
-			let image = country.flag
-			let flag = SKSpriteNode(texture: .init(image: image))
-			flag.texture?.filteringMode = .nearest
-			flag.size = image.size
-			flag.isHidden = true
-			root.addChild(flag)
-			return flag
+	private static func addArmies(root: SKNode) -> [SKSpriteNode?] {
+		var nodes = [SKSpriteNode?](repeating: nil, count: 64 * 4)
+		for country in Country.playable {
+			for slot in 0 ..< 4 {
+				let image = country.flag
+				let flag = SKSpriteNode(texture: .init(image: image))
+				flag.texture?.filteringMode = .nearest
+				flag.size = image.size
+				flag.isHidden = true
+				root.addChild(flag)
+				nodes[armyNodeIndex(country: country, slot: slot)] = flag
+			}
 		}
+		return nodes
 	}
 
 	private static func addCamera(root: SKNode, at center: CGPoint) -> SKCameraNode {
@@ -46,8 +51,13 @@ extension StrategicNodes {
 		MapNodes.make(
 			root: root,
 			size: state.sim.owner.size,
-			tiles: .terrain
+			tiles: .terrain,
+			fog: true
 		)
+	}
+
+	private static func armyNodeIndex(country: Country, slot: Int) -> Int {
+		Int(country.rawValue) * 4 + slot
 	}
 }
 
@@ -69,15 +79,18 @@ extension StrategicNodes {
 		map.cursor.position = state.sim.terrain.point(at: state.ui.cursor)
 		map.cursor.zPosition = map.zPosition(at: state.ui.cursor)
 
-		for slot in 0 ..< 4 {
-			let army = state.sim.armies[slot]
-			armies[slot].isHidden = !army.active
-			guard army.active else { continue }
-			armies[slot].position = state.sim.terrain.point(at: army.position)
-			armies[slot].zPosition = map.zPosition(at: army.position) + TileZ.unit
+		for country in Country.playable {
+			for slot in 0 ..< 4 {
+				let army = state.sim.army(ArmyID(country: country, slot: slot))
+				let node = armies[Self.armyNodeIndex(country: country, slot: slot)]
+				node?.isHidden = !army.active
+				guard army.active else { continue }
+				node?.position = state.sim.terrain.point(at: army.position)
+				node?.zPosition = map.zPosition(at: army.position) + TileZ.unit
+			}
 		}
 
-		let selected = state.ui.selected.map { slot in state.sim.armies[slot].position }
+		let selected = state.ui.selected.map { state.sim.army($0).position }
 		map.selection.isHidden = selected == nil
 		if let selected {
 			map.selection.position = state.sim.terrain.point(at: selected)
@@ -86,6 +99,21 @@ extension StrategicNodes {
 
 		state.sim.owner.indices.forEach { xy in
 			map.setBase(Self.baseGroup(for: state, at: xy), at: xy)
+		}
+		updateFog(state)
+	}
+
+	private func updateFog(_ state: borrowing StrategicState) {
+		var next = SetXY.empty
+		if let selectable = state.ui.selectable {
+			next = selectable
+		} else {
+			state.sim.owner.indices.forEach { next[$0] = true }
+		}
+		guard next != lit else { return }
+		defer { lit = next }
+		state.sim.owner.indices.forEach { xy in
+			map.setFog(!next[xy], terrain: state.sim.terrain[xy], at: xy)
 		}
 	}
 

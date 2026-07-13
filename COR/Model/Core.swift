@@ -86,10 +86,11 @@ public extension Core {
 		store(sim)
 	}
 
-	mutating func startCampaignBattle(at tile: XY) {
+	mutating func startCampaignBattle(at tile: XY, by requestedSlot: Int? = nil) {
 		guard location == .strategic,
 			  let defender = strategic?.owner(at: tile),
-			  let slot = strategic?.attackingArmy(at: tile)
+			  let slot = requestedSlot ?? strategic?.attackingArmy(at: tile),
+			  strategic?.canAttack(tile, with: ArmyID(country: strategic!.player.country, slot: slot)) == true
 		else { return }
 
 		let human = strategic!.player.country
@@ -101,7 +102,7 @@ public extension Core {
 			Player(country: defender, type: .ai, prestige: .poor + civilBonus(for: defender)),
 		]
 		let units = strategic!.roster(slot).compactMap { u in u.alive ? u : nil }
-			+ (strategic?.reinforcement(for: defender, near: tile) ?? [])
+			+ (strategic?.defendingCore(for: defender, near: tile) ?? [])
 			+ campaignAux(for: human)
 			+ campaignAux(for: defender)
 		strategic?.launchBattle(at: tile, by: slot)
@@ -125,13 +126,21 @@ public extension Core {
 		location = .tactical
 	}
 
+	/// Resolves the selected human offensive entirely on the campaign map.
+	@discardableResult
+	mutating func autoResolveCampaignBattle(at tile: XY, by slot: Int) -> Bool? {
+		guard location == .strategic, strategic != nil else { return nil }
+		let country = strategic!.player.country
+		return strategic?.autoResolveAttack(at: tile, by: ArmyID(country: country, slot: slot))
+	}
+
 	/// Recurring campaign income: every battle starts with +40 prestige per
 	/// civil factory level the country owns.
 	private func civilBonus(for country: Country) -> UInt16 {
 		UInt16(40 * (strategic?.buildingsTotal(.civil, of: country) ?? 0))
 	}
 
-	/// The auxilia a country fields in a campaign battle, sized by its
+	/// The auxiliary force a country fields in a campaign battle, sized by its
 	/// country-wide military factory totals.
 	private func campaignAux(for country: Country) -> [Unit] {
 		.aux(
@@ -153,13 +162,10 @@ public extension Core {
 
 	mutating func complete(_ sim: borrowing TacticalSim) {
 		let c = strategic?.player.country ?? hq.player.country
-		let units: [Unit] = sim.units
-			.compactMapAlive { i, u in
-				u.country != c || u[.aux] ? nil : modifying(u) { u in
-					u.reset()
-				}
-			}
-		let roster = [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
+		let roster = survivingRoster(for: c, in: sim)
+		let battleTile = strategic?.battle
+		let defender = battleTile.map { strategic?.owner(at: $0) ?? .none } ?? .none
+		let defendingArmy = battleTile.flatMap { strategic?.defendingArmy(for: defender, near: $0) }
 		tactical = nil
 
 		if strategic != nil {
@@ -169,6 +175,15 @@ public extension Core {
 			let slot = strategic?.fightingSlot() ?? 0
 			strategic?.setRoster(roster, slot: slot)
 			strategic?.disbandIfWipedOut(slot)
+			if let defendingArmy {
+				let defenders = survivingRoster(for: defendingArmy.country, in: sim)
+				strategic?.setRoster(
+					defenders,
+					slot: defendingArmy.index,
+					for: defendingArmy.country
+				)
+				strategic?.disbandIfWipedOut(defendingArmy.index, for: defendingArmy.country)
+			}
 			if let tile = strategic?.battle {
 				let won = sim.winner == c.team
 				strategic?.resolveBattle(at: tile, won: won, by: c)
@@ -179,5 +194,17 @@ public extension Core {
 			hq.units = roster
 			location = .hq
 		}
+	}
+
+	private func survivingRoster(
+		for country: Country,
+		in sim: borrowing TacticalSim
+	) -> [16 of Unit] {
+		let units: [Unit] = sim.units.compactMapAlive { _, unit in
+			unit.country != country || unit[.aux] ? nil : modifying(unit) { unit in
+				unit.reset()
+			}
+		}
+		return [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
 	}
 }

@@ -76,13 +76,13 @@ The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strat
 |---|---|---|
 | `nil` | `.hq` | `Core.hq` owns the standalone roster and player treasury. |
 | `nil` | `.tactical` | `Core.tactical` owns the running scenario; `complete` writes survivors and prestige back to `Core.hq`. |
-| non-`nil` | `.strategic` | `Core.strategic` owns the campaign player and all four army rosters, including slot 0. |
+| non-`nil` | `.strategic` | `Core.strategic` owns the campaign player and the four army slots for every country, including the human slot 0. |
 | non-`nil` | `.hq` | `Core.hq` is the selected army's editor snapshot (`HQSim.army` identifies the slot); `store` synchronizes its player and roster back into `Core.strategic`. |
 | non-`nil` | `.tactical` | `Core.tactical` owns the running battle; `complete` writes prestige and survivors back to the fighting army in `Core.strategic`. |
 
-Starting a campaign moves the standalone HQ roster into strategic army 0. An HQ screen inside a campaign is therefore opened only through an army (`openArmy`); there is no context-free Strategic → HQ transition. Saving or leaving that screen stores the edited roster before returning to the map. Campaign upkeep is likewise a `StrategicSim.reduce(.endTurn)` mutation, not a side effect applied later through `Core.hq`.
+Starting a campaign moves the standalone HQ roster into the human country's strategic army 0. Army storage is a fully inline `CArray<64, CArray<4, Army>>`, indexed first by `Country.rawValue` and then by slot. An HQ screen inside a campaign is therefore opened only through a human army (`openArmy`); there is no context-free Strategic → HQ transition. Saving or leaving that screen stores the edited roster before returning to the map. Campaign upkeep and the deterministic non-human campaign AI are likewise run by `StrategicSim.reduce(.endTurn)`.
 
-App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
+App-level `Settings` (e.g. sound level and the campaign battle-autoresolve toggle) live separately in `PG/Scene/Settings.swift`.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.
 
@@ -150,8 +150,8 @@ COR/                  Local package; shared COR product, no UI dependency
                       placement (place/vacate/spawn — the spatial invariant over position/unitsMap/cargo),
                       map generation, chess (debug scenario)
   HQ/                 Roster-management sim, domain actions/results/reducer
-  Strategic/          Campaign sim (Europe map, province ownership, battle launch/resolution),
-                      domain actions/results/reducer
+  Strategic/          Campaign sim (Europe map, country-keyed armies, province ownership,
+                      battle launch/autoresolution, strategic AI), domain actions/results/reducer
 
 PG/                   App & presentation layer
   App.swift           @main AppDelegate / SceneDelegate; owns global `core` + `settings`
