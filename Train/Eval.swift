@@ -35,10 +35,16 @@ enum Eval {
 
 		var line: String {
 			let days = battles == 0 ? 0 : Double(self.days) / Double(battles)
-			return "\(wins)W \(losses)L \(draws)D of \(battles)  " +
+			return "\(wins)W \(draws)D \(losses)L of \(battles)  " +
 				"win \(unsafe String(format: "%.1f", 100 * winRate))%  " +
-				"avg days \(unsafe String(format: "%.1f", days))"
+				"avg days \(unsafe String(format: "%.1f", days))  " +
+				"\(actions) actions  \(illegal) illegal"
 		}
+	}
+
+	struct Match {
+		var policy: Tally
+		var heuristic: Tally
 	}
 
 	static func run(_ args: [String]) throws {
@@ -46,6 +52,7 @@ enum Eval {
 		var seedBase = 0
 		var weightsPath: String?
 		var wseed: Int?
+		var suite: RolloutSuite = .mixed
 
 		try Args(args).parse { flag, next in
 			switch flag {
@@ -53,6 +60,7 @@ enum Eval {
 			case "--seed": seedBase = try Int(next()) ?? seedBase
 			case "--weights": weightsPath = try next()
 			case "--wseed": wseed = try Int(next())
+			case "--suite": suite = try .parse(next())
 			default: throw TrainError.usage("unknown option \(flag)")
 			}
 		}
@@ -71,16 +79,18 @@ enum Eval {
 		let clock = ContinuousClock()
 		let start = clock.now
 		var bySeat = [Tally(), Tally()]
+		var heuristic = Tally()
 
 		for index in seedBase ..< seedBase + n {
-			let config = Rollouts.replay(index: index)
+			let config = Rollouts.replay(index: index, suite: suite)
 			var results: [String] = []
 
 			for seat in 0 ..< config.seats.count {
-				let tally = play(config, policySeat: seat, policy: &policy)
-				bySeat[seat].add(tally)
-				let outcome = tally.wins > 0 ? "W" : tally.losses > 0 ? "L" : "D"
-				results.append("seat \(seat): \(outcome) \(tally.days)d")
+				let match = play(config, policySeat: seat, policy: &policy)
+				bySeat[seat].add(match.policy)
+				heuristic.add(match.heuristic)
+				let outcome = match.policy.wins > 0 ? "W" : match.policy.losses > 0 ? "L" : "D"
+				results.append("seat \(seat): \(outcome) \(match.policy.days)d")
 			}
 
 			let seats = config.seats.map { s in "\(s.country)" }.joined(separator: " vs ")
@@ -94,27 +104,32 @@ enum Eval {
 		let secs = Double(d.seconds) + Double(d.attoseconds) / 1e18
 		print("── eval ──")
 		print("  weights:  \(weightsPath ?? "random(seed: \(wseed ?? 0))")")
+		print("  suite:    \(suite.rawValue)")
 		print("  battles:  \(total.battles) (\(n) configs x both sides, seed base \(seedBase))")
 		print("  seat 0:   \(bySeat[0].line)")
 		print("  seat 1:   \(bySeat[1].line)")
-		print("  overall:  \(total.line)")
-		print("  actions:  \(total.actions) by policy, \(total.illegal) illegal")
+		print("  policy:   \(total.line)")
+		print("  heuristic: \(heuristic.line)")
 		print("  time:     \(Int(secs))s")
 
-		guard total.illegal == 0 else {
-			throw TrainError.failed("eval gate: \(total.illegal) illegal policy actions — masks must make this impossible")
+		guard total.illegal + heuristic.illegal == 0 else {
+			throw TrainError.failed("eval gate: \(total.illegal) illegal policy and \(heuristic.illegal) illegal heuristic actions")
 		}
 	}
 
 	/// Plays `configs` from both sides against `policy`, accumulating a
 	/// tally — the fixed arena both `Train eval` and the RL trainer's
 	/// checkpoints report.
-	static func arena(policy: inout LSTMPolicy, configs: Range<Int>) -> Tally {
+	static func arena(
+		policy: inout LSTMPolicy,
+		configs: Range<Int>,
+		suite: RolloutSuite = .mixed
+	) -> Tally {
 		var tally = Tally()
 		for index in configs {
-			let config = Rollouts.replay(index: index)
+			let config = Rollouts.replay(index: index, suite: suite)
 			for seat in 0 ..< config.seats.count {
-				tally.add(play(config, policySeat: seat, policy: &policy))
+				tally.add(play(config, policySeat: seat, policy: &policy).policy)
 			}
 		}
 		return tally
@@ -122,29 +137,38 @@ enum Eval {
 
 	/// One battle: the policy on `policySeat`, the heuristic on the rest;
 	/// same budgets as the rollout generator. Returns a single-battle tally.
-	static func play(_ config: Replay, policySeat: Int, policy: inout LSTMPolicy) -> Tally {
+	static func play(_ config: Replay, policySeat: Int, policy: inout LSTMPolicy) -> Match {
 		var sim = config.makeSim()
 		var ai = AI.Plan()
 		policy.reset()
 
-		var tally = Tally()
+		var policyTally = Tally()
+		var heuristicTally = Tally()
 		var actions = 0
 		while actions < Rollouts.maxActions {
-			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.winner != nil { break }
 			if sim.day > Rollouts.maxDays { break }
 
 			if sim.playerIndex == policySeat {
 				let action = policy.action(for: sim)
-				tally.actions += 1
+				policyTally.actions += 1
 				if action == .end {
 					_ = sim.reduce(action)
 				} else {
 					let before = encode(sim)
 					_ = sim.reduce(action)
-					if encode(sim) == before { tally.illegal += 1 }
+					if encode(sim) == before { policyTally.illegal += 1 }
 				}
 			} else {
-				_ = sim.reduce(sim.run(ai: &ai))
+				let action = sim.run(ai: &ai)
+				heuristicTally.actions += 1
+				if action == .end {
+					_ = sim.reduce(action)
+				} else {
+					let before = encode(sim)
+					_ = sim.reduce(action)
+					if encode(sim) == before { heuristicTally.illegal += 1 }
+				}
 			}
 			actions += 1
 		}
@@ -153,14 +177,19 @@ enum Eval {
 		let mine = config.seats[policySeat].country.team
 		let theirs = config.seats[1 - policySeat].country.team
 		if winner == mine {
-			tally.wins = 1
+			policyTally.wins = 1
+			heuristicTally.losses = 1
 		} else if winner == theirs {
-			tally.losses = 1
+			policyTally.losses = 1
+			heuristicTally.wins = 1
 		} else {
-			tally.draws = 1
+			policyTally.draws = 1
+			heuristicTally.draws = 1
 		}
-		tally.days = Int(sim.day)
-		tally.battles = 1
-		return tally
+		policyTally.days = Int(sim.day)
+		policyTally.battles = 1
+		heuristicTally.days = Int(sim.day)
+		heuristicTally.battles = 1
+		return Match(policy: policyTally, heuristic: heuristicTally)
 	}
 }

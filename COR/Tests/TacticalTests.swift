@@ -274,6 +274,22 @@ struct TacticalTests {
 
 	// MARK: - Objectives
 
+	@Test func generatedBattlePreservesObjective() {
+		let objective = Objective.survive(.axis, day: 32)
+		let sim = TacticalSim(
+			players: [
+				Player(country: .ger, type: .ai),
+				Player(country: .usa, type: .ai),
+			],
+			units: .base(.ger) + .base(.usa),
+			size: 24,
+			seed: 3,
+			objective: objective,
+			forts: 1
+		)
+		#expect(sim.objective == objective)
+	}
+
 	/// Build a unitless 1v1 sim with a single city at `cityXY` owned by
 	/// `controller`, for exercising `winner` in isolation. fin = axis (attacker),
 	/// rus = soviet (defender).
@@ -305,6 +321,14 @@ struct TacticalTests {
 		sim.players.modifyEach { _, p in if p.country == .rus { p.alive = false } }
 
 		#expect(sim.winner == .axis, "Eliminating the survivor before its deadline wins")
+	}
+
+	@Test func annihilatingAttackerBeforeDeadlineWinsForSurvivor() {
+		var sim = Self.objectiveSim(cityXY: XY(5, 5), controller: .rus)
+		sim.objective = .survive(.soviet, day: 20)
+		sim.players.modifyEach { _, p in if p.country == .fin { p.alive = false } }
+
+		#expect(sim.winner == .soviet, "Last team standing wins before the survival deadline")
 	}
 
 	@Test func ffaObjectiveResolvesOnLastTeamStanding() {

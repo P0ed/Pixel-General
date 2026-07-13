@@ -61,6 +61,7 @@ enum RLTrainer {
 		var evalN = 8
 		var curriculum = 0
 		var anneal: Float = 0.35
+		var suite: RolloutSuite = .mixed
 
 		try Args(args).parse { flag, next in
 			switch flag {
@@ -77,6 +78,7 @@ enum RLTrainer {
 			case "--evaln": evalN = try Int(next()) ?? evalN
 			case "--curriculum": curriculum = try Int(next()) ?? curriculum
 			case "--anneal": anneal = try Float(next()) ?? anneal
+			case "--suite": suite = try .parse(next())
 			default: throw TrainError.usage("unknown option \(flag)")
 			}
 		}
@@ -102,7 +104,10 @@ enum RLTrainer {
 		for iter in 1 ... iters {
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
-			let batch = collect(weights: current, count: episodes, startIndex: battleIndex, temp: temp, difficulty: difficulty)
+			let batch = collect(
+				weights: current, count: episodes, startIndex: battleIndex,
+				temp: temp, difficulty: difficulty, suite: suite
+			)
 			battleIndex += episodes
 
 			// Leave-one-out baseline, stratified by drawn difficulty level:
@@ -206,7 +211,7 @@ enum RLTrainer {
 				try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
 
 				var policy = LSTMPolicy(weights: snapshot)
-				let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN)
+				let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN, suite: suite)
 				arena = f(Float(100 * tally.winRate))
 				print("  arena \(tally.line)  illegal \(tally.illegal)")
 
@@ -224,6 +229,7 @@ enum RLTrainer {
 		let d = start.duration(to: clock.now).components
 		print("── rl ──")
 		print("  iters:    \(iters) (\(d.seconds)s, \(battleIndex - seed) episodes)")
+		print("  suite:    \(suite.rawValue)")
 		print("  out:      \(outDir.path)/policy.pgw")
 	}
 
@@ -236,7 +242,14 @@ enum RLTrainer {
 	/// probability from the fractional part — discrete level steps proved to
 	/// be cliffs (run 7: even the purely economic 3→2 step collapsed the win
 	/// rate), mixing makes every anneal a gradual re-weighting of the batch.
-	static func collect(weights: LSTMWeights, count: Int, startIndex: Int, temp: Float, difficulty: Float = 0) -> [Episode] {
+	static func collect(
+		weights: LSTMWeights,
+		count: Int,
+		startIndex: Int,
+		temp: Float,
+		difficulty: Float = 0,
+		suite: RolloutSuite = .mixed
+	) -> [Episode] {
 		let base = Int(difficulty)
 		let frac = difficulty - Float(base)
 		var results = [Episode?](repeating: nil, count: count)
@@ -248,7 +261,7 @@ enum RLTrainer {
 				let level = base + (mix.uniform() < frac ? 1 : 0)
 				unsafe out.value[j] = play(
 					index: index, seat: j % 2,
-					weights: weights, temp: temp, level: level
+					weights: weights, temp: temp, level: level, suite: suite
 				)
 			}
 		}
@@ -262,8 +275,13 @@ enum RLTrainer {
 	/// seat facing tier 3 is unwinnable whatever its prestige, and such
 	/// batches poison the curriculum with hopeless losses (run-6 lesson:
 	/// the 3→2 step reintroduced them and win starvation returned).
-	static func config(index: Int, seat: Int, level: Int) -> Replay {
-		var replay = Rollouts.replay(index: index)
+	static func config(
+		index: Int,
+		seat: Int,
+		level: Int,
+		suite: RolloutSuite = .mixed
+	) -> Replay {
+		var replay = Rollouts.replay(index: index, suite: suite)
 		guard level > 0 else { return replay }
 		let tier = max(replay.seats[0].tier, replay.seats[1].tier)
 		replay.seats[0].tier = tier
@@ -284,8 +302,15 @@ enum RLTrainer {
 
 	/// One sampled episode: the policy on `seat`, the heuristic opposite,
 	/// rollout budgets, terminal reward from the final state.
-	static func play(index: Int, seat: Int, weights: LSTMWeights, temp: Float, level: Int = 0) -> Episode {
-		var replay = config(index: index, seat: seat, level: level)
+	static func play(
+		index: Int,
+		seat: Int,
+		weights: LSTMWeights,
+		temp: Float,
+		level: Int = 0,
+		suite: RolloutSuite = .mixed
+	) -> Episode {
+		var replay = config(index: index, seat: seat, level: level, suite: suite)
 		var sim = replay.makeSim()
 		var policy = LSTMPolicy(weights: weights)
 		var ai = AI.Plan()
@@ -300,7 +325,7 @@ enum RLTrainer {
 		var lost: Float = 0
 
 		while replay.actions.count < Rollouts.maxActions {
-			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.winner != nil { break }
 			if sim.day > Rollouts.maxDays { break }
 
 			let action: TacticalAction

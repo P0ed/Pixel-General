@@ -51,9 +51,13 @@ extension TacticalSim {
 			? Team(rawValue: UInt8(teams.trailingZeroBitCount))
 			: nil
 		case let .survive(team, day: deadline):
-			teamAlive(team)
-			? (day > deadline ? team : nil)
-			: Team(rawValue: UInt8(teams.trailingZeroBitCount))
+			if teams.nonzeroBitCount == 1 {
+				Team(rawValue: UInt8(teams.trailingZeroBitCount))
+			} else if !teamAlive(team) {
+				nil
+			} else {
+				day > deadline ? team : nil
+			}
 		}
 	}
 

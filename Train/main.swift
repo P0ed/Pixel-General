@@ -28,8 +28,10 @@ do {
 		print("""
 		Usage: Train <command> [options]
 
-		  rollout --n <count> [--out <dir>] [--seed <base>] [--verify]
-		      Generate heuristic-vs-heuristic battles as .pgr replay files.
+		  rollout --n <count> [--out <dir>] [--seed <base>]
+		     [--suite classic|mixed] [--verify]
+		      Generate heuristic-vs-heuristic PGRP-v2 replay files. The default
+		      mixed suite rotates open battles and both survival defenders.
 		  replay <file> ...
 		      Rebuild replays deterministically and check they reproduce
 		      the recorded outcome.
@@ -42,12 +44,13 @@ do {
 		      Behavior-clone the heuristic AI from a replay corpus; writes PGW1
 		      checkpoints and a CSV loss/accuracy log.
 		  eval --weights <pgw> [--n <configs>] [--seed <base>] [--wseed <n>]
+		     [--suite classic|mixed]
 		      Arena: the pure-Swift LSTMPolicy vs the heuristic AI, each config played
-		      from both sides; reports win rate and gates on 0 illegal actions.
+		      from both sides; reports both records and gates on 0 illegal actions.
 		  rl --weights <pgw> [--out <dir>] [--iters <n>] [--episodes <per iter>]
 		     [--b <streams>] [--t <bptt>] [--lr <rate>] [--temp <sampling>]
 		     [--seed <battle base>] [--ckpt <every>] [--evaln <configs>]
-		     [--curriculum <level 0-3>]
+		     [--curriculum <level 0-3>] [--suite classic|mixed]
 		      REINFORCE fine-tune vs the frozen heuristic: sampled episodes,
 		      leave-one-out baseline, advantage-weighted CE; arena eval at checkpoints.
 		      --curriculum starts collection with the policy seat economically

@@ -14,6 +14,24 @@ bitwise-serializes via `encode`/`decode`, and the AI interface is one `TacticalA
 per call — exactly a policy's step function. Battles are therefore stored as *replays*
 and regenerated deterministically instead of storing states.
 
+## Heuristic teacher
+
+`run(ai:)` is a deterministic, objective-aware tactical teacher rather than a
+nearest-city script. Its fixed-capacity `AI.Plan` separates own, allied, and hostile
+settlements; assigns compatible retreat havens, threatened garrisons, combat support,
+and distributed offensive objectives; and selects attacks through one global scan of
+the acting roster against visible enemies. Expected value removed, kills, focus fire,
+objective pressure, counterfire, and visible artillery/AA support all contribute to
+the integer score. Movement likewise scores capture progress, actual post-move weapon
+range, terrain, friendly support, congestion, and visible threat. It never clones the
+sim, advances `D20`, or reads hidden enemy units.
+
+The battle objective sets its stance: open battles balance capture and destruction,
+a survival defender preserves and screens, and the opposing attacker accepts more
+risk as the deadline approaches. Its reactive action order is critical resupply,
+global attack, transport, planned movement, purchase after deployment tiles clear,
+then end turn.
+
 ## File map
 
 | Where | What |
@@ -106,11 +124,14 @@ neural/classic per battle in `TacticalMode.tactical`; `LSTMWeights.bundled` load
 
 ### Replays — `PGRP` (`Train/Replay.swift`)
 
-Per battle: magic, version, `MemoryLayout<TacticalAction>.size` sanity field,
-size/seats/winner/days/seed, then the raw `encode(action)` stream (~10–100 KB).
-`makeState()` rebuilds the exact initial state; `check()` = rebuild + replay + compare
+Version 2 stores magic, version, `MemoryLayout<TacticalAction>.size`,
+size/seats/winner/days/seed, the objective kind/team/deadline, fort level, and then the
+raw `encode(action)` stream (~10–100 KB).
+`makeSim()` rebuilds the exact initial state; `check()` = rebuild + replay + compare
 outcome. Replays are **same-build artifacts** — the versioned header guards toolchain
-drift, and regeneration is cheap.
+drift, and regeneration is cheap. Version-1 files are deliberately rejected: all
+existing corpora must be regenerated before BC or RL so demonstrations from the old
+and new teachers cannot be mixed.
 
 ## Training runs
 
@@ -129,22 +150,29 @@ redirected, so `tail -f run.log` works and nothing is lost on a kill.
 ### Pipeline
 
 ```
-Train rollout --n 160 --out tmp/runs/replays --verify        # heuristic corpus
+Train rollout --n 160 --out tmp/runs/replays --suite mixed --verify
 Train bc      --data tmp/runs/replays --out tmp/runs/bc      # behavior cloning
-Train eval    --weights tmp/runs/bc/policy.pgw               # baseline arena
+Train eval    --weights tmp/runs/bc/policy.pgw --suite mixed # objective-mixed arena
 Train rl      --weights tmp/runs/bc/policy.pgw --out tmp/runs/rl \
-              --iters 80 --episodes 32 --lr 1e-4             # REINFORCE fine-tune
+              --iters 80 --episodes 32 --lr 1e-4 --suite mixed
 Train eval    --weights tmp/runs/rl/ckpt-80.pgw --n 50       # pick the winner
 cp tmp/runs/rl/ckpt-80.pgw PG/policy.pgw                     # ship it
+
+# Compare the bundled PGW1 policy with the strengthened teacher on the old arena:
+Train eval --weights PG/policy.pgw --n 32 --suite classic
 ```
 
 ### Subcommands
 
-**`rollout --n 8 --out tmp/runs/replays --seed 0 [--verify]`** — heuristic-vs-heuristic
+**`rollout --n 8 --out tmp/runs/replays --seed 0 [--suite classic|mixed] [--verify]`** — heuristic-vs-heuristic
 battles as `.pgr` files. The config is derived purely from the index (country pairs
 ger/usa, fin/isr, swe/pak, ned/usa × sizes 24/32 × prestige and baseLevel/tier
 variants), so corpora are reproducible byte-for-byte; `--verify` replays each battle
-after writing. Budget: 65k actions / 128 days.
+after writing. `classic` is the exact historical `.none` mapping. The default `mixed`
+suite rotates `.none`, seat-0 survival defender, and seat-1 survival defender; survival
+deadlines are 32 days on 24×24 maps and 40 on 32×32, with fort level 1. Budget: 65k
+actions / 128 days. Every loop stops as soon as `sim.winner` is non-nil, including a
+survival win with both teams alive.
 
 **`replay <file> ...`** — rebuild + verify recorded winner/days; use after toolchain or
 core changes to check whether a corpus is still valid.
@@ -165,17 +193,19 @@ per head weighted by applicability; Adam + warmup/cosine lr + grad clip 1.0. Eve
 Reference (160-battle corpus, defaults, ~3 min): held-out accuracy kind 0.66 /
 actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
 
-**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>]`** — the arena: pure-Swift
+**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite classic|mixed]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
-(⇒ `2n` battles). Reports wins/losses/draws, avg days, and **hard-gates on 0 illegal
-actions** (mutation oracle). `--wseed` plays random weights instead — the sanity floor.
+(⇒ `2n` battles). Reports separate policy and heuristic wins/draws/losses, average
+days, action counts, and illegal-action counts, and **hard-gates on 0 illegal actions**
+(mutation oracle). `--wseed` plays random weights instead — the sanity floor.
 
 **`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
-[--curriculum 0] [--anneal 0.35]`** — REINFORCE
+[--curriculum 0] [--anneal 0.35] [--suite classic|mixed]`** — REINFORCE
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
 sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
 touched, and each episode is fully determined by its index, so runs are reproducible);
+collection and checkpoint arenas both use the selected suite (default `mixed`);
 leave-one-out baseline within each difficulty-level group (an EMA baseline goes stale
 after a policy shift and un-learns everything — within-batch advantages always straddle
 zero; a *shared* mean over a mixed-difficulty batch grades episodes by their matchup,
@@ -247,6 +277,10 @@ the reached `--curriculum` level explicitly when continuing an annealed run).
 - **Contracts are append-only**: `Plane`/`Global`, `ActionSpace` indices, and
   `LSTMWeights.spec` — a change invalidates weights and corpora. Re-run `parity` and
   `COR/Tests/PolicyTests` after touching them.
+- **Replay v2 is a hard corpus boundary**: objective and fort configuration are part
+  of the deterministic recipe. Regenerate every v1 corpus; do not combine old teacher
+  demonstrations with v2 data. This format change does not alter PGW1, observations,
+  or action indices, and the bundled `PG/policy.pgw` is not automatically replaced.
 - **MPSGraph autodiff gaps** (macOS 26.5): `split` and `broadcast` have no registered
   gradient, and `gradients(of:with:)` asserts on variables that aren't predecessors of
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via
