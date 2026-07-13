@@ -24,6 +24,8 @@ do {
 		try Eval.run(Array(arguments.dropFirst()))
 	case "rl":
 		try RLTrainer.run(Array(arguments.dropFirst()))
+	case "ppo":
+		try PPOTrainer.run(Array(arguments.dropFirst()))
 	default:
 		print("""
 		Usage: Train <command> [options]
@@ -56,6 +58,15 @@ do {
 		      --curriculum starts collection with the policy seat economically
 		      boosted (3 = rich+lvl5+tier3 vs poor) and anneals toward 0 as
 		      the sampled win rate clears 35%.
+		  ppo --weights <pgw> [--ref <pgw>] [--out <dir>] [--iters <n>]
+		     [--episodes <per iter>] [--epochs <passes>] [--clip <ε>]
+		     [--vcoef <c>] [--kl <β>] [--ent <c>] [--vwarm <iters>] [--lam <λ>]
+		     [--b --t --lr --temp --seed --ckpt --evaln --curriculum --anneal --suite]
+		      PPO fine-tune: clipped surrogate over --epochs reuses of each
+		      episode batch, trained value-head baseline (GAE, γ=1), and a
+		      full-distribution KL anchor to --ref (default: the starting
+		      weights). --vwarm trains the value head alone first; same
+		      collection, reward, and curriculum machinery as rl.
 		""")
 	}
 } catch {

@@ -29,6 +29,21 @@ enum Net {
 		return vars
 	}
 
+	/// The same catalog as `variables`, but as graph *constants* — a frozen
+	/// reference network (the PPO KL anchor). Constants have no gradient
+	/// plumbing, so autodiff never traverses into the reference branch.
+	static func constants(_ g: MPSGraph, _ weights: LSTMWeights) -> [String: MPSGraphTensor] {
+		var consts = [String: MPSGraphTensor]()
+		for (name, shape) in LSTMWeights.spec {
+			consts[name] = g.constant(
+				floatData(weights[name]),
+				shape: shape.map { NSNumber(value: $0) },
+				dataType: .float32
+			)
+		}
+		return consts
+	}
+
 	/// SimObservation encoder: conv trunk + pooled features.
 	/// `planes [n, 32, 32, P]`, `globals [n, G]` →
 	/// (`trunk [n, 1024, C]`, `x [n, H]` — the LSTM input).

@@ -88,7 +88,7 @@ kind    h ── fc 128→7
 actor   per tile [trunk(32) ⊕ proj(h→16)] ── 1×1 48→16 ReLU ── 16→1
 target  cond = ReLU(fc [h ⊕ trunk[actor]] 160→16); per tile [trunk ⊕ cond] ── same 1×1 stack
 slot    fc [h ⊕ trunk[actor]] 160→32 ReLU ── 32→40
-value   h ── fc 128→32 ReLU ── 32→1        (in the spec; not yet trained — see RL notes)
+value   h ── fc 128→32 ReLU ── 32→1        (trained by `Train ppo` only; inference ignores it)
 ```
 
 Contract details (must match between `Train/Net.swift` and `LSTMPolicy`): matmuls are
@@ -264,6 +264,44 @@ batch carries almost no signal).
 Note `--resume` does not exist here: restarting from a checkpoint restarts Adam (pass
 the reached `--curriculum` level explicitly when continuing an annealed run).
 
+**`ppo --weights <pgw> [--ref <pgw>] [--out tmp/runs/ppo] [--iters 100]
+[--episodes 32] [--epochs 3] [--clip 0.2] [--vcoef 0.5] [--kl 0.1] [--ent 0]
+[--vwarm 5] [--lam 1] [--b --t --lr --temp --seed --ckpt --evaln --curriculum
+--anneal --suite]`** — the stronger learner (`PPOTrainer.swift`), sharing
+collection, reward, curriculum, and arena machinery with `rl`. Three upgrades,
+each matched to a REINFORCE failure class:
+
+- **PPO-clip** — each batch is reused for `--epochs` optimization passes; the
+  per-sample importance ratio is clipped at 1±ε so a sample whose probability
+  has already moved that far stops contributing gradient. Per-iteration policy
+  movement is bounded in distribution space, retiring the hand-tuned
+  windows × lr displacement invariant (update-shock runs 4/5/10) — watch the
+  `clipfrac` column instead.
+- **Value-head baseline** — GAE (γ = 1, `--lam`, default 1 ⇒ A_t = R − V(s_t))
+  from the value head, trained here with `--vcoef` MSE. V sees
+  prestige/tier/baseLevel in the observation globals, so it learns the matchup
+  correction per state — replacing the stratified LOO baseline and the
+  length-normalization hack. `--vwarm` iterations train the value head *alone*
+  first (random-init V backpropagating into the shared trunk would shift the
+  policy heads' inputs under them); the curriculum is frozen meanwhile. The
+  `ev` column (explained variance vs the Monte-Carlo return) is the baseline's
+  health metric.
+- **KL anchor** — β = `--kl` times the full-distribution per-head
+  KL(π‖π_ref) toward `--ref` (default: the starting weights, i.e. the BC
+  prior), computed against an in-graph frozen constant copy of the network
+  with its own recurrent state. The policy can improve on the prior but cannot
+  silently unlearn it (the run-2/3 kiting drift).
+
+Old log-probs come from a **read pass** per iteration (the batch replayed once
+through the graph at the collection weights, per-sample logπ and V cached per
+window ordinal) rather than collection-time recording — episode-mode `Batcher`
+is deterministic, so every epoch reproduces byte-identical windows (asserted),
+and ratios are exact by construction even across runaway-turn-guard steps.
+Self-checks: during `--vwarm` the `kl` column must read ~0 (policy ≡ ref
+validates both the warmup freeze and the ref branch); `clipfrac`/`akl` near 0
+at epoch starts. `ppo-log.csv`:
+`iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin`.
+
 ### Reading a run
 
 - Sampled wins per iteration (`wins` column) is the noisy leading signal; the argmax
@@ -292,5 +330,6 @@ the reached `--curriculum` level explicitly when continuing an annealed run).
   gradient, and `gradients(of:with:)` asserts on variables that aren't predecessors of
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via
   implicit-broadcast addition; keep new graph code inside the gradient-supported op set.
-- The value head exists in the weight spec but is untrained (the RL baseline is EMA;
-  upgrade to a value baseline / entropy bonus if variance stalls — Roadmap follow-up).
+- The value head is trained only by `Train ppo` (BC and `rl` exclude it from their
+  gradient requests — autodiff asserts on variables that aren't predecessors of the
+  loss); inference never reads it beyond `lastValue` logging.

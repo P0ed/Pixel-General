@@ -101,8 +101,11 @@ final class Batcher {
 	private struct Lane {
 		var stream: SampleStream?
 		var scale: Float = 1
+		var id: Int32 = -1
 		var h = [Float](repeating: 0, count: LSTMWeights.hidden)
 		var c = [Float](repeating: 0, count: LSTMWeights.hidden)
+		var hr = [Float](repeating: 0, count: LSTMWeights.hidden)
+		var cr = [Float](repeating: 0, count: LSTMWeights.hidden)
 	}
 
 	struct Window {
@@ -111,6 +114,13 @@ final class Batcher {
 		var kindW, actorW, targetW, slotW: [Float]
 		var kindMask, actorMask, targetMask, slotMask: [Float]
 		var h0, c0: [Float]
+		/// Stream ordinal per sample (−1 on padding) — the PPO trainer maps
+		/// samples back to their episode's return/advantage with it.
+		var epi: [Int32]
+		/// A second recurrent state, carried for the PPO KL-anchor's frozen
+		/// reference branch (which must run its *own* h/c under its own
+		/// weights); zeros and unused everywhere else.
+		var h0r, c0r: [Float]
 		var samples = 0
 	}
 
@@ -135,12 +145,12 @@ final class Batcher {
 
 	/// BC: streams are battle-seat pairs, shuffled anew each epoch.
 	/// RL: the episode list, front to back, once.
-	private func nextStream() -> (SampleStream, Float)? {
+	private func nextStream() -> (SampleStream, Float, Int32)? {
 		if onePass {
 			guard cursor < episodes.count else { return nil }
 			let e = episodes[cursor]
 			cursor += 1
-			return (SampleStream(replay: e.replay, seat: e.seat), e.scale)
+			return (SampleStream(replay: e.replay, seat: e.seat), e.scale, Int32(cursor - 1))
 		}
 		if cursor >= order.count {
 			order = Array(0 ..< files.count * 2)
@@ -153,7 +163,7 @@ final class Batcher {
 		let id = order[cursor]
 		cursor += 1
 		guard let replay = try? Replay.read(files[id / 2]) else { return nil }
-		return (SampleStream(replay: replay, seat: id % 2), 1)
+		return (SampleStream(replay: replay, seat: id % 2), 1, Int32(id))
 	}
 
 	func window() -> Window {
@@ -174,7 +184,10 @@ final class Batcher {
 			targetMask: [Float](repeating: 0, count: n * ActionSpace.tiles),
 			slotMask: [Float](repeating: 0, count: n * ActionSpace.slots),
 			h0: [Float](repeating: 0, count: b * LSTMWeights.hidden),
-			c0: [Float](repeating: 0, count: b * LSTMWeights.hidden)
+			c0: [Float](repeating: 0, count: b * LSTMWeights.hidden),
+			epi: [Int32](repeating: -1, count: n),
+			h0r: [Float](repeating: 0, count: b * LSTMWeights.hidden),
+			c0r: [Float](repeating: 0, count: b * LSTMWeights.hidden)
 		)
 
 		for lane in 0 ..< b {
@@ -182,12 +195,17 @@ final class Batcher {
 				let next = nextStream()
 				lanes[lane].stream = next?.0
 				lanes[lane].scale = next?.1 ?? 1
+				lanes[lane].id = next?.2 ?? -1
 				lanes[lane].h = [Float](repeating: 0, count: LSTMWeights.hidden)
 				lanes[lane].c = [Float](repeating: 0, count: LSTMWeights.hidden)
+				lanes[lane].hr = [Float](repeating: 0, count: LSTMWeights.hidden)
+				lanes[lane].cr = [Float](repeating: 0, count: LSTMWeights.hidden)
 			}
 			for i in 0 ..< LSTMWeights.hidden {
 				w.h0[lane * LSTMWeights.hidden + i] = lanes[lane].h[i]
 				w.c0[lane * LSTMWeights.hidden + i] = lanes[lane].c[i]
+				w.h0r[lane * LSTMWeights.hidden + i] = lanes[lane].hr[i]
+				w.c0r[lane * LSTMWeights.hidden + i] = lanes[lane].cr[i]
 			}
 
 			for step in 0 ..< t {
@@ -203,6 +221,7 @@ final class Batcher {
 				w.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)
 				w.slotMask.replaceSubrange(i * ActionSpace.slots ..< (i + 1) * ActionSpace.slots, with: s.slotMask)
 				let scale = lanes[lane].scale
+				w.epi[i] = lanes[lane].id
 				w.kind[i] = s.kind
 				w.kindW[i] = scale
 				if s.actor >= 0 {
@@ -224,12 +243,15 @@ final class Batcher {
 	}
 
 	/// Carries the window-final hidden state into each lane that still has a
-	/// live stream (`h`/`c` are `[b * hidden]`, lane-major).
-	func carry(h: [Float], c: [Float]) {
+	/// live stream (`h`/`c` are `[b * hidden]`, lane-major). `hr`/`cr` carry
+	/// the PPO reference branch's independent state the same way.
+	func carry(h: [Float], c: [Float], hr: [Float]? = nil, cr: [Float]? = nil) {
 		for lane in 0 ..< b where lanes[lane].stream != nil {
 			for i in 0 ..< LSTMWeights.hidden {
 				lanes[lane].h[i] = h[lane * LSTMWeights.hidden + i]
 				lanes[lane].c[i] = c[lane * LSTMWeights.hidden + i]
+				if let hr { lanes[lane].hr[i] = hr[lane * LSTMWeights.hidden + i] }
+				if let cr { lanes[lane].cr[i] = cr[lane * LSTMWeights.hidden + i] }
 			}
 		}
 	}
