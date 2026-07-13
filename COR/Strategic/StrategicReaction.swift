@@ -15,8 +15,7 @@
 	case build(XY)
 	case move(Int)
 	case found(XY)
-	/// Prestige owed for armies beyond the first, charged at end of turn.
-	case upkeep(UInt16)
+	case endTurn
 }
 
 public extension StrategicSim {
@@ -61,6 +60,7 @@ public extension StrategicSim {
 			armies[i].mp = Army.moveSpeed
 			upkeep += Army.upkeep(slot: i)
 		}
-		if upkeep > 0 { events.append(.upkeep(upkeep)) }
+		player.prestige.decrement(by: upkeep)
+		events.append(.endTurn)
 	}
 }

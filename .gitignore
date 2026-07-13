@@ -2,7 +2,8 @@
 
 *.xcuserstate
 *.xcbkptlist
-*.xcodeproj/xcshareddata/*.xcodeproj/xcuserdata/
+*.xcodeproj/xcshareddata/
+*.xcodeproj/xcuserdata/
 *.xcuserdatad/
 
 .build/

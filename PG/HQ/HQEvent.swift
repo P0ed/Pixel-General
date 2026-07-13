@@ -62,9 +62,9 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
-		// Editing an army roster from the campaign: no scenario/LAN items,
-		// just the way back to the strategic map.
-		guard core.army == 0 else {
+		// During a campaign, HQ edits the selected army rather than acting
+		// as a standalone game mode.
+		guard core.strategic == nil else {
 			scene?.showMenu(MenuState(items: [
 				.close(icon: .HQ, status: "Back") { _ in
 					guard let scene else { return }

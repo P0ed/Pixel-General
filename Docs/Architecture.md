@@ -2,7 +2,7 @@
 
 The codebase is split into two modules:
 
-- **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI. It is the `COR` product of the local `GameCore` Swift package in `COR/`, with no UI/SpriteKit dependency.
+- **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI, with no UI/SpriteKit dependency.
 - **PG** — the app/presentation layer: composite scene state, input interpretation, presentation intents, SpriteKit scenes and nodes, rendering, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`.
 
 A third target, **Train**, is a macOS-only command-line tool for the LSTM opponent's
@@ -68,7 +68,19 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 ### State
 
-The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strategic/tactical sims, and a `.location` enum that drives which scene is active. The single live instance is the global `core: Core` in `PG/App.swift`; `Core.complete`/`startCampaignBattle`/`store` are the load-bearing transitions between modes.
+The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strategic/tactical sims, and a `.location` enum that drives which scene is active. The single live instance is the global `core: Core` in `PG/App.swift`; `Core.complete`/`startCampaignBattle`/`openArmy`/`store` are the load-bearing transitions between modes.
+
+`Core.hq` does not permanently own the main campaign army. State ownership depends on both campaign presence and the active location:
+
+| `strategic` | `location` | Source of truth |
+|---|---|---|
+| `nil` | `.hq` | `Core.hq` owns the standalone roster and player treasury. |
+| `nil` | `.tactical` | `Core.tactical` owns the running scenario; `complete` writes survivors and prestige back to `Core.hq`. |
+| non-`nil` | `.strategic` | `Core.strategic` owns the campaign player and all four army rosters, including slot 0. |
+| non-`nil` | `.hq` | `Core.hq` is the selected army's editor snapshot (`HQSim.army` identifies the slot); `store` synchronizes its player and roster back into `Core.strategic`. |
+| non-`nil` | `.tactical` | `Core.tactical` owns the running battle; `complete` writes prestige and survivors back to the fighting army in `Core.strategic`. |
+
+Starting a campaign moves the standalone HQ roster into strategic army 0. An HQ screen inside a campaign is therefore opened only through an army (`openArmy`); there is no context-free Strategic → HQ transition. Saving or leaving that screen stores the edited roster before returning to the map. Campaign upkeep is likewise a `StrategicSim.reduce(.endTurn)` mutation, not a side effect applied later through `Core.hq`.
 
 App-level `Settings` (e.g. sound level) live separately in `PG/Scene/Settings.swift`.
 
@@ -125,7 +137,7 @@ guarded by `COR/Tests/MultiplayerTests.swift`.
 ## Module Map
 
 ```
-COR/                  Local GameCore package; shared COR product, no UI dependency
+COR/                  Local package; shared COR product, no UI dependency
   Package.swift       One module/product consumed by PG, Train, and tests
   Foundation/         Data structures & primitives: CArray, Speicher, Map, SetXY, XY, D20;
                       Swift.swift = clone / encode / decode for ~Copyable state

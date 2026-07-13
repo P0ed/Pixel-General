@@ -6,8 +6,7 @@ extension StrategicNodes {
 	func process(_ event: StrategicEvent, _ state: borrowing StrategicState) async {
 		switch event {
 		case .attack(let xy): processAttack(xy)
-		case .build, .move, .found: persist()
-		case .upkeep(let cost): processUpkeep(cost)
+		case .build, .move, .found, .endTurn: persist()
 		}
 	}
 
@@ -28,17 +27,10 @@ extension StrategicNodes {
 
 	private func processAttack(_ xy: XY) {
 		guard let scene else { return }
-		core.store(scene.state.sim) // persist the strategic map before the battle
+		core.store(scene.state.sim)
 		core.startCampaignBattle(at: xy)
 		core.save()
 		view.present(.auto)
-	}
-
-	private func processUpkeep(_ cost: UInt16) {
-		guard let scene else { return }
-		core.payUpkeep(cost)
-		core.store(scene.state.sim)
-		core.save()
 	}
 
 	private func processArmy(_ slot: Int) {
@@ -59,11 +51,7 @@ extension StrategicNodes {
 				.space,
 				.space,
 				.load { [weak scene] in scene?.saveState() },
-				.close(icon: .HQ, status: "HQ") { _ in
-					core.goHQ()
-					core.save()
-					view.present(.auto)
-				},
+				.space,
 			]
 		))
 	}

@@ -42,6 +42,10 @@ public extension StrategicSim {
 		return nil
 	}
 
+	func armyIsActive(_ slot: Int) -> Bool {
+		(0 ..< 4).contains(slot) && armies[slot].active
+	}
+
 	func hasCoreForce(_ slot: Int) -> Bool {
 		let army = armies[slot]
 		for i in 0 ..< 16 where army.units[i].alive {
@@ -151,14 +155,13 @@ public extension StrategicSim {
 	/// The defender's nearest active army within `Army.defRange` of
 	/// `tile` — excluding the one fighting as the core force — joins the
 	/// battle as aux forces. Armies belong to the human country, so this
-	/// only fires when the human defends. Restricted to slots 1...3: the
-	/// main army's roster lives in `Core.hq`, invisible to the sim.
+	/// only fires when the human defends.
 	func reinforcement(for country: Country, near tile: XY) -> [Unit] {
 		guard country == player.country else { return [] }
 		let armies = armies
 		var best: Int?
 		var bestDistance = Army.defRange + 1
-		for i in 1 ..< 4 where armies[i].active && i != Int(battleArmy) {
+		for i in 0 ..< 4 where armies[i].active && i != Int(battleArmy) {
 			let p = armies[i].position
 			let d = max(abs(p.x - tile.x), abs(p.y - tile.y))
 			if d < bestDistance, hasCoreForce(i) {

@@ -2,8 +2,7 @@ import Foundation
 import COR
 
 // Train — headless data-generation / training CLI for the LSTM AI.
-// Consumes the same local GameCore package product as the app and tests.
-// See Docs/LSTM-AI.md.
+// See Docs/AI.md.
 
 // Line-buffer stdout even when redirected to a file, so long runs
 // (`Train rl … > run.log`) can be tailed and nothing is lost on a kill.

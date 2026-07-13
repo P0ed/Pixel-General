@@ -7,7 +7,7 @@ private extension D20 {
 	mutating func pick(_ n: Int) -> Int { Int(next() % UInt64(max(1, n))) }
 }
 
-/// Contracts of the LSTM policy plumbing (see Docs/LSTM-AI.md):
+/// Contracts of the LSTM policy plumbing (see Docs/AI.md):
 /// the observation encoding is fog-correct, and the factored action space
 /// (`ActionSpace`) masks exactly the actions `reduce` accepts.
 struct PolicyTests {
