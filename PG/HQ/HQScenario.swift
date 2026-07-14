@@ -17,7 +17,8 @@ extension HQNodes {
 		}
 		var size = 0
 		var forts: UInt8 = 0
-		let sizes: [UIImage] = [.sizeS, .sizeM, .sizeL]
+		var sea: UInt8 = 0
+		let sizes: [UIImage] = [.sizeM, .sizeL]
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
@@ -110,11 +111,11 @@ extension HQNodes {
 			.space, .space,.space, .space,
 			.space, .space,.space, .space,
 
-			.init(icon: sizes[size], status: .init(text: "Size: \(16 + size * 8)"), update: { m in
+			.init(icon: sizes[size], status: .init(text: "Size: \(24 + size * 8)"), update: { m in
 				modifying(m) { m in
-					size = (size + 1) % 3
+					size = (size + 1) % 2
 					m.items[28].icon = sizes[size]
-					m.items[28].status.text = "Size: \(16 + size * 8)"
+					m.items[28].status.text = "Size: \(24 + size * 8)"
 				}
 			}),
 			.init(icon: .toggle4(forts), status: .init(text: "Forts: \(forts)"), update: { m in
@@ -124,7 +125,13 @@ extension HQNodes {
 					m.items[29].status.text = "Forts: \(forts)"
 				}
 			}),
-			.space,
+			.init(icon: .toggle4(sea), status: .init(text: "Sea: \(sea)"), update: { m in
+				modifying(m) { m in
+					sea.toggle4()
+					m.items[30].icon = .toggle4(sea)
+					m.items[30].status.text = "Sea: \(sea)"
+				}
+			}),
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 
@@ -133,12 +140,15 @@ extension HQNodes {
 				+ (players[2].alive ? .base(players[2].country, lvl: players[2].baseLevel) : [])
 				+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
 				+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
+				let seed = Int.random(in: 0 ..< 128)
+				let terrain = Scenario.cornerTerrain(seaLevel: sea, seed: seed)
 
 				core.startScenario(TacticalSim(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: units,
-					size: 16 + size * 8,
-					seed: .random(in: 0..<128),
+					size: 24 + size * 8,
+					seed: seed,
+					terrain: terrain,
 					forts: Int(forts)
 				))
 				core.save()
