@@ -43,10 +43,14 @@
 
 ## AI
 
-- Strengthen the neural opponent further (`Train ppo` — PPO-clip + value baseline +
-  KL anchor — broke the REINFORCE ceiling at 25.7% vs BC's 21.6%, 832-battle paired
-  eval): continue PPO from ckpt-90 at difficulty 1.5, try `--lam < 1` / a bigger BC corpus for a
-  stronger prior; self-play once it consistently beats the heuristic.
+- Strengthen the neural opponent further. The bundled PPO2 checkpoint continued
+  PPO1 checkpoint 90 from difficulty 1.5 with `--lam 0.95`, annealed to 1.25, and
+  scored 28.0% (233W/22D/577L) against the heuristic in the 832-battle mixed arena,
+  versus PPO1's 25.7% and BC3's 21.6%, with zero illegal actions. The +2.3-point
+  PPO1 gain is below that arena's roughly four-point two-sigma resolution: confirm
+  it on a disjoint final arena. Next, train a stronger prior from a larger BC corpus;
+  keep checkpoint selection and the final arena separate; add self-play once the
+  policy consistently beats the heuristic.
 
 ## Multiplayer
 
