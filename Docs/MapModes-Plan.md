@@ -28,6 +28,24 @@ Changes:
 - **Docs** — Mechanics.md map-mode section; HelpMenu controls lines split so
   the four modes stay readable.
 
+## Tactical: air-aware Supply
+
+The supply mode becomes selection-dependent, mirroring defense: with an air
+unit selected it shades the **air** resupply grade, otherwise the ground
+grade (infantry fallback when nothing is selected).
+
+Grounded in `resupply` (`COR/Tactical/UnitResupply.swift`): air service is
+gated on the `airfields` mask (`serviced = sources.airfields[xy]`), so tiles
+outside the `.c5` plus of an owned airfield shade the worst grade — no ammo,
+no healing there at all — *not* `airLevel`'s literal 0. Inside the mask the
+tile shades `airLevel(at:)` (2, +2 truck, −2 adjacent enemy) through the same
+value→gradient mapping as the ground view.
+
+Changes are PG-only: `TacticalNodes` caches the selection's air-ness next to
+the cached masks (a base repaint triggers only when air-ness flips), and the
+`.supply` case in `baseGroup` picks the grade accordingly. The shared
+selection-resolution helper is renamed `defenseType` → `selectedType`.
+
 # Strategic Map Modes: Industry & Forts — Plan
 
 ## Goal

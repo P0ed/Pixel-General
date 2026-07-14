@@ -417,6 +417,12 @@ friendly-team supply truck, +2 in the `.c5` plus-shape of an owned settlement,
 −2 next to a visible enemy unit (owned airfields count as settlements — they
 supply ground units too). The shading is exact: `resupply` restores
 `level + 2` ammo and heals up to `level + 3` from the same masks.
+Like defense, supply follows the selection: with an air unit selected it
+shades the **air** grade instead — worst-grade red outside the `.c5` plus of
+an owned airfield, where `resupply` gives air units nothing at all, and
+`airLevel(at:)` (2, +2 truck, −2 adjacent enemy) inside it; terrain and tile
+control never matter to air. Ground grade otherwise, infantry view when
+nothing is selected.
 **Defense** shades every tile by `terrain.def(type) + terrain.baseEntrenchment`
 for the selected unit's type (infantry when nothing is selected) — the
 deterministic part of the `defenderMod` a just-arrived unit enjoys after one

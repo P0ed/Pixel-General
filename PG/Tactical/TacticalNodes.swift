@@ -11,6 +11,7 @@ struct TacticalNodes {
 	@IO var lit: SetXY = .empty
 	@IO var mapMode: MapMode = .terrain
 	@IO var supply: SupplySources = .empty
+	@IO var supplyAir: Bool = false
 	@IO var defense: UnitType = .inf
 }
 
@@ -127,16 +128,24 @@ extension TacticalNodes {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
 		let mode = state.ui.mapMode
 		let supply = mode == .supply ? state.sim.humanSupply : self.supply
-		let defense = mode == .defense ? Self.defenseType(state) : self.defense
+		let supplyAir = mode == .supply ? Self.selectedType(state).isAir : self.supplyAir
+		let defense = mode == .defense ? Self.selectedType(state) : self.defense
 
-		let baseChanged = mode != mapMode || supply != self.supply || defense != self.defense
+		let baseChanged = mode != mapMode || supply != self.supply
+			|| supplyAir != self.supplyAir || defense != self.defense
 		let litChanged = lit != self.lit
 		guard baseChanged || litChanged else { return }
-		defer { self.lit = lit; self.mapMode = mode; self.supply = supply; self.defense = defense }
+		defer {
+			self.lit = lit; self.mapMode = mode
+			self.supply = supply; self.supplyAir = supplyAir; self.defense = defense
+		}
 
 		if baseChanged {
 			state.sim.map.indices.forEach { xy in
-				map.setBase(baseGroup(for: state, at: xy, supply: supply, defense: defense), at: xy)
+				map.setBase(
+					baseGroup(for: state, at: xy, supply: supply, supplyAir: supplyAir, defense: defense),
+					at: xy
+				)
 			}
 		}
 		if litChanged {
@@ -149,9 +158,9 @@ extension TacticalNodes {
 		}
 	}
 
-	/// The unit type the defense map mode shades for: the human selection,
-	/// falling back to infantry.
-	private static func defenseType(_ state: borrowing TacticalState) -> UnitType {
+	/// The unit type the supply and defense map modes shade for: the human
+	/// selection, falling back to infantry.
+	private static func selectedType(_ state: borrowing TacticalState) -> UnitType {
 		guard state.ui.selectedUnit != .none else { return .inf }
 		let unit = state.sim.units[state.ui.selectedUnit]
 		return unit.alive ? unit.type : .inf
@@ -161,6 +170,7 @@ extension TacticalNodes {
 		for state: borrowing TacticalState,
 		at xy: XY,
 		supply: SupplySources,
+		supplyAir: Bool,
 		defense: UnitType
 	) -> SKTileGroup {
 		switch state.ui.mapMode {
@@ -172,7 +182,13 @@ extension TacticalNodes {
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		case .supply:
-			let level: UInt8 = switch supply.level(at: xy, terrain: state.sim.map[xy]) {
+			// Air service is airfield-gated: `resupply` feeds an air unit only
+			// inside the airfields mask, so unserviced tiles show the worst
+			// grade rather than `airLevel`'s literal 0.
+			let value: Int8 = supplyAir
+				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
+				: supply.level(at: xy, terrain: state.sim.map[xy])
+			let level: UInt8 = switch value {
 			case ..<(-2): 0
 			case -2: 1
 			case -1: 2
