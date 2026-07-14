@@ -98,17 +98,20 @@ public extension StrategicSim {
 	func fortLevel(at xy: XY) -> Int { Int(provinces[xy][.fort]) }
 
 	/// Samples and rotates the strategic 3×3 neighborhood used to generate a
-	/// tactical battle. In the result the attacking province is always middle
-	/// left (index 3), the defended province middle center (index 4), and the
-	/// direction beyond the defender middle right (index 5).
+	/// tactical battle: the attacking province at middle left (index 3), the
+	/// defended province middle center (index 4), and the direction beyond
+	/// the defender middle right (index 5). The window clamps to map bounds,
+	/// sliding inward at the border — there the attacker and defender shift
+	/// off-center rather than the map edge reading as coastline.
 	func battleTerrain(at defender: XY, attackingFrom attacker: XY) -> [9 of Terrain] {
 		let east = defender - attacker
 		guard east.manhattan == 1 else { return .init(repeating: terrain(at: defender)) }
 		let north = XY(-east.y, east.x)
+		let center = defender.clamped(1 ... owner.size - 2)
 		return [9 of Terrain] { index in
 			let dx = index % 3 - 1
 			let dy = 1 - index / 3
-			return terrain(at: defender + XY(
+			return terrain(at: center + XY(
 				east.x * dx + north.x * dy,
 				east.y * dx + north.y * dy
 			))

@@ -46,7 +46,14 @@ public extension XY {
 	}
 
 	func clamped(_ size: Int) -> XY {
-		XY(max(0, min(size - 1, x)), max(0, min(size - 1, y)))
+		clamped(0 ... size - 1)
+	}
+
+	func clamped(_ range: ClosedRange<Int>) -> XY {
+		XY(
+			max(range.lowerBound, min(range.upperBound, x)),
+			max(range.lowerBound, min(range.upperBound, y))
+		)
 	}
 
 	var mirror: [4 of XY] {
