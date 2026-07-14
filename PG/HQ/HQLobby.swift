@@ -103,15 +103,15 @@ extension HQNodes {
 				}
 			)
 		}
-		let sizes: [UIImage] = [.sizeS, .sizeM, .sizeL]
+		let sizes: [UIImage] = [.sizeM, .sizeL]
 		let bottom: [MenuItem<HQAction>] = isHost ? [
 			.init(icon: .empty, status: .init(text: Address.me.string), update: id),
 			.space,
 			.init(
-				icon: sizes[(session.size - 16) / 8],
+				icon: sizes[(session.size - 24) / 8],
 				status: .init(text: "Size: \(session.size)"),
 				update: { menu in
-					session.size = 16 + (session.size - 8) % 24
+					session.size = session.size == 24 ? 32 : 24
 					return rebuilt(cursor: 14)
 				}
 			),

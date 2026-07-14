@@ -22,8 +22,8 @@ public extension Map<32, Terrain> {
 	///     6 7 8
 	///
 	/// Campaign battles rotate their sample so the attacker is at 3 and the
-	/// defender at 4. Land entries bias the local noise; sea entries produce
-	/// an impassable open-water third that later generation passes preserve.
+	/// defender at 4. Land entries bias the local noise; sea entries seed an
+	/// impassable coast whose precise shoreline follows the height field.
 	init(size: Int, seed: Int, players: Int = 4, terrain: [9 of Terrain]) {
 		self = Map(size: size, zero: .none)
 
@@ -33,13 +33,13 @@ public extension Map<32, Terrain> {
 		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed + 1)
 		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
 
-		generateTerrain(
+		let mainland = generateTerrain(
 			height: height,
 			humidity: humidity,
 			terrain: terrain
 		)
 		placeRivers(height: height, d20: &d20)
-		let cities = placeCities(d20: &d20, players: players)
+		let cities = placeCities(d20: &d20, players: players, mainland: mainland)
 		connectCities(cities: cities)
 		shapeRoads()
 	}
@@ -48,22 +48,150 @@ public extension Map<32, Terrain> {
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
 		terrain: [9 of Terrain]
-	) {
+	) -> SetXY {
 		indices.forEach { xy in
 			let dominant = strategicTerrain(at: xy, terrain: terrain)
-			guard !dominant.isSea else {
+			guard !isSea(at: xy, height: height, terrain: terrain) else {
 				self[xy] = .sea
 				return
 			}
-			let humidityBias: Float = switch dominant {
-			case .forest, .forestHill: 0.5
-			default: 0.0
-			}
-			self[xy] = Terrain(
-				height: height.value(at: xy.simd) + 0.25 * Float(dominant.elevationLevel),
-				humidity: humidity.value(at: xy.simd) + humidityBias
-			)
+			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, dominant: dominant)
 		}
+		removeDisconnectedSea(height: height, humidity: humidity, terrain: terrain)
+		return reduceIslands()
+	}
+
+	private func landTerrain(
+		at xy: XY,
+		height: GKNoiseMap,
+		humidity: GKNoiseMap,
+		dominant: Terrain
+	) -> Terrain {
+		let humidityBias: Float = switch dominant {
+		case .forest, .forestHill: 0.5
+		default: 0.0
+		}
+		return Terrain(
+			height: height.value(at: xy.simd) + 0.25 * Float(dominant.elevationLevel),
+			humidity: humidity.value(at: xy.simd) + humidityBias
+		)
+	}
+
+	/// Height can create low pockets beyond the nominal coast. Only pockets
+	/// connected to the strategic sea region are ocean; disconnected ones are
+	/// restored to their generated land terrain instead of becoming tiny
+	/// inland sea tiles.
+	private mutating func removeDisconnectedSea(
+		height: GKNoiseMap,
+		humidity: GKNoiseMap,
+		terrain: [9 of Terrain]
+	) {
+		var connected = SetXY.empty
+		var pending = [] as [XY]
+		for xy in indices
+			where self[xy].isSea && strategicTerrain(at: xy, terrain: terrain).isSea {
+			connected[xy] = true
+			pending.append(xy)
+		}
+		while let xy = pending.popLast() {
+			let neighbors = xy.n4
+			for i in neighbors.indices {
+				let p = neighbors[i]
+				guard self[p].isSea && !connected[p] else { continue }
+				connected[p] = true
+				pending.append(p)
+			}
+		}
+		for xy in indices where self[xy].isSea && !connected[xy] {
+			let dominant = strategicTerrain(at: xy, terrain: terrain)
+			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, dominant: dominant)
+		}
+	}
+
+	/// The largest contiguous landmass is the mainland. Other components are
+	/// islands: tiny ones are submerged to keep the coast readable, while any
+	/// larger retained islands are left out of the mask returned to settlement
+	/// placement.
+	private mutating func reduceIslands() -> SetXY {
+		var visited = SetXY.empty
+		var landmasses = [] as [[XY]]
+		for start in indices where !self[start].isSea && !visited[start] {
+			var landmass = [start]
+			var head = 0
+			visited[start] = true
+			while head < landmass.count {
+				let neighbors = landmass[head].n4
+				head += 1
+				for i in neighbors.indices {
+					let p = neighbors[i]
+					guard contains(p), !self[p].isSea, !visited[p] else { continue }
+					visited[p] = true
+					landmass.append(p)
+				}
+			}
+			landmasses.append(landmass)
+		}
+		guard let mainlandIndex = landmasses.indices.max(by: { a, b in
+			landmasses[a].count < landmasses[b].count
+		}) else { return .empty }
+
+		let minimumIslandArea = max(6, count / 96)
+		for index in landmasses.indices
+			where index != mainlandIndex && landmasses[index].count < minimumIslandArea {
+			landmasses[index].forEach { xy in self[xy] = .sea }
+		}
+		return SetXY(landmasses[mainlandIndex])
+	}
+
+	/// Treats the 3×3 strategic sea mask as the broad coastline, then moves
+	/// that coastline inland at low elevations and out to sea at high ones.
+	/// Distance from the nearest sea-cell center adds a growing landward bias,
+	/// so peripheral water needs distinctly lower elevation than the sea core.
+	/// Capping nominal sea depth keeps that bias relevant even in an outer map
+	/// corner far from every strategic land cell.
+	private func isSea(at xy: XY, height: GKNoiseMap, terrain: [9 of Terrain]) -> Bool {
+		let hasSea = terrain.contains { $0.isSea }
+		guard hasSea else { return false }
+		guard terrain.contains({ !$0.isSea }) else { return true }
+
+		let scale = 3.0 / Float(size)
+		let point = SIMD2<Float>(
+			(Float(xy.x) + 0.5) * scale,
+			(Float(xy.y) + 0.5) * scale
+		)
+		var seaDistance = Float.greatestFiniteMagnitude
+		var landDistance = Float.greatestFiniteMagnitude
+		var seaCenterDistance = Float.greatestFiniteMagnitude
+		for index in terrain.indices {
+			let column = index % 3
+			let rowFromSouth = 2 - index / 3
+			let cell = SIMD2<Float>(Float(column), Float(rowFromSouth))
+			let distance = distance(
+				from: point,
+				toCellAt: cell
+			)
+			if terrain[index].isSea {
+				seaDistance = min(seaDistance, distance)
+				let centerOffset = point - cell - SIMD2<Float>(repeating: 0.5)
+				seaCenterDistance = min(
+					seaCenterDistance,
+					(centerOffset.x * centerOffset.x + centerOffset.y * centerOffset.y).squareRoot()
+				)
+			} else {
+				landDistance = min(landDistance, distance)
+			}
+		}
+
+		let elevation = 0.6 * lowpass(height, at: xy) + 0.4 * height.value(at: xy.simd)
+		let seaDepth = min(landDistance, 0.6)
+		let centerPenalty = max(0, seaCenterDistance - 0.15) * 0.65
+		return seaDistance - seaDepth + centerPenalty + 0.05 + elevation * 0.75 < 0
+	}
+
+	private func distance(from point: SIMD2<Float>, toCellAt origin: SIMD2<Float>) -> Float {
+		let dx = max(0, max(origin.x - point.x, point.x - origin.x - 1))
+		let dy = max(0, max(origin.y - point.y, point.y - origin.y - 1))
+		return (dx * dx + dy * dy).squareRoot()
 	}
 
 	private func strategicTerrain(at xy: XY, terrain: [9 of Terrain]) -> Terrain {
@@ -85,8 +213,13 @@ public extension Map<32, Terrain> {
 
 		(0 ..< riversCount).forEach { idx in
 			guard
-				let edge = Edge.allCases.randomElement(using: &d20),
-				let source = riverMouth(on: edge, height: height, d20: &d20, apart: mouths)
+				let preferredEdge = Edge.allCases.randomElement(using: &d20),
+				let (edge, source) = riverSource(
+					preferredEdge: preferredEdge,
+					height: height,
+					d20: &d20,
+					apart: mouths
+				)
 			else { return }
 
 			let salt = d20.next()
@@ -96,12 +229,15 @@ public extension Map<32, Terrain> {
 			)
 			var mouth = nil as XY?
 			if idx == 0 || d20() >= 8 {
-				let across = d20() < 14
-					? edge.opposite
-					: Edge.allCases.filter { e in e != edge && e != edge.opposite }
-						.randomElement(using: &d20) ?? edge.opposite
-				mouth = riverMouth(on: across, height: height, d20: &d20, apart: mouths, across: source)
-					?? riverMouth(on: edge.opposite, height: height, d20: &d20, apart: mouths, across: source)
+				mouth = coastalRiverMouth(height: height, apart: mouths, across: source)
+				if mouth == nil {
+					let across = d20() < 14
+						? edge.opposite
+						: Edge.allCases.filter { e in e != edge && e != edge.opposite }
+							.randomElement(using: &d20) ?? edge.opposite
+					mouth = riverMouth(on: across, height: height, d20: &d20, apart: mouths, across: source)
+						?? riverMouth(on: edge.opposite, height: height, d20: &d20, apart: mouths, across: source)
+				}
 				guard mouth != nil else { return }
 			}
 
@@ -117,10 +253,28 @@ public extension Map<32, Terrain> {
 		}
 	}
 
+	/// Tries the seeded edge first, then the remaining edges. Coastal maps can
+	/// submerge an entire edge, which should not cancel a river when a valid
+	/// inland source exists elsewhere on the map boundary.
+	private func riverSource(
+		preferredEdge: Edge,
+		height: GKNoiseMap,
+		d20: inout D20,
+		apart mouths: [XY]
+	) -> (Edge, XY)? {
+		let edges = [preferredEdge] + Edge.allCases.filter { $0 != preferredEdge }
+		for edge in edges {
+			if let source = riverMouth(on: edge, height: height, d20: &d20, apart: mouths) {
+				return (edge, source)
+			}
+		}
+		return nil
+	}
+
 	/// Lowest-lying of a few random candidates on `edge`, so mouths favor
-	/// valleys. Mouths keep apart from other rivers' mouths, and an exit must
-	/// be far enough from its `source` that the river genuinely crosses the
-	/// map rather than clipping a corner.
+	/// valleys without starting beside a sea shore. Mouths keep apart from
+	/// other rivers' mouths, and an exit must be far enough from its `source`
+	/// that the river genuinely crosses the map rather than clipping a corner.
 	private func riverMouth(
 		on edge: Edge,
 		height: GKNoiseMap,
@@ -134,11 +288,37 @@ public extension Map<32, Terrain> {
 			let p = onEdge(edge, t)
 			guard
 				!self[p].isSea,
+				hasNoSeaNeighbors(at: p),
 				hasNoRivers(at: p),
 				mouths.allSatisfy({ xy in xy.stepDistance(to: p) >= size / 2 }),
 				source.map({ xy in xy.manhattanDistance(to: p) >= size - 1 }) ?? true,
 				best.map({ xy in height.value(at: p.simd) < height.value(at: xy.simd) }) ?? true
 			else { return }
+			best = p
+		}
+		return best
+	}
+
+	/// Lowest coastal land reachable far enough from `source` to form a real
+	/// river. The pathfinder may enter this tile as its goal, but shoreline
+	/// land is otherwise impassable, making it a terminal river mouth rather
+	/// than a route that follows the coast.
+	private func coastalRiverMouth(
+		height: GKNoiseMap,
+		apart mouths: [XY],
+		across source: XY
+	) -> XY? {
+		var best = nil as XY?
+		for p in indices {
+			guard
+				!self[p].isSea,
+				touchesSea(at: p),
+				p.n4.contains({ q in contains(q) && !self[q].isSea && hasNoSeaNeighbors(at: q) }),
+				hasNoRivers(at: p),
+				mouths.allSatisfy({ xy in xy.stepDistance(to: p) >= size / 2 }),
+				source.manhattanDistance(to: p) >= size / 2,
+				best.map({ xy in height.value(at: p.simd) < height.value(at: xy.simd) }) ?? true
+			else { continue }
 			best = p
 		}
 		return best
@@ -156,12 +336,15 @@ public extension Map<32, Terrain> {
 	/// Cost of carving a river through `xy`: low-passed height squared, so
 	/// macro ridges repel the river strongly while flat ground is nearly
 	/// free, plus a per-river `meander` field that bends the path even where
-	/// the terrain is flat, and a penalty for hugging the map border. Land
-	/// next to an existing river is impassable so parallel rivers keep a gap
-	/// — a tributary (`mouth == nil`) instead pays a penalty there and
-	/// terminates on the first river tile it touches.
+	/// the terrain is flat, and a penalty for hugging the map border. Shoreline
+	/// land is impassable except for the selected terminal mouth, so a river
+	/// can meet the sea but cannot run along it. Land next to an existing river
+	/// is also impassable so parallel rivers keep a gap — a tributary
+	/// (`mouth == nil`) instead pays a penalty there and terminates on the
+	/// first river tile it touches.
 	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt16? {
 		guard contains(xy), !self[xy].isSea else { return nil }
+		if !hasNoSeaNeighbors(at: xy), mouth.map({ $0 == xy }) != true { return nil }
 		if self[xy].isRiver { return mouth == nil ? 1 : nil }
 		let near = !hasNoRivers(at: xy)
 		if near, mouth != nil { return nil }
@@ -193,7 +376,15 @@ public extension Map<32, Terrain> {
 		xy.n8.firstMap { xy in self[xy].isRiver ? .some(xy) : .none } == .none
 	}
 
-	private mutating func placeCities(d20: inout D20, players: Int) -> [XY] {
+	private func hasNoSeaNeighbors(at xy: XY) -> Bool {
+		xy.n8.firstMap { p in self[p].isSea ? .some(p) : .none } == .none
+	}
+
+	private func touchesSea(at xy: XY) -> Bool {
+		xy.n4.firstMap { p in self[p].isSea ? .some(p) : .none } != .none
+	}
+
+	private mutating func placeCities(d20: inout D20, players: Int, mainland: SetXY) -> [XY] {
 		let citiesCount = min(16, max(6, count / 48))
 
 		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
@@ -207,6 +398,7 @@ public extension Map<32, Terrain> {
 
 		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
 			contains(p)
+			&& mainland[p]
 			&& !self[p].isWater
 			&& !self[p].isSettlement
 			&& self[p] != .mountain

@@ -5,7 +5,7 @@ struct MapGenerationTests {
 
 	@Test func terminatesAcrossManySeeds() {
 		for seed in 0 ..< 16 {
-			_ = Map<32, Terrain>(size: 8 + seed % 24, seed: seed)
+			_ = Map<32, Terrain>(size: 24 + seed % 9, seed: seed)
 		}
 	}
 
@@ -49,8 +49,8 @@ struct MapGenerationTests {
 	@Test func handlesPlayableSizes() {
 		// `placeCities` lays cities on a jittered grid whose columns/rows are
 		// derived from the city count, so it has no divisor that collapses to
-		// zero and works across the full 16...32 range.
-		for size in 16 ... 32 {
+		// zero and works across the full playable 24...32 range.
+		for size in 24 ... 32 {
 			let map = Map<32, Terrain>(size: size, seed: 0)
 			#expect(map.size == size)
 			#expect(map.count == size * size)
@@ -100,27 +100,148 @@ struct MapGenerationTests {
 		}
 	}
 
-	@Test func terrainNeighborhoodComposesSeaByStrategicThird() {
+	@Test func terrainNeighborhoodShapesSeaWithHeightMap() {
 		var terrain = [9 of Terrain](repeating: .field)
 		terrain[0] = .sea // north-west strategic tile
-		let map = Map<32, Terrain>(size: 24, seed: 7, players: 2, terrain: terrain)
+		let a = Map<32, Terrain>(size: 24, seed: 7, players: 2, terrain: terrain)
+		let b = Map<32, Terrain>(size: 24, seed: 19, players: 2, terrain: terrain)
 
-		var missingSea: [XY] = []
-		var unexpectedSea: [XY] = []
-		for xy in map.indices {
-			let northWest = xy.x < 8 && xy.y >= 16
-			if northWest, map[xy] != .sea { missingSea.append(xy) }
-			if !northWest, map[xy] == .sea { unexpectedSea.append(xy) }
+		var aSea = Set<XY>()
+		var bSea = Set<XY>()
+		for xy in a.indices {
+			if a[xy].isSea { aSea.insert(xy) }
+			if b[xy].isSea { bSea.insert(xy) }
 		}
-		#expect(missingSea.isEmpty, "Sea third was overwritten at: \(missingSea)")
-		#expect(unexpectedSea.isEmpty, "Sea escaped its strategic third at: \(unexpectedSea)")
+		#expect(!aSea.isEmpty, "Sea neighborhood produced no water")
+		#expect(aSea.count < 24 * 24, "Sea neighborhood flooded the whole map")
+		#expect(aSea != bSea, "Different height maps produced the same square shore")
+		var landInsideNominalShore = 0
+		var centerSea = 0
+		var centerTiles = 0
+		var peripheralSea = 0
+		var peripheralTiles = 0
+		for xy in a.indices {
+			let nominalSea = xy.x < 8 && xy.y >= 16
+			if !a[xy].isSea, nominalSea { landInsideNominalShore += 1 }
+			let center = (2 ..< 6).contains(xy.x) && (18 ..< 22).contains(xy.y)
+			if center {
+				centerTiles += 1
+				if a[xy].isSea { centerSea += 1 }
+			} else if nominalSea {
+				peripheralTiles += 1
+				if a[xy].isSea { peripheralSea += 1 }
+			}
+		}
+		#expect(landInsideNominalShore >= 4, "High ground did not break up the strategic square")
+		#expect(aSea.count <= 48, "Sea occupied too much of its strategic square")
+		#expect(
+			centerSea * peripheralTiles > peripheralSea * centerTiles,
+			"Sea did not become less likely away from its strategic center"
+		)
+	}
+
+	@Test func scenarioSeaLevelsAreCumulativeAndSeededByCorner() {
+		let validCorners: [Set<Int>] = [
+			[2, 1, 5], [0, 1, 3], [6, 7, 3], [8, 7, 5],
+		]
+		var observedCorners = Set<Int>()
+		for seed in 0 ..< 64 {
+			var previous = Set<Int>()
+			for level: UInt8 in 0 ... 3 {
+				let terrain = Scenario.cornerTerrain(seaLevel: level, seed: seed)
+				let sea = Set(terrain.indices.filter { terrain[$0].isSea })
+				#expect(sea.count == Int(level), "Sea level \(level) produced \(sea.count) squares for seed \(seed)")
+				#expect(previous.isSubset(of: sea), "Sea level \(level) was not cumulative for seed \(seed)")
+				previous = sea
+				if level == 1, let corner = sea.first { observedCorners.insert(corner) }
+				if level == 3 {
+					#expect(validCorners.contains(sea), "Sea squares \(sea) do not form a corner for seed \(seed)")
+				}
+			}
+		}
+		#expect(observedCorners == Set([0, 2, 6, 8]), "Seeded sea did not use all four corners")
+	}
+
+	@Test func riversOnlyTouchSeaAtTerminalMouths() {
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea
+		terrain[1] = .sea
+		terrain[3] = .sea
+		var mouths = 0
+		for seed in 0 ..< 24 {
+			let map = Map<32, Terrain>(size: 32, seed: seed, players: 4, terrain: terrain)
+			for xy in map.indices where map[xy].isRiver || map[xy].isBridge {
+				let touchesSea = xy.n8.contains { p in map[p].isSea }
+				guard touchesSea else { continue }
+				mouths += 1
+				#expect(xy.n4.contains({ p in map[p].isSea }), "River mouth at \(xy) only meets sea diagonally for seed \(seed)")
+				var riverNeighbors = [] as [XY]
+				let neighbors = xy.n4
+				for i in neighbors.indices {
+					let p = neighbors[i]
+					if map[p].isRiver || map[p].isBridge { riverNeighbors.append(p) }
+				}
+				#expect(riverNeighbors.count == 1, "River at \(xy) follows rather than terminates at the shore for seed \(seed)")
+				if let inland = riverNeighbors.first {
+					#expect(!inland.n8.contains({ p in map[p].isSea }), "River continues through the shore at \(xy) for seed \(seed)")
+				}
+			}
+		}
+		#expect(mouths > 0, "No generated river terminated at the sea")
+	}
+
+	@Test func citiesStayOffIslandsAndSmallIslandsAreRemoved() {
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea
+		terrain[1] = .sea
+		terrain[3] = .sea
+		for seed in 0 ..< 16 {
+			let map = Map<32, Terrain>(size: 24, seed: seed, players: 4, terrain: terrain)
+			let center = XY(map.size / 2, map.size / 2)
+			var mainland = Set([center])
+			var pending = [center]
+			while let xy = pending.popLast() {
+				let neighbors = xy.n4
+				for i in neighbors.indices {
+					let p = neighbors[i]
+					guard map.contains(p), !map[p].isSea, !mainland.contains(p) else { continue }
+					mainland.insert(p)
+					pending.append(p)
+				}
+			}
+
+			var visited = mainland
+			var islands = 0
+			for start in map.indices where !map[start].isSea && !visited.contains(start) {
+				islands += 1
+				var island = [start]
+				var head = 0
+				visited.insert(start)
+				while head < island.count {
+					let neighbors = island[head].n4
+					head += 1
+					for i in neighbors.indices {
+						let p = neighbors[i]
+						guard map.contains(p), !map[p].isSea, !visited.contains(p) else { continue }
+						visited.insert(p)
+						island.append(p)
+					}
+				}
+				#expect(island.count >= 6, "Small island of \(island.count) tiles survived for seed \(seed)")
+				#expect(!island.contains(where: { xy in map[xy] == .city }), "City generated on an island for seed \(seed)")
+			}
+			#expect(islands <= 1, "Too many islands (\(islands)) survived for seed \(seed)")
+			for xy in map.indices where map[xy] == .city {
+				#expect(mainland.contains(xy), "City at \(xy) is not on the mainland for seed \(seed)")
+			}
+		}
 	}
 
 	@Test func roadsConnectAllCities() {
 		// MST-based road building links every terrain-reachable city into
 		// one network; on these seeds all cities share one landmass, so a
 		// flood along road tiles from any city must reach every other.
-		for (size, seed) in [(32, 0), (32, 7), (32, 21), (32, 42), (24, 5), (24, 11), (16, 2)] {
+		for (size, seed) in [(32, 0), (32, 7), (32, 21), (32, 42), (24, 5), (24, 11)] {
 			let map = Map<32, Terrain>(size: size, seed: seed)
 			var cities = [] as [XY]
 			for xy in map.indices where map[xy] == .city { cities.append(xy) }
@@ -182,7 +303,7 @@ struct MapGenerationTests {
 		// Rings only overwrite field/forest/hill, so every fort must sit
 		// where open ground used to be, and every other tile must be
 		// untouched — roads, rivers and settlements survive.
-		for (size, seed) in [(32, 0), (32, 7), (24, 5), (16, 2)] {
+		for (size, seed) in [(32, 0), (32, 7), (24, 5)] {
 			let base = Map<32, Terrain>(size: size, seed: seed)
 			var map = clone(base)
 			map.placeForts(around: cities(of: base), level: 3)

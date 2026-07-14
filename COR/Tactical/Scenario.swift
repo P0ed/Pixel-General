@@ -36,6 +36,32 @@ public struct Scenario {
 	public func makeSim() -> TacticalSim {
 		TacticalSim(self)
 	}
+
+	/// Field neighborhood with zero to three cumulative sea squares in a
+	/// corner. The canonical north-east pattern is:
+	///
+	///     L 2 1
+	///     L L 3
+	///     L L L
+	///
+	/// A seeded draw rotates that pattern to one of the four corners, keeping
+	/// replays deterministic while varying standalone scenario coastlines.
+	public static func cornerTerrain(seaLevel: UInt8, seed: Int) -> [9 of Terrain] {
+		var terrain = [9 of Terrain](repeating: .field)
+		guard seaLevel > 0 else { return terrain }
+
+		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
+		let tiles: [Int] = switch Int.random(in: 0 ..< 4, using: &d20) {
+		case 0: [2, 1, 5] // north-east
+		case 1: [0, 1, 3] // north-west
+		case 2: [6, 7, 3] // south-west
+		default: [8, 7, 5] // south-east
+		}
+		for index in tiles.prefix(Int(min(seaLevel, 3))) {
+			terrain[index] = .sea
+		}
+		return terrain
+	}
 }
 
 public extension TacticalSim {
