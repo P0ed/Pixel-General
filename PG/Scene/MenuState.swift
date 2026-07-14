@@ -68,15 +68,31 @@ import Foundation
 
 extension MenuItem {
 
+	/// An item that pushes a single-item confirmation submenu; `action` runs
+	/// only on the second tap, closing back cancels.
+	static func confirm(icon: UIImage, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
+		MenuItem(icon: icon, status: .init(text: status), update: { menu in
+			MenuState(
+				items: [
+					.init(icon: .empty, status: .init(text: "Cancel")) { _ in menu },
+					.space,
+					.space,
+					.close(icon: .new, status: "Confirm") { _ in action() },
+				],
+				close: { _ in menu }
+			)
+		})
+	}
+
 	static func load(save: @escaping () -> Void) -> MenuItem {
 		MenuItem(icon: .load, status: .init(text: "Load \(UserDefaults.standard.slot + 1)"), update: { state in
 			MenuState(
 				items: (0...3).map { slot in
-						.close(icon: .load, status: .init(text: "Slot \(slot + 1)"), update: { _ in
+						.confirm(icon: .load, status: "Slot \(slot + 1)") {
 							save()
 							core = .load(slot: slot)
 							view.present(.auto)
-						})
+						}
 				},
 				close: { _ in
 					state

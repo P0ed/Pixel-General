@@ -55,7 +55,13 @@ extension StrategicNodes {
 				.close(icon: .start, status: "Next turn", action: .endTurn),
 				.space,
 				.load { [weak scene] in scene?.saveState() },
-				.space,
+				.confirm(icon: .HQ, status: "Abandon campaign") { [weak scene] in
+					guard let scene else { return }
+					core = .new(country: scene.state.sim.player.country)
+					core.save()
+					view.present(.auto)
+				},
+
 				MenuItem(
 					icon: .toggle4(settings.campaignAutoresolve ? 3 : 0),
 					status: .init(text: "Battle autoresolve"),
@@ -66,6 +72,7 @@ extension StrategicNodes {
 						}
 					}
 				),
+				.space, .space, .space,
 			]
 		))
 	}
