@@ -127,6 +127,14 @@ extension StrategicNodes {
 			return .team(state.sim.owner[xy].team, elevation: elevation)
 		case .country:
 			return .base(surface: .country(state.sim.owner[xy]), elevation: elevation)
+		case .industry:
+			guard state.sim.owner[xy] != .none else { return .base(terrain: .water) }
+			let level = UInt8(min(7, state.sim.provinces[xy].industry))
+			return .base(surface: .supply(level), elevation: elevation)
+		case .forts:
+			guard state.sim.owner[xy] != .none else { return .base(terrain: .water) }
+			let level = state.sim.provinces[xy][.fort] * 7 / 3
+			return .base(surface: .supply(level), elevation: elevation)
 		}
 	}
 }

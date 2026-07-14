@@ -1,7 +1,7 @@
 import COR
 
 enum MapMode: UInt8, Hashable {
-	case terrain, supply, country, team
+	case terrain, supply, country, team, defense
 }
 
 struct TacticalUI: ~Copyable {
@@ -130,7 +130,7 @@ extension TacticalState {
 		case .a: ui.mapMode = .terrain
 		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
 		case .c: ui.mapMode = .supply
-		case .d: break
+		case .d: ui.mapMode = .defense
 		}
 		return .none
 	}

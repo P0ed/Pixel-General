@@ -1,7 +1,7 @@
 import COR
 
 enum StrategicMapMode: UInt8, Hashable {
-	case terrain, country, team
+	case terrain, country, team, industry, forts
 }
 
 struct StrategicUI {
@@ -98,7 +98,8 @@ extension StrategicState {
 		switch action {
 		case .a: ui.mapMode = .terrain
 		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
-		case .c, .d: break
+		case .c: ui.mapMode = ui.mapMode == .industry ? .forts : .industry
+		case .d: break
 		}
 		return .none
 	}

@@ -11,6 +11,7 @@ struct TacticalNodes {
 	@IO var lit: SetXY = .empty
 	@IO var mapMode: MapMode = .terrain
 	@IO var supply: SupplySources = .empty
+	@IO var defense: UnitType = .inf
 }
 
 @MainActor
@@ -126,15 +127,16 @@ extension TacticalNodes {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
 		let mode = state.ui.mapMode
 		let supply = mode == .supply ? state.sim.humanSupply : self.supply
+		let defense = mode == .defense ? Self.defenseType(state) : self.defense
 
-		let baseChanged = mode != mapMode || supply != self.supply
+		let baseChanged = mode != mapMode || supply != self.supply || defense != self.defense
 		let litChanged = lit != self.lit
 		guard baseChanged || litChanged else { return }
-		defer { self.lit = lit; self.mapMode = mode; self.supply = supply }
+		defer { self.lit = lit; self.mapMode = mode; self.supply = supply; self.defense = defense }
 
 		if baseChanged {
 			state.sim.map.indices.forEach { xy in
-				map.setBase(baseGroup(for: state, at: xy, supply: supply), at: xy)
+				map.setBase(baseGroup(for: state, at: xy, supply: supply, defense: defense), at: xy)
 			}
 		}
 		if litChanged {
@@ -147,10 +149,19 @@ extension TacticalNodes {
 		}
 	}
 
+	/// The unit type the defense map mode shades for: the human selection,
+	/// falling back to infantry.
+	private static func defenseType(_ state: borrowing TacticalState) -> UnitType {
+		guard state.ui.selectedUnit != .none else { return .inf }
+		let unit = state.sim.units[state.ui.selectedUnit]
+		return unit.alive ? unit.type : .inf
+	}
+
 	private func baseGroup(
 		for state: borrowing TacticalState,
 		at xy: XY,
-		supply: SupplySources
+		supply: SupplySources,
+		defense: UnitType
 	) -> SKTileGroup {
 		switch state.ui.mapMode {
 		case .terrain:
@@ -179,6 +190,18 @@ extension TacticalNodes {
 			return .base(
 				surface: .country(state.sim.control[xy]),
 				elevation: state.sim.map[xy].elevationLevel
+			)
+		case .defense:
+			// def(type) + entrenchment floor: the defenderMod a just-arrived
+			// unit has after one end of turn. −5 (heavy armor in a river) …
+			// +6 (infantry in a city) onto the 8-step gradient; air ignores
+			// terrain and never entrenches, so it shades uniformly.
+			let terrain = state.sim.map[xy]
+			let value = defense.isAir
+				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)
+			return .base(
+				surface: .supply(UInt8(clamping: (value + 5) * 7 / 11)),
+				elevation: terrain.elevationLevel
 			)
 		}
 	}
