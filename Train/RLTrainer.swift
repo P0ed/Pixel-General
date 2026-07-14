@@ -91,9 +91,9 @@ enum RLTrainer {
 		var winEMA: Float = 0
 		var starved = 0
 
-		init(level: Int, anneal: Float) {
-			difficulty = Float(level)
-			ceiling = Float(level)
+		init(level: Float, anneal: Float) {
+			difficulty = level
+			ceiling = level
 			self.anneal = anneal
 		}
 
@@ -132,7 +132,7 @@ enum RLTrainer {
 		var seed = 1000
 		var ckpt = 10
 		var evalN = 8
-		var curriculum = 0
+		var curriculum: Float = 0
 		var anneal: Float = 0.35
 		var suite: RolloutSuite = .mixed
 
@@ -149,7 +149,7 @@ enum RLTrainer {
 			case "--seed": seed = try Int(next()) ?? seed
 			case "--ckpt": ckpt = try Int(next()) ?? ckpt
 			case "--evaln": evalN = try Int(next()) ?? evalN
-			case "--curriculum": curriculum = try Int(next()) ?? curriculum
+			case "--curriculum": curriculum = try Float(next()) ?? curriculum
 			case "--anneal": anneal = try Float(next()) ?? anneal
 			case "--suite": suite = try .parse(next())
 			default: throw TrainError.usage("unknown option \(flag)")
@@ -158,6 +158,9 @@ enum RLTrainer {
 
 		guard let weightsPath else {
 			throw TrainError.usage("rl needs --weights <pgw> (a BC checkpoint)")
+		}
+		guard (0 ... 3).contains(curriculum) else {
+			throw TrainError.usage("--curriculum must be between 0 and 3")
 		}
 		let weights = try LSTMWeights.load(weightsPath)
 
@@ -275,8 +278,7 @@ enum RLTrainer {
 	) throws -> String {
 		try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
 
-		var policy = LSTMPolicy(weights: snapshot)
-		let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN, suite: suite)
+		let tally = Eval.arena(weights: snapshot, configs: 0 ..< evalN, suite: suite)
 		print("  arena \(tally.line)  illegal \(tally.illegal)")
 
 		let epiDir = outDir.appendingPathComponent("episodes-\(iter)", isDirectory: true)

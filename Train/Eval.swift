@@ -7,9 +7,11 @@ import COR
 /// generation, economy, and roster asymmetries cancel out of the win rate.
 ///
 /// Reported: win/draw/loss per side and overall, average days, and the
-/// illegal-action count — a non-`.end` policy action that leaves `encode(sim)`
-/// unchanged no-opped through `reduce`, which the masks are supposed to make
-/// impossible; any hit fails the run.
+/// illegal-action count. Independent battle/seat pairs run concurrently; their
+/// results are folded and printed in config order, so throughput scales across
+/// CPU cores without making the report nondeterministic. A non-`.end` action
+/// that leaves `encode(sim)` unchanged no-opped through `reduce`, which the
+/// masks are supposed to make impossible; any hit fails the run.
 enum Eval {
 
 	struct Tally {
@@ -74,19 +76,22 @@ enum Eval {
 			throw TrainError.usage("eval needs --weights <pgw> (or --wseed <n> for a random-weight baseline)")
 		}
 
-		var policy = LSTMPolicy(weights: weights)
-
 		let clock = ContinuousClock()
 		let start = clock.now
 		var bySeat = [Tally(), Tally()]
 		var heuristic = Tally()
+		let configs = seedBase ..< seedBase + n
+		let matches = matches(
+			weights: weights, configs: configs, suite: suite,
+			heuristicOracle: true
+		)
 
-		for index in seedBase ..< seedBase + n {
+		for (offset, index) in configs.enumerated() {
 			let config = Rollouts.replay(index: index, suite: suite)
 			var results: [String] = []
 
 			for seat in 0 ..< config.seats.count {
-				let match = play(config, policySeat: seat, policy: &policy, heuristicOracle: true)
+				let match = matches[offset * config.seats.count + seat]
 				bySeat[seat].add(match.policy)
 				heuristic.add(match.heuristic)
 				let outcome = match.policy.wins > 0 ? "W" : match.policy.losses > 0 ? "L" : "D"
@@ -121,25 +126,56 @@ enum Eval {
 	/// tally — the fixed arena both `Train eval` and the RL trainer's
 	/// checkpoints report.
 	static func arena(
-		policy: inout LSTMPolicy,
+		weights: LSTMWeights,
 		configs: Range<Int>,
 		suite: RolloutSuite
 	) -> Tally {
 		var tally = Tally()
-		for index in configs {
-			let config = Rollouts.replay(index: index, suite: suite)
-			for seat in 0 ..< config.seats.count {
-				tally.add(play(config, policySeat: seat, policy: &policy, heuristicOracle: false).policy)
-			}
+		for match in matches(
+			weights: weights, configs: configs, suite: suite,
+			heuristicOracle: false
+		) {
+			tally.add(match.policy)
 		}
 		return tally
+	}
+
+	/// Runs each (config, policy-seat) match with a fresh policy. `play`
+	/// already reset the shared policy between serial matches; independent
+	/// instances preserve those semantics and make parallel execution safe.
+	private static func matches(
+		weights: LSTMWeights,
+		configs: Range<Int>,
+		suite: RolloutSuite,
+		heuristicOracle: Bool
+	) -> [Match] {
+		let seats = 2
+		let count = configs.count * seats
+		var results = [Match?](repeating: nil, count: count)
+		unsafe results.withUnsafeMutableBufferPointer { buffer in
+			let out = unsafe UnsafeSendable(buffer)
+			DispatchQueue.concurrentPerform(iterations: count) { task in
+				autoreleasepool {
+					let index = configs.lowerBound + task / seats
+					let seat = task % seats
+					let config = Rollouts.replay(index: index, suite: suite)
+					var policy = LSTMPolicy(weights: weights)
+					unsafe out.value[task] = play(
+						config, policySeat: seat, policy: &policy,
+						heuristicOracle: heuristicOracle
+					)
+				}
+			}
+		}
+		return results.map { $0! }
 	}
 
 	/// One battle: the policy on `policySeat`, the heuristic on the rest;
 	/// same budgets as the rollout generator. Returns a single-battle tally
 	/// per side. The mutation oracle (encode before/after `reduce`) always
-	/// guards policy actions; `heuristicOracle` extends it to the heuristic's
-	/// — the arena skips that, since it discards the heuristic tally.
+	/// guards policy actions; `heuristicOracle` extends it to the heuristic's —
+	/// checkpoint arenas skip that extra bookkeeping because they discard the
+	/// heuristic tally.
 	static func play(
 		_ config: Replay,
 		policySeat: Int,

@@ -55,7 +55,7 @@ enum PPOTrainer {
 		var seed = 1000
 		var ckpt = 10
 		var evalN = 8
-		var curriculum = 0
+		var curriculum: Float = 0
 		var anneal: Float = 0.30
 		var suite: RolloutSuite = .mixed
 		var vwarm = 5
@@ -76,7 +76,7 @@ enum PPOTrainer {
 			case "--seed": seed = try Int(next()) ?? seed
 			case "--ckpt": ckpt = try Int(next()) ?? ckpt
 			case "--evaln": evalN = try Int(next()) ?? evalN
-			case "--curriculum": curriculum = try Int(next()) ?? curriculum
+			case "--curriculum": curriculum = try Float(next()) ?? curriculum
 			case "--anneal": anneal = try Float(next()) ?? anneal
 			case "--suite": suite = try .parse(next())
 			case "--epochs": cfg.epochs = try Int(next()) ?? cfg.epochs
@@ -92,6 +92,9 @@ enum PPOTrainer {
 
 		guard let weightsPath else {
 			throw TrainError.usage("ppo needs --weights <pgw> (a BC checkpoint)")
+		}
+		guard (0 ... 3).contains(curriculum) else {
+			throw TrainError.usage("--curriculum must be between 0 and 3")
 		}
 		let weights = try LSTMWeights.load(weightsPath)
 		let ref = try refPath.map { try LSTMWeights.load($0) } ?? weights

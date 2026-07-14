@@ -206,7 +206,8 @@ actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
 (⇒ `2n` battles). Reports separate policy and heuristic wins/draws/losses, average
 days, action counts, and illegal-action counts, and **hard-gates on 0 illegal actions**
-(mutation oracle). `--wseed` plays random weights instead — the sanity floor.
+(mutation oracle). Independent battles run concurrently while results remain ordered
+by config. `--wseed` plays random weights instead — the sanity floor.
 
 **`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
@@ -238,7 +239,8 @@ the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFO
 | prestige | 0.25 | (mine − theirs) / (mine + theirs) at episode end |
 | outcome | 0.5 | ±0.5 on a decided battle; timeouts score 0 and are judged by the dense terms |
 
-`--curriculum <0-3>` starts collection with the policy seat economically boosted.
+`--curriculum <0-3>` starts collection with the policy seat economically boosted;
+fractional values are accepted so a checkpoint can continue from its exact difficulty.
 Difficulty is **continuous**: each episode plays at level ⌊d⌋ or ⌈d⌉ with probability
 from the fractional part (level 3 = rich + baseLevel 5 + tier 3 vs poor; 2 = rich +
 baseLevel 2 vs poor; 1 = rich vs poor; at any boosted level, config tier asymmetry is

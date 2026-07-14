@@ -45,7 +45,7 @@
 
 - Strengthen the neural opponent further (`Train ppo` — PPO-clip + value baseline +
   KL anchor — broke the REINFORCE ceiling at 25.7% vs BC's 21.6%, 832-battle paired
-  eval): continue PPO from ckpt-90, try `--lam < 1` / a bigger BC corpus for a
+  eval): continue PPO from ckpt-90 at difficulty 1.5, try `--lam < 1` / a bigger BC corpus for a
   stronger prior; self-play once it consistently beats the heuristic.
 
 ## Multiplayer
