@@ -102,9 +102,7 @@ enum PPOTrainer {
 		let graph = try PPOGraph(weights: weights, ref: ref, b: b, t: t, cfg: cfg)
 		var battleIndex = seed
 		var globalStep = 0
-		var difficulty = Float(curriculum)
-		var winEMA: Float = 0
-		var starved = 0
+		var schedule = RLTrainer.Curriculum(level: curriculum, anneal: anneal)
 		var csv = "iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
@@ -114,7 +112,7 @@ enum PPOTrainer {
 			let current = graph.checkpoint()
 			let batch = RLTrainer.collect(
 				weights: current, count: episodes, startIndex: battleIndex,
-				temp: cfg.temp, difficulty: difficulty, suite: suite
+				temp: cfg.temp, difficulty: schedule.difficulty, suite: suite
 			)
 			battleIndex += episodes
 			let episodeList = batch.map { ($0.replay, $0.seat, Float(1)) }
@@ -162,10 +160,10 @@ enum PPOTrainer {
 						throw TrainError.failed("PPO window \(k) does not match the read pass")
 					}
 					globalStep += 1
-					let corrected = lr * (1 - powf(0.999, Float(globalStep))).squareRoot() / (1 - powf(0.9, Float(globalStep)))
 					let m = graph.step(
 						w, oldLogp: cache[k].oldLogp, adv: adv[k], ret: ret[k],
-						lr: corrected, polCoef: warming ? 0 : 1, valueOnly: warming
+						lr: Net.correctedLR(lr, step: globalStep),
+						polCoef: warming ? 0 : 1, valueOnly: warming
 					)
 					batcher.carry(h: m.h, c: m.c, hr: m.hr, cr: m.cr)
 					sums.add(m)
@@ -178,57 +176,23 @@ enum PPOTrainer {
 			}
 			sums.scale(1 / Float(max(windows, 1)))
 
-			let n = Float(batch.count)
-			let meanR = batch.reduce(0) { $0 + $1.reward } / n
-			let wins = batch.count(where: { $0.outcome == "W" })
-			let losses = batch.count(where: { $0.outcome == "L" })
-			let draws = batch.count - wins - losses
-			let days = batch.reduce(0) { $0 + Int($1.replay.days) } / batch.count
-			let samples = batch.reduce(0) { $0 + $1.samples }
-			let settle = batch.reduce(0) { $0 + $1.settleTerm } / n
-			let units = batch.reduce(0) { $0 + $1.unitTerm } / n
-			let prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / n
-			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(settle))  units \(f(units))  days \(days)  samples \(samples)\(difficulty > 0 ? "  d \(f(difficulty))" : "")")
+			let stats = RLTrainer.BatchStats(batch)
+			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
 			// Self-paced curriculum, unchanged v3.1 semantics (see RLTrainer);
 			// frozen while the value head warms up.
-			if !warming {
-				winEMA = 0.8 * winEMA + 0.2 * Float(wins) / n
-				if difficulty > 0, winEMA > anneal {
-					difficulty = max(0, difficulty - 0.25)
-					winEMA *= 0.5
-					starved = 0
-					print("  curriculum → difficulty \(f(difficulty))")
-				} else if difficulty < Float(curriculum), winEMA < 0.10 {
-					starved += 1
-					if starved >= 6 {
-						difficulty = min(Float(curriculum), difficulty + 0.25)
-						starved = 0
-						winEMA = 0.2
-						print("  curriculum → difficulty \(f(difficulty)) (win starvation)")
-					}
-				} else {
-					starved = 0
-				}
+			if !warming, let move = schedule.update(winRate: Float(stats.wins) / Float(batch.count)) {
+				print("  \(move)")
 			}
 
 			var arena = ""
 			if iter % ckpt == 0 || iter == iters {
-				let snapshot = graph.checkpoint()
-				try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
-
-				var policy = LSTMPolicy(weights: snapshot)
-				let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN, suite: suite)
-				arena = f(Float(100 * tally.winRate))
-				print("  arena \(tally.line)  illegal \(tally.illegal)")
-
-				let epiDir = outDir.appendingPathComponent("episodes-\(iter)", isDirectory: true)
-				try FileManager.default.createDirectory(at: epiDir, withIntermediateDirectories: true)
-				for (j, e) in batch.enumerated() {
-					try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
-				}
+				arena = try RLTrainer.dumpCheckpoint(
+					graph.checkpoint(), iter: iter, outDir: outDir,
+					evalN: evalN, suite: suite, batch: batch
+				)
 			}
-			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(ev),\(madv),\(settle),\(units),\(prestige),\(days),\(samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(difficulty),\(arena)\n"
+			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(ev),\(madv),\(stats.settle),\(stats.units),\(stats.prestige),\(stats.days),\(stats.samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(schedule.difficulty),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("ppo-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -264,7 +228,7 @@ enum PPOTrainer {
 
 		var adv = cache.map { [Float](repeating: 0, count: $0.epi.count) }
 		var ret = cache.map { [Float](repeating: 0, count: $0.epi.count) }
-		var sum: Float = 0, sqsum: Float = 0, count: Float = 0
+		var sum: Float = 0, sqsum: Float = 0, absSum: Float = 0, count: Float = 0
 		var mcVarSum: Float = 0, mcSum: Float = 0, resSum: Float = 0
 		for (e, s) in seq.enumerated() {
 			guard !s.isEmpty else { continue }
@@ -280,6 +244,7 @@ enum PPOTrainer {
 				ret[s[j].k][s[j].i] = a + v
 				sum += a
 				sqsum += a * a
+				absSum += abs(a)
 				count += 1
 				mcSum += R
 				mcVarSum += R * R
@@ -290,9 +255,7 @@ enum PPOTrainer {
 
 		let mean = sum / count
 		let std = max((sqsum / count - mean * mean).squareRoot(), 1e-3)
-		let madv = adv.enumerated().reduce(Float(0)) { acc, kv in
-			acc + kv.element.indices.reduce(0) { $0 + (cache[kv.offset].valid[$1] > 0 ? abs(kv.element[$1]) : 0) }
-		} / count
+		let madv = absSum / count
 		for k in adv.indices {
 			for i in adv[k].indices where cache[k].valid[i] > 0 {
 				adv[k][i] = max(-5, min(5, (adv[k][i] - mean) / std))

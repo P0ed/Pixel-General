@@ -78,7 +78,7 @@ enum Rollouts {
 
 	/// Battle configuration derived purely from the index; strides are chosen
 	/// so nearby indices vary the matchup before the economy knobs.
-	static func replay(index: Int, suite: RolloutSuite = .mixed) -> Replay {
+	static func replay(index: Int, suite: RolloutSuite) -> Replay {
 		let pair = pairs[index % pairs.count]
 		let prestige = prestiges[(index / 4) % prestiges.count]
 		let level = baseLevels[(index / 16) % baseLevels.count]

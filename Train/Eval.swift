@@ -86,7 +86,7 @@ enum Eval {
 			var results: [String] = []
 
 			for seat in 0 ..< config.seats.count {
-				let match = play(config, policySeat: seat, policy: &policy)
+				let match = play(config, policySeat: seat, policy: &policy, heuristicOracle: true)
 				bySeat[seat].add(match.policy)
 				heuristic.add(match.heuristic)
 				let outcome = match.policy.wins > 0 ? "W" : match.policy.losses > 0 ? "L" : "D"
@@ -123,73 +123,68 @@ enum Eval {
 	static func arena(
 		policy: inout LSTMPolicy,
 		configs: Range<Int>,
-		suite: RolloutSuite = .mixed
+		suite: RolloutSuite
 	) -> Tally {
 		var tally = Tally()
 		for index in configs {
 			let config = Rollouts.replay(index: index, suite: suite)
 			for seat in 0 ..< config.seats.count {
-				tally.add(play(config, policySeat: seat, policy: &policy).policy)
+				tally.add(play(config, policySeat: seat, policy: &policy, heuristicOracle: false).policy)
 			}
 		}
 		return tally
 	}
 
 	/// One battle: the policy on `policySeat`, the heuristic on the rest;
-	/// same budgets as the rollout generator. Returns a single-battle tally.
-	static func play(_ config: Replay, policySeat: Int, policy: inout LSTMPolicy) -> Match {
+	/// same budgets as the rollout generator. Returns a single-battle tally
+	/// per side. The mutation oracle (encode before/after `reduce`) always
+	/// guards policy actions; `heuristicOracle` extends it to the heuristic's
+	/// — the arena skips that, since it discards the heuristic tally.
+	static func play(
+		_ config: Replay,
+		policySeat: Int,
+		policy: inout LSTMPolicy,
+		heuristicOracle: Bool
+	) -> Match {
 		var sim = config.makeSim()
 		var ai = AI.Plan()
 		policy.reset()
 
-		var policyTally = Tally()
-		var heuristicTally = Tally()
+		var tallies = [Tally(), Tally()]	// [policy, heuristic]
 		var actions = 0
 		while actions < Rollouts.maxActions {
 			if sim.winner != nil { break }
 			if sim.day > Rollouts.maxDays { break }
 
-			if sim.playerIndex == policySeat {
-				let action = policy.action(for: sim)
-				policyTally.actions += 1
-				if action == .end {
-					_ = sim.reduce(action)
-				} else {
-					let before = encode(sim)
-					_ = sim.reduce(action)
-					if encode(sim) == before { policyTally.illegal += 1 }
-				}
+			let side = sim.playerIndex == policySeat ? 0 : 1
+			let action = side == 0 ? policy.action(for: sim) : sim.run(ai: &ai)
+			tallies[side].actions += 1
+			if action != .end, side == 0 || heuristicOracle {
+				let before = encode(sim)
+				_ = sim.reduce(action)
+				if encode(sim) == before { tallies[side].illegal += 1 }
 			} else {
-				let action = sim.run(ai: &ai)
-				heuristicTally.actions += 1
-				if action == .end {
-					_ = sim.reduce(action)
-				} else {
-					let before = encode(sim)
-					_ = sim.reduce(action)
-					if encode(sim) == before { heuristicTally.illegal += 1 }
-				}
+				_ = sim.reduce(action)
 			}
 			actions += 1
 		}
 
 		let winner = sim.winner ?? .none
-		let mine = config.seats[policySeat].country.team
-		let theirs = config.seats[1 - policySeat].country.team
-		if winner == mine {
-			policyTally.wins = 1
-			heuristicTally.losses = 1
-		} else if winner == theirs {
-			policyTally.losses = 1
-			heuristicTally.wins = 1
-		} else {
-			policyTally.draws = 1
-			heuristicTally.draws = 1
+		let teams = [
+			config.seats[policySeat].country.team,
+			config.seats[1 - policySeat].country.team,
+		]
+		for side in 0 ..< 2 {
+			if winner == teams[side] {
+				tallies[side].wins = 1
+			} else if winner == teams[1 - side] {
+				tallies[side].losses = 1
+			} else {
+				tallies[side].draws = 1
+			}
+			tallies[side].days = Int(sim.day)
+			tallies[side].battles = 1
 		}
-		policyTally.days = Int(sim.day)
-		policyTally.battles = 1
-		heuristicTally.days = Int(sim.day)
-		heuristicTally.battles = 1
-		return Match(policy: policyTally, heuristic: heuristicTally)
+		return Match(policy: tallies[0], heuristic: tallies[1])
 	}
 }

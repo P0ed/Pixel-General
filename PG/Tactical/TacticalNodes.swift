@@ -9,10 +9,19 @@ struct TacticalNodes {
 	var sounds: SoundNodes
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
-	@IO var mapMode: MapMode = .terrain
-	@IO var supply: SupplySources = .empty
-	@IO var supplyAir: Bool = false
-	@IO var defense: UnitType = .inf
+	@IO var baseKey: BaseKey = .terrain
+
+	/// Everything the map-mode base layer depends on, as one equatable
+	/// repaint key: the layer repaints exactly when the key changes. A new
+	/// mode adds a case here and a render case in `baseGroup` — the change
+	/// detection itself never grows.
+	enum BaseKey: Equatable {
+		case terrain
+		case team
+		case country
+		case supply(SupplySources, air: Bool)
+		case defense(UnitType)
+	}
 }
 
 @MainActor
@@ -126,26 +135,22 @@ extension TacticalNodes {
 
 	private func updateFogIfNeeded(state: borrowing TacticalState) {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
-		let mode = state.ui.mapMode
-		let supply = mode == .supply ? state.sim.humanSupply : self.supply
-		let supplyAir = mode == .supply ? Self.selectedType(state).isAir : self.supplyAir
-		let defense = mode == .defense ? Self.selectedType(state) : self.defense
+		let key: BaseKey = switch state.ui.mapMode {
+		case .terrain: .terrain
+		case .team: .team
+		case .country: .country
+		case .supply: .supply(state.sim.humanSupply, air: Self.selectedType(state).isAir)
+		case .defense: .defense(Self.selectedType(state))
+		}
 
-		let baseChanged = mode != mapMode || supply != self.supply
-			|| supplyAir != self.supplyAir || defense != self.defense
+		let baseChanged = key != baseKey
 		let litChanged = lit != self.lit
 		guard baseChanged || litChanged else { return }
-		defer {
-			self.lit = lit; self.mapMode = mode
-			self.supply = supply; self.supplyAir = supplyAir; self.defense = defense
-		}
+		defer { self.lit = lit; baseKey = key }
 
 		if baseChanged {
 			state.sim.map.indices.forEach { xy in
-				map.setBase(
-					baseGroup(for: state, at: xy, supply: supply, supplyAir: supplyAir, defense: defense),
-					at: xy
-				)
+				map.setBase(baseGroup(for: state, at: xy, key: key), at: xy)
 			}
 		}
 		if litChanged {
@@ -169,11 +174,9 @@ extension TacticalNodes {
 	private func baseGroup(
 		for state: borrowing TacticalState,
 		at xy: XY,
-		supply: SupplySources,
-		supplyAir: Bool,
-		defense: UnitType
+		key: BaseKey
 	) -> SKTileGroup {
-		switch state.ui.mapMode {
+		switch key {
 		case .terrain:
 			return .base(terrain: state.sim.map[xy])
 		case .team:
@@ -181,11 +184,11 @@ extension TacticalNodes {
 				state.sim.control[xy].team,
 				elevation: state.sim.map[xy].elevationLevel
 			)
-		case .supply:
+		case .supply(let supply, let air):
 			// Air service is airfield-gated: `resupply` feeds an air unit only
 			// inside the airfields mask, so unserviced tiles show the worst
 			// grade rather than `airLevel`'s literal 0.
-			let value: Int8 = supplyAir
+			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
 				: supply.level(at: xy, terrain: state.sim.map[xy])
 			let level: UInt8 = switch value {
@@ -207,7 +210,7 @@ extension TacticalNodes {
 				surface: .country(state.sim.control[xy]),
 				elevation: state.sim.map[xy].elevationLevel
 			)
-		case .defense:
+		case .defense(let defense):
 			// def(type) + entrenchment floor: the defenderMod a just-arrived
 			// unit has after one end of turn. −5 (heavy armor in a river) …
 			// +6 (infantry in a city) onto the 8-step gradient; air ignores

@@ -10,8 +10,6 @@ public enum AI {
 		public var rosterSignature: UInt128 = 0
 		public var stance: Stance = .balanced
 		public var focusTarget: XY?
-		public var actionTurn: UInt32?
-		public var actionCountry: Country = .none
 		public var actionsThisTurn: UInt16 = 0
 
 		public var role: [128 of Role] = .init(repeating: .idle)
@@ -32,6 +30,26 @@ public enum AI {
 			case balanced
 			case defendSurvival
 			case attackSurvival
+
+			/// Units at or below this HP retreat to a haven when the plan
+			/// is built.
+			var retreatHP: UInt8 {
+				switch self {
+				case .defendSurvival: 7
+				case .balanced: 4
+				case .attackSurvival: 3
+				}
+			}
+
+			/// `criticalResupply` triggers at or below this HP — it tracks
+			/// `retreatHP` from above so a unit refits before it must run.
+			var resupplyHP: UInt8 {
+				switch self {
+				case .defendSurvival: 9
+				case .balanced: 5
+				case .attackSurvival: 4
+				}
+			}
 		}
 
 		@frozen public enum Role: UInt8 {
@@ -76,18 +94,15 @@ extension TacticalSim {
 	/// handle transport, execute the highest-priority move, then buy only after
 	/// deployment tiles have cleared.
 	public func run(ai: inout AI.Plan) -> TacticalAction {
-		if ai.actionTurn != turn || ai.actionCountry != country {
-			ai.actionTurn = turn
-			ai.actionCountry = country
-			ai.actionsThisTurn = 0
-		}
-		guard ai.actionsThisTurn < 256 else { return .end }
-		ai.actionsThisTurn += 1
-
 		let signature = refresh(&ai)
-		if ai.turn != turn || ai.country != country || ai.rosterSignature != signature {
+		let turnChanged = ai.turn != turn || ai.country != country
+		if turnChanged { ai.actionsThisTurn = 0 }
+		if turnChanged || ai.rosterSignature != signature {
 			buildPlan(&ai, signature: signature)
 		}
+		// Runaway guard: a turn is capped at 256 actions whatever the plan says.
+		guard ai.actionsThisTurn < 256 else { return .end }
+		ai.actionsThisTurn += 1
 
 		if let action = criticalResupply(ai) { return action }
 		if let action = bestAttack(ai) { return action }
@@ -152,20 +167,23 @@ extension TacticalSim {
 		ai.skippedMoves = 0
 
 		guard !ai.roster.isEmpty else { return }
-		ai.focusTarget = strategicFocus(ai)
+
+		// Visible pressure per owned settlement, computed once for the whole
+		// rebuild — the survival focus and the garrison assignment both read it.
+		var pressures: [64 of Int] = .init(repeating: 0)
+		for i in ai.ownSettlements.indices {
+			pressures[i] = threat(at: ai.ownSettlements[i], from: ai.enemies)
+		}
+		ai.focusTarget = strategicFocus(ai, pressures: pressures)
 
 		var claimed: UInt128 = 0
 
 		// Broken units get a supply-compatible haven. Air can repair only at
 		// an owned airfield; ground can use any owned settlement, including one.
+		let retreatHP = ai.stance.retreatHP
 		ai.roster.forEach { _, uid in
 			let u = units[uid]
-			let hpLimit: UInt8 = switch ai.stance {
-			case .defendSurvival: 7
-			case .balanced: 4
-			case .attackSurvival: 3
-			}
-			guard u.hp <= hpLimit || (u.maxAmmo > 0 && u.ammo == 0),
+			guard u.hp <= retreatHP || (u.maxAmmo > 0 && u.ammo == 0),
 				  let haven = nearestCompatibleHaven(for: uid, ai)
 			else { return }
 			ai.role[uid.index] = .retreat
@@ -182,8 +200,7 @@ extension TacticalSim {
 			var pickScore = Int.min
 			for i in ai.ownSettlements.indices where visited & (UInt64(1) << i) == 0 {
 				let xy = ai.ownSettlements[i]
-				let pressure = threat(at: xy, from: ai.enemies)
-				var score = pressure * 100 + Int(map[xy].income) * 8
+				var score = pressures[i] * 100 + Int(map[xy].income) * 8
 				if ai.focusTarget == xy { score += 500 }
 				if score > pickScore { pickScore = score; pick = i }
 			}
@@ -191,7 +208,7 @@ extension TacticalSim {
 			visited |= UInt64(1) << pick
 
 			let city = ai.ownSettlements[pick]
-			let pressure = threat(at: city, from: ai.enemies)
+			let pressure = pressures[pick]
 			let quietSurvivalFocus = ai.stance == .defendSurvival && ai.focusTarget == city
 			guard pressure > 0 || quietSurvivalFocus else { continue }
 			let need = min(3, max(1, 1 + pressure / 22 + (quietSurvivalFocus ? 1 : 0)))
@@ -289,12 +306,13 @@ extension TacticalSim {
 		return haven
 	}
 
-	private func strategicFocus(_ ai: borrowing AI.Plan) -> XY? {
+	private func strategicFocus(_ ai: borrowing AI.Plan, pressures: borrowing [64 of Int]) -> XY? {
 		if ai.stance == .defendSurvival {
 			var focus: XY?
 			var score = Int.min
-			ai.ownSettlements.forEach { _, xy in
-				let s = threat(at: xy, from: ai.enemies) * 100 + Int(map[xy].income) * 12
+			for i in ai.ownSettlements.indices {
+				let xy = ai.ownSettlements[i]
+				let s = pressures[i] * 100 + Int(map[xy].income) * 12
 				if s > score { score = s; focus = xy }
 			}
 			return focus
@@ -362,13 +380,7 @@ extension TacticalSim {
 	}
 
 	private func nearestVisibleEnemy(to p: XY, _ ai: borrowing AI.Plan) -> UID? {
-		var best: UID?
-		var distance = Int.max
-		ai.enemies.forEach { _, uid in
-			let d = p.stepDistance(to: position[uid])
-			if d < distance { distance = d; best = uid }
-		}
-		return best
+		ai.enemies.min { p.stepDistance(to: position[$0]) < p.stepDistance(to: position[$1]) }
 	}
 
 	private func nearestCombatAnchor(
@@ -393,16 +405,12 @@ extension TacticalSim {
 	private func criticalResupply(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		var best: UID = .none
 		var bestScore = 0
+		let resupplyHP = ai.stance.resupplyHP
 		ai.roster.forEach { _, uid in
 			let u = units[uid]
 			guard canResupply(unit: uid) else { return }
-			let hpLimit: UInt8 = switch ai.stance {
-			case .defendSurvival: 9
-			case .balanced: 5
-			case .attackSurvival: 4
-			}
 			let empty = u.maxAmmo > 0 && u.ammo == 0
-			guard u.hp <= hpLimit || empty else { return }
+			guard u.hp <= resupplyHP || empty else { return }
 			var score = Int(u.maxHP - u.hp) * (ai.stance == .defendSurvival ? 30 : 20)
 			score += empty ? 180 + Int(u.maxAmmo) * 8 : 0
 			if ai.role[uid.index] == .retreat { score += 40 }
@@ -425,7 +433,7 @@ extension TacticalSim {
 			guard !offMap(unit: uid), units[uid].canAttack, units[uid].ammo > 0 else { return }
 			ai.enemies.forEach { _, tid in
 				guard canAttack(src: uid, dst: tid) else { return }
-				let damage = previewDamage(attacker: uid, defender: tid)
+				let damage = estimateDamage(attacker: uid, defender: tid, visibleOnly: true)
 				guard damage > 0 else { return }
 				let score = attackScore(uid, tid, damage: damage, ai: ai)
 				if score > bestScore {
@@ -458,18 +466,18 @@ extension TacticalSim {
 
 		var counterDamage: UInt8 = 0
 		if unitCanHit(tid, uid), !u.isArt || target.isArt {
-			counterDamage = previewDamage(attacker: tid, defender: uid)
+			counterDamage = estimateDamage(attacker: tid, defender: uid, visibleOnly: true)
 		}
 
 		var supportDamage: UInt8 = 0
 		if !u.isAir, !target.isAir, !u.isArt,
-		   let support = visibleSupport(around: targetXY, artillery: true, defending: target.country)
+		   let support = artSupport(defender: tid, attacker: uid, visibleOnly: true)
 		{
-			supportDamage = previewDamage(attacker: support, defender: uid, defMod: 0)
+			supportDamage = estimateDamage(attacker: support, defender: uid, defMod: 0, visibleOnly: true)
 		} else if u.isAir, !target.isAA,
-				  let support = visibleSupport(around: targetXY, artillery: false, defending: target.country)
+				  let support = aaSupport(defender: tid, attacker: uid, visibleOnly: true)
 		{
-			supportDamage = previewDamage(attacker: support, defender: uid, defMod: 0)
+			supportDamage = estimateDamage(attacker: support, defender: uid, defMod: 0, visibleOnly: true)
 		}
 
 		let ownDamage = min(Int(u.hp), Int(counterDamage) + Int(supportDamage))
@@ -502,97 +510,6 @@ extension TacticalSim {
 		}
 		if supportDamage >= u.hp { score -= Int(u.cost) * 20 }
 		return score
-	}
-
-	/// Deterministic damage preview that deliberately ignores hidden enemy aura
-	/// and support units. It uses the live Duel curve without touching D20.
-	private func previewDamage(
-		attacker src: UID,
-		defender dst: UID,
-		defMod override: Int8? = nil
-	) -> UInt8 {
-		let source = units[src]
-		let destination = units[dst]
-		let defMod = override ?? previewDefenderMod(defender: dst, attacker: src)
-		let aLeadership: Int8 = visibleAura(.leadership, country: source.country, at: position[src]) ? 1 : 0
-		let aRecon: Int8 = visibleAura(.recon, country: source.country, at: position[src]) ? 1 : 0
-		let dLeadership: Int8 = visibleAura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
-		let dRecon: Int8 = visibleAura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
-		let radar: Int8 = destination.isAir && visibleAura(.radar, country: source.country, at: position[src]) ? 2 : 0
-		let atk = Int8(source.atk(destination)) + aLeadership + aRecon + radar
-		let def = Int8(destination.def(source)) + defMod + dLeadership + dRecon
-		return Duel(
-			atk: atk,
-			def: def,
-			hp: source.hp,
-			crit: source[.crit],
-			evasion: destination[.evasion]
-		).expected()
-	}
-
-	private func previewDefenderMod(defender dst: UID, attacker src: UID) -> Int8 {
-		let source = units[src]
-		let destination = units[dst]
-		let sp = position[src]
-		let dp = position[dst]
-		let dxy = dp - sp
-		let terrain = map[dp]
-		let ranged = source.isArt
-		let mountaineer: Int8 = terrain.isHighground
-			? (destination[.mountaineer] ? 2 : 0) - (source[.mountaineer] ? 1 : 0) : 0
-		let mhtn: Int8 = source[.mhtn] && (dxy.x == 0 || dxy.y == 0) ? 1 : 0
-		let diag: Int8 = source[.diag] && abs(dxy.x) == abs(dxy.y) ? 1 : 0
-		return Int8(destination.entDef) + terrain.def(destination.type)
-			+ (ranged ? 0 : terrain.closeCombat(destination.type))
-			+ mountaineer - mhtn - diag - visibleEncirclement(of: dst)
-	}
-
-	private func visibleEncirclement(of uid: UID) -> Int8 {
-		let team = units[uid].country.team
-		let n4 = position[uid].n4
-		var enemies: Int8 = 0
-		for i in n4.indices {
-			let id = unitsMap[n4[i]]
-			guard id != .none, isVisible(id), units[id].country.team != team else { continue }
-			enemies += 1
-		}
-		return max(0, enemies - 1)
-	}
-
-	private func visibleAura(_ skill: Skills, country: Country, at xy: XY) -> Bool {
-		if let id = uidAt(xy), isVisible(id), units[id].country == country, units[id][skill] { return true }
-		let n8 = xy.n8
-		for i in n8.indices {
-			let id = unitsMap[n8[i]]
-			if id != .none, isVisible(id), units[id].country == country, units[id][skill] { return true }
-		}
-		return false
-	}
-
-	private func visibleAura(_ trait: Traits, country: Country, at xy: XY) -> Bool {
-		if let id = uidAt(xy), isVisible(id), units[id].country == country, units[id][trait] { return true }
-		let n8 = xy.n8
-		for i in n8.indices {
-			let id = unitsMap[n8[i]]
-			if id != .none, isVisible(id), units[id].country == country, units[id][trait] { return true }
-		}
-		return false
-	}
-
-	private func visibleSupport(
-		around xy: XY,
-		artillery: Bool,
-		defending country: Country
-	) -> UID? {
-		let n8 = xy.n8
-		for i in n8.indices {
-			let id = unitsMap[n8[i]]
-			guard id != .none, isVisible(id) else { continue }
-			let u = units[id]
-			guard u.country.team == country.team, u.ammo > 0 else { continue }
-			if artillery ? u.isArt : u.isAA { return id }
-		}
-		return nil
 	}
 
 	// MARK: - Transport
@@ -648,26 +565,21 @@ extension TacticalSim {
 	/// Selects from the cached order before doing pathfinding, so an action pays
 	/// for one BFS: the one mover it actually considers.
 	private func bestMove(_ ai: inout AI.Plan) -> TacticalAction? {
-		var selected: UID = .none
 		for i in ai.order.indices {
 			let uid = ai.order[i]
 			guard ai.skippedMoves & bit(uid) == 0, units[uid].canMove, !offMap(unit: uid) else { continue }
 			let p = position[uid]
-			let role = ai.role[uid.index]
-			let target = movementTarget(for: uid, ai)
 			if !units[uid].isAir, map[p].isSettlement, control[p].team != country.team { continue }
-			if (role == .retreat || role == .defend) && p == target { continue }
+			let role = ai.role[uid.index]
 			if role == .support, let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai),
 			   p.stepDistance(to: position[anchor]) <= 3 { continue }
-			selected = uid
-			break
-		}
+			let target = movementTarget(for: uid, ai)
+			if (role == .retreat || role == .defend) && p == target { continue }
 
-		guard selected != .none else { return nil }
-		if let action = pickMove(selected, toward: movementTarget(for: selected, ai), ai: ai) {
-			return action
+			if let action = pickMove(uid, toward: target, ai: ai) { return action }
+			ai.skippedMoves |= bit(uid)
+			return nil
 		}
-		ai.skippedMoves |= bit(selected)
 		return nil
 	}
 
@@ -729,15 +641,26 @@ extension TacticalSim {
 			score += Int(map[xy].def(u.type)) * (defensive ? 8 : 4)
 		}
 
-		// A unit that may fire after moving values actual weapon range, not only
-		// adjacency. Killable and dangerous targets pull it into firing position.
-		if u.canAttackAfterMove, u.ap > 0, u.ammo > 0 {
-			let range = Int(u.rng) * 2 + 1
-			ai.enemies.forEach { _, enemy in
-				let e = units[enemy]
-				guard xy.stepDistance(to: position[enemy]) <= range, u.atk(e) > 0 else { return }
+		// One enemy pass shares the tile distance between both terms. A unit
+		// that may fire after moving values actual weapon range, not only
+		// adjacency: killable and dangerous targets pull it into firing
+		// position, while enemy reach onto the tile accumulates danger.
+		let mayFire = u.canAttackAfterMove && u.ap > 0 && u.ammo > 0
+		let uRange = Int(u.rng) * 2 + 1
+		var danger = 0
+		ai.enemies.forEach { _, enemy in
+			let e = units[enemy]
+			let d = xy.stepDistance(to: position[enemy])
+			if mayFire, d <= uRange, u.atk(e) > 0 {
 				score += Int(u.atk(e)) * 24 + Int(e.cost) / 5
 				if e.hp <= 4 { score += Int(e.cost) / 2 }
+			}
+			guard e.atk(u) > 0 else { return }
+			let range = Int(e.rng) * 2 + 1
+			if d <= range {
+				danger += Int(e.atk(u)) * 4 + Int(e.ini)
+			} else if e.canAttackAfterMove, e.mp > 0, d <= range + Int(e.mov) * 2 + 1 {
+				danger += Int(e.atk(u)) * 2
 			}
 		}
 
@@ -754,19 +677,6 @@ extension TacticalSim {
 			if friend.type == .supply { score += 38 }
 		}
 		score -= congestion * 12
-
-		var danger = 0
-		ai.enemies.forEach { _, enemy in
-			let e = units[enemy]
-			guard e.atk(u) > 0 else { return }
-			let d = position[enemy].stepDistance(to: xy)
-			let range = Int(e.rng) * 2 + 1
-			if d <= range {
-				danger += Int(e.atk(u)) * 4 + Int(e.ini)
-			} else if e.canAttackAfterMove, e.mp > 0, d <= range + Int(e.mov) * 2 + 1 {
-				danger += Int(e.atk(u)) * 2
-			}
-		}
 		let dangerWeight = switch ai.stance {
 		case .defendSurvival: defensive ? 7 : 5
 		case .balanced: defensive ? 5 : 3
@@ -801,15 +711,14 @@ extension TacticalSim {
 		var supply = 0
 		var enemyAir = 0
 		var enemyArmor = 0
-		units.forEachAlive { _, u in
-			if u.country == country {
-				if !u[.aux] { core += 1 }
-				if !u.isAir { ground += 1 }
-				if u.type == .inf || u.isArmor { capture += 1 }
-				if u.isArt { artillery += 1 }
-				if u.isAA { aa += 1 }
-				if u.type == .supply { supply += 1 }
-			}
+		ai.roster.forEach { _, uid in
+			let u = units[uid]
+			if !u[.aux] { core += 1 }
+			if !u.isAir { ground += 1 }
+			if u.type == .inf || u.isArmor { capture += 1 }
+			if u.isArt { artillery += 1 }
+			if u.isAA { aa += 1 }
+			if u.type == .supply { supply += 1 }
 		}
 		ai.enemies.forEach { _, uid in
 			enemyAir += units[uid].isAir ? 1 : 0
@@ -822,18 +731,21 @@ extension TacticalSim {
 		var bestScore = Int.min
 		settlements.forEach { xy in
 			guard control[xy] == country, unitsMap[xy] == .none else { return }
+			// `shopUnits` owns the tile half of the buy rule and the guards
+			// above plus the prestige check below imply `canBuy(slot:at:)`.
 			let shop = shopUnits(at: xy)
+			guard !shop.isEmpty else { return }
+			var locationScore = threat(at: xy, from: ai.enemies) * (ai.stance == .defendSurvival ? 5 : 2)
+			if let focus = ai.focusTarget { locationScore -= xy.stepDistance(to: focus) * 5 }
 			for slot in shop.indices {
 				let template = shop[slot]
-				guard canBuy(slot: slot, at: xy), template.cost + reserve <= player.prestige else { continue }
-				var score = purchaseScore(
+				guard template.cost + reserve <= player.prestige else { continue }
+				let score = locationScore + purchaseScore(
 					template,
 					ground: ground, capture: capture, artillery: artillery,
 					aa: aa, supply: supply, enemyAir: enemyAir, enemyArmor: enemyArmor,
 					stance: ai.stance
 				)
-				if let focus = ai.focusTarget { score -= xy.stepDistance(to: focus) * 5 }
-				score += threat(at: xy, from: ai.enemies) * (ai.stance == .defendSurvival ? 5 : 2)
 				if score > bestScore {
 					bestScore = score
 					bestSpot = xy

@@ -47,6 +47,79 @@ enum RLTrainer {
 		var prestigeTerm: Float = 0
 	}
 
+	/// Per-iteration aggregates over a collected batch — the numbers both the
+	/// RL and PPO loops print and log.
+	struct BatchStats {
+		var wins = 0
+		var losses = 0
+		var draws = 0
+		var days = 0
+		var samples = 0
+		var meanR: Float = 0
+		var settle: Float = 0
+		var units: Float = 0
+		var prestige: Float = 0
+
+		init(_ batch: [Episode]) {
+			let n = Float(batch.count)
+			wins = batch.count(where: { $0.outcome == "W" })
+			losses = batch.count(where: { $0.outcome == "L" })
+			draws = batch.count - wins - losses
+			days = batch.reduce(0) { $0 + Int($1.replay.days) } / batch.count
+			samples = batch.reduce(0) { $0 + $1.samples }
+			meanR = batch.reduce(0) { $0 + $1.reward } / n
+			settle = batch.reduce(0) { $0 + $1.settleTerm } / n
+			units = batch.reduce(0) { $0 + $1.unitTerm } / n
+			prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / n
+		}
+	}
+
+	/// Self-paced curriculum, both directions: winning comfortably nudges
+	/// difficulty down a quarter-step (soft EMA decay keeps momentum across
+	/// smooth terrain); a *starving* stretch nudges it back up. Starvation is
+	/// winEMA under a floor, not a strict zero-win streak — run 8 parked 20
+	/// iterations at W1–2/16, too many wins to ever hit six consecutive
+	/// zeros, hopelessly short of the descent threshold. On ascent winEMA
+	/// restarts at 0.2: above the floor so the easier mix gets a fair
+	/// evaluation window, below the descent threshold so it must earn the
+	/// way back down. Shared by the RL and PPO loops — one definition of the
+	/// tuned v3.1 semantics.
+	struct Curriculum {
+		var difficulty: Float
+		let ceiling: Float
+		let anneal: Float
+		var winEMA: Float = 0
+		var starved = 0
+
+		init(level: Int, anneal: Float) {
+			difficulty = Float(level)
+			ceiling = Float(level)
+			self.anneal = anneal
+		}
+
+		/// One post-iteration update. Returns a log line when difficulty moved.
+		mutating func update(winRate: Float) -> String? {
+			winEMA = 0.8 * winEMA + 0.2 * winRate
+			if difficulty > 0, winEMA > anneal {
+				difficulty = max(0, difficulty - 0.25)
+				winEMA *= 0.5
+				starved = 0
+				return "curriculum → difficulty \(f(difficulty))"
+			} else if difficulty < ceiling, winEMA < 0.10 {
+				starved += 1
+				if starved >= 6 {
+					difficulty = min(ceiling, difficulty + 0.25)
+					starved = 0
+					winEMA = 0.2
+					return "curriculum → difficulty \(f(difficulty)) (win starvation)"
+				}
+			} else {
+				starved = 0
+			}
+			return nil
+		}
+	}
+
 	static func run(_ args: [String]) throws {
 		var weightsPath: String?
 		var out = "tmp/runs/rl"
@@ -94,9 +167,7 @@ enum RLTrainer {
 		let graph = try BCGraph(weights: weights, b: b, t: t)
 		var battleIndex = seed
 		var globalStep = 0
-		var difficulty = Float(curriculum)
-		var winEMA: Float = 0
-		var starved = 0
+		var schedule = Curriculum(level: curriculum, anneal: anneal)
 		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
@@ -106,7 +177,7 @@ enum RLTrainer {
 			let current = graph.checkpoint()
 			let batch = collect(
 				weights: current, count: episodes, startIndex: battleIndex,
-				temp: temp, difficulty: difficulty, suite: suite
+				temp: temp, difficulty: schedule.difficulty, suite: suite
 			)
 			battleIndex += episodes
 
@@ -124,7 +195,6 @@ enum RLTrainer {
 			// A singleton group has no baseline and contributes no gradient.
 			// The clamp bounds any single episode's pull after normalization.
 			let n = Float(batch.count)
-			let meanR = batch.reduce(0) { $0 + $1.reward } / n
 			var advantages = [Float](repeating: 0, count: batch.count)
 			for level in Set(batch.map(\.level)) {
 				let group = batch.indices.filter { batch[$0].level == level }
@@ -159,69 +229,28 @@ enum RLTrainer {
 				let window = batcher.window()
 				guard window.samples > 0 else { break }
 				globalStep += 1
-				let corrected = lr * (1 - powf(0.999, Float(globalStep))).squareRoot() / (1 - powf(0.9, Float(globalStep)))
-				let m = graph.step(window, lr: corrected, update: true)
+				let m = graph.step(window, lr: Net.correctedLR(lr, step: globalStep), update: true)
 				batcher.carry(h: m.h, c: m.c)
 				loss += m.loss
 				windows += 1
 			}
 			loss /= Float(max(windows, 1))
 
-			let wins = batch.count(where: { $0.outcome == "W" })
-			let losses = batch.count(where: { $0.outcome == "L" })
-			let draws = batch.count - wins - losses
-			let days = batch.reduce(0) { $0 + Int($1.replay.days) } / batch.count
-			let samples = batch.reduce(0) { $0 + $1.samples }
-			let settle = batch.reduce(0) { $0 + $1.settleTerm } / Float(batch.count)
-			let units = batch.reduce(0) { $0 + $1.unitTerm } / Float(batch.count)
-			let prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / Float(batch.count)
-			print("iter \(iter)  \(wins)W \(losses)L \(draws)D  R \(f(meanR))  |A| \(f(meanAbs))  settle \(f(settle))  units \(f(units))  prestige \(f(prestige))  days \(days)  samples \(samples)  loss \(f(loss))\(difficulty > 0 ? "  d \(f(difficulty))" : "")")
+			let stats = BatchStats(batch)
+			print("iter \(iter)  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  |A| \(f(meanAbs))  settle \(f(stats.settle))  units \(f(stats.units))  prestige \(f(stats.prestige))  days \(stats.days)  samples \(stats.samples)  loss \(f(loss))\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
-			// Self-paced curriculum, both directions: winning comfortably
-			// nudges difficulty down a quarter-step (soft EMA decay keeps
-			// momentum across smooth terrain); a *starving* stretch nudges it
-			// back up. Starvation is winEMA under a floor, not a strict
-			// zero-win streak — run 8 parked 20 iterations at W1–2/16, too
-			// many wins to ever hit six consecutive zeros, hopelessly short
-			// of the descent threshold. On ascent winEMA restarts at 0.2:
-			// above the floor so the easier mix gets a fair evaluation
-			// window, below the descent threshold so it must earn the way
-			// back down.
-			winEMA = 0.8 * winEMA + 0.2 * Float(wins) / Float(batch.count)
-			if difficulty > 0, winEMA > anneal {
-				difficulty = max(0, difficulty - 0.25)
-				winEMA *= 0.5
-				starved = 0
-				print("  curriculum → difficulty \(f(difficulty))")
-			} else if difficulty < Float(curriculum), winEMA < 0.10 {
-				starved += 1
-				if starved >= 6 {
-					difficulty = min(Float(curriculum), difficulty + 0.25)
-					starved = 0
-					winEMA = 0.2
-					print("  curriculum → difficulty \(f(difficulty)) (win starvation)")
-				}
-			} else {
-				starved = 0
+			if let move = schedule.update(winRate: Float(stats.wins) / n) {
+				print("  \(move)")
 			}
 
 			var arena = ""
 			if iter % ckpt == 0 || iter == iters {
-				let snapshot = graph.checkpoint()
-				try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
-
-				var policy = LSTMPolicy(weights: snapshot)
-				let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN, suite: suite)
-				arena = f(Float(100 * tally.winRate))
-				print("  arena \(tally.line)  illegal \(tally.illegal)")
-
-				let epiDir = outDir.appendingPathComponent("episodes-\(iter)", isDirectory: true)
-				try FileManager.default.createDirectory(at: epiDir, withIntermediateDirectories: true)
-				for (j, e) in batch.enumerated() {
-					try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
-				}
+				arena = try dumpCheckpoint(
+					graph.checkpoint(), iter: iter, outDir: outDir,
+					evalN: evalN, suite: suite, batch: batch
+				)
 			}
-			csv += "\(iter),\(wins),\(losses),\(draws),\(meanR),\(meanAbs),\(settle),\(units),\(prestige),\(days),\(samples),\(loss),\(windows),\(difficulty),\(arena)\n"
+			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(meanAbs),\(stats.settle),\(stats.units),\(stats.prestige),\(stats.days),\(stats.samples),\(loss),\(windows),\(schedule.difficulty),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -231,6 +260,31 @@ enum RLTrainer {
 		print("  iters:    \(iters) (\(d.seconds)s, \(battleIndex - seed) episodes)")
 		print("  suite:    \(suite.rawValue)")
 		print("  out:      \(outDir.path)/policy.pgw")
+	}
+
+	/// The checkpoint tail shared by the RL and PPO loops: write the weights,
+	/// run the argmax arena on the fixed eval configs, dump the batch's
+	/// episodes as replays. Returns the arena win rate for the CSV column.
+	static func dumpCheckpoint(
+		_ snapshot: LSTMWeights,
+		iter: Int,
+		outDir: URL,
+		evalN: Int,
+		suite: RolloutSuite,
+		batch: [Episode]
+	) throws -> String {
+		try snapshot.data().write(to: outDir.appendingPathComponent("ckpt-\(iter).pgw"))
+
+		var policy = LSTMPolicy(weights: snapshot)
+		let tally = Eval.arena(policy: &policy, configs: 0 ..< evalN, suite: suite)
+		print("  arena \(tally.line)  illegal \(tally.illegal)")
+
+		let epiDir = outDir.appendingPathComponent("episodes-\(iter)", isDirectory: true)
+		try FileManager.default.createDirectory(at: epiDir, withIntermediateDirectories: true)
+		for (j, e) in batch.enumerated() {
+			try e.replay.write(to: epiDir.appendingPathComponent("epi-\(j)-seat\(e.seat)-\(e.outcome).pgr"))
+		}
+		return f(Float(100 * tally.winRate))
 	}
 
 	// MARK: - Episode collection
@@ -247,8 +301,8 @@ enum RLTrainer {
 		count: Int,
 		startIndex: Int,
 		temp: Float,
-		difficulty: Float = 0,
-		suite: RolloutSuite = .mixed
+		difficulty: Float,
+		suite: RolloutSuite
 	) -> [Episode] {
 		let base = Int(difficulty)
 		let frac = difficulty - Float(base)
@@ -279,7 +333,7 @@ enum RLTrainer {
 		index: Int,
 		seat: Int,
 		level: Int,
-		suite: RolloutSuite = .mixed
+		suite: RolloutSuite
 	) -> Replay {
 		var replay = Rollouts.replay(index: index, suite: suite)
 		guard level > 0 else { return replay }
@@ -307,8 +361,8 @@ enum RLTrainer {
 		seat: Int,
 		weights: LSTMWeights,
 		temp: Float,
-		level: Int = 0,
-		suite: RolloutSuite = .mixed
+		level: Int,
+		suite: RolloutSuite
 	) -> Episode {
 		var replay = config(index: index, seat: seat, level: level, suite: suite)
 		var sim = replay.makeSim()

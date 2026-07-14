@@ -270,6 +270,34 @@ struct PolicyTests {
 		return sim
 	}
 
+	/// Open-field ger-vs-usa duel: cities placed and controlled as given,
+	/// units reset and placed in order (UID = array index), full vision
+	/// unless the test punches its own holes.
+	private static func duelSim(
+		size: Int = 10,
+		cities: [(XY, Country)] = [(XY(0, 0), .ger), (XY(9, 9), .usa)],
+		units: [COR.Unit],
+		at positions: [XY],
+		fullVision: Bool = true
+	) -> TacticalSim {
+		var map = Map<32, Terrain>(size: size, zero: .field)
+		for (xy, _) in cities { map[xy] = .city }
+		var units = units
+		units.modifyEach { u in u.reset() }
+		var sim = TacticalSim(
+			map: consume map,
+			players: [
+				Player(country: .ger, type: .ai, prestige: .poor),
+				Player(country: .usa, type: .ai, prestige: .poor),
+			],
+			cities: cities,
+			units: units
+		)
+		for (i, xy) in positions.enumerated() { sim.place(i.uid, at: xy) }
+		if fullVision { sim.vision.modifyEach { v in v = .full } }
+		return sim
+	}
+
 	@Test func alliedSettlementsNeverBecomeHostileObjectives() {
 		let sim = Self.plannedSim()
 		var ai = AI.Plan()
@@ -332,63 +360,34 @@ struct PolicyTests {
 	}
 
 	@Test func globalAttackSelectionIsNotBoundToFirstAttacker() {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
-		map[XY(0, 0)] = .city
-		map[XY(9, 9)] = .city
-		let players = [
-			Player(country: .ger, type: .ai, prestige: .poor),
-			Player(country: .usa, type: .ai, prestige: .poor),
-		]
-		var weak = Unit(model: .regular, country: .ger)
-		var strong = Unit(model: .m270, country: .ger)
-		var target = Unit(model: .militia, country: .usa)
-		weak.reset(); strong.reset(); target.reset()
-		var sim = TacticalSim(
-			map: consume map,
-			players: players,
-			cities: [(XY(0, 0), .ger), (XY(9, 9), .usa)],
-			units: [weak, strong, target]
+		let sim = Self.duelSim(
+			units: [
+				Unit(model: .regular, country: .ger),	// weak
+				Unit(model: .m270, country: .ger),		// strong
+				Unit(model: .militia, country: .usa),	// target
+			],
+			at: [XY(4, 3), XY(3, 3), XY(5, 3)]
 		)
-		let weakID = 0.uid
-		let strongID = 1.uid
-		let targetID = 2.uid
-		sim.place(weakID, at: XY(4, 3))
-		sim.place(strongID, at: XY(3, 3))
-		sim.place(targetID, at: XY(5, 3))
-		sim.vision.modifyEach { v in v = .full }
 
 		var ai = AI.Plan()
 		guard case let .attack(source, destination) = sim.run(ai: &ai) else {
 			Issue.record("heuristic did not take an available attack")
 			return
 		}
-		#expect(source == strongID)
-		#expect(destination == targetID)
+		#expect(source == 1.uid)
+		#expect(destination == 2.uid)
 	}
 
 	@Test func attackSelectionFocusesWoundedTargets() {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
-		map[XY(0, 0)] = .city
-		map[XY(9, 9)] = .city
-		let players = [
-			Player(country: .ger, type: .ai, prestige: .poor),
-			Player(country: .usa, type: .ai, prestige: .poor),
-		]
-		var source = Unit(model: .m270, country: .ger)
-		var full = Unit(model: .militia, country: .usa)
-		var wounded = Unit(model: .militia, country: .usa)
-		source.reset(); full.reset(); wounded.reset()
-		wounded.hp = 2
-		var sim = TacticalSim(
-			map: consume map,
-			players: players,
-			cities: [(XY(0, 0), .ger), (XY(9, 9), .usa)],
-			units: [source, full, wounded]
+		var sim = Self.duelSim(
+			units: [
+				Unit(model: .m270, country: .ger),
+				Unit(model: .militia, country: .usa),	// full
+				Unit(model: .militia, country: .usa),	// wounded
+			],
+			at: [XY(3, 3), XY(5, 3), XY(3, 5)]
 		)
-		sim.place(0.uid, at: XY(3, 3))
-		sim.place(1.uid, at: XY(5, 3))
-		sim.place(2.uid, at: XY(3, 5))
-		sim.vision.modifyEach { v in v = .full }
+		sim.units[2.uid].hp = 2
 
 		var ai = AI.Plan()
 		guard case let .attack(_, target) = sim.run(ai: &ai) else {
@@ -399,29 +398,15 @@ struct PolicyTests {
 	}
 
 	@Test func attackSelectionAvoidsVisibleSupportFire() {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
-		map[XY(0, 0)] = .city
-		map[XY(9, 9)] = .city
-		let players = [
-			Player(country: .ger, type: .ai, prestige: .poor),
-			Player(country: .usa, type: .ai, prestige: .poor),
-		]
-		var source = Unit(model: .f35, country: .ger)
-		var protected = Unit(model: .militia, country: .usa)
-		var safe = Unit(model: .militia, country: .usa)
-		var support = Unit(model: .patriot, country: .usa)
-		source.reset(); protected.reset(); safe.reset(); support.reset()
-		var sim = TacticalSim(
-			map: consume map,
-			players: players,
-			cities: [(XY(0, 0), .ger), (XY(9, 9), .usa)],
-			units: [source, protected, safe, support]
+		let sim = Self.duelSim(
+			units: [
+				Unit(model: .f35, country: .ger),
+				Unit(model: .militia, country: .usa),	// protected by the patriot
+				Unit(model: .militia, country: .usa),	// safe to strike
+				Unit(model: .patriot, country: .usa),
+			],
+			at: [XY(3, 3), XY(5, 3), XY(3, 5), XY(6, 3)]
 		)
-		sim.place(0.uid, at: XY(3, 3))
-		sim.place(1.uid, at: XY(5, 3))
-		sim.place(2.uid, at: XY(3, 5))
-		sim.place(3.uid, at: XY(6, 3))
-		sim.vision.modifyEach { v in v = .full }
 
 		var ai = AI.Plan()
 		guard case let .attack(_, target) = sim.run(ai: &ai) else {
@@ -433,28 +418,16 @@ struct PolicyTests {
 
 	@Test func hiddenSupportDoesNotChangeHeuristicAction() {
 		func make(_ includeSupport: Bool) -> TacticalSim {
-			var map = Map<32, Terrain>(size: 10, zero: .field)
-			map[XY(0, 0)] = .city
-			map[XY(9, 9)] = .city
-			let players = [
-				Player(country: .ger, type: .ai, prestige: .poor),
-				Player(country: .usa, type: .ai, prestige: .poor),
+			var units = [
+				Unit(model: .f35, country: .ger),
+				Unit(model: .militia, country: .usa),
 			]
-			var source = Unit(model: .f35, country: .ger)
-			var target = Unit(model: .militia, country: .usa)
-			var support = Unit(model: .patriot, country: .usa)
-			source.reset(); target.reset(); support.reset()
-			var units = [source, target]
-			if includeSupport { units.append(support) }
-			var sim = TacticalSim(
-				map: consume map,
-				players: players,
-				cities: [(XY(0, 0), .ger), (XY(9, 9), .usa)],
-				units: units
-			)
-			sim.place(0.uid, at: XY(3, 3))
-			sim.place(1.uid, at: XY(5, 3))
-			if includeSupport { sim.place(2.uid, at: XY(6, 3)) }
+			var positions = [XY(3, 3), XY(5, 3)]
+			if includeSupport {
+				units.append(Unit(model: .patriot, country: .usa))
+				positions.append(XY(6, 3))
+			}
+			var sim = Self.duelSim(units: units, at: positions, fullVision: false)
 			sim.vision[0] = .empty
 			sim.vision[0][XY(3, 3)] = true
 			sim.vision[0][XY(5, 3)] = true
@@ -472,48 +445,26 @@ struct PolicyTests {
 	}
 
 	@Test func reachableHostileSettlementIsCapturedByMovement() {
-		var map = Map<32, Terrain>(size: 8, zero: .field)
-		map[XY(0, 0)] = .city
-		map[XY(3, 0)] = .city
-		let players = [
-			Player(country: .ger, type: .ai, prestige: .poor),
-			Player(country: .usa, type: .ai, prestige: .poor),
-		]
-		var unit = Unit(model: .regular, country: .ger)
-		unit.reset()
-		var sim = TacticalSim(
-			map: consume map,
-			players: players,
+		let sim = Self.duelSim(
+			size: 8,
 			cities: [(XY(0, 0), .ger), (XY(3, 0), .usa)],
-			units: [unit]
+			units: [Unit(model: .regular, country: .ger)],
+			at: [XY(2, 0)]
 		)
-		sim.place(0.uid, at: XY(2, 0))
-		sim.vision.modifyEach { v in v = .full }
 
 		var ai = AI.Plan()
 		#expect(sim.run(ai: &ai) == .move(0.uid, XY(3, 0)))
 	}
 
 	@Test func rangedMoverSeeksPostMoveFiringPosition() {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
-		map[XY(0, 1)] = .city
-		map[XY(9, 1)] = .city
-		let players = [
-			Player(country: .ger, type: .ai, prestige: .poor),
-			Player(country: .usa, type: .ai, prestige: .poor),
-		]
-		var artillery = Unit(model: .m270, country: .ger)
-		var enemy = Unit(model: .militia, country: .usa)
-		artillery.reset(); enemy.reset()
-		var sim = TacticalSim(
-			map: consume map,
-			players: players,
+		let sim = Self.duelSim(
 			cities: [(XY(0, 1), .ger), (XY(9, 1), .usa)],
-			units: [artillery, enemy]
+			units: [
+				Unit(model: .m270, country: .ger),
+				Unit(model: .militia, country: .usa),
+			],
+			at: [XY(1, 1), XY(6, 1)]
 		)
-		sim.place(0.uid, at: XY(1, 1))
-		sim.place(1.uid, at: XY(6, 1))
-		sim.vision.modifyEach { v in v = .full }
 		let range = Int(sim.units[0].rng) * 2 + 1
 		#expect(sim.position[0].stepDistance(to: sim.position[1]) > range)
 
