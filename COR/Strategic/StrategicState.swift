@@ -29,9 +29,7 @@ public struct StrategicSim: ~Copyable {
 		self.turn = turn
 		self.battle = battle
 		self.battleArmy = battleArmy
-		for xy in self.owner.indices where self.owner[xy] == .none {
-			self.terrain[xy] = .sea
-		}
+		stampSea()
 	}
 
 	public static func emptyArmies() -> CArray<64, CArray<4, Army>> {
@@ -71,14 +69,18 @@ public struct StrategicSim: ~Copyable {
 				if let tile = Terrain(legend: ch) { terrain[XY(x, y)] = tile }
 			}
 		}
-		// Sea is terrain, not merely the absence of a country. Keeping it in
-		// the terrain map makes every strategic map mode render water the same
-		// way and lets campaign battles sample coastal neighborhoods directly.
+		stampSea()
+		placeStartingFactories()
+		foundStartingArmies()
+	}
+
+	/// Sea is terrain, not merely the absence of a country. Keeping it in
+	/// the terrain map makes every strategic map mode render water the same
+	/// way and lets campaign battles sample coastal neighborhoods directly.
+	private mutating func stampSea() {
 		for xy in owner.indices where owner[xy] == .none {
 			terrain[xy] = .sea
 		}
-		placeStartingFactories()
-		foundStartingArmies()
 	}
 }
 
@@ -101,25 +103,25 @@ public extension StrategicSim {
 	/// direction beyond the defender middle right (index 5).
 	func battleTerrain(at defender: XY, attackingFrom attacker: XY) -> [9 of Terrain] {
 		let east = defender - attacker
-		guard east.manhattan == 1 else {
-			let fallback = owner.contains(defender) && owner[defender] != .none
-				? terrain[defender]
-				: .sea
-			return .init(repeating: fallback)
-		}
+		guard east.manhattan == 1 else { return .init(repeating: terrain(at: defender)) }
 		let north = XY(-east.y, east.x)
 		return [9 of Terrain] { index in
-			let column = index % 3
-			let row = index / 3
-			let dx = column - 1
-			let dy = 1 - row
-			let xy = defender + XY(
+			let dx = index % 3 - 1
+			let dy = 1 - index / 3
+			return terrain(at: defender + XY(
 				east.x * dx + north.x * dy,
 				east.y * dx + north.y * dy
-			)
-			guard owner.contains(xy), owner[xy] != .none else { return .sea }
-			return terrain[xy]
+			))
 		}
+	}
+
+	/// Neighborhood for a battle at `defender` launched by the player's army
+	/// in `slot`, so callers need not resolve the army position themselves.
+	func battleTerrain(at defender: XY, by slot: Int) -> [9 of Terrain] {
+		battleTerrain(
+			at: defender,
+			attackingFrom: army(ArmyID(country: player.country, slot: slot)).position
+		)
 	}
 
 	func canAttack(_ xy: XY) -> Bool {

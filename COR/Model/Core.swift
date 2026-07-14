@@ -105,9 +105,8 @@ public extension Core {
 			+ (strategic?.defendingCore(for: defender, near: tile) ?? [])
 			+ campaignAux(for: human)
 			+ campaignAux(for: defender)
-		let attackingFrom = strategic!.army(ArmyID(country: human, slot: slot)).position
-		let terrain = strategic!.battleTerrain(at: tile, attackingFrom: attackingFrom)
-		let fortLevel = strategic?.fortLevel(at: tile) ?? 0
+		let terrain = strategic!.battleTerrain(at: tile, by: slot)
+		let fortLevel = strategic!.fortLevel(at: tile)
 		strategic?.launchBattle(at: tile, by: slot)
 
 		let buildingsMask = [

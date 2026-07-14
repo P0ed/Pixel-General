@@ -84,13 +84,7 @@ public extension TacticalSim {
 			else { continue }
 
 			var k = allocatedUnits[player]
-			while k < placements[player].count {
-				let xy = placements[player][k]
-				if self.map.contains(xy), unitsMap[xy] == .none,
-					u.isAir || !self.map[xy].isSea, !self.map[xy].isRiver
-				{
-					break
-				}
+			while k < placements[player].count, !canDeploy(u, at: placements[player][k]) {
 				k += 1
 			}
 			if k < placements[player].count {
@@ -102,9 +96,7 @@ public extension TacticalSim {
 			// Rings exhausted — an edge-of-map city offers fewer than the
 			// seat's core + aux can need; any free tile beats crashing.
 			var fallback: XY?
-			for xy in self.map.indices where unitsMap[xy] == .none
-				&& (u.isAir || !self.map[xy].isSea) && !self.map[xy].isRiver
-			{
+			for xy in self.map.indices where canDeploy(u, at: xy) {
 				fallback = xy
 				break
 			}
@@ -114,6 +106,11 @@ public extension TacticalSim {
 
 		let v = self.players.map { i, p in vision(for: p.country) }
 		self.players.modifyEach { i, p in vision[i] = v[i] }
+	}
+
+	private func canDeploy(_ u: Unit, at xy: XY) -> Bool {
+		map.contains(xy) && unitsMap[xy] == .none
+			&& (u.isAir || !map[xy].isSea) && !map[xy].isRiver
 	}
 
 	subscript(_ xy: XY) -> Unit? {

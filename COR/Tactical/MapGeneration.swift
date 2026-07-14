@@ -50,12 +50,9 @@ public extension Map<32, Terrain> {
 		terrain: [9 of Terrain]
 	) -> SetXY {
 		indices.forEach { xy in
-			let dominant = strategicTerrain(at: xy, terrain: terrain)
-			guard !isSea(at: xy, height: height, terrain: terrain) else {
-				self[xy] = .sea
-				return
-			}
-			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, dominant: dominant)
+			self[xy] = isSea(at: xy, height: height, terrain: terrain)
+				? .sea
+				: landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain)
 		}
 		removeDisconnectedSea(height: height, humidity: humidity, terrain: terrain)
 		return reduceIslands()
@@ -65,8 +62,9 @@ public extension Map<32, Terrain> {
 		at xy: XY,
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
-		dominant: Terrain
+		terrain: [9 of Terrain]
 	) -> Terrain {
+		let dominant = strategicTerrain(at: xy, terrain: terrain)
 		let humidityBias: Float = switch dominant {
 		case .forest, .forestHill: 0.5
 		default: 0.0
@@ -87,25 +85,35 @@ public extension Map<32, Terrain> {
 		terrain: [9 of Terrain]
 	) {
 		var connected = SetXY.empty
-		var pending = [] as [XY]
-		for xy in indices
-			where self[xy].isSea && strategicTerrain(at: xy, terrain: terrain).isSea {
-			connected[xy] = true
-			pending.append(xy)
+		let seeds = indices.filter { xy in
+			self[xy].isSea && strategicTerrain(at: xy, terrain: terrain).isSea
 		}
-		while let xy = pending.popLast() {
-			let neighbors = xy.n4
+		_ = flood(from: seeds, visited: &connected) { self[$0].isSea }
+		for xy in indices where self[xy].isSea && !connected[xy] {
+			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain)
+		}
+	}
+
+	/// 4-connected component of `passable` tiles grown from `seeds`, extending
+	/// `visited` with every tile reached.
+	private func flood(from seeds: [XY], visited: inout SetXY, passable: (XY) -> Bool) -> [XY] {
+		var tiles = [] as [XY]
+		for seed in seeds where !visited[seed] && passable(seed) {
+			visited[seed] = true
+			tiles.append(seed)
+		}
+		var head = 0
+		while head < tiles.count {
+			let neighbors = tiles[head].n4
+			head += 1
 			for i in neighbors.indices {
 				let p = neighbors[i]
-				guard self[p].isSea && !connected[p] else { continue }
-				connected[p] = true
-				pending.append(p)
+				guard contains(p), !visited[p], passable(p) else { continue }
+				visited[p] = true
+				tiles.append(p)
 			}
 		}
-		for xy in indices where self[xy].isSea && !connected[xy] {
-			let dominant = strategicTerrain(at: xy, terrain: terrain)
-			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, dominant: dominant)
-		}
+		return tiles
 	}
 
 	/// The largest contiguous landmass is the mainland. Other components are
@@ -116,20 +124,7 @@ public extension Map<32, Terrain> {
 		var visited = SetXY.empty
 		var landmasses = [] as [[XY]]
 		for start in indices where !self[start].isSea && !visited[start] {
-			var landmass = [start]
-			var head = 0
-			visited[start] = true
-			while head < landmass.count {
-				let neighbors = landmass[head].n4
-				head += 1
-				for i in neighbors.indices {
-					let p = neighbors[i]
-					guard contains(p), !self[p].isSea, !visited[p] else { continue }
-					visited[p] = true
-					landmass.append(p)
-				}
-			}
-			landmasses.append(landmass)
+			landmasses.append(flood(from: [start], visited: &visited) { !self[$0].isSea })
 		}
 		guard let mainlandIndex = landmasses.indices.max(by: { a, b in
 			landmasses[a].count < landmasses[b].count
@@ -377,11 +372,11 @@ public extension Map<32, Terrain> {
 	}
 
 	private func hasNoSeaNeighbors(at xy: XY) -> Bool {
-		xy.n8.firstMap { p in self[p].isSea ? .some(p) : .none } == .none
+		!xy.n8.contains { p in self[p].isSea }
 	}
 
 	private func touchesSea(at xy: XY) -> Bool {
-		xy.n4.firstMap { p in self[p].isSea ? .some(p) : .none } != .none
+		xy.n4.contains { p in self[p].isSea }
 	}
 
 	private mutating func placeCities(d20: inout D20, players: Int, mainland: SetXY) -> [XY] {

@@ -23,6 +23,13 @@ enum TileSurface: Hashable {
 		case .supply(let level): .redToGreen8(level)
 		}
 	}
+
+	/// Tinted top face at `elevation`; sea is the only textured surface.
+	@MainActor
+	func image(elevation: Int) -> CGImage? {
+		let image = UIImage.surface(elevation).cg?.tinted(color.cgColor)
+		return self == .sea ? image?.noised() : image
+	}
 }
 
 extension Terrain {
@@ -79,8 +86,7 @@ extension SKTileGroup {
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
 				ctx.drawTile(UIImage.frame(elevation).cg)
-				let image = UIImage.surface(elevation).cg?.tinted(surface.color.cgColor)
-				ctx.drawTile(surface == .sea ? image?.noised() : image)
+				ctx.drawTile(surface.image(elevation: elevation))
 			}
 		)
 		baseCache[key] = group
@@ -88,10 +94,7 @@ extension SKTileGroup {
 	}
 
 	static func base(terrain: Terrain) -> SKTileGroup {
-		base(
-			surface: terrain.tileSurface,
-			elevation: terrain.elevationLevel
-		)
+		base(surface: terrain.tileSurface, elevation: terrain.elevationLevel)
 	}
 
 	static func team(_ team: Team, elevation: Int) -> SKTileGroup {
@@ -145,23 +148,27 @@ extension SKTileGroup {
 	}
 }
 
+@MainActor
 private extension CGImage {
+
+	/// Stable tile-sized speckle, rendered once — noising a surface is then a
+	/// single masked draw instead of a per-pixel fill on every texture build.
+	static let noise: CGImage = .draw(size: .tile3D) { ctx in
+		var d20 = D20()
+		for y in 0 ..< Int(CGSize.tile3D.height) {
+			for x in 0 ..< Int(CGSize.tile3D.width) {
+				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.1).cgColor)
+				ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
+			}
+		}
+	}
 
 	/// Applies stable white noise only where the source image is nontransparent.
 	func noised() -> CGImage {
 		.draw(size: CGSize(width: width, height: height)) { ctx in
-			let bounds = CGRect(x: 0, y: 0, width: width, height: height)
-			var d20 = D20()
-			ctx.draw(self, in: bounds)
+			ctx.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
 			ctx.setBlendMode(.sourceAtop)
-
-			for y in 0 ..< height {
-				for x in 0 ..< width {
-					let value = CGFloat(d20.uniform()) * 2.0 - 1.0
-					ctx.setFillColor(UIColor.black.withAlphaComponent(abs(value) * 0.1).cgColor)
-					ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
-				}
-			}
+			ctx.draw(CGImage.noise, in: CGRect(origin: .zero, size: .tile3D))
 			ctx.setBlendMode(.normal)
 		}
 	}
@@ -257,8 +264,7 @@ extension UIImage {
 		let elevation = terrain.elevationLevel
 		let image = ImageBuffer.tile.draw { ctx in
 			ctx.drawTile(UIImage.frame(elevation).cg)
-			let surface = UIImage.surface(elevation).cg?.tinted(terrain.tileSurface.color.cgColor)
-			ctx.drawTile(terrain.isSea ? surface?.noised() : surface)
+			ctx.drawTile(terrain.tileSurface.image(elevation: elevation))
 			ctx.drawTile(terrain.decoration?.cg)
 		}
 		return UIImage(cgImage: image)

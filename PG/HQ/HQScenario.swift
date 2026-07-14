@@ -141,16 +141,15 @@ extension HQNodes {
 				+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
 				+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
 				let seed = Int.random(in: 0 ..< 128)
-				let terrain = Scenario.cornerTerrain(seaLevel: sea, seed: seed)
 
-				core.startScenario(TacticalSim(
+				core.startScenario(Scenario(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: units,
+					terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
+					fortLevel: Int(forts),
 					size: 24 + size * 8,
-					seed: seed,
-					terrain: terrain,
-					forts: Int(forts)
-				))
+					seed: seed
+				).makeSim())
 				core.save()
 				view.present(.auto)
 			})
