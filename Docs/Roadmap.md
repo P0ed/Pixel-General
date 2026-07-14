@@ -2,15 +2,25 @@
 
 ## Scenario
 
+- Add sea tiles `Terrain.sea`. Not passable for land units. Darker color than river.
+  Also used for sea tiles in all strategic map modes.
+- Generate map based on `[9 of Terrain]`. Compose using the following pattern:
+  ```
+  xxx
+  ADx
+  xxx
+  ```
+  A: Attacker, D: Defender on strategic map. Can contain sea tiles.
+
 - Do not transfer prestige after scenario to HQ.
   Instead pay fixed reward on victory.
-- Finetune the damage curve.
+
 - Allow buying units in a `.c5` region around city/village/airfield.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
+
 - Add unit deployment phase before day 1.
 - Unit surrenders if can't retreat.
-- Defensive AI.
-- Sea tiles and ships.
+- Ships.
 - Separate layer for air units.
 - Weather.
 - Bridging engineers.
@@ -19,12 +29,9 @@
 
 ## Campaign (HoI lite)
 
-- Add next turn action in menu similar to Tactical menu.
-- Make `armies: [4 of Army]` -> `armies: CArray<64, CArray<4, Army>>` keyed by `Country.rawValue`.
-- Army selection same as unit selection in Tactical with cursor and move range displayed by fog layer.
-- Simple AI.
-- - Makes armies, moves and attacks if has 3 to 1 advantage localy.
-- Battle autoresolve option.
+- Add `struct Scenario`: `players: [Player], units: [Unit], terrain: [9 of Terrain], fortLevel: Int`, etc.
+  Serving as `TacticalSim` factory.
+- Train a simple model that predicts battle outcome with casualties for auto resolutions in strategic layer given a `Scenario`.
 
 - Dynamic diplomacy.
 - - Rename `Country` to `Flag` [or `Tag`?].
