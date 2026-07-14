@@ -34,7 +34,16 @@ public struct Scenario {
 	}
 
 	public func makeSim() -> TacticalSim {
-		TacticalSim(self)
+		TacticalSim(
+			players: players,
+			units: units,
+			size: size,
+			seed: seed,
+			terrain: terrain,
+			objective: objective,
+			forts: fortLevel,
+			buildingsMask: buildingsMask
+		)
 	}
 
 	/// Field neighborhood with zero to three cumulative sea squares in a
@@ -61,21 +70,5 @@ public struct Scenario {
 			terrain[index] = .sea
 		}
 		return terrain
-	}
-}
-
-public extension TacticalSim {
-
-	init(_ scenario: borrowing Scenario) {
-		self.init(
-			players: scenario.players,
-			units: scenario.units,
-			size: scenario.size,
-			seed: scenario.seed,
-			terrain: scenario.terrain,
-			objective: scenario.objective,
-			forts: scenario.fortLevel,
-			buildingsMask: scenario.buildingsMask
-		)
 	}
 }

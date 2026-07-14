@@ -197,36 +197,31 @@ struct MapGenerationTests {
 		terrain[3] = .sea
 		for seed in 0 ..< 16 {
 			let map = Map<32, Terrain>(size: 24, seed: seed, players: 4, terrain: terrain)
-			let center = XY(map.size / 2, map.size / 2)
-			var mainland = Set([center])
-			var pending = [center]
-			while let xy = pending.popLast() {
-				let neighbors = xy.n4
-				for i in neighbors.indices {
-					let p = neighbors[i]
-					guard map.contains(p), !map[p].isSea, !mainland.contains(p) else { continue }
-					mainland.insert(p)
-					pending.append(p)
-				}
-			}
 
-			var visited = mainland
-			var islands = 0
-			for start in map.indices where !map[start].isSea && !visited.contains(start) {
-				islands += 1
-				var island = [start]
+			func landmass(from start: XY, into visited: inout Set<XY>) -> [XY] {
+				var tiles = [start]
 				var head = 0
 				visited.insert(start)
-				while head < island.count {
-					let neighbors = island[head].n4
+				while head < tiles.count {
+					let neighbors = tiles[head].n4
 					head += 1
 					for i in neighbors.indices {
 						let p = neighbors[i]
 						guard map.contains(p), !map[p].isSea, !visited.contains(p) else { continue }
 						visited.insert(p)
-						island.append(p)
+						tiles.append(p)
 					}
 				}
+				return tiles
+			}
+
+			var visited = Set<XY>()
+			let mainland = Set(landmass(from: XY(map.size / 2, map.size / 2), into: &visited))
+
+			var islands = 0
+			for start in map.indices where !map[start].isSea && !visited.contains(start) {
+				islands += 1
+				let island = landmass(from: start, into: &visited)
 				#expect(island.count >= 6, "Small island of \(island.count) tiles survived for seed \(seed)")
 				#expect(!island.contains(where: { xy in map[xy] == .city }), "City generated on an island for seed \(seed)")
 			}
