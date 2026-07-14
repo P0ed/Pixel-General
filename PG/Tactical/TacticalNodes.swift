@@ -178,7 +178,7 @@ extension TacticalNodes {
 	) -> SKTileGroup {
 		switch key {
 		case .terrain:
-			return .base(terrain: state.sim.map[xy])
+			return .base(terrain: state.sim.map[xy], at: xy)
 		case .team:
 			return .team(
 				state.sim.control[xy].team,
