@@ -270,7 +270,7 @@ extension Unit {
 		 heli, fighter, cas
 }
 
-extension UnitType {
+public extension UnitType {
 
 	var isAir: Bool {
 		switch self {

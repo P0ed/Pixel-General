@@ -16,6 +16,12 @@
 		get { buildings[Int(t.rawValue)] }
 		set { buildings[Int(t.rawValue)] = newValue }
 	}
+
+	/// Total factory levels excluding `fort` — the province's productive
+	/// capacity, as shaded by the strategic industry map mode.
+	public var industry: Int {
+		BuildingType.allCases.reduce(0) { $0 + ($1 == .fort ? 0 : Int(self[$1])) }
+	}
 }
 
 public extension StrategicSim {

@@ -29,6 +29,27 @@ enum Net {
 		return vars
 	}
 
+	/// The same catalog as `variables`, but as graph *constants* — a frozen
+	/// reference network (the PPO KL anchor). Constants have no gradient
+	/// plumbing, so autodiff never traverses into the reference branch.
+	static func constants(_ g: MPSGraph, _ weights: LSTMWeights) -> [String: MPSGraphTensor] {
+		var consts = [String: MPSGraphTensor]()
+		for (name, shape) in LSTMWeights.spec {
+			consts[name] = g.constant(
+				floatData(weights[name]),
+				shape: shape.map { NSNumber(value: $0) },
+				dataType: .float32
+			)
+		}
+		return consts
+	}
+
+	/// Host-side Adam bias correction. The β₁ = 0.9 / β₂ = 0.999 here must
+	/// match the beta constants baked into every training graph's `adam` ops.
+	static func correctedLR(_ lr: Float, step: Int) -> Float {
+		lr * (1 - powf(0.999, Float(step))).squareRoot() / (1 - powf(0.9, Float(step)))
+	}
+
 	/// SimObservation encoder: conv trunk + pooled features.
 	/// `planes [n, 32, 32, P]`, `globals [n, G]` →
 	/// (`trunk [n, 1024, C]`, `x [n, H]` — the LSTM input).

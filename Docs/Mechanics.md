@@ -417,12 +417,30 @@ friendly-team supply truck, +2 in the `.c5` plus-shape of an owned settlement,
 −2 next to a visible enemy unit (owned airfields count as settlements — they
 supply ground units too). The shading is exact: `resupply` restores
 `level + 2` ammo and heals up to `level + 3` from the same masks.
+Like defense, supply follows the selection: with an air unit selected it
+shades the **air** grade instead — worst-grade red outside the `.c5` plus of
+an owned airfield, where `resupply` gives air units nothing at all, and
+`airLevel(at:)` (2, +2 truck, −2 adjacent enemy) inside it; terrain and tile
+control never matter to air. Ground grade otherwise, infantry view when
+nothing is selected.
+**Defense** shades every tile by `terrain.def(type) + terrain.baseEntrenchment`
+for the selected unit's type (infantry when nothing is selected) — the
+deterministic part of the `defenderMod` a just-arrived unit enjoys after one
+end of turn (`TacticalAttack.swift`), −5 (heavy armor in a river) to +6
+(infantry in a city) spread over the same red-to-green gradient. Air types
+shade uniformly: they ignore terrain and never entrench.
 Map modes use the right modifier: Right+A selects terrain, Right+B toggles
-country/team, and Right+C selects supply.
+country/team, Right+C selects supply, and Right+D selects defense.
 
 The strategic layer uses the same controls for terrain and country/team; it has
 no supply view. Its terrain view shows the campaign's field, forest, hill, and
-mountain overlay while retaining water for ownerless sea tiles.
+mountain overlay while retaining water for ownerless sea tiles. In its place,
+Right+C toggles two campaign views on the same red-to-green gradient
+(`StrategicMapMode`, `PG/Strategic/StrategicState.swift`): **industry** shades
+each province by `Province.industry` — its total factory levels excluding
+forts, clamped at 7 — and **forts** shades by the province's `fort` building
+level, 0–3 spread over gradient steps 0/2/4/7. Ownerless sea tiles stay water
+in both, as in the terrain view.
 
 Only the base tile changes with the mode: buildings/roads/bridges
 (decorations) and fog of war render on separate tile-map layers in every

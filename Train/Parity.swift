@@ -57,12 +57,12 @@ enum Parity {
 		}
 
 		while compared < steps {
-			var sim = Rollouts.replay(index: battle).makeSim()
+			var sim = Rollouts.replay(index: battle, suite: .classic).makeSim()
 			battle += 1
 			policy.reset()
 			var ai = AI.Plan()
 
-			while compared < steps, sim.aliveTeams.nonzeroBitCount > 1, sim.day <= 32 {
+			while compared < steps, sim.winner == nil, sim.day <= 32 {
 				guard sim.playerIndex == 0 else {
 					_ = sim.reduce(sim.run(ai: &ai))
 					continue

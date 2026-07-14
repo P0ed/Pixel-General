@@ -37,6 +37,7 @@ public extension TacticalSim {
 			units: units,
 			buildingsMask: buildingsMask
 		)
+		self.objective = objective
 	}
 
 	private static func cities(

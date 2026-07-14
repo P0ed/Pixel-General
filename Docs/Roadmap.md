@@ -43,8 +43,10 @@
 
 ## AI
 
-- Strengthen the neural opponent: value-head baseline / entropy bonus if REINFORCE
-  variance stalls; self-play once it consistently beats the heuristic.
+- Strengthen the neural opponent further (`Train ppo` — PPO-clip + value baseline +
+  KL anchor — broke the REINFORCE ceiling at 25.7% vs BC's 21.6%, 832-battle paired
+  eval): continue PPO from ckpt-90 at difficulty 1.5, try `--lam < 1` / a bigger BC corpus for a
+  stronger prior; self-play once it consistently beats the heuristic.
 
 ## Multiplayer
 

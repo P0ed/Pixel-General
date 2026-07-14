@@ -179,7 +179,8 @@ private enum Help {
 	  [ / Shift-Tab       Select previous unit
 	  Esc                 Open the menu
 	  Z / X / C           Zoom  1× / 2× / 4×
-	  1 / 2 / 3           Terrain / Country-Team / Supply map
+	  1 / 2               Terrain / Country-Team map
+	  3 / 4               Supply / Defense map (campaign: Industry-Forts)
 
 	GAMEPAD
 
@@ -189,7 +190,8 @@ private enum Help {
 	  Tap L / R shoulder  Previous / Next unit
 	  Hold L + D-pad      Pan the map
 	  Hold R + D-pad ↑/↓  Zoom in / out
-	  Hold R + A / B / X  Terrain / Country-Team / Supply map
+	  Hold R + A / B      Terrain / Country-Team map
+	  Hold R + X / Y      Supply / Defense map (campaign: Industry-Forts)
 	  Menu                Open the menu
 
 	POINTER

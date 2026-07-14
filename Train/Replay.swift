@@ -9,7 +9,9 @@ struct Replay {
 
 	/// Bump when the recipe changes (factory, `.base` rosters, `TacticalAction`
 	/// layout): stale files are rejected — regeneration is cheap.
-	static let version: UInt16 = 1
+	/// v3: the factory no longer appends seats-1+ rosters (a25d286) —
+	/// `makeSim()` composes the full unit list itself.
+	static let version: UInt16 = 3
 	static let magic: UInt32 = 0x50475250 // "PGRP"
 
 	struct Seat {
@@ -22,6 +24,8 @@ struct Replay {
 	var size: UInt8
 	var seed: Int64
 	var seats: [Seat]
+	var objective: Objective = .none
+	var forts: UInt8 = 0
 	var actions: [TacticalAction] = []
 	var winner: Team = .none
 	var days: UInt16 = 0
@@ -30,8 +34,9 @@ struct Replay {
 extension Replay {
 
 	/// Rebuilds the battle's initial state, identical to what the generator saw.
-	/// The factory appends `.base` rosters for seats 1+ itself; seat 0's roster
-	/// is passed explicitly with the same recipe.
+	/// The factory places exactly the units it is given (app callers compose
+	/// campaign rosters + aux themselves), so every seat's `.base` roster is
+	/// composed here; training battles carry no aux.
 	func makeSim() -> TacticalSim {
 		TacticalSim(
 			players: seats.map { s in
@@ -43,9 +48,11 @@ extension Replay {
 					tier: s.tier
 				)
 			},
-			units: .base(seats[0].country, lvl: seats[0].baseLevel),
+			units: seats.flatMap { s -> [COR.Unit] in .base(s.country, lvl: s.baseLevel) },
 			size: Int(size),
-			seed: Int(seed)
+			seed: Int(seed),
+			objective: objective,
+			forts: Int(forts)
 		)
 	}
 }
@@ -65,6 +72,14 @@ extension Replay {
 		w.put(UInt8(0)) // pad
 		w.put(days)
 		w.put(seed)
+		let objectiveRecord: (kind: UInt8, team: UInt8, day: UInt16) = switch objective {
+		case .none: (0, Team.none.rawValue, 0)
+		case .survive(let team, let day): (1, team.rawValue, day)
+		}
+		w.put(objectiveRecord.kind)
+		w.put(objectiveRecord.team)
+		w.put(objectiveRecord.day)
+		w.put(forts)
 		for s in seats {
 			w.put(s.country.rawValue)
 			w.put(s.prestige)
@@ -90,8 +105,22 @@ extension Replay {
 			let winnerRaw = r.take(UInt8.self), let winner = Team(rawValue: winnerRaw),
 			r.take(UInt8.self) != nil, // pad
 			let days = r.take(UInt16.self),
-			let seed = r.take(Int64.self)
+			let seed = r.take(Int64.self),
+			let objectiveKind = r.take(UInt8.self),
+			let objectiveTeamRaw = r.take(UInt8.self),
+			let objectiveTeam = Team(rawValue: objectiveTeamRaw),
+			let objectiveDay = r.take(UInt16.self),
+			let forts = r.take(UInt8.self)
 		else { throw TrainError.badFile(path) }
+		let objective: Objective
+		switch objectiveKind {
+		case 0 where objectiveTeam == .none && objectiveDay == 0:
+			objective = .none
+		case 1 where objectiveTeam != .none:
+			objective = .survive(objectiveTeam, day: objectiveDay)
+		default:
+			throw TrainError.badFile(path)
+		}
 
 		var seats: [Seat] = []
 		for _ in 0..<seatCount {
@@ -111,9 +140,11 @@ extension Replay {
 			guard let action = r.take(TacticalAction.self) else { throw TrainError.badFile(path) }
 			actions.append(action)
 		}
+		guard r.isAtEnd else { throw TrainError.badFile(path) }
 
 		self.init(
 			size: size, seed: seed, seats: seats,
+			objective: objective, forts: forts,
 			actions: actions, winner: winner, days: days
 		)
 	}
@@ -166,6 +197,7 @@ struct ByteWriter {
 struct ByteReader {
 	let data: Data
 	var offset = 0
+	var isAtEnd: Bool { offset == data.count }
 
 	mutating func take<T: BitwiseCopyable>(_ type: T.Type = T.self) -> T? {
 		let n = MemoryLayout<T>.size

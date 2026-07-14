@@ -106,14 +106,15 @@ extension TacticalSim {
 	/// The attacker/defender numbers that feed the duel: base `atk`/`def` plus the
 	/// leadership/recon/radar auras, with the caller's `defMod` folded into `def`.
 	/// Shared by `fire` (live) and `estimateDamage` (prediction) so the aura and
-	/// base-stat assembly has a single definition.
-	func combatStats(src: UID, dst: UID, defMod: Int8) -> (atk: Int8, def: Int8) {
+	/// base-stat assembly has a single definition. `visibleOnly` is the acting
+	/// player's perspective: units it cannot see contribute nothing.
+	func combatStats(src: UID, dst: UID, defMod: Int8, visibleOnly: Bool = false) -> (atk: Int8, def: Int8) {
 		let (source, destination) = (units[src], units[dst])
-		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src]) ? 1 : 0
-		let aRC: Int8 = aura(.recon, country: source.country, at: position[src]) ? 1 : 0
-		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst]) ? 1 : 0
-		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst]) ? 1 : 0
-		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src]) ? 2 : 0
+		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src], visibleOnly: visibleOnly) ? 1 : 0
+		let aRC: Int8 = aura(.recon, country: source.country, at: position[src], visibleOnly: visibleOnly) ? 1 : 0
+		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst], visibleOnly: visibleOnly) ? 1 : 0
+		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst], visibleOnly: visibleOnly) ? 1 : 0
+		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src], visibleOnly: visibleOnly) ? 2 : 0
 		let atk = Int8(source.atk(destination)) + aRC + aLR + radar
 		let def = Int8(destination.def(source)) + defMod + dRC + dLR
 		return (atk, def)
@@ -123,7 +124,7 @@ extension TacticalSim {
 	/// entrench + terrain def + (close-combat unless ranged) + mountaineer, minus
 	/// the attacker's manhattan/diagonal reach and encirclement. This is the
 	/// deterministic part of `attack`'s `dstDef`.
-	func defenderMod(defender dst: UID, attacker src: UID, ranged: Bool) -> Int8 {
+	func defenderMod(defender dst: UID, attacker src: UID, ranged: Bool, visibleOnly: Bool = false) -> Int8 {
 		let (su, du) = (units[src], units[dst])
 		let (sp, dp) = (position[src], position[dst])
 		let dxy = dp - sp
@@ -137,7 +138,7 @@ extension TacticalSim {
 		return Int8(du.entDef) + dt.def(du.type) + (ranged ? 0 : dt.closeCombat(du.type))
 			+ mountaineer
 			- mhtn - diag
-			- encirclement(id: dst)
+			- encirclement(id: dst, visibleOnly: visibleOnly)
 	}
 
 	func unitCanHit(_ src: UID, _ dst: UID) -> Bool {
@@ -150,40 +151,48 @@ extension TacticalSim {
 			&& (su.isAir ? su.ammo > 0 : true)
 	}
 
-	func artSupport(defender: UID, attacker: UID) -> UID? {
+	func artSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {
 		position[defender].n8.firstMap { hx in
 			unitAt(hx).flatMap { u in
 				u.country.team == units[defender].country.team && u.isArt && u.ammo > 0
+				&& (!visibleOnly || isVisible(unitsMap[hx]))
 				? unitsMap[hx] : nil
 			}
 		}
 	}
 
-	func aaSupport(defender: UID, attacker: UID) -> UID? {
+	func aaSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {
 		position[defender].n8.firstMap { hx in
 			unitAt(hx).flatMap { u in
 				u.country.team == units[defender].country.team && u.isAA && u.ammo > 0
+				&& (!visibleOnly || isVisible(unitsMap[hx]))
 				? unitsMap[hx] : nil
 			}
 		}
 	}
 
-	private func aura(_ skills: Skills, country: Country, at xy: XY) -> Bool {
-		(unitAt(xy)?[skills] ?? false) || neighbors(at: xy).contains {
-			units[$0].country == country && units[$0][skills]
+	private func aura(_ skills: Skills, country: Country, at xy: XY, visibleOnly: Bool) -> Bool {
+		aura(country: country, at: xy, visibleOnly: visibleOnly) { $0[skills] }
+	}
+
+	private func aura(_ traits: Traits, country: Country, at xy: XY, visibleOnly: Bool) -> Bool {
+		aura(country: country, at: xy, visibleOnly: visibleOnly) { $0[traits] }
+	}
+
+	private func aura(country: Country, at xy: XY, visibleOnly: Bool, has: (Unit) -> Bool) -> Bool {
+		if let id = uidAt(xy), !visibleOnly || isVisible(id), units[id].country == country, has(units[id]) {
+			return true
+		}
+		return neighbors(at: xy).contains { id in
+			(!visibleOnly || isVisible(id)) && units[id].country == country && has(units[id])
 		}
 	}
 
-	private func aura(_ traits: Traits, country: Country, at xy: XY) -> Bool {
-		(unitAt(xy)?[traits] ?? false) || neighbors(at: xy).contains {
-			units[$0].country == country && units[$0][traits]
-		}
-	}
-
-	private func encirclement(id: UID) -> Int8 {
+	private func encirclement(id: UID, visibleOnly: Bool) -> Int8 {
 		let team = units[id].country.team
 		let enemies = position[id.index].n4.reduce(into: 0 as Int8) { r, xy in
-			r += (unitAt(xy).map { u in u.country.team != team ? 1 : 0 } ?? 0)
+			guard let other = uidAt(xy), !visibleOnly || isVisible(other) else { return }
+			r += units[other].country.team != team ? 1 : 0
 		}
 		return max(0, enemies - 1)
 	}
@@ -210,10 +219,21 @@ extension TacticalSim {
 		}
 	}
 
-	func estimateDamage(attacker: UID, defender: UID) -> UInt8 {
+	/// Deterministic damage prediction on the live `Duel` curve without touching
+	/// `d20`. With `visibleOnly` it is the AI's preview — hidden aura,
+	/// encirclement, and support units contribute nothing. `defMod` overrides
+	/// the defender modifier (support fire strikes back at 0, matching `fire`).
+	func estimateDamage(
+		attacker: UID,
+		defender: UID,
+		defMod override: Int8? = nil,
+		visibleOnly: Bool = false
+	) -> UInt8 {
 		let (a, d) = (units[attacker], units[defender])
-		let defMod = defenderMod(defender: defender, attacker: attacker, ranged: a.isArt)
-		let (atk, def) = combatStats(src: attacker, dst: defender, defMod: defMod)
+		let defMod = override ?? defenderMod(
+			defender: defender, attacker: attacker, ranged: a.isArt, visibleOnly: visibleOnly
+		)
+		let (atk, def) = combatStats(src: attacker, dst: defender, defMod: defMod, visibleOnly: visibleOnly)
 		return Duel(
 			atk: atk,
 			def: def,

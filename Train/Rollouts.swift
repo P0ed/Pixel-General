@@ -1,6 +1,18 @@
 import Foundation
 import COR
 
+enum RolloutSuite: String, Sendable {
+	case classic
+	case mixed
+
+	static func parse(_ value: String) throws -> Self {
+		guard let suite = Self(rawValue: value) else {
+			throw TrainError.usage("--suite must be classic or mixed")
+		}
+		return suite
+	}
+}
+
 /// Generates heuristic-vs-heuristic battles and stores them as replays.
 /// Both seats are driven by the heuristic `run(ai:)` directly (the perf-test
 /// pattern), so the corpus is uniform heuristic play. Every battle
@@ -20,6 +32,7 @@ enum Rollouts {
 		var out = "tmp/runs/replays"
 		var seedBase = 0
 		var verify = false
+		var suite: RolloutSuite = .mixed
 
 		try Args(args).parse { flag, next in
 			switch flag {
@@ -27,6 +40,7 @@ enum Rollouts {
 			case "--out": out = try next()
 			case "--seed": seedBase = try Int(next()) ?? seedBase
 			case "--verify": verify = true
+			case "--suite": suite = try .parse(next())
 			default: throw TrainError.usage("unknown option \(flag)")
 			}
 		}
@@ -40,7 +54,7 @@ enum Rollouts {
 		var resolved = 0
 
 		for index in seedBase ..< seedBase + n {
-			var replay = Self.replay(index: index)
+			var replay = Self.replay(index: index, suite: suite)
 			play(&replay)
 
 			let url = dir.appendingPathComponent(name(index))
@@ -56,6 +70,7 @@ enum Rollouts {
 		let secs = Double(d.seconds) + Double(d.attoseconds) / 1e18
 		print("── rollouts ──")
 		print("  battles:  \(n) (\(resolved) resolved)")
+		print("  suite:    \(suite.rawValue)")
 		print("  actions:  \(totalActions)")
 		print("  time:     \(Int(secs))s (\(Int(Double(totalActions) / max(secs, 1e-9))) actions/s)")
 		print("  out:      \(dir.path)")
@@ -63,12 +78,12 @@ enum Rollouts {
 
 	/// Battle configuration derived purely from the index; strides are chosen
 	/// so nearby indices vary the matchup before the economy knobs.
-	static func replay(index: Int) -> Replay {
+	static func replay(index: Int, suite: RolloutSuite) -> Replay {
 		let pair = pairs[index % pairs.count]
 		let prestige = prestiges[(index / 4) % prestiges.count]
 		let level = baseLevels[(index / 16) % baseLevels.count]
 		let tier = tiers[(index / 64) % tiers.count]
-		return Replay(
+		var replay = Replay(
 			size: index % 2 == 0 ? 24 : 32,
 			seed: Int64(index),
 			seats: [
@@ -76,6 +91,20 @@ enum Rollouts {
 				.init(country: pair.1, prestige: prestige.1, baseLevel: level.1, tier: tier.1),
 			]
 		)
+		guard suite == .mixed else { return replay }
+
+		let deadline: UInt16 = replay.size == 24 ? 32 : 40
+		switch index % 3 {
+		case 1:
+			replay.objective = .survive(replay.seats[0].country.team, day: deadline)
+			replay.forts = 1
+		case 2:
+			replay.objective = .survive(replay.seats[1].country.team, day: deadline)
+			replay.forts = 1
+		default:
+			break
+		}
+		return replay
 	}
 
 	/// The proven headless loop (`TacticalPerformanceTests`), recording every action.
@@ -83,7 +112,7 @@ enum Rollouts {
 		var sim = replay.makeSim()
 		var ai = AI.Plan()
 		while replay.actions.count < maxActions {
-			if sim.aliveTeams.nonzeroBitCount <= 1 { break }
+			if sim.winner != nil { break }
 			if sim.day > maxDays { break }
 			let action = sim.run(ai: &ai)
 			replay.actions.append(action)
