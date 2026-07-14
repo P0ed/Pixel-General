@@ -122,12 +122,12 @@ extension StrategicNodes {
 		// Sea remains sea in political, industry, and fortification modes too;
 		// older saves may still identify it only through `.none` ownership.
 		if terrain.isSea || state.sim.owner[xy] == .none {
-			return .base(terrain: .sea)
+			return .base(terrain: .sea, at: xy)
 		}
 		let elevation = terrain.elevationLevel
 		switch state.ui.mapMode {
 		case .terrain:
-			return .base(terrain: terrain)
+			return .base(terrain: terrain, at: xy)
 		case .team:
 			return .team(state.sim.owner[xy].team, elevation: elevation)
 		case .country:
