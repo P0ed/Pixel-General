@@ -129,7 +129,7 @@ private extension EditorState {
 		let prev = map[xy]
 		map[xy] = terrain
 
-		let touchesWater = terrain.isRiver || prev.isRiver
+		let touchesWater = terrain.isWater || prev.isWater
 		let touchesRoad = terrain.hasRoad || prev.hasRoad
 
 		if touchesWater || touchesRoad {
@@ -193,7 +193,7 @@ extension Terrain {
 
 	static let palette: [Terrain] = [
 		.field, .forest, .hill, .forestHill,
-		.mountain, .water, .city,
+		.mountain, .river, .sea, .city,
 		.airfield, .roadWE, .bridgeWE, .fort
 	]
 
@@ -205,7 +205,8 @@ extension Terrain {
 		case .hill: "H"
 		case .forestHill: "h"
 		case .mountain: "M"
-		case .water: "W"
+		case .river: "W"
+		case .sea: "S"
 		case .bridgeWE, .bridgeSN: "B"
 		case .city: "C"
 		case .airfield: "A"
@@ -223,7 +224,8 @@ extension Terrain {
 		case "H": self = .hill
 		case "h": self = .forestHill
 		case "M": self = .mountain
-		case "W": self = .water
+		case "W": self = .river
+		case "S": self = .sea
 		case "B": self = .bridgeWE
 		case "C": self = .city
 		case "A": self = .airfield

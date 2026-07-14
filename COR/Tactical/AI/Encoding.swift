@@ -23,7 +23,7 @@ public enum Plane {
 	public static let onMap = 0
 
 	// Terrain, one-hot by mechanic group.
-	public static let water = 1
+	public static let river = 1
 	public static let bridge = 2
 	public static let field = 3
 	public static let forest = 4
@@ -186,7 +186,7 @@ extension Terrain {
 	var plane: Int? {
 		switch self {
 		case .none: nil
-		case .water: Plane.water
+		case .river, .sea: Plane.river
 		case .bridgeWE, .bridgeSN: Plane.bridge
 		case .field: Plane.field
 		case .forest: Plane.forest

@@ -118,21 +118,24 @@ extension StrategicNodes {
 	}
 
 	private static func baseGroup(for state: borrowing StrategicState, at xy: XY) -> SKTileGroup {
-		let elevation = state.sim.terrain[xy].elevationLevel
+		let terrain = state.sim.terrain[xy]
+		// Sea remains sea in political, industry, and fortification modes too;
+		// older saves may still identify it only through `.none` ownership.
+		if terrain.isSea || state.sim.owner[xy] == .none {
+			return .base(terrain: .sea)
+		}
+		let elevation = terrain.elevationLevel
 		switch state.ui.mapMode {
 		case .terrain:
-			let terrain: Terrain = state.sim.owner[xy] == .none ? .water : state.sim.terrain[xy]
 			return .base(terrain: terrain)
 		case .team:
 			return .team(state.sim.owner[xy].team, elevation: elevation)
 		case .country:
 			return .base(surface: .country(state.sim.owner[xy]), elevation: elevation)
 		case .industry:
-			guard state.sim.owner[xy] != .none else { return .base(terrain: .water) }
 			let level = UInt8(min(7, state.sim.provinces[xy].industry))
 			return .base(surface: .supply(level), elevation: elevation)
 		case .forts:
-			guard state.sim.owner[xy] != .none else { return .base(terrain: .water) }
 			let level = state.sim.provinces[xy][.fort] * 7 / 3
 			return .base(surface: .supply(level), elevation: elevation)
 		}

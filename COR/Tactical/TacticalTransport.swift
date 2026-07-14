@@ -36,7 +36,7 @@ extension TacticalSim {
 		&& units[unit][.transport] && cargo[unit.index] != .none
 		&& position[unit.index].manhattanDistance(to: xy) == 1
 		&& unitsMap[xy] == .none
-		&& !map[xy].isRiver
+		&& !map[xy].isWater
 	}
 
 	mutating func disembark(unit: UID, to xy: XY, into events: inout [TacticalEvent]) {

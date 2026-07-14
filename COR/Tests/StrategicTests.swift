@@ -102,7 +102,7 @@ struct StrategicTests {
 
 	@Test func europeTerrainHasForestsHillsAndMountains() {
 		let sim = StrategicSim.europe(country: .fin)
-		var forests = 0, hills = 0, mountains = 0, roughTerrainOnSea = 0
+		var forests = 0, hills = 0, mountains = 0, nonSeaTerrainOnSea = 0
 		for xy in sim.terrain.indices {
 			switch sim.terrain[xy] {
 			case .forest: forests += 1
@@ -110,12 +110,12 @@ struct StrategicTests {
 			case .mountain: mountains += 1
 			default: break
 			}
-			if sim.owner[xy] == .none, sim.terrain[xy] != .field { roughTerrainOnSea += 1 }
+			if sim.owner[xy] == .none, sim.terrain[xy] != .sea { nonSeaTerrainOnSea += 1 }
 		}
 		#expect(forests > 0, "no forests on the europe map")
 		#expect(hills > 0, "no hills on the europe map")
 		#expect(mountains > 0, "no mountains on the europe map")
-		#expect(roughTerrainOnSea == 0, "rough terrain placed on sea tiles")
+		#expect(nonSeaTerrainOnSea == 0, "strategic sea is not represented by Terrain.sea")
 
 		// The Alps: every Austrian province is hill or mountain.
 		var flatAustria = 0
@@ -123,6 +123,28 @@ struct StrategicTests {
 			if !sim.terrain[xy].isHighground { flatAustria += 1 }
 		}
 		#expect(flatAustria == 0, "\(flatAustria) Austrian tiles missed the Alps")
+	}
+
+	@Test func battleTerrainRotatesAttackerToMiddleLeft() {
+		var owner = Map<32, Country>(size: 5, zero: .fin)
+		var terrain = Map<32, Terrain>(size: 5, zero: .field)
+		let defender = XY(2, 2)
+		terrain[XY(1, 2)] = .forest
+		terrain[defender] = .hill
+		terrain[XY(1, 3)] = .mountain
+		owner[XY(3, 2)] = .none
+
+		let sim = StrategicSim(
+			owner: owner,
+			terrain: terrain,
+			player: Player(country: .fin, type: .human)
+		)
+		let sample = sim.battleTerrain(at: defender, attackingFrom: XY(1, 2))
+
+		#expect(sample[3] == .forest, "attacker terrain must occupy index 3")
+		#expect(sample[4] == .hill, "defender terrain must occupy index 4")
+		#expect(sample[0] == .mountain, "north-west orientation was lost")
+		#expect(sample[5] == .sea, "unowned strategic tiles must sample as sea")
 	}
 
 	@Test func cannotAttackOwnOrSea() {
@@ -681,7 +703,12 @@ struct StrategicTests {
 			terrain: .field
 		)
 		var tacticalForests = 0, plainsForests = 0
-		for xy in tactical.map.indices {
+		// The defended strategic province is the center third (index 4) of
+		// the composed tactical map; neighboring provinces now retain their
+		// own terrain instead of inheriting the defender's forest bias.
+		for xy in tactical.map.indices where (8 ..< 16).contains(xy.x)
+			&& (8 ..< 16).contains(xy.y)
+		{
 			if tactical.map[xy] == .forest || tactical.map[xy] == .forestHill {
 				tacticalForests += 1
 			}

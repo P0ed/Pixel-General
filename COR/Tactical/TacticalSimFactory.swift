@@ -5,7 +5,7 @@ public extension TacticalSim {
 		units: [Unit],
 		size: Int,
 		seed: Int,
-		terrain: Terrain = .field,
+		terrain: [9 of Terrain],
 		objective: Objective = .none,
 		forts: Int = 0,
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
@@ -38,6 +38,29 @@ public extension TacticalSim {
 			buildingsMask: buildingsMask
 		)
 		self.objective = objective
+	}
+
+	/// Compatibility factory for standalone battles with one dominant terrain.
+	init(
+		players: [Player],
+		units: [Unit],
+		size: Int,
+		seed: Int,
+		terrain: Terrain = .field,
+		objective: Objective = .none,
+		forts: Int = 0,
+		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
+	) {
+		self.init(
+			players: players,
+			units: units,
+			size: size,
+			seed: seed,
+			terrain: [9 of Terrain](repeating: terrain),
+			objective: objective,
+			forts: forts,
+			buildingsMask: buildingsMask
+		)
 	}
 
 	private static func cities(

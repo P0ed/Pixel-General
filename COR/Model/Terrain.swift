@@ -1,12 +1,13 @@
 @frozen public enum Terrain: UInt8, Hashable, Codable, Sendable {
 	case none
-	case water
+	case river
 	case bridgeWE, bridgeSN
 	case field, forest, hill, forestHill, mountain
 	case city, airfield
 	case villageE, villageN, villageW, villageS
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
 	case fort
+	case sea
 }
 
 public extension Terrain {
@@ -69,9 +70,17 @@ public extension Terrain {
 
 	var isRiver: Bool {
 		switch self {
-		case .water: true
+		case .river: true
 		default: false
 		}
+	}
+
+	var isSea: Bool {
+		self == .sea
+	}
+
+	var isWater: Bool {
+		isRiver || isSea
 	}
 
 	var isHighground: Bool {

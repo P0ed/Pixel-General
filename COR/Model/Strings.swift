@@ -147,7 +147,8 @@ extension Terrain: CustomStringConvertible {
 
 	public var description: String {
 		switch self {
-		case .water: "water"
+		case .sea: "sea"
+		case .river: "river"
 		case .bridgeWE, .bridgeSN: "bridge"
 		case .field: "field"
 		case .forest: "forest"

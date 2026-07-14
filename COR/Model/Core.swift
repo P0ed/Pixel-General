@@ -105,6 +105,9 @@ public extension Core {
 			+ (strategic?.defendingCore(for: defender, near: tile) ?? [])
 			+ campaignAux(for: human)
 			+ campaignAux(for: defender)
+		let attackingFrom = strategic!.army(ArmyID(country: human, slot: slot)).position
+		let terrain = strategic!.battleTerrain(at: tile, attackingFrom: attackingFrom)
+		let fortLevel = strategic?.fortLevel(at: tile) ?? 0
 		strategic?.launchBattle(at: tile, by: slot)
 
 		let buildingsMask = [
@@ -113,16 +116,17 @@ public extension Core {
 			0xFF, 0xFF,
 		] as [4 of UInt8]
 
-		tactical = TacticalSim(
+		let scenario = Scenario(
 			players: players,
 			units: units,
+			terrain: terrain,
+			fortLevel: fortLevel,
 			size: 24,
 			seed: tile.x + tile.y * 32,
-			terrain: strategic?.terrain(at: tile) ?? .field,
 			objective: .survive(defender.team, day: 20),
-			forts: strategic?.fortLevel(at: tile) ?? 0,
 			buildingsMask: buildingsMask
 		)
+		tactical = scenario.makeSim()
 		location = .tactical
 	}
 
