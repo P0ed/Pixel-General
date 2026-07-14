@@ -100,6 +100,22 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func terrainNeighborhoodComposesSeaByStrategicThird() {
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea // north-west strategic tile
+		let map = Map<32, Terrain>(size: 24, seed: 7, players: 2, terrain: terrain)
+
+		var missingSea: [XY] = []
+		var unexpectedSea: [XY] = []
+		for xy in map.indices {
+			let northWest = xy.x < 8 && xy.y >= 16
+			if northWest, map[xy] != .sea { missingSea.append(xy) }
+			if !northWest, map[xy] == .sea { unexpectedSea.append(xy) }
+		}
+		#expect(missingSea.isEmpty, "Sea third was overwritten at: \(missingSea)")
+		#expect(unexpectedSea.isEmpty, "Sea escaped its strategic third at: \(unexpectedSea)")
+	}
+
 	@Test func roadsConnectAllCities() {
 		// MST-based road building links every terrain-reachable city into
 		// one network; on these seeds all cities share one landmass, so a

@@ -7,7 +7,7 @@ import COR
 /// political ownership, or supply level. Decorations and fog are separate
 /// layers, so adding a mode only adds surfaces here.
 enum TileSurface: Hashable {
-	case none, field, forest, water
+	case none, field, forest, water, sea
 	case team(Team)
 	case country(Country)
 	case supply(UInt8)
@@ -18,6 +18,7 @@ enum TileSurface: Hashable {
 		case .field: .fieldSurface
 		case .forest: .forestSurface
 		case .water: .waterSurface
+		case .sea: .seaSurface
 		case .team(let team): team.color
 		case .country(let country): country.color
 		case .supply(let level): .redToGreen8(level)
@@ -30,14 +31,15 @@ extension Terrain {
 	var tileSurface: TileSurface {
 		switch self {
 		case .forest, .forestHill: .forest
-		case .water, .bridgeWE, .bridgeSN: .water
+		case .river, .bridgeWE, .bridgeSN: .water
+		case .sea: .sea
 		default: .field
 		}
 	}
 
 	var decoration: UIImage? {
 		switch self {
-		case .none, .water, .field, .forest, .hill, .forestHill, .mountain: nil
+		case .none, .river, .sea, .field, .forest, .hill, .forestHill, .mountain: nil
 		case .city: .city
 		case .airfield: .airfield
 		case .bridgeWE: .bridgeWE
@@ -169,7 +171,7 @@ extension SKTileSet {
 	static let terrain = SKTileSet(
 		tileGroups: .make { ts in
 			for elevation in 0 ... 2 {
-				for surface in [TileSurface.field, .forest, .water] {
+				for surface in [TileSurface.field, .forest, .water, .sea] {
 					ts.append(.base(surface: surface, elevation: elevation))
 				}
 				for team in Team.allCases {

@@ -86,7 +86,9 @@ public extension TacticalSim {
 			var k = allocatedUnits[player]
 			while k < placements[player].count {
 				let xy = placements[player][k]
-				if self.map.contains(xy), unitsMap[xy] == .none, !self.map[xy].isRiver {
+				if self.map.contains(xy), unitsMap[xy] == .none,
+					u.isAir || !self.map[xy].isSea, !self.map[xy].isRiver
+				{
 					break
 				}
 				k += 1
@@ -100,7 +102,9 @@ public extension TacticalSim {
 			// Rings exhausted — an edge-of-map city offers fewer than the
 			// seat's core + aux can need; any free tile beats crashing.
 			var fallback: XY?
-			for xy in self.map.indices where unitsMap[xy] == .none && !self.map[xy].isRiver {
+			for xy in self.map.indices where unitsMap[xy] == .none
+				&& (u.isAir || !self.map[xy].isSea) && !self.map[xy].isRiver
+			{
 				fallback = xy
 				break
 			}

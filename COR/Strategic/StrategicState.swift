@@ -29,6 +29,9 @@ public struct StrategicSim: ~Copyable {
 		self.turn = turn
 		self.battle = battle
 		self.battleArmy = battleArmy
+		for xy in self.owner.indices where self.owner[xy] == .none {
+			self.terrain[xy] = .sea
+		}
 	}
 
 	public static func emptyArmies() -> CArray<64, CArray<4, Army>> {
@@ -68,6 +71,12 @@ public struct StrategicSim: ~Copyable {
 				if let tile = Terrain(legend: ch) { terrain[XY(x, y)] = tile }
 			}
 		}
+		// Sea is terrain, not merely the absence of a country. Keeping it in
+		// the terrain map makes every strategic map mode render water the same
+		// way and lets campaign battles sample coastal neighborhoods directly.
+		for xy in owner.indices where owner[xy] == .none {
+			terrain[xy] = .sea
+		}
 		placeStartingFactories()
 		foundStartingArmies()
 	}
@@ -81,8 +90,37 @@ public extension StrategicSim {
 	// fields out of the noncopyable sim through optional chains hangs the
 	// compiler, so outside access goes through methods.
 	func owner(at xy: XY) -> Country { owner[xy] }
-	func terrain(at xy: XY) -> Terrain { terrain[xy] }
+	func terrain(at xy: XY) -> Terrain {
+		owner.contains(xy) && owner[xy] != .none ? terrain[xy] : .sea
+	}
 	func fortLevel(at xy: XY) -> Int { Int(provinces[xy][.fort]) }
+
+	/// Samples and rotates the strategic 3×3 neighborhood used to generate a
+	/// tactical battle. In the result the attacking province is always middle
+	/// left (index 3), the defended province middle center (index 4), and the
+	/// direction beyond the defender middle right (index 5).
+	func battleTerrain(at defender: XY, attackingFrom attacker: XY) -> [9 of Terrain] {
+		let east = defender - attacker
+		guard east.manhattan == 1 else {
+			let fallback = owner.contains(defender) && owner[defender] != .none
+				? terrain[defender]
+				: .sea
+			return .init(repeating: fallback)
+		}
+		let north = XY(-east.y, east.x)
+		return [9 of Terrain] { index in
+			let column = index % 3
+			let row = index / 3
+			let dx = column - 1
+			let dy = 1 - row
+			let xy = defender + XY(
+				east.x * dx + north.x * dy,
+				east.y * dx + north.y * dy
+			)
+			guard owner.contains(xy), owner[xy] != .none else { return .sea }
+			return terrain[xy]
+		}
+	}
 
 	func canAttack(_ xy: XY) -> Bool {
 		canAttack(xy, by: player.country)

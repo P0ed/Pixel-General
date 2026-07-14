@@ -6,23 +6,37 @@ public extension Map<32, Terrain> {
 	/// mountains lift the height field, while forests raise humidity. Campaign
 	/// battles pass the contested province's strategic terrain here.
 	init(size: Int, seed: Int, players: Int = 4, terrain: Terrain = .field) {
+		self.init(
+			size: size,
+			seed: seed,
+			players: players,
+			terrain: [9 of Terrain](repeating: terrain)
+		)
+	}
+
+	/// Generates one tactical map from a 3×3 strategic neighborhood. The
+	/// array is row-major from north-west to south-east:
+	///
+	///     0 1 2
+	///     3 4 5
+	///     6 7 8
+	///
+	/// Campaign battles rotate their sample so the attacker is at 3 and the
+	/// defender at 4. Land entries bias the local noise; sea entries produce
+	/// an impassable open-water third that later generation passes preserve.
+	init(size: Int, seed: Int, players: Int = 4, terrain: [9 of Terrain]) {
 		self = Map(size: size, zero: .none)
 
-		let size = SIMD2<Int32>(Int32(size), Int32(size))
+		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
 		let seed = Int32(bitPattern: UInt32(seed & Int(UInt32.max)))
-		let height = GKNoiseMap.height(size: size, seed: seed)
-		let humidity = GKNoiseMap.humidity(size: size, seed: seed + 1)
+		let height = GKNoiseMap.height(size: noiseSize, seed: seed)
+		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed + 1)
 		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
-		let humidityBias: Float = switch terrain {
-		case .forest, .forestHill: 0.5
-		default: 0.0
-		}
 
 		generateTerrain(
 			height: height,
 			humidity: humidity,
-			heightBias: 0.25 * Float(terrain.elevationLevel),
-			humidityBias: humidityBias
+			terrain: terrain
 		)
 		placeRivers(height: height, d20: &d20)
 		let cities = placeCities(d20: &d20, players: players)
@@ -33,15 +47,30 @@ public extension Map<32, Terrain> {
 	private mutating func generateTerrain(
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
-		heightBias: Float,
-		humidityBias: Float
+		terrain: [9 of Terrain]
 	) {
 		indices.forEach { xy in
+			let dominant = strategicTerrain(at: xy, terrain: terrain)
+			guard !dominant.isSea else {
+				self[xy] = .sea
+				return
+			}
+			let humidityBias: Float = switch dominant {
+			case .forest, .forestHill: 0.5
+			default: 0.0
+			}
 			self[xy] = Terrain(
-				height: height.value(at: xy.simd) + heightBias,
+				height: height.value(at: xy.simd) + 0.25 * Float(dominant.elevationLevel),
 				humidity: humidity.value(at: xy.simd) + humidityBias
 			)
 		}
+	}
+
+	private func strategicTerrain(at xy: XY, terrain: [9 of Terrain]) -> Terrain {
+		let column = min(2, xy.x * 3 / size)
+		let rowFromSouth = min(2, xy.y * 3 / size)
+		let rowFromNorth = 2 - rowFromSouth
+		return terrain[rowFromNorth * 3 + column]
 	}
 
 	/// Rivers enter and leave at seed-chosen edge points and follow valleys of
@@ -82,7 +111,7 @@ public extension Map<32, Terrain> {
 				cost: { _, xy in riverStep(to: xy, mouth: mouth, height: height, meander: meander, salt: salt) }
 			)
 			guard let path else { return }
-			path.forEach { xy in self[xy] = .water }
+			path.forEach { xy in self[xy] = .river }
 			mouths.append(source)
 			mouth.map { m in mouths.append(m) }
 		}
@@ -104,6 +133,7 @@ public extension Map<32, Terrain> {
 			let t = Int.random(in: size / 6 ... size - 1 - size / 6, using: &d20)
 			let p = onEdge(edge, t)
 			guard
+				!self[p].isSea,
 				hasNoRivers(at: p),
 				mouths.allSatisfy({ xy in xy.stepDistance(to: p) >= size / 2 }),
 				source.map({ xy in xy.manhattanDistance(to: p) >= size - 1 }) ?? true,
@@ -131,7 +161,7 @@ public extension Map<32, Terrain> {
 	/// — a tributary (`mouth == nil`) instead pays a penalty there and
 	/// terminates on the first river tile it touches.
 	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt16? {
-		guard contains(xy) else { return nil }
+		guard contains(xy), !self[xy].isSea else { return nil }
 		if self[xy].isRiver { return mouth == nil ? 1 : nil }
 		let near = !hasNoRivers(at: xy)
 		if near, mouth != nil { return nil }
@@ -177,9 +207,8 @@ public extension Map<32, Terrain> {
 
 		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
 			contains(p)
-			&& !self[p].isRiver
+			&& !self[p].isWater
 			&& !self[p].isSettlement
-			&& self[p] != .water
 			&& self[p] != .mountain
 			&& !placed.contains { $0.stepDistance(to: p) < minSpacing }
 		}

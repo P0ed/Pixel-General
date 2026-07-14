@@ -61,6 +61,40 @@ struct TacticalTests {
 		#expect(cityBadCountry.isEmpty, "Cities with unexpected country: \(cityBadCountry)")
 	}
 
+	@Test func scenarioBuildsFromTerrainNeighborhood() {
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[2] = .sea
+		let objective = Objective.survive(.soviet, day: 12)
+		let scenario = Scenario(
+			players: [
+				Player(country: .fin, type: .human),
+				Player(country: .rus, type: .ai),
+			],
+			units: [],
+			terrain: terrain,
+			fortLevel: 2,
+			size: 24,
+			seed: 9,
+			objective: objective
+		)
+		let sim = scenario.makeSim()
+
+		#expect(sim.map[XY(20, 20)] == .sea)
+		#expect(sim.objective == objective)
+		#expect(sim.players.count == 2)
+	}
+
+	@Test func seaIsImpassableOnlyToLandUnits() {
+		var infantry = Unit(model: .regular, country: .fin)
+		infantry.reset()
+		var fighter = Unit(model: .f16, country: .fin)
+		fighter.reset()
+
+		#expect(Terrain.sea.moveCost(infantry) == 0x10)
+		#expect(Terrain.sea.moveCost(fighter) == 1)
+		#expect(Terrain.river.moveCost(infantry) < 0x10, "River crossing must remain possible")
+	}
+
 	@Test func auxDeploysAtStartAndLeavesTheShop() {
 		let players = Self.players()
 		let sim = TacticalSim(
