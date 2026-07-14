@@ -1,9 +1,6 @@
 import SpriteKit
-import GameplayKit
 import UIKit
 import COR
-
-private let seaNoiseVariants: UInt8 = 8
 
 /// What the top face of a base tile shows. Mode-dependent: terrain colors,
 /// political ownership, or supply level. Decorations and fog are separate
@@ -73,30 +70,27 @@ extension SKTileGroup {
 	private struct BaseKey: Hashable {
 		let surface: TileSurface
 		let elevation: Int
-		let variant: UInt8
 	}
 	private static var baseCache: [BaseKey: SKTileGroup] = [:]
 
-	static func base(surface: TileSurface, elevation: Int, variant: UInt8 = 0) -> SKTileGroup {
-		let variant = surface == .sea ? variant % seaNoiseVariants : 0
-		let key = BaseKey(surface: surface, elevation: elevation, variant: variant)
+	static func base(surface: TileSurface, elevation: Int) -> SKTileGroup {
+		let key = BaseKey(surface: surface, elevation: elevation)
 		if let group = baseCache[key] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
 				ctx.drawTile(UIImage.frame(elevation).cg)
 				let image = UIImage.surface(elevation).cg?.tinted(surface.color.cgColor)
-				ctx.drawTile(surface == .sea ? image?.noised(seed: variant) : image)
+				ctx.drawTile(surface == .sea ? image?.noised() : image)
 			}
 		)
 		baseCache[key] = group
 		return group
 	}
 
-	static func base(terrain: Terrain, at xy: XY) -> SKTileGroup {
+	static func base(terrain: Terrain) -> SKTileGroup {
 		base(
 			surface: terrain.tileSurface,
-			elevation: terrain.elevationLevel,
-			variant: terrain.isSea ? seaNoiseVariant(at: xy) : 0
+			elevation: terrain.elevationLevel
 		)
 	}
 
@@ -151,31 +145,19 @@ extension SKTileGroup {
 	}
 }
 
-private func seaNoiseVariant(at xy: XY) -> UInt8 {
-	var hash = UInt32(truncatingIfNeeded: xy.x) &* 0x9E37_79B9
-	hash ^= UInt32(truncatingIfNeeded: xy.y) &* 0x85EB_CA6B
-	hash ^= hash >> 16
-	return UInt8(hash % UInt32(seaNoiseVariants))
-}
-
 private extension CGImage {
 
 	/// Applies stable white noise only where the source image is nontransparent.
-	func noised(seed: UInt8) -> CGImage {
+	func noised() -> CGImage {
 		.draw(size: CGSize(width: width, height: height)) { ctx in
 			let bounds = CGRect(x: 0, y: 0, width: width, height: height)
+			var d20 = D20()
 			ctx.draw(self, in: bounds)
 			ctx.setBlendMode(.sourceAtop)
 
 			for y in 0 ..< height {
 				for x in 0 ..< width {
-					var sample = UInt32(truncatingIfNeeded: y * width + x)
-					sample &+= UInt32(seed) &* 0x9E37_79B9
-					sample = (sample ^ (sample >> 16)) &* 0x7FEB_352D
-					sample = (sample ^ (sample >> 15)) &* 0x846C_A68B
-					sample ^= sample >> 16
-
-					let value = CGFloat(sample >> 24) / 255.0 * 2.0 - 1.0
+					let value = CGFloat(d20.uniform()) * 2.0 - 1.0
 					ctx.setFillColor(UIColor.black.withAlphaComponent(abs(value) * 0.1).cgColor)
 					ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
 				}
@@ -214,11 +196,8 @@ extension SKTileSet {
 	static let terrain = SKTileSet(
 		tileGroups: .make { ts in
 			for elevation in 0 ... 2 {
-				for surface in [TileSurface.field, .forest, .water] {
+				for surface in [TileSurface.field, .forest, .water, .sea] {
 					ts.append(.base(surface: surface, elevation: elevation))
-				}
-				for variant in 0 ..< seaNoiseVariants {
-					ts.append(.base(surface: .sea, elevation: elevation, variant: variant))
 				}
 				for team in Team.allCases {
 					ts.append(.team(team, elevation: elevation))
@@ -279,7 +258,7 @@ extension UIImage {
 		let image = ImageBuffer.tile.draw { ctx in
 			ctx.drawTile(UIImage.frame(elevation).cg)
 			let surface = UIImage.surface(elevation).cg?.tinted(terrain.tileSurface.color.cgColor)
-			ctx.drawTile(terrain.isSea ? surface?.noised(seed: 0) : surface)
+			ctx.drawTile(terrain.isSea ? surface?.noised() : surface)
 			ctx.drawTile(terrain.decoration?.cg)
 		}
 		return UIImage(cgImage: image)

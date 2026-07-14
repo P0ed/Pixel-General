@@ -44,7 +44,7 @@ extension MapNodes {
 	}
 
 	func setTile(_ terrain: Terrain, at xy: XY) {
-		setBase(.base(terrain: terrain, at: xy), at: xy)
+		setBase(.base(terrain: terrain), at: xy)
 		guard !decorationLayers.isEmpty else { return }
 		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: false), at: xy)
 	}
