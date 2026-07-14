@@ -4,8 +4,9 @@ The neural opponent for Tactical battles: a convolutional LSTM policy
 that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
 *Neural opponent* in the Tactical menu (heuristic fallback when the resource is missing
 or invalid). It was trained by behavior-cloning the heuristic `run(ai:)` and then
-REINFORCE fine-tuning against it — entirely with `MetalPerformanceShadersGraph` (OS
-built-in, no Python, no packages). Inference is dependency-free Swift in COR, so the
+PPO fine-tuning against it (clipped surrogate, value-head baseline, KL anchor to
+the BC prior; an earlier REINFORCE learner plateaued at the BC level) — entirely
+with `MetalPerformanceShadersGraph` (OS built-in, no Python, no packages). Inference is dependency-free Swift in COR, so the
 shipping app never touches MPSGraph.
 
 Training rests on properties of the core: `reduce` is a pure function of
@@ -159,10 +160,12 @@ redirected, so `tail -f run.log` works and nothing is lost on a kill.
 Train rollout --n 160 --out tmp/runs/replays --suite mixed --verify
 Train bc      --data tmp/runs/replays --out tmp/runs/bc      # behavior cloning
 Train eval    --weights tmp/runs/bc/policy.pgw --suite mixed # objective-mixed arena
-Train rl      --weights tmp/runs/bc/policy.pgw --out tmp/runs/rl \
-              --iters 80 --episodes 32 --lr 1e-4 --suite mixed
-Train eval    --weights tmp/runs/rl/ckpt-80.pgw --n 50       # pick the winner
-cp tmp/runs/rl/ckpt-80.pgw PG/policy.pgw                     # ship it
+Train ppo     --weights tmp/runs/bc/policy.pgw --out tmp/runs/ppo \
+              --iters 150 --curriculum 3 --suite mixed
+Train eval    --weights tmp/runs/ppo/ckpt-90.pgw --n 416     # pick the winner
+                                # (~0.85 s/battle; 832 battles resolves ~4pt at z≈2 —
+                                # configs are inhomogeneous, only compare paired runs)
+cp tmp/runs/ppo/ckpt-90.pgw PG/policy.pgw                    # ship it
 
 # Compare the bundled PGW1 policy with the strengthened teacher on the old arena:
 Train eval --weights PG/policy.pgw --n 32 --suite classic
