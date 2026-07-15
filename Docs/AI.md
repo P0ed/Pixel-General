@@ -83,22 +83,29 @@ the same sim-level `can*` predicates that guard the reducers (`canMove`, `canAtt
 `Docs/Architecture.md`), so a masked sample can never no-op — reducers silently
 ignoring illegal input is what makes "state mutated" a legality oracle in tests.
 
-### Network (~189k params, 31 tensors)
+### Network (~295k params, 35 tensors)
 
 ```
-obs 32×32×53 ── conv3×3 53→32 ReLU ×3 (same-pad) ──► trunk 32×32×32
-trunk ── full-grid mean pool (32) ⊕ globals (12) ── fc 44→128 ReLU ── LSTM H=128 ──► h
+obs 32×32×53 ── conv3×3 ReLU ×5 (same-pad, 53→48 then 48→48, dilations 1,2,4,8,1) ──► trunk 32×32×48
+trunk ── mean pools: full grid (48) ⊕ four 16×16 quadrants (4×48) ⊕ globals (12) ── fc 252→128 ReLU ── LSTM H=128 ──► h
 kind    h ── fc 128→7
-actor   per tile [trunk(32) ⊕ proj(h→16)] ── 1×1 48→16 ReLU ── 16→1
-target  cond = ReLU(fc [h ⊕ trunk[actor]] 160→16); per tile [trunk ⊕ cond] ── same 1×1 stack
-slot    fc [h ⊕ trunk[actor]] 160→32 ReLU ── 32→40
-value   h ── fc 128→32 ReLU ── 32→1        (trained by `Train ppo` only; inference ignores it)
+actor   per tile [trunk(48) ⊕ proj(h→16)] ── 1×1 64→16 ReLU ── 16→1
+target  cond = ReLU(fc [h ⊕ trunk[actor]] 176→16); per tile [trunk ⊕ cond] ── same 1×1 stack
+slot    fc [h ⊕ trunk[actor]] 176→48 ReLU ── 48→40
+value   h ── fc 128→48 ReLU ── 48→1        (trained by `Train ppo` only; inference ignores it)
 ```
+
+The dilation ladder (1, 2, 4, 8, then a dense finish that smooths the d8
+gridding artifacts) gives a 33×33 receptive field — effectively the whole map,
+which the teacher's global-scan decisions require; the quadrant pyramid gives
+the LSTM a coarse *where*, not just the full-grid *how much*. Quadrant order is
+(yHalf, xHalf) row-major — q00 q01 q10 q11, channels inner.
 
 Contract details (must match between `Train/Net.swift` and `LSTMPolicy`): matmuls are
 `y = x@W + b` with `W [in, out]`; convs HWIO; LSTM gate order **i, f, g, o** in
 `lstm.wx [128,512]` / `lstm.wh` / `lstm.b`, forget bias initialized +1; both
-conditioned heads take `[h ⊕ trunk[actor]]` in that order. `Train/Net.swift` is the
+conditioned heads take `[h ⊕ trunk[actor]]` in that order; the fc1 input concat
+is full-pool ⊕ quadrants ⊕ globals. `Train/Net.swift` is the
 ONE MPSGraph expression of this network — parity, BC, and RL all build on it.
 
 ### Weights — `PGW1` (`LSTMWeights.swift`)

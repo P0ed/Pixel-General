@@ -22,7 +22,7 @@ public struct LSTMWeights: Sendable {
 
 	/// Network dimensions. Changing any of these is a new weight contract:
 	/// old files stop loading (shape validation), which is the intent.
-	public static let trunk = 32		// conv channels
+	public static let trunk = 48		// conv channels
 	public static let hidden = 128		// LSTM hidden/cell size
 	public static let proj = 16		// per-tile head channels
 	public static let fused = trunk + proj	// per-tile concat [trunk ⊕ proj]
@@ -33,11 +33,16 @@ public struct LSTMWeights: Sendable {
 	public subscript(name: String) -> [Float] { values[name] ?? [] }
 
 	/// The full tensor catalog: name → shape. Order is the file order.
+	/// conv2…conv4 run dilated (2, 4, 8) and conv5 dense — same 3×3 shapes;
+	/// fc1 takes the full-grid mean pool ⊕ the four quadrant mean pools
+	/// (5·trunk) ⊕ globals.
 	public static let spec: [(name: String, shape: [Int])] = [
 		("conv1.w", [3, 3, SimObservation.planeCount, trunk]), ("conv1.b", [trunk]),
 		("conv2.w", [3, 3, trunk, trunk]), ("conv2.b", [trunk]),
 		("conv3.w", [3, 3, trunk, trunk]), ("conv3.b", [trunk]),
-		("fc1.w", [trunk + SimObservation.globalCount, hidden]), ("fc1.b", [hidden]),
+		("conv4.w", [3, 3, trunk, trunk]), ("conv4.b", [trunk]),
+		("conv5.w", [3, 3, trunk, trunk]), ("conv5.b", [trunk]),
+		("fc1.w", [5 * trunk + SimObservation.globalCount, hidden]), ("fc1.b", [hidden]),
 		("lstm.wx", [hidden, 4 * hidden]),
 		("lstm.wh", [hidden, 4 * hidden]),
 		("lstm.b", [4 * hidden]),

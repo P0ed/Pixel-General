@@ -50,31 +50,44 @@ enum Net {
 		lr * (1 - powf(0.999, Float(step))).squareRoot() / (1 - powf(0.9, Float(step)))
 	}
 
-	/// SimObservation encoder: conv trunk + pooled features.
+	/// SimObservation encoder: dilated conv trunk + pyramid-pooled features.
 	/// `planes [n, 32, 32, P]`, `globals [n, G]` →
 	/// (`trunk [n, 1024, C]`, `x [n, H]` — the LSTM input).
+	///
+	/// Dilations 1, 2, 4, 8, 1 give a 33×33 receptive field (≈ the full map);
+	/// the trailing dense layer smooths the d8 gridding artifacts for the
+	/// per-tile heads. The LSTM input pools the trunk at two scales — full-grid
+	/// mean ⊕ the four 16×16 quadrant means, order q00 q01 q10 q11
+	/// ((yHalf, xHalf) row-major, channels inner) — and must match
+	/// `LSTMPolicy.step` exactly (parity is the oracle).
 	static func encode(
 		_ g: MPSGraph, _ v: [String: MPSGraphTensor],
 		planes: MPSGraphTensor, globals: MPSGraphTensor, n: Int
 	) -> (trunk: MPSGraphTensor, x: MPSGraphTensor) {
-		let desc = MPSGraphConvolution2DOpDescriptor(
-			strideInX: 1, strideInY: 1, dilationRateInX: 1, dilationRateInY: 1,
-			groups: 1, paddingStyle: .TF_SAME, dataLayout: .NHWC, weightsLayout: .HWIO
-		)!
 		var t = planes
-		for name in ["conv1", "conv2", "conv3"] {
+		for (name, d) in [("conv1", 1), ("conv2", 2), ("conv3", 4), ("conv4", 8), ("conv5", 1)] {
+			let desc = MPSGraphConvolution2DOpDescriptor(
+				strideInX: 1, strideInY: 1, dilationRateInX: d, dilationRateInY: d,
+				groups: 1, paddingStyle: .TF_SAME, dataLayout: .NHWC, weightsLayout: .HWIO
+			)!
 			t = g.reLU(with: g.addition(
 				g.convolution2D(t, weights: v["\(name).w"]!, descriptor: desc, name: nil),
 				v["\(name).b"]!, name: nil
 			), name: nil)
 		}
-		let trunk = g.reshape(t, shape: [NSNumber(value: n), NSNumber(value: ActionSpace.tiles), NSNumber(value: LSTMWeights.trunk)], name: nil)
+		let C = NSNumber(value: LSTMWeights.trunk)
+		let trunk = g.reshape(t, shape: [NSNumber(value: n), NSNumber(value: ActionSpace.tiles), C], name: nil)
 
 		let pooled = g.reshape(
 			g.mean(of: t, axes: [1, 2], name: nil),
-			shape: [NSNumber(value: n), NSNumber(value: LSTMWeights.trunk)], name: nil
+			shape: [NSNumber(value: n), C], name: nil
 		)
-		let x = g.reLU(with: fc(g, v, g.concatTensors([pooled, globals], dimension: 1, name: nil), "fc1"), name: nil)
+		let half = NSNumber(value: SimObservation.side / 2)
+		let quads = g.reshape(
+			g.mean(of: g.reshape(t, shape: [NSNumber(value: n), 2, half, 2, half, C], name: nil), axes: [2, 4], name: nil),
+			shape: [NSNumber(value: n), NSNumber(value: 4 * LSTMWeights.trunk)], name: nil
+		)
+		let x = g.reLU(with: fc(g, v, g.concatTensors([pooled, quads, globals], dimension: 1, name: nil), "fc1"), name: nil)
 		return (trunk, x)
 	}
 

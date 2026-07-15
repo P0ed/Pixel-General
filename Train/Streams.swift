@@ -97,6 +97,7 @@ final class Batcher {
 	private var order: [Int] = []
 	private var cursor = 0
 	private var lanes: [Lane]
+	private var buf: Window
 
 	private struct Lane {
 		var stream: SampleStream?
@@ -108,6 +109,17 @@ final class Batcher {
 		var cr = [Float](repeating: 0, count: LSTMWeights.hidden)
 	}
 
+	/// One `Batcher` owns a single `Window` buffer that `window()` mutates and
+	/// returns — CoW makes that safe as long as callers drop the window before
+	/// the next `window()` call (all trainers do). Retaining a *large* array
+	/// (`planes`) across calls silently triggers a full copy on the next
+	/// window — don't; small snapshots (`epi`, `kindW`) copy cheaply, which is
+	/// exactly the semantics the PPO read-pass cache needs.
+	///
+	/// Padded rows (zero weight, `epi == -1`) keep **stale** planes/globals/
+	/// masks/labels from earlier windows — harmless: the zero weights exclude
+	/// them from every loss/accuracy term, and dead-lane `hT`/`cT` are never
+	/// carried (`carry()` skips lanes with `stream == nil`).
 	struct Window {
 		var planes, globals: [Float]
 		var kind, actor, target, slot: [Int32]
@@ -122,6 +134,29 @@ final class Batcher {
 		/// weights); zeros and unused everywhere else.
 		var h0r, c0r: [Float]
 		var samples = 0
+
+		init(b: Int, t: Int) {
+			let n = b * t
+			planes = [Float](repeating: 0, count: n * SimObservation.planeSize * SimObservation.planeCount)
+			globals = [Float](repeating: 0, count: n * SimObservation.globalCount)
+			kind = [Int32](repeating: 0, count: n)
+			actor = [Int32](repeating: 0, count: n)
+			target = [Int32](repeating: 0, count: n)
+			slot = [Int32](repeating: 0, count: n)
+			kindW = [Float](repeating: 0, count: n)
+			actorW = [Float](repeating: 0, count: n)
+			targetW = [Float](repeating: 0, count: n)
+			slotW = [Float](repeating: 0, count: n)
+			kindMask = [Float](repeating: 0, count: n * ActionSpace.kinds)
+			actorMask = [Float](repeating: 0, count: n * ActionSpace.tiles)
+			targetMask = [Float](repeating: 0, count: n * ActionSpace.tiles)
+			slotMask = [Float](repeating: 0, count: n * ActionSpace.slots)
+			h0 = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+			c0 = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+			epi = [Int32](repeating: -1, count: n)
+			h0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+			c0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		}
 	}
 
 	init(files: [URL], b: Int, t: Int, seed: UInt64) {
@@ -131,6 +166,7 @@ final class Batcher {
 		onePass = false
 		rng = D20(seed: seed)
 		lanes = [Lane](repeating: Lane(), count: b)
+		buf = Window(b: b, t: t)
 	}
 
 	init(episodes: [(replay: Replay, seat: Int, scale: Float)], b: Int, t: Int) {
@@ -141,6 +177,7 @@ final class Batcher {
 		onePass = true
 		rng = D20(seed: 0)
 		lanes = [Lane](repeating: Lane(), count: b)
+		buf = Window(b: b, t: t)
 	}
 
 	/// BC: streams are battle-seat pairs, shuffled anew each epoch.
@@ -168,27 +205,17 @@ final class Batcher {
 
 	func window() -> Window {
 		let planeCount = SimObservation.planeSize * SimObservation.planeCount
-		var w = Window(
-			planes: [Float](repeating: 0, count: n * planeCount),
-			globals: [Float](repeating: 0, count: n * SimObservation.globalCount),
-			kind: [Int32](repeating: 0, count: n),
-			actor: [Int32](repeating: 0, count: n),
-			target: [Int32](repeating: 0, count: n),
-			slot: [Int32](repeating: 0, count: n),
-			kindW: [Float](repeating: 0, count: n),
-			actorW: [Float](repeating: 0, count: n),
-			targetW: [Float](repeating: 0, count: n),
-			slotW: [Float](repeating: 0, count: n),
-			kindMask: [Float](repeating: 0, count: n * ActionSpace.kinds),
-			actorMask: [Float](repeating: 0, count: n * ActionSpace.tiles),
-			targetMask: [Float](repeating: 0, count: n * ActionSpace.tiles),
-			slotMask: [Float](repeating: 0, count: n * ActionSpace.slots),
-			h0: [Float](repeating: 0, count: b * LSTMWeights.hidden),
-			c0: [Float](repeating: 0, count: b * LSTMWeights.hidden),
-			epi: [Int32](repeating: -1, count: n),
-			h0r: [Float](repeating: 0, count: b * LSTMWeights.hidden),
-			c0r: [Float](repeating: 0, count: b * LSTMWeights.hidden)
-		)
+		// Reset only what correctness needs (see `Window`'s doc): the weights
+		// and `epi` gate everything else; h0/c0/h0r/c0r are fully rewritten by
+		// the lane loop below.
+		buf.samples = 0
+		for i in 0 ..< n {
+			buf.kindW[i] = 0
+			buf.actorW[i] = 0
+			buf.targetW[i] = 0
+			buf.slotW[i] = 0
+			buf.epi[i] = -1
+		}
 
 		for lane in 0 ..< b {
 			if lanes[lane].stream == nil {
@@ -202,10 +229,10 @@ final class Batcher {
 				lanes[lane].cr = [Float](repeating: 0, count: LSTMWeights.hidden)
 			}
 			for i in 0 ..< LSTMWeights.hidden {
-				w.h0[lane * LSTMWeights.hidden + i] = lanes[lane].h[i]
-				w.c0[lane * LSTMWeights.hidden + i] = lanes[lane].c[i]
-				w.h0r[lane * LSTMWeights.hidden + i] = lanes[lane].hr[i]
-				w.c0r[lane * LSTMWeights.hidden + i] = lanes[lane].cr[i]
+				buf.h0[lane * LSTMWeights.hidden + i] = lanes[lane].h[i]
+				buf.c0[lane * LSTMWeights.hidden + i] = lanes[lane].c[i]
+				buf.h0r[lane * LSTMWeights.hidden + i] = lanes[lane].hr[i]
+				buf.c0r[lane * LSTMWeights.hidden + i] = lanes[lane].cr[i]
 			}
 
 			for step in 0 ..< t {
@@ -214,32 +241,33 @@ final class Batcher {
 					break
 				}
 				let i = step * b + lane
-				w.planes.replaceSubrange(i * planeCount ..< (i + 1) * planeCount, with: s.planes)
-				w.globals.replaceSubrange(i * SimObservation.globalCount ..< (i + 1) * SimObservation.globalCount, with: s.globals)
-				w.kindMask.replaceSubrange(i * ActionSpace.kinds ..< (i + 1) * ActionSpace.kinds, with: s.kindMask)
-				w.actorMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.actorMask)
-				w.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)
-				w.slotMask.replaceSubrange(i * ActionSpace.slots ..< (i + 1) * ActionSpace.slots, with: s.slotMask)
+				// Equal-length replaces mutate in place — no reallocation.
+				buf.planes.replaceSubrange(i * planeCount ..< (i + 1) * planeCount, with: s.planes)
+				buf.globals.replaceSubrange(i * SimObservation.globalCount ..< (i + 1) * SimObservation.globalCount, with: s.globals)
+				buf.kindMask.replaceSubrange(i * ActionSpace.kinds ..< (i + 1) * ActionSpace.kinds, with: s.kindMask)
+				buf.actorMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.actorMask)
+				buf.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)
+				buf.slotMask.replaceSubrange(i * ActionSpace.slots ..< (i + 1) * ActionSpace.slots, with: s.slotMask)
 				let scale = lanes[lane].scale
-				w.epi[i] = lanes[lane].id
-				w.kind[i] = s.kind
-				w.kindW[i] = scale
+				buf.epi[i] = lanes[lane].id
+				buf.kind[i] = s.kind
+				buf.kindW[i] = scale
 				if s.actor >= 0 {
-					w.actor[i] = s.actor
-					w.actorW[i] = scale
+					buf.actor[i] = s.actor
+					buf.actorW[i] = scale
 				}
 				if s.target >= 0 {
-					w.target[i] = s.target
-					w.targetW[i] = scale
+					buf.target[i] = s.target
+					buf.targetW[i] = scale
 				}
 				if s.slot >= 0 {
-					w.slot[i] = s.slot
-					w.slotW[i] = scale
+					buf.slot[i] = s.slot
+					buf.slotW[i] = scale
 				}
-				w.samples += 1
+				buf.samples += 1
 			}
 		}
-		return w
+		return buf
 	}
 
 	/// Carries the window-final hidden state into each lane that still has a

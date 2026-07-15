@@ -104,21 +104,36 @@ public struct LSTMPolicy {
 	/// Runs the recurrent trunk on one observation, updating `h`/`c` and
 	/// `lastValue`; returns the per-tile trunk features `[1024, trunk]`.
 	mutating func step(_ obs: SimObservation) -> [Float] {
-		var t = relu(conv3x3(obs.planes, channels: SimObservation.planeCount, "conv1"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, "conv2"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, "conv3"))
+		// Dilations 1, 2, 4, 8, 1: 33×33 receptive field, dense finish.
+		var t = relu(conv3x3(obs.planes, channels: SimObservation.planeCount, dilation: 1, "conv1"))
+		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 2, "conv2"))
+		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 4, "conv3"))
+		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 8, "conv4"))
+		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 1, "conv5"))
 
-		// Global mean pool over the full 32×32 grid (off-map tiles are zero
+		// Two-scale mean pool over the 32×32 grid: full grid ⊕ the four 16×16
+		// quadrants, order q00 q01 q10 q11 ((yHalf, xHalf) row-major) — must
+		// match the trainer's concat order exactly (off-map tiles are zero
 		// everywhere, including after ReLU convs on zero input… only near the
 		// map edge do they carry signal — which is fine, it is the same grid
 		// the trainer pools over).
-		var pooled = [Float](repeating: 0, count: LSTMWeights.trunk)
-		for tile in 0 ..< SimObservation.planeSize {
-			for ch in 0 ..< LSTMWeights.trunk {
-				pooled[ch] += t[tile * LSTMWeights.trunk + ch]
+		let C = LSTMWeights.trunk
+		let side = SimObservation.side
+		let half = side / 2
+		var pooled = [Float](repeating: 0, count: 5 * C)
+		for y in 0 ..< side {
+			for x in 0 ..< side {
+				let tile = y * side + x
+				let quad = (y / half) * 2 + x / half
+				for ch in 0 ..< C {
+					let v = t[tile * C + ch]
+					pooled[ch] += v
+					pooled[(1 + quad) * C + ch] += v
+				}
 			}
 		}
-		for ch in pooled.indices { pooled[ch] /= Float(SimObservation.planeSize) }
+		for i in 0 ..< C { pooled[i] /= Float(SimObservation.planeSize) }
+		for i in C ..< 5 * C { pooled[i] /= Float(half * half) }
 
 		let x = relu(fc(pooled + obs.globals, "fc1"))
 
@@ -162,9 +177,10 @@ public struct LSTMPolicy {
 		return t
 	}
 
-	/// Same-padded 3×3 convolution over the 32×32 HWC grid: im2col into
-	/// `[1024, 9·channels]`, one matmul against the HWIO kernel.
-	func conv3x3(_ input: [Float], channels: Int, _ name: String) -> [Float] {
+	/// Same-padded, optionally dilated 3×3 convolution over the 32×32 HWC
+	/// grid: im2col into `[1024, 9·channels]` (taps `d` apart, zero where they
+	/// fall off-grid — TF_SAME), one matmul against the HWIO kernel.
+	func conv3x3(_ input: [Float], channels: Int, dilation d: Int, _ name: String) -> [Float] {
 		let side = SimObservation.side
 		let patch = 9 * channels
 		var cols = [Float](repeating: 0, count: side * side * patch)
@@ -173,10 +189,10 @@ public struct LSTMPolicy {
 			for x in 0 ..< side {
 				let row = (y * side + x) * patch
 				for ky in 0 ..< 3 {
-					let sy = y + ky - 1
+					let sy = y + (ky - 1) * d
 					guard sy >= 0, sy < side else { continue }
 					for kx in 0 ..< 3 {
-						let sx = x + kx - 1
+						let sx = x + (kx - 1) * d
 						guard sx >= 0, sx < side else { continue }
 						let src = (sy * side + sx) * channels
 						let dst = row + (ky * 3 + kx) * channels
