@@ -8,6 +8,7 @@ extension UnitStats {
 		ini: 3,
 		softAtk: 5,
 		hardAtk: 1,
+		navAtk: 1,
 		groundDef: 5,
 		airDef: 3
 	)
@@ -20,6 +21,7 @@ extension UnitStats {
 		softAtk: 9,
 		hardAtk: 4,
 		airAtk: 2,
+		navAtk: 2,
 		groundDef: 8,
 		airDef: 7,
 		traits: .elite
@@ -34,6 +36,7 @@ extension UnitStats {
 		softAtk: 7,
 		hardAtk: 5,
 		airAtk: 2,
+		navAtk: 2,
 		groundDef: 7,
 		airDef: 6
 	)
@@ -45,6 +48,7 @@ extension UnitStats {
 		softAtk: 8,
 		hardAtk: 7,
 		airAtk: 2,
+		navAtk: 2,
 		groundDef: 7,
 		airDef: 6,
 		traits: .transport
@@ -58,6 +62,7 @@ extension UnitStats {
 		ini: 6,
 		softAtk: 7,
 		hardAtk: 11,
+		navAtk: 4,
 		groundDef: 10,
 		airDef: 5
 	)
@@ -69,6 +74,7 @@ extension UnitStats {
 		ini: 7,
 		softAtk: 9,
 		hardAtk: 13,
+		navAtk: 5,
 		groundDef: 11,
 		airDef: 5
 	)
@@ -80,6 +86,7 @@ extension UnitStats {
 		ini: 8,
 		softAtk: 9,
 		hardAtk: 14,
+		navAtk: 6,
 		groundDef: 12,
 		airDef: 6
 	)
@@ -92,6 +99,7 @@ extension UnitStats {
 		ini: 1,
 		softAtk: 9,
 		hardAtk: 5,
+		navAtk: 3,
 		groundDef: 5,
 		airDef: 4
 	)
@@ -103,6 +111,7 @@ extension UnitStats {
 		ini: 1,
 		softAtk: 9,
 		hardAtk: 5,
+		navAtk: 3,
 		groundDef: 5,
 		airDef: 4
 	)
@@ -136,6 +145,7 @@ extension UnitStats {
 		softAtk: 7,
 		hardAtk: 7,
 		airAtk: 9,
+		navAtk: 3,
 		groundDef: 8,
 		airDef: 8
 	)
@@ -149,6 +159,7 @@ extension UnitStats {
 		softAtk: 6,
 		hardAtk: 4,
 		airAtk: 2,
+		navAtk: 2,
 		groundDef: 6,
 		airDef: 6,
 		traits: .transport
@@ -162,6 +173,7 @@ extension UnitStats {
 		softAtk: 9,
 		hardAtk: 9,
 		airAtk: 7,
+		navAtk: 5,
 		groundDef: 8,
 		airDef: 7,
 		traits: .transport
@@ -184,6 +196,7 @@ extension UnitStats {
 		softAtk: 7,
 		hardAtk: 8,
 		airAtk: 10,
+		navAtk: 6,
 		groundDef: 9,
 		airDef: 8,
 		traits: .radar
@@ -197,6 +210,7 @@ extension UnitStats {
 		softAtk: 8,
 		hardAtk: 10,
 		airAtk: 12,
+		navAtk: 9,
 		groundDef: 9,
 		airDef: 9,
 		traits: .radar
@@ -210,6 +224,7 @@ extension UnitStats {
 		softAtk: 9,
 		hardAtk: 12,
 		airAtk: 7,
+		navAtk: 10,
 		groundDef: 10,
 		airDef: 7,
 		traits: .radar

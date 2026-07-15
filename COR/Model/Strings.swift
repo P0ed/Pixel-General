@@ -14,6 +14,7 @@ public extension Unit {
 				add("SA: \(softAtk)")
 				add("HA: \(hardAtk)")
 				add("AA: \(airAtk)")
+				add("NA: \(navAtk)")
 				add("GD: \(groundDef)")
 				add("AD: \(airDef)")
 				add("IN: \(ini)")

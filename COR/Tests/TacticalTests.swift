@@ -84,6 +84,96 @@ struct TacticalTests {
 		#expect(sim.players.count == 2)
 	}
 
+	@Test func scenarioAddsNavalAuxAtThreeSeaTiles() {
+		let players = [
+			Player(country: .fin, type: .human, baseLevel: 2),
+			Player(country: .rus, type: .ai),
+		]
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea
+		terrain[1] = .sea
+
+		let belowThreshold = Scenario(players: players, units: [], terrain: terrain)
+		#expect(!belowThreshold.units.contains { $0.type.isNaval })
+
+		terrain[2] = .sea
+		let scenario = Scenario(players: players, units: [], terrain: terrain, seed: 7)
+		for player in players {
+			let fleet = scenario.units.filter { $0.country == player.country }
+			#expect(fleet.count(where: { $0.model == .cruiser }) == 1)
+			#expect(fleet.count(where: { $0.model == .destroyer }) == 2)
+			#expect(fleet.count(where: { $0.model == .cargo }) == 2)
+			#expect(fleet.allSatisfy { $0[.aux] })
+		}
+		#expect(scenario.units.first(where: { $0.country == .fin })?.lvl == 2)
+
+		let sim = scenario.makeSim()
+		var misplaced: [XY] = []
+		sim.units.forEachAlive { i, u in
+			if u.type.isNaval, !sim.map[sim.position[i]].isSea {
+				misplaced.append(sim.position[i])
+			}
+		}
+		#expect(misplaced.isEmpty, "Ships deployed off sea at: \(misplaced)")
+	}
+
+	@Test func navalAuxKeepsFourFullRostersWithinUnitCapacity() {
+		let countries: [Country] = [.swe, .den, .ned, .nor]
+		let players = countries.map { Player(country: $0, type: .ai) }
+		let units = countries.flatMap { [Unit].base($0) + .aux($0) }
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea
+		terrain[1] = .sea
+		terrain[2] = .sea
+
+		let scenario = Scenario(players: players, units: units, terrain: terrain)
+		#expect(scenario.units.count == 128)
+		#expect(scenario.units.count(where: { $0.model == .cruiser }) == players.count)
+		#expect(scenario.units.count(where: { $0.model == .destroyer }) == players.count * 2)
+		#expect(scenario.units.count(where: { $0.model == .cargo }) == players.count * 2)
+		for country in countries {
+			let aux = scenario.units.count(where: { $0.country == country && $0[.aux] })
+			#expect(aux == 16, "\(country) has \(aux) aux units")
+		}
+	}
+
+	@Test func navalDeploymentSeparatesShipsAndTeamsAcrossSeeds() {
+		let players = [
+			Player(country: .fin, type: .human),
+			Player(country: .rus, type: .ai),
+			Player(country: .usa, type: .ai),
+			Player(country: .swe, type: .ai),
+		]
+		let teams = Set(players.map { $0.country.team })
+		for seed in 0 ..< 32 {
+			let terrain = Scenario.cornerTerrain(seaLevel: 2, seed: seed)
+			let sim = Scenario(players: players, units: [], terrain: terrain, seed: seed).makeSim()
+			var cellsByTeam: [Team: Set<Int>] = [:]
+			var adjacent: [(XY, XY)] = []
+
+			sim.units.forEachAlive { i, unit in
+				guard unit.type.isNaval else { return }
+				let xy = sim.position[i]
+				let column = min(2, xy.x * 3 / sim.map.size)
+				let rowFromSouth = min(2, xy.y * 3 / sim.map.size)
+				cellsByTeam[unit.country.team, default: []].insert((2 - rowFromSouth) * 3 + column)
+				let neighbors = xy.n4
+				for j in neighbors.indices {
+					let p = neighbors[j]
+					guard sim.map.contains(p), let other = sim[p], other.type.isNaval else { continue }
+					adjacent.append((xy, p))
+				}
+			}
+
+			#expect(adjacent.isEmpty, "Adjacent ships for seed \(seed): \(adjacent)")
+			#expect(cellsByTeam.count == teams.count)
+			#expect(cellsByTeam.values.allSatisfy { $0.count == 1 })
+			let occupiedCells = Set(cellsByTeam.values.compactMap { $0.first })
+			#expect(occupiedCells.count == teams.count)
+			#expect(occupiedCells.allSatisfy { terrain[$0].isSea })
+		}
+	}
+
 	@Test func seaIsImpassableOnlyToLandUnits() {
 		var infantry = Unit(model: .regular, country: .fin)
 		infantry.reset()

@@ -59,6 +59,7 @@ public extension Unit {
 	var softAtk: UInt8 { stats.softAtk }
 	var hardAtk: UInt8 { stats.hardAtk }
 	var airAtk: UInt8 { stats.airAtk }
+	var navAtk: UInt8 { stats.navAtk }
 	var groundDef: UInt8 { stats.groundDef }
 	var airDef: UInt8 { stats.airDef }
 	var traits: Traits { stats.traits }
@@ -93,7 +94,8 @@ public extension Unit {
 		case .lightWheel: 6
 		case .lightTrack: 6
 		case .heavyTrack: 6
-		case .cruiser: 12
+		case .destroyer: 12
+		case .cruiser: 14
 		}
 	}
 
@@ -130,7 +132,7 @@ public extension Unit {
 		case .supply, .inf: 4
 		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3
 		case .heavyTrack, .trackAA, .trackArt: 2
-		case .heli, .fighter, .cas, .cargo, .cruiser: 0
+		case .heli, .fighter, .cas, .cargo, .destroyer, .cruiser: 0
 		}
 		return rate * (self[.engineer] ? 2 : 1)
 	}
@@ -178,8 +180,8 @@ public extension Unit {
 			hardAtk > 0 ? hardAtk + (isArmor ? lvl : (lvl / 2)) : 0
 		case .heli, .fighter, .cas:
 			airAtk > 0 ? airAtk + (isAA ? lvl : (lvl / 2)) : 0
-		case .cargo, .cruiser:
-			hardAtk > 0 ? hardAtk + (type.isNaval ? lvl : (lvl / 2)) : 0
+		case .cargo, .destroyer, .cruiser:
+			navAtk > 0 ? navAtk + (type.isNaval ? lvl : (lvl / 2)) : 0
 		}
 	}
 
@@ -207,7 +209,8 @@ public extension Unit {
 		case .trackArt, .heavyTrack: 220
 		case .heli: 270
 		case .fighter, .cas: 330
-		case .cargo: 470
+		case .cargo: 220
+		case .destroyer: 470
 		case .cruiser: 680
 		}
 	}
@@ -217,6 +220,7 @@ public extension Unit {
 			UInt16(softAtk * 4)
 			+ UInt16(hardAtk * 5)
 			+ UInt16(airAtk * 6)
+			+ UInt16(navAtk * 5)
 			+ UInt16(groundDef * 4)
 			+ UInt16(airDef * 4)
 			+ UInt16(ini * 4)
@@ -262,7 +266,7 @@ extension Unit {
 		 aa, wheelAA, trackAA,
 		 lightWheel, lightTrack, heavyTrack,
 		 heli, fighter, cas,
-		 cargo, cruiser
+		 cargo, destroyer, cruiser
 }
 
 @frozen public enum MoveType: UInt8, Hashable {
@@ -288,6 +292,7 @@ public extension UnitType {
 		case .fighter: .air
 		case .cas: .air
 		case .cargo: .naval
+		case .destroyer: .naval
 		case .cruiser: .naval
 		}
 	}
@@ -301,7 +306,7 @@ public extension UnitType {
 
 	var isAA: Bool {
 		switch self {
-		case .aa, .wheelAA, .trackAA, .fighter: true;
+		case .aa, .wheelAA, .trackAA, .fighter, .destroyer: true;
 		default: false
 		}
 	}
@@ -322,7 +327,7 @@ public extension UnitType {
 
 	var isNaval: Bool {
 		switch self {
-		case .cargo, .cruiser: true
+		case .cargo, .destroyer, .cruiser: true
 		default: false
 		}
 	}

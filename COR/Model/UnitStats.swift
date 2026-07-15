@@ -7,6 +7,7 @@ public struct UnitStats {
 	public var softAtk: UInt8 = 0
 	public var hardAtk: UInt8 = 0
 	public var airAtk: UInt8 = 0
+	public var navAtk: UInt8 = 0
 	public var groundDef: UInt8 = 0
 	public var airDef: UInt8 = 0
 	public var traits: Traits = []
@@ -48,6 +49,7 @@ public extension UnitStats {
 		ini: 4,
 		softAtk: 7,
 		hardAtk: 2,
+		navAtk: 1,
 		groundDef: 6,
 		airDef: 4
 	)
@@ -60,6 +62,7 @@ public extension UnitStats {
 		softAtk: 8,
 		hardAtk: 6,
 		airAtk: 2,
+		navAtk: 2,
 		groundDef: 7,
 		airDef: 5,
 		traits: .engineer
@@ -72,27 +75,31 @@ public extension UnitStats {
 		ini: 1,
 		softAtk: 11,
 		hardAtk: 7,
+		navAtk: 4,
 		groundDef: 5,
 		airDef: 4
 	)
 	@safe nonisolated(unsafe) static let cargo = UnitStats(
-		type: .art,
+		type: .cargo,
 		tier: 1,
 		mov: 6,
 		rng: 3,
 		ini: 1,
 		groundDef: 6,
-		airDef: 3
+		airDef: 3,
+		traits: .transport
 	)
 	@safe nonisolated(unsafe) static let destroyer = UnitStats(
-		type: .cruiser,
+		type: .destroyer,
 		tier: 2,
 		mov: 7,
 		rng: 2,
 		ini: 9,
 		softAtk: 10,
-		hardAtk: 14,
-		groundDef: 12,
+		hardAtk: 10,
+		airAtk: 9,
+		navAtk: 14,
+		groundDef: 10,
 		airDef: 9
 	)
 	@safe nonisolated(unsafe) static let cruiser = UnitStats(
@@ -102,8 +109,10 @@ public extension UnitStats {
 		rng: 4,
 		ini: 8,
 		softAtk: 12,
-		hardAtk: 16,
-		groundDef: 16,
+		hardAtk: 9,
+		airAtk: 4,
+		navAtk: 16,
+		groundDef: 12,
 		airDef: 8
 	)
 }

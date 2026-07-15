@@ -172,7 +172,9 @@ the actual damage curve:
 - `atk = atk(target) + leadershipAura + reconAura + radarAura` (leadership /
   recon auras = +1 if the firing unit or a friendly neighbour has the skill;
   `radarAura` = +2 when the target is air and the firing side has the `radar`
-  trait nearby). `lvl` is already folded into `atk(target)`.
+  trait nearby). `atk(target)` selects `softAtk`, `hardAtk`, `airAtk`, or
+  `navAtk` for soft, armored, air, or naval targets respectively; zero means
+  that unit cannot attack the target class. `lvl` is already folded into it.
 - `def = def(attacker) + defMod + leadershipAura + reconAura`, with `lvl/2`
   folded into `def(attacker)` and `defMod = entDef + terrain.def(defType)
   + mountaineer − mhtn − diag − encirclement` (the deterministic part is

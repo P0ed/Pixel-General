@@ -10,6 +10,7 @@ extension UnitStats {
 		softAtk: 10,
 		hardAtk: 5,
 		airAtk: 3,
+		navAtk: 2,
 		groundDef: 9,
 		airDef: 8,
 		traits: .elite
@@ -24,6 +25,7 @@ extension UnitStats {
 		softAtk: 6,
 		hardAtk: 3,
 		airAtk: 2,
+		navAtk: 1,
 		groundDef: 6,
 		airDef: 6,
 		traits: .optics
@@ -37,6 +39,7 @@ extension UnitStats {
 		softAtk: 10,
 		hardAtk: 9,
 		airAtk: 3,
+		navAtk: 3,
 		groundDef: 9,
 		airDef: 7,
 		traits: .transport
@@ -50,6 +53,7 @@ extension UnitStats {
 		softAtk: 10,
 		hardAtk: 10,
 		airAtk: 3,
+		navAtk: 3,
 		groundDef: 11,
 		airDef: 8,
 		traits: .transport
@@ -63,6 +67,7 @@ extension UnitStats {
 		softAtk: 11,
 		hardAtk: 11,
 		airAtk: 4,
+		navAtk: 4,
 		groundDef: 12,
 		airDef: 8,
 		traits: .elite
@@ -76,6 +81,7 @@ extension UnitStats {
 		softAtk: 11,
 		hardAtk: 10,
 		airAtk: 5,
+		navAtk: 4,
 		groundDef: 12,
 		airDef: 8,
 		traits: .elite
@@ -89,6 +95,7 @@ extension UnitStats {
 		softAtk: 10,
 		hardAtk: 9,
 		airAtk: 4,
+		navAtk: 3,
 		groundDef: 11,
 		airDef: 8,
 		traits: .transport
@@ -103,6 +110,7 @@ extension UnitStats {
 		ini: 4,
 		softAtk: 11,
 		hardAtk: 7,
+		navAtk: 4,
 		groundDef: 6,
 		airDef: 5
 	)
@@ -115,6 +123,7 @@ extension UnitStats {
 		ini: 8,
 		softAtk: 8,
 		hardAtk: 12,
+		navAtk: 4,
 		groundDef: 11,
 		airDef: 7
 	)
@@ -126,6 +135,7 @@ extension UnitStats {
 		ini: 9,
 		softAtk: 10,
 		hardAtk: 15,
+		navAtk: 5,
 		groundDef: 13,
 		airDef: 8,
 		traits: .elite
@@ -137,6 +147,7 @@ extension UnitStats {
 		ini: 7,
 		softAtk: 7,
 		hardAtk: 13,
+		navAtk: 4,
 		groundDef: 11,
 		airDef: 7
 	)
@@ -148,6 +159,7 @@ extension UnitStats {
 		ini: 9,
 		softAtk: 10,
 		hardAtk: 15,
+		navAtk: 5,
 		groundDef: 14,
 		airDef: 8,
 		traits: .elite
@@ -160,6 +172,7 @@ extension UnitStats {
 		ini: 10,
 		softAtk: 12,
 		hardAtk: 16,
+		navAtk: 7,
 		groundDef: 14,
 		airDef: 8,
 		traits: .elite
@@ -174,6 +187,7 @@ extension UnitStats {
 		softAtk: 7,
 		hardAtk: 7,
 		airAtk: 11,
+		navAtk: 2,
 		groundDef: 6,
 		airDef: 7
 	)
@@ -197,6 +211,7 @@ extension UnitStats {
 		softAtk: 10,
 		hardAtk: 8,
 		airAtk: 10,
+		navAtk: 3,
 		groundDef: 10,
 		airDef: 9,
 		traits: .radar
@@ -219,6 +234,7 @@ extension UnitStats {
 		ini: 6,
 		softAtk: 5,
 		hardAtk: 5,
+		navAtk: 3,
 		groundDef: 7,
 		airDef: 5
 	)
@@ -230,6 +246,7 @@ extension UnitStats {
 		softAtk: 7,
 		hardAtk: 7,
 		airAtk: 5,
+		navAtk: 3,
 		groundDef: 7,
 		airDef: 6,
 		traits: .transport
@@ -243,6 +260,7 @@ extension UnitStats {
 		softAtk: 9,
 		hardAtk: 11,
 		airAtk: 12,
+		navAtk: 8,
 		groundDef: 10,
 		airDef: 10,
 		traits: .radar
@@ -255,6 +273,7 @@ extension UnitStats {
 		softAtk: 8,
 		hardAtk: 11,
 		airAtk: 6,
+		navAtk: 9,
 		groundDef: 10,
 		airDef: 7
 	)
