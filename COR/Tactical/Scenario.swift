@@ -8,7 +8,6 @@ public struct Scenario {
 	/// attacker occupies index 3 and the defender index 4.
 	public var terrain: [9 of Terrain]
 	public var fortLevel: Int
-	public var size: Int
 	public var seed: Int
 	public var objective: Objective
 	public var buildingsMask: [4 of UInt8]
@@ -18,7 +17,6 @@ public struct Scenario {
 		units: [Unit],
 		terrain: [9 of Terrain] = .init(repeating: .field),
 		fortLevel: Int = 0,
-		size: Int = 24,
 		seed: Int = 0,
 		objective: Objective = .none,
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
@@ -27,7 +25,6 @@ public struct Scenario {
 		self.units = units
 		self.terrain = terrain
 		self.fortLevel = fortLevel
-		self.size = size
 		self.seed = seed
 		self.objective = objective
 		self.buildingsMask = buildingsMask
@@ -37,7 +34,6 @@ public struct Scenario {
 		TacticalSim(
 			players: players,
 			units: units,
-			size: size,
 			seed: seed,
 			terrain: terrain,
 			objective: objective,

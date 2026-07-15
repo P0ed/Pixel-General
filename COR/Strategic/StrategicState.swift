@@ -13,8 +13,8 @@ public struct StrategicSim: ~Copyable {
 
 	public init(
 		owner: consuming Map<32, Country>,
-		terrain: consuming Map<32, Terrain> = Map(size: 32, zero: .field),
-		provinces: consuming Map<32, Province> = Map(size: 32, zero: Province()),
+		terrain: consuming Map<32, Terrain> = Map(zero: .field),
+		provinces: consuming Map<32, Province> = Map(zero: Province()),
 		player: Player,
 		armies: consuming CArray<64, CArray<4, Army>> = StrategicSim.emptyArmies(),
 		turn: UInt32 = 0,
@@ -43,9 +43,9 @@ public struct StrategicSim: ~Copyable {
 	/// factory-function temporary return buffers (notably Swift Testing's small
 	/// worker stacks).
 	public init(europe player: Player) {
-		owner = Map<32, Country>(size: 32, zero: .none)
-		terrain = Map<32, Terrain>(size: 32, zero: .field)
-		provinces = Map<32, Province>(size: 32, zero: Province())
+		owner = Map<32, Country>(zero: .none)
+		terrain = Map<32, Terrain>(zero: .field)
+		provinces = Map<32, Province>(zero: Province())
 		self.player = player
 		armies = CArray([64 of CArray<4, Army>].init { _ in
 			CArray([4 of Army].init(repeating: Army()))

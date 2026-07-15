@@ -24,7 +24,6 @@ final class NetSession {
 	// means open for (or claimed by) a networked player.
 	private(set) var seats: [4 of Player]
 	private(set) var mySeat = 0
-	var size = 24
 	var onLobby: () -> Void = ø
 	var onEnd: () -> Void = ø
 
@@ -176,7 +175,6 @@ final class NetSession {
 		let sim = TacticalSim(
 			players: players,
 			units: units,
-			size: size,
 			seed: .random(in: 0 ..< 128)
 		)
 		started = true

@@ -15,7 +15,6 @@ struct TacticalPerformanceTests {
 
 	private static let countries: [Country] = [.fin, .rus]
 	private static let runs = 8
-	private static let mapSize = 24
 
 	private static let maxActionsPerBattle = 65_000
 	private static let maxDaysPerBattle = 128
@@ -42,7 +41,6 @@ struct TacticalPerformanceTests {
 				+ .aux(Self.countries[0], lvl: 5)
 				+ .base(Self.countries[1])
 				+ .aux(Self.countries[1]),
-				size: Self.mapSize,
 				seed: seed
 			)
 
@@ -79,7 +77,7 @@ struct TacticalPerformanceTests {
 		unsafe print("""
 		── TacticalSim AI-battle performance ──
 		  match-up:      \(Self.countries.map(String.init(describing:)).joined(separator: " vs "))
-		  map:           \(Self.mapSize)×\(Self.mapSize), \(Self.runs) runs
+		  map:           32×32, \(Self.runs) runs
 		  resolved:      \(resolvedCount)/\(Self.runs)
 		  total time:    \(String(format: "%.3f", secs))s
 		  avg / battle:  \(String(format: "%.3f", secs / Double(Self.runs)))s

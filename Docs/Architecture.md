@@ -125,8 +125,8 @@ guarded by `COR/Tests/MultiplayerTests.swift`.
   `action(…)` relay → `leave`. Payloads are `encode(_:)` native bytes; peers
   must run the same build on the same architecture (see `Connection.swift`).
 - **Lobby** — HQ menu *Host LAN* / *Join LAN* (`PG/HQ/HQLobby.swift`). The
-  host configures four seats (country, human–AI–open cycle, prestige, map
-  size), sees joins live and starts; clients enter `ip:port` (default port
+  host configures four seats (country, human–AI–open cycle, prestige), sees
+  joins live and starts; clients enter `ip:port` (default port
   9899) and mirror the seat table.
 - **Failure handling** — a disconnected or leaving seat is handed to the host
   AI through the relayed `.takeover` action; when the host vanishes, clients

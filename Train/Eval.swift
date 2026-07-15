@@ -99,7 +99,7 @@ enum Eval {
 			}
 
 			let seats = config.seats.map { s in "\(s.country)" }.joined(separator: " vs ")
-			print("  \(index): \(seats) \(config.size)x\(config.size) | \(results.joined(separator: " | "))")
+			print("  \(index): \(seats) 32x32 | \(results.joined(separator: " | "))")
 		}
 
 		var total = Tally()

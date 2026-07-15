@@ -12,14 +12,13 @@ private extension D20 {
 /// (`ActionSpace`) masks exactly the actions `reduce` accepts.
 struct PolicyTests {
 
-	private static func makeSim(seed: Int, size: Int = 24) -> TacticalSim {
+	private static func makeSim(seed: Int) -> TacticalSim {
 		TacticalSim(
 			players: [
 				Player(country: .ger, type: .ai, prestige: .rich, baseLevel: 0),
 				Player(country: .usa, type: .ai, prestige: .rich, baseLevel: 0),
 			],
 			units: .base(.ger) + .aux(.ger) + .base(.usa) + .aux(.usa),
-			size: size,
 			seed: seed
 		)
 	}
@@ -250,7 +249,7 @@ struct PolicyTests {
 	// MARK: - Heuristic AI
 
 	private static func plannedSim(objective: Objective = .none) -> TacticalSim {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		map[XY(1, 1)] = .city
 		map[XY(5, 1)] = .city
 		map[XY(8, 8)] = .city
@@ -276,13 +275,12 @@ struct PolicyTests {
 	/// units reset and placed in order (UID = array index), full vision
 	/// unless the test punches its own holes.
 	private static func duelSim(
-		size: Int = 10,
 		cities: [(XY, Country)] = [(XY(0, 0), .ger), (XY(9, 9), .usa)],
 		units: [COR.Unit],
 		at positions: [XY],
 		fullVision: Bool = true
 	) -> TacticalSim {
-		var map = Map<32, Terrain>(size: size, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		for (xy, _) in cities { map[xy] = .city }
 		var units = units
 		units.modifyEach { u in u.reset() }
@@ -329,7 +327,7 @@ struct PolicyTests {
 	}
 
 	@Test func retreatAssignmentsUseCompatibleSupplyHavens() {
-		var map = Map<32, Terrain>(size: 10, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		map[XY(1, 1)] = .city
 		map[XY(1, 4)] = .airfield
 		map[XY(8, 8)] = .city
@@ -448,7 +446,6 @@ struct PolicyTests {
 
 	@Test func reachableHostileSettlementIsCapturedByMovement() {
 		let sim = Self.duelSim(
-			size: 8,
 			cities: [(XY(0, 0), .ger), (XY(3, 0), .usa)],
 			units: [Unit(model: .regular, country: .ger)],
 			at: [XY(2, 0)]
@@ -508,7 +505,6 @@ struct PolicyTests {
 				Player(country: .isr, type: .ai, prestige: .poor, tier: 3),
 			],
 			units: .base(.fin),
-			size: 32,
 			seed: 1,
 			objective: .survive(.axis, day: 40),
 			forts: 1

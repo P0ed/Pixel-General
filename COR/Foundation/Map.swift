@@ -1,13 +1,11 @@
-public struct Map<let maxSize: Int, Element>: ~Copyable {
-	private var tiles: InlineArray<maxSize, InlineArray<maxSize, Element>>
+public struct Map<let size: Int, Element>: ~Copyable {
+	private var tiles: InlineArray<size, InlineArray<size, Element>>
 	private var zero: Element
-	public private(set) var size: Int
 
+	public var size: Int { Self.size }
 	public var count: Int { size * size }
 
-	public init(size: Int, zero: Element) {
-		precondition(size > 0 && size <= maxSize)
-		self.size = size
+	public init(zero: Element) {
 		self.zero = zero
 		tiles = .init(repeating: .init(repeating: zero))
 	}

@@ -18,7 +18,6 @@ struct TacticalTests {
 		let sim = TacticalSim(
 			players: players,
 			units: units,
-			size: 32,
 			seed: 0
 		)
 
@@ -73,13 +72,14 @@ struct TacticalTests {
 			units: [],
 			terrain: terrain,
 			fortLevel: 2,
-			size: 24,
 			seed: 9,
 			objective: objective
 		)
 		let sim = scenario.makeSim()
 
-		#expect(sim.map[XY(20, 20)] == .sea)
+		var seaTiles = 0
+		for xy in sim.map.indices where sim.map[xy].isSea { seaTiles += 1 }
+		#expect(seaTiles > 0)
 		#expect(sim.objective == objective)
 		#expect(sim.players.count == 2)
 	}
@@ -100,7 +100,6 @@ struct TacticalTests {
 		let sim = TacticalSim(
 			players: players,
 			units: players.flatMap { Array<Unit>.small($0.country) + .aux($0.country) },
-			size: 32,
 			seed: 0
 		)
 
@@ -145,7 +144,6 @@ struct TacticalTests {
 		var sim = TacticalSim(
 			players: TacticalTests.players(types: [.ai, .ai, .ai, .ai]),
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
-			size: 32,
 			seed: 0
 		)
 
@@ -172,7 +170,6 @@ struct TacticalTests {
 		var sim = TacticalSim(
 			players: Self.players(types: [.ai, .ai, .ai, .ai]),
 			units: Array<Unit>.small(.swe),
-			size: 32,
 			seed: 0
 		)
 		let before = sim.turn
@@ -185,7 +182,7 @@ struct TacticalTests {
 		// embarks it, then moves again. The sim position after the second move
 		// must match the last tile of the emitted move event (what the sprite
 		// animates to).
-		let map = Map<32, Terrain>(size: 32, zero: .field)
+		let map = Map<32, Terrain>(zero: .field)
 		let players = [Player(country: .usa, type: .human, prestige: 0xF00)]
 		var heli = Unit(model: .mh6, country: .usa)
 		heli.reset()
@@ -241,7 +238,7 @@ struct TacticalTests {
 		// A move ambushed by a hidden enemy on the *first* step must not emit a
 		// move event whose path runs past where the unit actually stops. The
 		// sprite animates the event's path; the sim stores `pos`. They must agree.
-		let map = Map<32, Terrain>(size: 32, zero: .field)
+		let map = Map<32, Terrain>(zero: .field)
 		let players = [
 			Player(country: .usa, type: .human, prestige: 0xF00),
 			Player(country: .rus, type: .ai, prestige: 0xF00),
@@ -289,7 +286,6 @@ struct TacticalTests {
 		let sim = TacticalSim(
 			players: Self.players(),
 			units: Array<Unit>.small(.swe),
-			size: 32,
 			seed: 0
 		)
 
@@ -316,7 +312,6 @@ struct TacticalTests {
 				Player(country: .usa, type: .ai),
 			],
 			units: .base(.ger) + .base(.usa),
-			size: 24,
 			seed: 3,
 			objective: objective,
 			forts: 1
@@ -328,7 +323,7 @@ struct TacticalTests {
 	/// `controller`, for exercising `winner` in isolation. fin = axis (attacker),
 	/// rus = soviet (defender).
 	private static func objectiveSim(cityXY: XY, controller: Country) -> TacticalSim {
-		var map = Map<32, Terrain>(size: 32, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		map[cityXY] = .city
 		let players = [
 			Player(country: .fin, type: .human, prestige: 0xF00),
@@ -375,10 +370,10 @@ struct TacticalTests {
 
 	// MARK: Supply penalties
 
-	/// Two-city 8×8 field sim: swe (axis) owns the north-west corner, rus
-	/// (soviet) the south-east — `control` splits along the diagonal.
+	/// Two-city field sim: swe (axis) owns (0, 0), rus (soviet) owns (7, 7),
+	/// and `control` splits along their diagonal.
 	private static func supplySim() -> TacticalSim {
-		var map = Map<32, Terrain>(size: 8, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		map[XY(0, 0)] = .city
 		map[XY(7, 7)] = .city
 		let players = [

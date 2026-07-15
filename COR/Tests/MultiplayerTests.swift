@@ -18,7 +18,6 @@ struct MultiplayerTests {
 		TacticalSim(
 			players: players(),
 			units: .small(.swe) + .small(.usa) + .small(.rus) + .small(.pak),
-			size: 24,
 			seed: seed
 		)
 	}

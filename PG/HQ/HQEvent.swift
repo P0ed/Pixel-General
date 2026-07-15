@@ -96,11 +96,7 @@ extension HQNodes {
 			}),
 			.space, .space, .space,
 
-			.close(icon: .chess, status: .init(text: "Chess"), update: { _ in
-				core.startScenario(.chess())
-				view.present(.auto)
-			}),
-			.space, .space, .space,
+			.space, .space, .space, .space,
 
 			.init(icon: .new, status: .init(text: "New")) { _ in
 				guard let scene else { return nil }

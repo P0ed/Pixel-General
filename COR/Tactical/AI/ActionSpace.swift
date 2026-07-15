@@ -3,8 +3,8 @@
 /// A `TacticalAction` maps to (kind, actor tile, target tile, shop slot) head
 /// indices and back, and the legality masks mirror the reducer guards — so a
 /// masked action can never silently no-op through `reduce`. Tiles index the
-/// fixed 32-stride grid of `SimObservation` regardless of the actual map size
-/// (`x + y * 32`); UIDs are deliberately absent from the interface because
+/// fixed 32×32 grid of `SimObservation` (`x + y * 32`); UIDs are deliberately
+/// absent from the interface because
 /// they are arbitrary storage slots the network cannot observe.
 public enum ActionSpace {
 	public static let kinds = 7

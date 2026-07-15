@@ -11,7 +11,7 @@ public extension TacticalSim {
 
 	func moves(for uid: UID, target: XY? = nil) -> Moves {
 		let unit = units[uid]
-		var mov = Moves(start: position[uid], size: map.size)
+		var mov = Moves(start: position[uid])
 		if !unit.canMove { return mov }
 
 		let team = unit.country.team
@@ -173,9 +173,9 @@ public struct Moves: ~Copyable {
 
 public extension Moves {
 
-	init(start: XY, size: Int) {
+	init(start: XY) {
 		self.start = start
-		moves = .init(size: size, zero: 0)
+		moves = .init(zero: 0)
 	}
 
 	var setXY: SetXY {

@@ -43,8 +43,8 @@ public extension TacticalSim {
 		self.position = .init(repeating: .zero)
 		vision = .init(repeating: .empty)
 		cargo = .init(repeating: .none)
-		unitsMap = .init(size: self.map.size, zero: .none)
-		control = .init(size: self.map.size, zero: .default)
+		unitsMap = .init(zero: .none)
+		control = .init(zero: .default)
 		self.buildingsMask = buildingsMask
 		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }

@@ -3,14 +3,13 @@ public extension TacticalSim {
 	init(
 		players: [Player],
 		units: [Unit],
-		size: Int,
 		seed: Int,
 		terrain: [9 of Terrain],
 		objective: Objective = .none,
 		forts: Int = 0,
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
-		var map = Map<32, Terrain>(size: size, seed: seed, players: players.count, terrain: terrain)
+		var map = Map<32, Terrain>(seed: seed, players: players.count, terrain: terrain)
 		let defending: Team? = switch objective {
 		case .survive(let team, _): team
 		case .none: nil
@@ -44,7 +43,6 @@ public extension TacticalSim {
 	init(
 		players: [Player],
 		units: [Unit],
-		size: Int,
 		seed: Int,
 		terrain: Terrain = .field,
 		objective: Objective = .none,
@@ -54,7 +52,6 @@ public extension TacticalSim {
 		self.init(
 			players: players,
 			units: units,
-			size: size,
 			seed: seed,
 			terrain: [9 of Terrain](repeating: terrain),
 			objective: objective,
