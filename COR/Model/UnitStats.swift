@@ -97,10 +97,11 @@ public extension UnitStats {
 		ini: 9,
 		softAtk: 10,
 		hardAtk: 10,
-		airAtk: 9,
+		airAtk: 10,
 		navAtk: 14,
 		groundDef: 10,
-		airDef: 9
+		airDef: 9,
+		traits: [.radar, .optics]
 	)
 	@safe nonisolated(unsafe) static let cruiser = UnitStats(
 		type: .cruiser,
@@ -110,10 +111,11 @@ public extension UnitStats {
 		ini: 8,
 		softAtk: 12,
 		hardAtk: 9,
-		airAtk: 4,
+		airAtk: 6,
 		navAtk: 16,
 		groundDef: 12,
-		airDef: 8
+		airDef: 8,
+		traits: [.optics]
 	)
 }
 

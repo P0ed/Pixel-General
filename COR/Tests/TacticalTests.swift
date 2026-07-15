@@ -174,6 +174,34 @@ struct TacticalTests {
 		}
 	}
 
+	@Test func navalDeploymentChoosesSeaCellsNearTeamCenterOfMass() {
+		let players = [
+			Player(country: .fin, type: .human),
+			Player(country: .rus, type: .ai),
+			Player(country: .usa, type: .ai),
+			Player(country: .swe, type: .ai),
+		]
+		var terrain = [9 of Terrain](repeating: .field)
+		terrain[0] = .sea
+		terrain[2] = .sea
+		terrain[6] = .sea
+		terrain[8] = .sea
+		let centers = TacticalSim.navalCenters(
+			players: players,
+			terrain: terrain,
+			cities: [
+				(XY(3, 3), .fin),
+				(XY(7, 3), .swe),
+				(XY(28, 28), .rus),
+				(XY(28, 3), .usa),
+			]
+		)
+
+		#expect(centers[.axis] == XY(5, 5))
+		#expect(centers[.soviet] == XY(26, 26))
+		#expect(centers[.allies] == XY(26, 5))
+	}
+
 	@Test func seaIsImpassableOnlyToLandUnits() {
 		var infantry = Unit(model: .regular, country: .fin)
 		infantry.reset()

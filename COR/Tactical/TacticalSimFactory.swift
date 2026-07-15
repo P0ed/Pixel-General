@@ -35,18 +35,24 @@ public extension TacticalSim {
 			cities: cities,
 			units: units,
 			buildingsMask: buildingsMask,
-			navalCenters: Self.navalCenters(players: players, terrain: terrain)
+			navalCenters: Self.navalCenters(
+				players: players,
+				terrain: terrain,
+				cities: cities
+			)
 		)
 		self.objective = objective
 	}
 
-	/// Assign each participating team a distinct strategic sea cell, spreading
-	/// opposing fleets across the coastline. With two teams, start from the two
-	/// most distant cells; additional teams take the cell farthest from those
-	/// already selected. The returned points are tactical-map cell centers.
-	private static func navalCenters(
+	/// Assign each participating team a distinct strategic sea cell near the
+	/// center of mass of its cities, which are also the anchors for its land
+	/// deployment. The small exhaustive matching avoids player-order bias when
+	/// multiple teams prefer the same sea cell. Returned points are tactical-map
+	/// cell centers.
+	static func navalCenters(
 		players: [Player],
-		terrain: [9 of Terrain]
+		terrain: [9 of Terrain],
+		cities: [(XY, Country)]
 	) -> [Team: XY] {
 		var teams: [Team] = []
 		for player in players where player.alive && player.country.team != .none {
@@ -56,39 +62,48 @@ public extension TacticalSim {
 		let sea = terrain.indices.filter { terrain[$0].isSea }
 		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
 
-		func distance(_ a: Int, _ b: Int) -> Int {
-			abs(a % 3 - b % 3) + abs(a / 3 - b / 3)
-		}
-
-		var selected: [Int] = []
-		if teams.count == 1 || sea.count == 1 {
-			selected.append(sea.min { distance($0, 4) < distance($1, 4) }!)
-		} else {
-			var pair = (sea[0], sea[1])
-			var pairDistance = distance(pair.0, pair.1)
-			for i in sea.indices {
-				for j in sea.indices where j > i {
-					let d = distance(sea[i], sea[j])
-					if d > pairDistance {
-						pair = (sea[i], sea[j])
-						pairDistance = d
-					}
-				}
-			}
-			selected = [pair.0, pair.1]
-		}
-		while selected.count < min(teams.count, sea.count) {
-			let next = sea.filter { !selected.contains($0) }.max { a, b in
-				selected.map { distance(a, $0) }.min()!
-					< selected.map { distance(b, $0) }.min()!
-			}!
-			selected.append(next)
-		}
-
-		return Dictionary(uniqueKeysWithValues: zip(teams, selected).map { team, index in
+		func strategicCenter(_ index: Int) -> XY {
 			let column = index % 3
 			let rowFromSouth = 2 - index / 3
-			return (team, XY((column * 2 + 1) * 32 / 6, (rowFromSouth * 2 + 1) * 32 / 6))
+			return XY(
+				(column * 2 + 1) * 32 / 6,
+				(rowFromSouth * 2 + 1) * 32 / 6
+			)
+		}
+
+		let teamCenters = teams.map { team in
+			let anchors = cities.compactMap { xy, country in
+				country.team == team ? xy : nil
+			}
+			guard !anchors.isEmpty else { return XY(16, 16) }
+			return XY(
+				anchors.reduce(0) { $0 + $1.x } / anchors.count,
+				anchors.reduce(0) { $0 + $1.y } / anchors.count
+			)
+		}
+
+		let assignmentCount = min(teams.count, sea.count)
+		var bestCost = Int.max
+		var best: [Int] = []
+		func match(_ teamIndex: Int, _ selected: [Int], _ cost: Int) {
+			guard teamIndex < assignmentCount else {
+				if cost < bestCost {
+					bestCost = cost
+					best = selected
+				}
+				return
+			}
+			for index in sea where !selected.contains(index) {
+				let nextCost = cost
+					+ strategicCenter(index).manhattanDistance(to: teamCenters[teamIndex])
+				guard nextCost < bestCost else { continue }
+				match(teamIndex + 1, selected + [index], nextCost)
+			}
+		}
+		match(0, [], 0)
+
+		return Dictionary(uniqueKeysWithValues: zip(teams, best).map { team, index in
+			(team, strategicCenter(index))
 		})
 	}
 
