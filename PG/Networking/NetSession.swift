@@ -24,7 +24,6 @@ final class NetSession {
 	// means open for (or claimed by) a networked player.
 	private(set) var seats: [4 of Player]
 	private(set) var mySeat = 0
-	var size = 24
 	var onLobby: () -> Void = ø
 	var onEnd: () -> Void = ø
 

@@ -103,18 +103,9 @@ extension HQNodes {
 				}
 			)
 		}
-		let sizes: [UIImage] = [.sizeM, .sizeL]
 		let bottom: [MenuItem<HQAction>] = isHost ? [
 			.init(icon: .empty, status: .init(text: Address.me.string), update: id),
-			.space,
-			.init(
-				icon: sizes[(session.size - 24) / 8],
-				status: .init(text: "Size: \(session.size)"),
-				update: { menu in
-					session.size = session.size == 24 ? 32 : 24
-					return rebuilt(cursor: 14)
-				}
-			),
+			.space, .space,
 			.init(icon: .start, status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
 				guard let scene else { return nil }
 				session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })

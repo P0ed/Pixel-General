@@ -25,7 +25,7 @@ enum Rollouts {
 	static let tiers: [(UInt8, UInt8)] = [(3, 3), (0, 0), (3, 0), (0, 3)]
 
 	static let maxActions = 65_000
-	static let maxDays = 128
+	static let maxDays = 80
 
 	static func run(_ args: [String]) throws {
 		var n = 8
@@ -63,7 +63,7 @@ enum Rollouts {
 
 			totalActions += replay.actions.count
 			if replay.winner != .none { resolved += 1 }
-			print("  \(name(index)): \(replay.seats[0].country) vs \(replay.seats[1].country), \(replay.size)x\(replay.size), \(replay.actions.count) actions, \(replay.days) days, winner: \(replay.winner)")
+			print("  \(name(index)): \(replay.seats[0].country) vs \(replay.seats[1].country), 32x32, \(replay.actions.count) actions, \(replay.days) days, winner: \(replay.winner)")
 		}
 
 		let d = start.duration(to: clock.now).components
@@ -84,7 +84,6 @@ enum Rollouts {
 		let level = baseLevels[(index / 16) % baseLevels.count]
 		let tier = tiers[(index / 64) % tiers.count]
 		var replay = Replay(
-			size: index % 2 == 0 ? 24 : 32,
 			seed: Int64(index),
 			seats: [
 				.init(country: pair.0, prestige: prestige.0, baseLevel: level.0, tier: tier.0),
@@ -93,7 +92,7 @@ enum Rollouts {
 		)
 		guard suite == .mixed else { return replay }
 
-		let deadline: UInt16 = replay.size == 24 ? 32 : 40
+		let deadline: UInt16 = 40
 		switch index % 3 {
 		case 1:
 			replay.objective = .survive(replay.seats[0].country.team, day: deadline)

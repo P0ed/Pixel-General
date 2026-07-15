@@ -70,8 +70,8 @@ invalidates existing weights and replay-derived corpora.
 ### Action space — `ActionSpace.swift`
 
 Factored heads, tile-indexed (UIDs are arbitrary slot numbers a conv net can't see;
-`unitsMap` gives the tile ↔ UID bijection). Tile index = `x + y*32`, fixed stride for
-both map sizes:
+`unitsMap` gives the tile ↔ UID bijection). Tile index = `x + y*32` on the fixed
+32×32 map:
 
 - **kind** (7: move / embark / disembark / attack / resupply / purchase / end)
 - **actor tile** (1024), **target tile** (1024), **shop slot** (40)
@@ -135,8 +135,8 @@ neural/classic per battle in `TacticalMode.tactical`; `LSTMWeights.bundled` load
 
 ### Replays — `PGRP` (`Train/Replay.swift`)
 
-Version 3 stores magic, version, `MemoryLayout<TacticalAction>.size`,
-size/seats/winner/days/seed, the objective kind/team/deadline, fort level, and then the
+Version 4 stores magic, version, `MemoryLayout<TacticalAction>.size`,
+seats/winner/days/seed, the objective kind/team/deadline, fort level, and then the
 raw `encode(action)` stream (~10–100 KB).
 `makeSim()` rebuilds the exact initial state; `check()` = rebuild + replay + compare
 outcome. Replays are **same-build artifacts** — the versioned header guards toolchain
@@ -145,6 +145,7 @@ existing corpora must be regenerated before BC or RL so demonstrations from diff
 teachers or battle recipes cannot be mixed. v3 (same layout as v2) marks the factory
 contract change (`a25d286`): the factory places exactly the units it is given, so
 `makeSim()` composes every seat's `.base` roster itself (training battles carry no aux).
+v4 removes the runtime map-size byte because every tactical map is 32×32.
 
 ## Training runs
 
@@ -185,12 +186,12 @@ Train eval --weights PG/policy.pgw --n 32 --suite classic
 
 **`rollout --n 8 --out tmp/runs/replays --seed 0 [--suite classic|mixed] [--verify]`** — heuristic-vs-heuristic
 battles as `.pgr` files. The config is derived purely from the index (country pairs
-ger/usa, fin/isr, swe/pak, ned/usa × sizes 24/32 × prestige and baseLevel/tier
+ger/usa, fin/isr, swe/pak, ned/usa × prestige and baseLevel/tier
 variants), so corpora are reproducible byte-for-byte; `--verify` replays each battle
 after writing. `classic` is the exact historical `.none` mapping. The default `mixed`
 suite rotates `.none`, seat-0 survival defender, and seat-1 survival defender; survival
-deadlines are 32 days on 24×24 maps and 40 on 32×32, with fort level 1. Budget: 65k
-actions / 128 days. Every loop stops as soon as `sim.winner` is non-nil, including a
+deadlines are 40 days on 32×32 maps, with fort level 1. Budget: 65k
+actions / 80 days. Every loop stops as soon as `sim.winner` is non-nil, including a
 survival win with both teams alive.
 
 **`replay <file> ...`** — rebuild + verify recorded winner/days; use after toolchain or

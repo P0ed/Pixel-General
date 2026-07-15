@@ -163,7 +163,7 @@ struct RNGTests {
 extension TacticalSim {
 
 	static var xs: Self {
-		var map = Map<32, Terrain>(size: 4, zero: .field)
+		var map = Map<32, Terrain>(zero: .field)
 		let cities: [(XY, Country)] = [
 			(XY(0, 0), .den),
 			(XY(3, 3), .usa),

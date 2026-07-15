@@ -55,7 +55,7 @@ struct StrategicTests {
 	}
 
 	private static func borderSim(russianUnits: Int) -> StrategicSim {
-		var owner = Map<32, Country>(size: 32, zero: .none)
+		var owner = Map<32, Country>(zero: .none)
 		owner[XY(1, 1)] = .fin
 		owner[XY(2, 1)] = .rus
 		var sim = StrategicSim(
@@ -126,8 +126,8 @@ struct StrategicTests {
 	}
 
 	@Test func battleTerrainRotatesAttackerToMiddleLeft() {
-		var owner = Map<32, Country>(size: 5, zero: .fin)
-		var terrain = Map<32, Terrain>(size: 5, zero: .field)
+		var owner = Map<32, Country>(zero: .fin)
+		var terrain = Map<32, Terrain>(zero: .field)
 		let defender = XY(2, 2)
 		terrain[XY(1, 2)] = .forest
 		terrain[defender] = .hill
@@ -380,7 +380,7 @@ struct StrategicTests {
 	}
 
 	@Test func armyCanCrossAlliedCountryWithoutChangingOwnership() {
-		var owner = Map<32, Country>(size: 32, zero: .none)
+		var owner = Map<32, Country>(zero: .none)
 		owner[XY(1, 1)] = .fin
 		owner[XY(2, 1)] = .swe
 		owner[XY(3, 1)] = .ger
@@ -502,7 +502,7 @@ struct StrategicTests {
 	}
 
 	@Test func strategicAIMustersAndMovesArmies() {
-		var owner = Map<32, Country>(size: 32, zero: .none)
+		var owner = Map<32, Country>(zero: .none)
 		owner[XY(1, 1)] = .rus
 		owner[XY(2, 1)] = .rus
 		owner[XY(3, 1)] = .rus
@@ -697,7 +697,6 @@ struct StrategicTests {
 
 		let tactical = clone(core.tactical!)
 		let plains = Map<32, Terrain>(
-			size: 24,
 			seed: target.x + target.y * 32,
 			players: 2,
 			terrain: .field
