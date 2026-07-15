@@ -3,9 +3,11 @@
 The neural opponent for Tactical battles: a convolutional LSTM policy
 that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
 *Neural opponent* in the Tactical menu (heuristic fallback when the resource is missing
-or invalid). It was trained by behavior-cloning the heuristic `run(ai:)` and then
-PPO fine-tuning against it (clipped surrogate, value-head baseline, KL anchor to
-the BC prior; an earlier REINFORCE learner plateaued at the BC level) — entirely
+or invalid). It is trained by behavior-cloning the heuristic `run(ai:)` — BC scale
+(corpus × steps) has been the reliable strength lever; PPO fine-tuning (clipped
+surrogate, value-head baseline, KL anchor to the BC prior) lifted a weak BC prior
+once but stopped adding over strong ones, and an earlier REINFORCE learner
+plateaued at the BC level — entirely
 with `MetalPerformanceShadersGraph` (OS built-in, no Python, no packages). Inference is dependency-free Swift in COR, so the
 shipping app never touches MPSGraph.
 
@@ -202,6 +204,11 @@ per head weighted by applicability; Adam + warmup/cosine lr + grad clip 1.0. Eve
 (`step,lr,loss,kind_ce,kind_acc,…,slot_ce,slot_acc`).
 Reference (160-battle corpus, defaults, ~3 min): held-out accuracy kind 0.66 /
 actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
+Scale reference (960-battle corpus, `--steps 4000`, ~12 min): kind 0.77 /
+actor 0.46 / target 0.41 / slot 0.63; paired 832-battle win rate **29.1%** —
+the strongest policy to date, and held-out loss was still falling at 4000
+steps. Scale corpus and steps together (windows/epoch grows with the corpus;
+the warmup/cosine schedule stretches with `--steps` automatically).
 
 **`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite classic|mixed]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
