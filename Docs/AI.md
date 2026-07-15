@@ -216,7 +216,9 @@ Scale reference — corpus and steps scaled together (windows/epoch grows with
 the corpus; the warmup/cosine schedule stretches with `--steps` automatically),
 paired 832-battle win rates: 1× (240 battles / 1000 steps) **25.4%** · 4×
 (960 / 4000, ~12 min) **29.1%** · 16× (3840 / 16000, ~47 min) **37.4%** —
-gains per 4× step growing so far. At 16× the best checkpoint was ckpt-14000,
+gains per 4× step growing so far; the dilated-48 trunk + pyramid pooling
+(bc7) lifted the same 16× recipe to **46.0%** (383W vs 311W, ~70 min).
+At 16× the best checkpoint was ckpt-14000 (both architectures),
 not the final: held-out CE flattens and goes noisy near the end of a long run
 and is a poor proxy for arena strength — arena-eval the best-held-out AND
 final checkpoints.
@@ -375,7 +377,8 @@ the reliable lever since; RL is worth revisiting only at even matchups
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via
   implicit-broadcast addition; `clamp` and `reductionMaximum` gradients are
   unverified — the PPO loss paths use min/max compositions and
-  `log(softMax + 1e-10)` instead. Keep new graph code inside this
+  `log(softMax + 1e-10)` instead. Dilated `convolution2D` gradients are
+  verified (bc7 trained through them). Keep new graph code inside this
   known-good op set.
 - The value head is trained only by `Train ppo` (BC and `rl` exclude it from their
   gradient requests — autodiff asserts on variables that aren't predecessors of the
