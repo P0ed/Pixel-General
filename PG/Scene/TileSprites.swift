@@ -24,11 +24,16 @@ enum TileSurface: Hashable {
 		}
 	}
 
-	/// Tinted top face at `elevation`; sea is the only textured surface.
+	/// Tinted top face at `elevation`; terrain surfaces have stable texture.
 	@MainActor
 	func image(elevation: Int) -> CGImage? {
 		let image = UIImage.surface(elevation).cg?.tinted(color.cgColor)
-		return self == .sea ? image?.noised() : image
+		switch self {
+		case .field, .forest, .water, .sea:
+			return image?.noised()
+		case .none, .team, .country, .supply:
+			return image
+		}
 	}
 }
 
@@ -157,7 +162,7 @@ private extension CGImage {
 		var d20 = D20()
 		for y in 0 ..< Int(CGSize.tile3D.height) {
 			for x in 0 ..< Int(CGSize.tile3D.width) {
-				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.1).cgColor)
+				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.068).cgColor)
 				ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
 			}
 		}
