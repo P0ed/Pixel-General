@@ -51,8 +51,9 @@ then end turn.
 ### `SimObservation` — `Encoding.swift`
 
 Everything the acting player may know, immediately before each of its actions, as
-32×32×**51** planes (HWC, index `(y*32 + x)*51 + plane`) plus **12** global scalars,
-all normalized to 0…1. Planes: on-map, terrain one-hot (11 mechanic groups) +
+32×32×**53** planes (HWC, index `(y*32 + x)*53 + plane`) plus **12** global scalars,
+all normalized to 0…1. Planes: on-map, terrain one-hot (13 mechanic groups; fort and
+sea appended after the fog plane, previously folded into city / river) +
 entrenchment/income, control (own / ally / enemy), unit presence and scalars (hp,
 ammo, entrenchment, mp, ap, level), `UnitType` one-hot (14), normalized model stats,
 vision. Globals: prestige, day, seat, tier, base level, unit/settlement counts,
@@ -80,10 +81,10 @@ the same sim-level `can*` predicates that guard the reducers (`canMove`, `canAtt
 `Docs/Architecture.md`), so a masked sample can never no-op — reducers silently
 ignoring illegal input is what makes "state mutated" a legality oracle in tests.
 
-### Network (~188k params, 31 tensors)
+### Network (~189k params, 31 tensors)
 
 ```
-obs 32×32×51 ── conv3×3 51→32 ReLU ×3 (same-pad) ──► trunk 32×32×32
+obs 32×32×53 ── conv3×3 53→32 ReLU ×3 (same-pad) ──► trunk 32×32×32
 trunk ── full-grid mean pool (32) ⊕ globals (12) ── fc 44→128 ReLU ── LSTM H=128 ──► h
 kind    h ── fc 128→7
 actor   per tile [trunk(32) ⊕ proj(h→16)] ── 1×1 48→16 ReLU ── 16→1

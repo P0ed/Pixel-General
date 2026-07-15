@@ -8,7 +8,7 @@
 /// screen has.
 public struct SimObservation {
 	public static let side = 32
-	public static let planeCount = 51
+	public static let planeCount = 53
 	public static let globalCount = 12
 	public static let planeSize = side * side
 
@@ -70,6 +70,10 @@ public enum Plane {
 	public static let ini = 49
 
 	public static let visible = 50		// acting player's fog of war
+
+	// Appended terrain groups (previously folded into city / river).
+	public static let fort = 51
+	public static let sea = 52
 }
 
 /// Global scalar indices, same append-only contract as `Plane`.
@@ -186,14 +190,16 @@ extension Terrain {
 	var plane: Int? {
 		switch self {
 		case .none: nil
-		case .river, .sea: Plane.river
+		case .river: Plane.river
+		case .sea: Plane.sea
 		case .bridgeWE, .bridgeSN: Plane.bridge
 		case .field: Plane.field
 		case .forest: Plane.forest
 		case .hill: Plane.hill
 		case .forestHill: Plane.forestHill
 		case .mountain: Plane.mountain
-		case .city, .fort: Plane.city
+		case .city: Plane.city
+		case .fort: Plane.fort
 		case .airfield: Plane.airfield
 		case .villageE, .villageN, .villageW, .villageS: Plane.village
 		case .roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX: Plane.road

@@ -149,11 +149,13 @@ struct PolicyTests {
 	/// player: every non-`.end` action it emits mutates the state (reducers
 	/// no-op on illegal input), and its turns always terminate.
 	@Test func randomWeightPolicyPlaysLegally() {
-		// The sim seed must give a battle that survives past the 20-step
-		// floor below; regenerated maps can shift pacing, so repick the seed
-		// if this stalls after a map-generation change.
+		// The seeds must give a battle that survives past the 20-step floor
+		// below with a policy that doesn't just end turns; regenerated maps or
+		// an observation-contract change can shift both, so repick either seed
+		// if this stalls (weight seed 13 degenerated to always-`.end` when the
+		// plane count went 51 → 53).
 		var sim = Self.makeSim(seed: 8)
-		var policy = LSTMPolicy(weights: .random(seed: 13))
+		var policy = LSTMPolicy(weights: .random(seed: 14))
 		var ai = AI.Plan()
 
 		var policySteps = 0
