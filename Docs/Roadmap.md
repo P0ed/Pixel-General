@@ -50,14 +50,15 @@
 
 ## AI
 
-- Strengthen the neural opponent further. The bundled PPO2 checkpoint continued
-  PPO1 checkpoint 90 from difficulty 1.5 with `--lam 0.95`, annealed to 1.25, and
-  scored 28.0% (233W/22D/577L) against the heuristic in the 832-battle mixed arena,
-  versus PPO1's 25.7% and BC3's 21.6%, with zero illegal actions. The +2.3-point
-  PPO1 gain is below that arena's roughly four-point two-sigma resolution: confirm
-  it on a disjoint final arena. Next, train a stronger prior from a larger BC corpus;
-  keep checkpoint selection and the final arena separate; add self-play once the
-  policy consistently beats the heuristic.
+- Strengthen the neural opponent toward >60% vs the heuristic, then self-play for
+  emergent behavior. Bundled: bc6 ckpt-14000 — pure BC at 16× scale (3840-battle
+  mixed corpus, 16000 steps), 37.4% (311W) in the paired 832-battle mixed arena vs
+  bc5 29.1%, bc4 25.4%, best PPO 26.2%; BC-scale gains per 4× still growing. Next:
+  64× BC; then DAgger-style corpora (teacher labels on policy-visited states) to
+  close the covariate-shift gap — pure BC of a deterministic teacher caps near 50%,
+  so >60% ultimately needs RL; revisit PPO at even matchups (`--curriculum 0`) from
+  a prior strong enough to sample wins there (boosted-curriculum PPO over strong
+  priors is a twice-null result; pick checkpoints from the descent, not the park).
 
 ## Multiplayer
 

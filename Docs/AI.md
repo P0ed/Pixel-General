@@ -318,6 +318,26 @@ validates both the warmup freeze and the ref branch); `clipfrac`/`akl` near 0
 at epoch starts. `ppo-log.csv`:
 `iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin`.
 
+Loss mechanics (`PPOGraph`): joint logπ = Σ heads applicability-weighted −CE
+(the BC graph's masked softmaxCE, reduction none); ratio r =
+exp(clamp₍±20₎(logπ − logπ_old)); surrogate −Σ valid·min(r·A,
+clip(r, 1−ε, 1+ε)·A) / Σ valid; advantages batch-normalized to mean 0 / std 1
+and clamped ±5; value target = the λ-return; the KL branch is teacher-forced
+on the same actor labels as the policy; entropy is logged even at `--ent 0`.
+Value warmup runs a second value-only gradient/Adam path (moment variables
+shared by name, own grad clip) so random-init V cannot shift the shared trunk
+under the policy heads. Smoke recipe: 3 iters × 4 episodes, epochs 2, vwarm 1
+— `kl` must log 0.0 *exactly* during warmup, no NaN, RSS bounded.
+
+**Verdict (runs ppo1–ppo3, 2026-07-14/15)**: PPO broke the REINFORCE ceiling
+from a weak prior (ppo1 ckpt-90 25.7% vs bc3 21.6%, paired 832 battles, z≈2)
+but added nothing over strong priors twice (ppo2 continuation of ckpt-90 +5W
+n.s.; ppo3 from bc4 +7W n.s.), and parking at the difficulty frontier after
+the descent *erodes* even-matchup strength (ppo3 ckpt-110/150 lost ~25W vs
+ckpt-50) — pick checkpoints from the descent, not the park. BC scale has been
+the reliable lever since; RL is worth revisiting only at even matchups
+(`--curriculum 0`) from a prior strong enough to sample wins there.
+
 ### Reading a run
 
 - Sampled wins per iteration (`wins` column) is the noisy leading signal; the argmax
@@ -345,7 +365,10 @@ at epoch starts. `ppo-log.csv`:
 - **MPSGraph autodiff gaps** (macOS 26.5): `split` and `broadcast` have no registered
   gradient, and `gradients(of:with:)` asserts on variables that aren't predecessors of
   the loss. `Net.swift` therefore slices LSTM gates and broadcasts via
-  implicit-broadcast addition; keep new graph code inside the gradient-supported op set.
+  implicit-broadcast addition; `clamp` and `reductionMaximum` gradients are
+  unverified — the PPO loss paths use min/max compositions and
+  `log(softMax + 1e-10)` instead. Keep new graph code inside this
+  known-good op set.
 - The value head is trained only by `Train ppo` (BC and `rl` exclude it from their
   gradient requests — autodiff asserts on variables that aren't predecessors of the
   loss); inference never reads it beyond `lastValue` logging.
