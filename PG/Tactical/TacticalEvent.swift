@@ -66,7 +66,7 @@ private extension TacticalNodes {
 			let xy = path[i]
 			let point = state.sim.map.point(at: xy)
 			let prev = state.sim.map.point(at: path[i - 1])
-			let duration = (prev - point).length / 330.0 * scale
+			let duration = (prev - point).length / 400.0 * scale
 			let hidden = i == path.count - 1
 				? !state.sim.isVisibleToHuman(uid)
 				: !state.sim.isVisibleToHuman(xy)

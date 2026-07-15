@@ -39,6 +39,6 @@ extension Settings {
 	}
 
 	var animationScale: Double {
-		1.5 / Double(animationSpeed + 1)
+		Double(animationSpeed + 1) / Double(animationSpeed * 2 + 1)
 	}
 }
