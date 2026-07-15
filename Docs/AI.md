@@ -204,11 +204,14 @@ per head weighted by applicability; Adam + warmup/cosine lr + grad clip 1.0. Eve
 (`step,lr,loss,kind_ce,kind_acc,…,slot_ce,slot_acc`).
 Reference (160-battle corpus, defaults, ~3 min): held-out accuracy kind 0.66 /
 actor 0.29 (1024-way) / target 0.39 / slot 0.67; eval win rate ≈ 8%.
-Scale reference (960-battle corpus, `--steps 4000`, ~12 min): kind 0.77 /
-actor 0.46 / target 0.41 / slot 0.63; paired 832-battle win rate **29.1%** —
-the strongest policy to date, and held-out loss was still falling at 4000
-steps. Scale corpus and steps together (windows/epoch grows with the corpus;
-the warmup/cosine schedule stretches with `--steps` automatically).
+Scale reference — corpus and steps scaled together (windows/epoch grows with
+the corpus; the warmup/cosine schedule stretches with `--steps` automatically),
+paired 832-battle win rates: 1× (240 battles / 1000 steps) **25.4%** · 4×
+(960 / 4000, ~12 min) **29.1%** · 16× (3840 / 16000, ~47 min) **37.4%** —
+gains per 4× step growing so far. At 16× the best checkpoint was ckpt-14000,
+not the final: held-out CE flattens and goes noisy near the end of a long run
+and is a poor proxy for arena strength — arena-eval the best-held-out AND
+final checkpoints.
 
 **`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite classic|mixed]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
