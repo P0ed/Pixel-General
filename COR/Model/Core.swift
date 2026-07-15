@@ -120,7 +120,6 @@ public extension Core {
 			units: units,
 			terrain: terrain,
 			fortLevel: fortLevel,
-			size: 24,
 			seed: tile.x + tile.y * 32,
 			objective: .survive(defender.team, day: 20),
 			buildingsMask: buildingsMask

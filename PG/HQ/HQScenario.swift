@@ -15,10 +15,8 @@ extension HQNodes {
 				!players.contains { $0.alive && $0.country == c }
 			}
 		}
-		var size = 0
 		var forts: UInt8 = 0
 		var sea: UInt8 = 0
-		let sizes: [UIImage] = [.sizeM, .sizeL]
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
@@ -111,13 +109,6 @@ extension HQNodes {
 			.space, .space,.space, .space,
 			.space, .space,.space, .space,
 
-			.init(icon: sizes[size], status: .init(text: "Size: \(24 + size * 8)"), update: { m in
-				modifying(m) { m in
-					size = (size + 1) % 2
-					m.items[28].icon = sizes[size]
-					m.items[28].status.text = "Size: \(24 + size * 8)"
-				}
-			}),
 			.init(icon: .toggle4(forts), status: .init(text: "Forts: \(forts)"), update: { m in
 				modifying(m) { m in
 					forts.toggle4()
@@ -132,6 +123,7 @@ extension HQNodes {
 					m.items[30].status.text = "Sea: \(sea)"
 				}
 			}),
+			.space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 
@@ -147,7 +139,6 @@ extension HQNodes {
 					units: units,
 					terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
 					fortLevel: Int(forts),
-					size: 24 + size * 8,
 					seed: seed
 				).makeSim())
 				core.save()

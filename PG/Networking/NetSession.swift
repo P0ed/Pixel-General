@@ -176,7 +176,6 @@ final class NetSession {
 		let sim = TacticalSim(
 			players: players,
 			units: units,
-			size: size,
 			seed: .random(in: 0 ..< 128)
 		)
 		started = true

@@ -6,7 +6,7 @@ public struct HQSim: ~Copyable {
 	public var army: Int
 
 	public init(
-		map: consuming Map<4, Terrain> = Map<4, Terrain>(size: 4, zero: .field),
+		map: consuming Map<4, Terrain> = Map<4, Terrain>(zero: .field),
 		player: Player,
 		units: [16 of Unit],
 		army: Int = 0

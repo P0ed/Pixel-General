@@ -5,9 +5,8 @@ public extension Map<32, Terrain> {
 	/// `terrain` is the dominant terrain of the generated map: hills and
 	/// mountains lift the height field, while forests raise humidity. Campaign
 	/// battles pass the contested province's strategic terrain here.
-	init(size: Int, seed: Int, players: Int = 4, terrain: Terrain = .field) {
+	init(seed: Int, players: Int = 4, terrain: Terrain = .field) {
 		self.init(
-			size: size,
 			seed: seed,
 			players: players,
 			terrain: [9 of Terrain](repeating: terrain)
@@ -24,8 +23,8 @@ public extension Map<32, Terrain> {
 	/// Campaign battles rotate their sample so the attacker is at 3 and the
 	/// defender at 4. Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
-	init(size: Int, seed: Int, players: Int = 4, terrain: [9 of Terrain]) {
-		self = Map(size: size, zero: .none)
+	init(seed: Int, players: Int = 4, terrain: [9 of Terrain]) {
+		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
 		let seed = Int32(bitPattern: UInt32(seed & Int(UInt32.max)))
@@ -683,8 +682,8 @@ public extension Map<32, Terrain> {
 		reached: (XY) -> Bool,
 		cost: (XY, XY) -> UInt16?
 	) -> [XY]? {
-		var dist = Map<32, UInt16>(size: size, zero: .max)
-		var prev = Map<32, UInt16>(size: size, zero: 0)
+		var dist = Map<32, UInt16>(zero: .max)
+		var prev = Map<32, UInt16>(zero: 0)
 		guard let goal = dijkstra(from: start, reached: reached, cost: cost, dist: &dist, prev: &prev)
 		else { return nil }
 
@@ -703,8 +702,8 @@ public extension Map<32, Terrain> {
 	/// Travel cost from `start` to every tile over `stepCost` terrain,
 	/// flooded to exhaustion; `.max` = unreachable.
 	private func distances(from start: XY) -> Map<32, UInt16> {
-		var dist = Map<32, UInt16>(size: size, zero: .max)
-		var prev = Map<32, UInt16>(size: size, zero: 0)
+		var dist = Map<32, UInt16>(zero: .max)
+		var prev = Map<32, UInt16>(zero: 0)
 		_ = dijkstra(
 			from: start,
 			reached: { _ in false },

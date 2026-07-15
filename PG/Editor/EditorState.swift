@@ -29,7 +29,7 @@ enum EditorEvent {
 extension EditorState {
 
 	init() {
-		map = Map(size: 32, zero: .field)
+		map = Map(zero: .field)
 	}
 
 	mutating func apply(_ input: Input) -> InputReaction<EditorAction, EditorEvent> {
@@ -146,7 +146,7 @@ private extension EditorState {
 	}
 
 	mutating func randomizeMap(into events: inout [EditorEvent]) {
-		map = Map(size: map.size, seed: Int.random(in: 0 ... .max))
+		map = Map(seed: Int.random(in: 0 ... .max))
 		events.append(.redraw)
 	}
 
