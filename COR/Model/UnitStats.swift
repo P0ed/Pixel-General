@@ -75,6 +75,37 @@ public extension UnitStats {
 		groundDef: 5,
 		airDef: 4
 	)
+	@safe nonisolated(unsafe) static let cargo = UnitStats(
+		type: .art,
+		tier: 1,
+		mov: 6,
+		rng: 3,
+		ini: 1,
+		groundDef: 6,
+		airDef: 3
+	)
+	@safe nonisolated(unsafe) static let destroyer = UnitStats(
+		type: .cruiser,
+		tier: 2,
+		mov: 7,
+		rng: 2,
+		ini: 9,
+		softAtk: 10,
+		hardAtk: 14,
+		groundDef: 12,
+		airDef: 9
+	)
+	@safe nonisolated(unsafe) static let cruiser = UnitStats(
+		type: .cruiser,
+		tier: 2,
+		mov: 6,
+		rng: 4,
+		ini: 8,
+		softAtk: 12,
+		hardAtk: 16,
+		groundDef: 16,
+		airDef: 8
+	)
 }
 
 public extension UnitStats {
@@ -90,6 +121,9 @@ public extension UnitStats {
 		case .regular: .regular
 		case .engineer: .engineer
 		case .art155: .art155
+		case .cargo: .cargo
+		case .destroyer: .destroyer
+		case .cruiser: .cruiser
 
 		// Allies
 		case .ranger: .ranger

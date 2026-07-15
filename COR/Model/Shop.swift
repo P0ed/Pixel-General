@@ -41,6 +41,7 @@ extension Unit {
 			 .lightWheel, .lightTrack, .heavyTrack: .armor
 		case .aa: .aa
 		case .heli, .fighter, .cas: .air
+		case .cargo, .cruiser: .navy
 		}
 	}
 }

@@ -229,4 +229,16 @@ extension Shop {
 		case .none: nil
 		}
 	}
+
+	var nav1: Unit? {
+		Unit(model: .cargo, country: country)
+	}
+
+	var nav2: Unit? {
+		Unit(model: .destroyer, country: country)
+	}
+
+	var nav3: Unit? {
+		Unit(model: .cruiser, country: country)
+	}
 }

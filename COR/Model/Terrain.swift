@@ -68,20 +68,9 @@ public extension Terrain {
 		}
 	}
 
-	var isRiver: Bool {
-		switch self {
-		case .river: true
-		default: false
-		}
-	}
-
-	var isSea: Bool {
-		self == .sea
-	}
-
-	var isWater: Bool {
-		isRiver || isSea
-	}
+	var isRiver: Bool { self == .river }
+	var isSea: Bool { self == .sea }
+	var isWater: Bool { isRiver || isSea }
 
 	var isHighground: Bool {
 		switch self {
@@ -91,8 +80,8 @@ public extension Terrain {
 	}
 
 	func moveCost(_ stats: Unit) -> UInt8 {
-		switch stats.type {
-		case .inf, .aa, .art:
+		switch stats.type.moveType {
+		case .leg:
 			switch self {
 			case _ where hasRoad: 1
 			case .field, .fort: 1
@@ -102,7 +91,7 @@ public extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .supply, .wheelArt, .wheelAA, .lightWheel:
+		case .wheel:
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 2
@@ -111,7 +100,7 @@ public extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .trackArt, .trackAA, .lightTrack, .heavyTrack:
+		case .track:
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 1
@@ -120,8 +109,10 @@ public extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .heli, .fighter, .cas:
+		case .air:
 			self.isNoFlyZone ? 0x10 : 1
+		case .naval:
+			self == .sea ? 1 : 0x10
 		}
 	}
 
@@ -136,11 +127,8 @@ public extension Terrain {
 	}
 
 	func closeCombat(_ type: UnitType) -> Int8 {
-		let penalty: Int8 = switch type {
-		case .lightWheel, .lightTrack, .wheelArt, .wheelAA, .trackArt, .trackAA: -1
-		case .heavyTrack: -2
-		default: 0
-		}
+		guard type.isHard else { return 0 }
+		let penalty: Int8 = type == .heavyTrack ? -2 : -1
 		return switch self {
 		case .hill, .airfield: penalty * 1
 		case .forest, .villageE, .villageN, .villageW, .villageS: penalty * 2
