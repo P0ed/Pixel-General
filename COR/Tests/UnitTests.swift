@@ -38,6 +38,23 @@ struct UnitTests {
 		}
 	}
 
+	@Test func allArmedUnitsDeclareNavalAttack() {
+		var missing: [UnitModel] = []
+		for raw in 0 ..< 256 {
+			guard let model = UnitModel(rawValue: UInt8(raw)) else { continue }
+			let stats = UnitStats.table[raw]
+			if stats.softAtk > 0 || stats.hardAtk > 0, stats.navAtk == 0 {
+				missing.append(model)
+			}
+		}
+		#expect(missing.isEmpty, "Armed units missing navAtk: \(missing)")
+
+		let cruiser = Unit(model: .cruiser, country: .ger)
+		#expect(Unit(model: .regular, country: .usa).atk(cruiser) > 0)
+		#expect(Unit(model: .f35, country: .usa).atk(cruiser) > 0)
+		#expect(Unit(model: .patriot, country: .usa).atk(cruiser) == 0)
+	}
+
 	@Test func campaignAuxScalesWithFactories() {
 		let none: [Unit] = .aux(.ger, army: 0, armor: 0, air: 0, aa: 0)
 		let some: [Unit] = .aux(.ger, army: 2, armor: 2, air: 1, aa: 1)

@@ -35,7 +35,8 @@ public extension TacticalSim {
 		players: [Player],
 		cities: [(XY, Country)],
 		units: [Unit],
-		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
+		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF),
+		navalCenters: [Team: XY] = [:]
 	) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
@@ -82,6 +83,11 @@ public extension TacticalSim {
 			let u = self.units[i]
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { continue }
+			if u.type.isNaval, let center = navalCenters[u.country.team],
+			   let xy = navalPlacement(for: u, near: center) {
+				place(i.uid, at: xy)
+				continue
+			}
 
 			var k = allocatedUnits[player]
 			while k < placements[player].count, !canDeploy(u, at: placements[player][k]) {
@@ -109,8 +115,31 @@ public extension TacticalSim {
 	}
 
 	private func canDeploy(_ u: Unit, at xy: XY) -> Bool {
-		map.contains(xy) && unitsMap[xy] == .none
-			&& (u.isAir || !map[xy].isSea) && !map[xy].isRiver
+		guard map.contains(xy), unitsMap[xy] == .none else { return false }
+		return u.type.isNaval
+			? map[xy].isSea && !hasAdjacentShip(at: xy)
+			: u.isAir ? !map[xy].isNoFlyZone : !map[xy].isSea && !map[xy].isRiver
+	}
+
+	private func navalPlacement(for unit: Unit, near center: XY) -> XY? {
+		var result: XY?
+		var bestDistance = Int.max
+		for xy in map.indices where canDeploy(unit, at: xy) {
+			let distance = xy.manhattanDistance(to: center)
+			if distance < bestDistance {
+				result = xy
+				bestDistance = distance
+			}
+		}
+		return result
+	}
+
+	private func hasAdjacentShip(at xy: XY) -> Bool {
+		xy.n4.contains { p in
+			guard map.contains(p) else { return false }
+			let uid = unitsMap[p]
+			return uid != .none && units[uid].type.isNaval
+		}
 	}
 
 	subscript(_ xy: XY) -> Unit? {

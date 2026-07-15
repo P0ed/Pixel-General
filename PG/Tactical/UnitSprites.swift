@@ -76,6 +76,11 @@ extension Unit {
 		case .orlan: .fixedWing
 		case .f16, .f35: .F_16
 		case .gripen, .mig29, .su57, .su25, .su27: .F_64
+
+		// Naval
+		case .cargo: .cargo
+		case .destroyer: .destroyer
+		case .cruiser: .cruiser
 		}
 	}
 }

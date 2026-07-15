@@ -112,15 +112,15 @@ extension HQNodes {
 			.init(icon: .toggle4(forts), status: .init(text: "Forts: \(forts)"), update: { m in
 				modifying(m) { m in
 					forts.toggle4()
-					m.items[29].icon = .toggle4(forts)
-					m.items[29].status.text = "Forts: \(forts)"
+					m.items[28].icon = .toggle4(forts)
+					m.items[28].status.text = "Forts: \(forts)"
 				}
 			}),
 			.init(icon: .toggle4(sea), status: .init(text: "Sea: \(sea)"), update: { m in
 				modifying(m) { m in
 					sea.toggle4()
-					m.items[30].icon = .toggle4(sea)
-					m.items[30].status.text = "Sea: \(sea)"
+					m.items[29].icon = .toggle4(sea)
+					m.items[29].status.text = "Sea: \(sea)"
 				}
 			}),
 			.space,

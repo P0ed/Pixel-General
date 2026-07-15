@@ -34,9 +34,77 @@ public extension TacticalSim {
 			players: players,
 			cities: cities,
 			units: units,
-			buildingsMask: buildingsMask
+			buildingsMask: buildingsMask,
+			navalCenters: Self.navalCenters(
+				players: players,
+				terrain: terrain,
+				cities: cities
+			)
 		)
 		self.objective = objective
+	}
+
+	/// Assign each participating team a distinct strategic sea cell near the
+	/// center of mass of its cities, which are also the anchors for its land
+	/// deployment. The small exhaustive matching avoids player-order bias when
+	/// multiple teams prefer the same sea cell. Returned points are tactical-map
+	/// cell centers.
+	static func navalCenters(
+		players: [Player],
+		terrain: [9 of Terrain],
+		cities: [(XY, Country)]
+	) -> [Team: XY] {
+		var teams: [Team] = []
+		for player in players where player.alive && player.country.team != .none {
+			let team = player.country.team
+			if !teams.contains(team) { teams.append(team) }
+		}
+		let sea = terrain.indices.filter { terrain[$0].isSea }
+		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
+
+		func strategicCenter(_ index: Int) -> XY {
+			let column = index % 3
+			let rowFromSouth = 2 - index / 3
+			return XY(
+				(column * 2 + 1) * 32 / 6,
+				(rowFromSouth * 2 + 1) * 32 / 6
+			)
+		}
+
+		let teamCenters = teams.map { team in
+			let anchors = cities.compactMap { xy, country in
+				country.team == team ? xy : nil
+			}
+			guard !anchors.isEmpty else { return XY(16, 16) }
+			return XY(
+				anchors.reduce(0) { $0 + $1.x } / anchors.count,
+				anchors.reduce(0) { $0 + $1.y } / anchors.count
+			)
+		}
+
+		let assignmentCount = min(teams.count, sea.count)
+		var bestCost = Int.max
+		var best: [Int] = []
+		func match(_ teamIndex: Int, _ selected: [Int], _ cost: Int) {
+			guard teamIndex < assignmentCount else {
+				if cost < bestCost {
+					bestCost = cost
+					best = selected
+				}
+				return
+			}
+			for index in sea where !selected.contains(index) {
+				let nextCost = cost
+					+ strategicCenter(index).manhattanDistance(to: teamCenters[teamIndex])
+				guard nextCost < bestCost else { continue }
+				match(teamIndex + 1, selected + [index], nextCost)
+			}
+		}
+		match(0, [], 0)
+
+		return Dictionary(uniqueKeysWithValues: zip(teams, best).map { team, index in
+			(team, strategicCenter(index))
+		})
 	}
 
 	/// Compatibility factory for standalone battles with one dominant terrain.

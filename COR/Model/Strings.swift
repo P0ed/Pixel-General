@@ -14,6 +14,7 @@ public extension Unit {
 				add("SA: \(softAtk)")
 				add("HA: \(hardAtk)")
 				add("AA: \(airAtk)")
+				add("NA: \(navAtk)")
 				add("GD: \(groundDef)")
 				add("AD: \(airDef)")
 				add("IN: \(ini)")
@@ -139,6 +140,11 @@ public extension Unit {
 		case .su57: "Su-57"
 		case .su25: "Su-25"
 		case .su27: "Su-27"
+
+		// Naval
+		case .cargo: "Transport"
+		case .destroyer: "Destroyer"
+		case .cruiser: "Cruiser"
 		}
 	}
 }

@@ -31,8 +31,6 @@ extension Shop {
 
 extension Unit {
 
-	/// The factory type that unlocks this platform in the campaign shop;
-	/// `nil` for supply, which is always available.
 	var factory: BuildingType? {
 		switch type {
 		case .supply: nil
@@ -41,6 +39,7 @@ extension Unit {
 			 .lightWheel, .lightTrack, .heavyTrack: .armor
 		case .aa: .aa
 		case .heli, .fighter, .cas: .air
+		case .cargo, .destroyer, .cruiser: .navy
 		}
 	}
 }
