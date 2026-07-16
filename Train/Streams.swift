@@ -157,6 +157,22 @@ final class Batcher {
 			h0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 			c0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 		}
+
+		/// Clears only the gating fields so a reused buffer reads as a fresh
+		/// window: zero weights + `epi == -1` exclude every stale row from the
+		/// losses/accuracy, and `samples` recounts. planes/globals/masks/labels
+		/// and h0/c0/h0r/c0r are fully overwritten by the lane loop, so they
+		/// need no reset (see this struct's doc comment).
+		mutating func reset() {
+			samples = 0
+			for i in kindW.indices {
+				kindW[i] = 0
+				actorW[i] = 0
+				targetW[i] = 0
+				slotW[i] = 0
+				epi[i] = -1
+			}
+		}
 	}
 
 	init(files: [URL], b: Int, t: Int, seed: UInt64) {
@@ -205,17 +221,7 @@ final class Batcher {
 
 	func window() -> Window {
 		let planeCount = SimObservation.planeSize * SimObservation.planeCount
-		// Reset only what correctness needs (see `Window`'s doc): the weights
-		// and `epi` gate everything else; h0/c0/h0r/c0r are fully rewritten by
-		// the lane loop below.
-		buf.samples = 0
-		for i in 0 ..< n {
-			buf.kindW[i] = 0
-			buf.actorW[i] = 0
-			buf.targetW[i] = 0
-			buf.slotW[i] = 0
-			buf.epi[i] = -1
-		}
+		buf.reset()
 
 		for lane in 0 ..< b {
 			if lanes[lane].stream == nil {

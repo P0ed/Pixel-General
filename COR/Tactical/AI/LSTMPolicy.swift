@@ -104,12 +104,14 @@ public struct LSTMPolicy {
 	/// Runs the recurrent trunk on one observation, updating `h`/`c` and
 	/// `lastValue`; returns the per-tile trunk features `[1024, trunk]`.
 	mutating func step(_ obs: SimObservation) -> [Float] {
-		// Dilations 1, 2, 4, 8, 1: 33×33 receptive field, dense finish.
-		var t = relu(conv3x3(obs.planes, channels: SimObservation.planeCount, dilation: 1, "conv1"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 2, "conv2"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 4, "conv3"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 8, "conv4"))
-		t = relu(conv3x3(t, channels: LSTMWeights.trunk, dilation: 1, "conv5"))
+		// Dilated conv trunk (see `LSTMWeights.convs`): 33×33 receptive field,
+		// dense finish. conv1 ingests the raw planes; conv2… are trunk→trunk.
+		var t = obs.planes
+		var channels = SimObservation.planeCount
+		for (name, d) in LSTMWeights.convs {
+			t = relu(conv3x3(t, channels: channels, dilation: d, name))
+			channels = LSTMWeights.trunk
+		}
 
 		// Two-scale mean pool over the 32×32 grid: full grid ⊕ the four 16×16
 		// quadrants, order q00 q01 q10 q11 ((yHalf, xHalf) row-major) — must
@@ -120,7 +122,7 @@ public struct LSTMPolicy {
 		let C = LSTMWeights.trunk
 		let side = SimObservation.side
 		let half = side / 2
-		var pooled = [Float](repeating: 0, count: 5 * C)
+		var pooled = [Float](repeating: 0, count: LSTMWeights.poolRegions * C)
 		for y in 0 ..< side {
 			for x in 0 ..< side {
 				let tile = y * side + x
@@ -133,7 +135,7 @@ public struct LSTMPolicy {
 			}
 		}
 		for i in 0 ..< C { pooled[i] /= Float(SimObservation.planeSize) }
-		for i in C ..< 5 * C { pooled[i] /= Float(half * half) }
+		for i in C ..< LSTMWeights.poolRegions * C { pooled[i] /= Float(half * half) }
 
 		let x = relu(fc(pooled + obs.globals, "fc1"))
 

@@ -28,21 +28,35 @@ public struct LSTMWeights: Sendable {
 	public static let fused = trunk + proj	// per-tile concat [trunk ⊕ proj]
 	public static let cond = hidden + trunk	// conditioned fc input [h ⊕ trunk[actor]]
 
+	/// Conv trunk schedule: name → dilation rate. conv1 ingests the raw planes
+	/// (planeCount→trunk); conv2…conv5 are trunk→trunk. Both `Net.encode` and
+	/// `LSTMPolicy.step` iterate this, so the ladder (1, 2, 4, 8, then a dense
+	/// finish — a 33×33 receptive field) can't drift across the parity boundary.
+	public static let convs: [(name: String, dilation: Int)] = [
+		("conv1", 1), ("conv2", 2), ("conv3", 4), ("conv4", 8), ("conv5", 1),
+	]
+
+	/// Trunk mean-pool regions fed to fc1: the full grid ⊕ the four 16×16
+	/// quadrants. fc1's input width is `poolRegions * trunk + globalCount`;
+	/// `Net.encode`, `LSTMPolicy.step`, and `spec`'s fc1.w all size from these.
+	public static let quadrants = 4
+	public static let poolRegions = 1 + quadrants	// full grid + quadrants
+
 	public private(set) var values: [String: [Float]] = [:]
 
 	public subscript(name: String) -> [Float] { values[name] ?? [] }
 
 	/// The full tensor catalog: name → shape. Order is the file order.
-	/// conv2…conv4 run dilated (2, 4, 8) and conv5 dense — same 3×3 shapes;
-	/// fc1 takes the full-grid mean pool ⊕ the four quadrant mean pools
-	/// (5·trunk) ⊕ globals.
+	/// The conv rows follow `convs` (dilations 2, 4, 8 then a dense finish) —
+	/// same 3×3 shapes; fc1 takes the full-grid mean pool ⊕ the four quadrant
+	/// mean pools (`poolRegions`·trunk) ⊕ globals.
 	public static let spec: [(name: String, shape: [Int])] = [
 		("conv1.w", [3, 3, SimObservation.planeCount, trunk]), ("conv1.b", [trunk]),
 		("conv2.w", [3, 3, trunk, trunk]), ("conv2.b", [trunk]),
 		("conv3.w", [3, 3, trunk, trunk]), ("conv3.b", [trunk]),
 		("conv4.w", [3, 3, trunk, trunk]), ("conv4.b", [trunk]),
 		("conv5.w", [3, 3, trunk, trunk]), ("conv5.b", [trunk]),
-		("fc1.w", [5 * trunk + SimObservation.globalCount, hidden]), ("fc1.b", [hidden]),
+		("fc1.w", [poolRegions * trunk + SimObservation.globalCount, hidden]), ("fc1.b", [hidden]),
 		("lstm.wx", [hidden, 4 * hidden]),
 		("lstm.wh", [hidden, 4 * hidden]),
 		("lstm.b", [4 * hidden]),

@@ -65,7 +65,7 @@ enum Net {
 		planes: MPSGraphTensor, globals: MPSGraphTensor, n: Int
 	) -> (trunk: MPSGraphTensor, x: MPSGraphTensor) {
 		var t = planes
-		for (name, d) in [("conv1", 1), ("conv2", 2), ("conv3", 4), ("conv4", 8), ("conv5", 1)] {
+		for (name, d) in LSTMWeights.convs {
 			let desc = MPSGraphConvolution2DOpDescriptor(
 				strideInX: 1, strideInY: 1, dilationRateInX: d, dilationRateInY: d,
 				groups: 1, paddingStyle: .TF_SAME, dataLayout: .NHWC, weightsLayout: .HWIO
@@ -85,7 +85,7 @@ enum Net {
 		let half = NSNumber(value: SimObservation.side / 2)
 		let quads = g.reshape(
 			g.mean(of: g.reshape(t, shape: [NSNumber(value: n), 2, half, 2, half, C], name: nil), axes: [2, 4], name: nil),
-			shape: [NSNumber(value: n), NSNumber(value: 4 * LSTMWeights.trunk)], name: nil
+			shape: [NSNumber(value: n), NSNumber(value: LSTMWeights.quadrants * LSTMWeights.trunk)], name: nil
 		)
 		let x = g.reLU(with: fc(g, v, g.concatTensors([pooled, quads, globals], dimension: 1, name: nil), "fc1"), name: nil)
 		return (trunk, x)
