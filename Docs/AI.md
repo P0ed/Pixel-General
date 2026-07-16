@@ -349,7 +349,11 @@ and clamped ±5; value target = the λ-return; the KL branch is teacher-forced
 on the same actor labels as the policy; entropy is logged even at `--ent 0`.
 Value warmup runs a second value-only gradient/Adam path (moment variables
 shared by name, own grad clip) so random-init V cannot shift the shared trunk
-under the policy heads. Smoke recipe: 3 iters × 4 episodes, epochs 2, vwarm 1
+under the policy heads. Adam bias correction is per path (separate step
+counters — warmup windows never advance the live path's, or the first policy
+updates hit zero moments under a matured correction, ~3–5× too large), and
+the per-window lr is scaled by the window's valid-sample fraction so sparse
+tail windows (the longest episodes' remainders) cannot out-vote full ones. Smoke recipe: 3 iters × 4 episodes, epochs 2, vwarm 1
 — `kl` must log 0.0 *exactly* during warmup, no NaN, RSS bounded.
 
 **Verdict (runs ppo1–ppo3, 2026-07-14/15)**: PPO broke the REINFORCE ceiling

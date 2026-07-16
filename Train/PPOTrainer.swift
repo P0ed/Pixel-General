@@ -104,7 +104,14 @@ enum PPOTrainer {
 
 		let graph = try PPOGraph(weights: weights, ref: ref, b: b, t: t, cfg: cfg)
 		var battleIndex = seed
-		var globalStep = 0
+		// Adam bias correction is per update path: warmup windows never touch
+		// the actor/trunk moments, so the live path must start its correction
+		// at t = 1 — under one shared counter the first policy updates land on
+		// zero moments with a matured correction factor, ~3–5× too large. The
+		// value head's moments are older than policyStep claims; the stale-low
+		// correction only damps its first live steps, which is benign.
+		var valueStep = 0
+		var policyStep = 0
 		var schedule = RLTrainer.Curriculum(level: curriculum, anneal: anneal)
 		var csv = "iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
@@ -159,13 +166,19 @@ enum PPOTrainer {
 				while true {
 					let w = batcher.window()
 					guard w.samples > 0 else { break }
-					guard k < cache.count, w.epi == cache[k].epi else {
+					guard k < cache.count, w.epi == cache[k].epi, w.samples == cache[k].samples else {
 						throw TrainError.failed("PPO window \(k) does not match the read pass")
 					}
-					globalStep += 1
+					if warming { valueStep += 1 } else { policyStep += 1 }
+					// The loss is mean-per-valid-sample and Adam normalizes
+					// gradient scale away, so every window would otherwise step
+					// equally hard — scaling lr by the fill keeps a near-empty
+					// tail window (the longest episodes' remainders) from
+					// voting like a full one.
+					let fill = Float(w.samples) / Float(b * t)
 					let m = graph.step(
 						w, oldLogp: cache[k].oldLogp, adv: adv[k], ret: ret[k],
-						lr: Net.correctedLR(lr, step: globalStep),
+						lr: Net.correctedLR(lr, step: warming ? valueStep : policyStep) * fill,
 						polCoef: warming ? 0 : 1, valueOnly: warming
 					)
 					batcher.carry(h: m.h, c: m.c, hr: m.hr, cr: m.cr)
