@@ -30,9 +30,6 @@
 
 ## AI
 
-- Rewrite `Plane` to include naval units.
-- - Is it better to encode traits and properties instead of unitType (like isNaval, isHard, isAA, isAir, etc.)? 
-- When building survive scenario, give attacker 2x army advantage (base + aux vs base).
 - Strengthen the neural opponent toward >60% vs the heuristic, then self-play for
   emergent behavior. Bundled: bc6 ckpt-14000 — pure BC at 16× scale (3840-battle
   mixed corpus, 16000 steps), 37.4% (311W) in the paired 832-battle mixed arena vs

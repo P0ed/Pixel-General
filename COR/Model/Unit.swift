@@ -174,14 +174,14 @@ public extension Unit {
 	}
 
 	func atk(_ dst: Unit) -> UInt8 {
-		switch dst.type {
-		case .inf, .supply, .art, .aa, .wheelAA, .wheelArt:
+		switch dst.type.targetType {
+		case .soft:
 			softAtk > 0 ? softAtk + lvl : 0
-		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack:
+		case .hard:
 			hardAtk > 0 ? hardAtk + (isArmor ? lvl : (lvl / 2)) : 0
-		case .heli, .fighter, .cas:
+		case .air:
 			airAtk > 0 ? airAtk + (isAA ? lvl : (lvl / 2)) : 0
-		case .cargo, .destroyer, .cruiser:
+		case .naval:
 			navAtk > 0 ? navAtk + (type.isNaval ? lvl : (lvl / 2)) : 0
 		}
 	}
@@ -274,6 +274,10 @@ extension Unit {
 	case leg, wheel, track, air, naval
 }
 
+@frozen public enum TargetType: UInt8, Hashable {
+	case soft, hard, air, naval
+}
+
 public extension UnitType {
 
 	var moveType: MoveType {
@@ -298,6 +302,15 @@ public extension UnitType {
 		}
 	}
 
+	var targetType: TargetType {
+		switch self {
+		case .inf, .supply, .art, .aa, .wheelAA, .wheelArt: .soft
+		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack: .hard
+		case .heli, .fighter, .cas: .air
+		case .cargo, .destroyer, .cruiser: .naval
+		}
+	}
+
 	var isArt: Bool {
 		switch self {
 		case .art, .wheelArt, .trackArt: true;
@@ -308,13 +321,6 @@ public extension UnitType {
 	var isAA: Bool {
 		switch self {
 		case .aa, .wheelAA, .trackAA, .fighter, .destroyer: true;
-		default: false
-		}
-	}
-
-	var isHard: Bool {
-		switch self {
-		case .trackArt, .trackAA, .lightWheel, .lightTrack, .heavyTrack: true
 		default: false
 		}
 	}

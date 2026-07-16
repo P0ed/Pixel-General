@@ -8,7 +8,7 @@ import MetalPerformanceShadersGraph
 /// graph the trainer optimizes is the same code `Train parity` proves
 /// equivalent to the pure-Swift `LSTMPolicy`.
 ///
-/// Everything is batched over a leading `n`: observations `[n, 32, 32, 53]`,
+/// Everything is batched over a leading `n`: observations `[n, 32, 32, P]`,
 /// hidden states `[batch, H]`, per-tile trunk `[n, 1024, C]`. The 1×1 head
 /// convolutions run as (leading-dim broadcast) matmuls over the flattened
 /// trunk — bit-identical math, simpler graph.

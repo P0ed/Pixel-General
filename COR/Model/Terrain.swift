@@ -127,7 +127,7 @@ public extension Terrain {
 	}
 
 	func closeCombat(_ type: UnitType) -> Int8 {
-		guard type.isHard else { return 0 }
+		guard type.targetType == .hard else { return 0 }
 		let penalty: Int8 = type == .heavyTrack ? -2 : -1
 		return switch self {
 		case .hill, .airfield: penalty * 1

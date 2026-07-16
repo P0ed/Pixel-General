@@ -13,7 +13,10 @@ struct Replay {
 	/// `makeSim()` composes the full unit list itself.
 	/// v4: tactical maps have a compile-time 32×32 size, so the replay header
 	/// no longer stores a runtime map size.
-	static let version: UInt16 = 4
+	/// v5: survival attackers field `.base + .aux` (2× army) — a 1:1 attacker
+	/// rarely cracks the fort ring, so the corpus under-sampled successful
+	/// assaults.
+	static let version: UInt16 = 5
 	static let magic: UInt32 = 0x50475250 // "PGRP"
 
 	struct Seat {
@@ -36,8 +39,10 @@ extension Replay {
 
 	/// Rebuilds the battle's initial state, identical to what the generator saw.
 	/// The factory places exactly the units it is given (app callers compose
-	/// campaign rosters + aux themselves), so every seat's `.base` roster is
-	/// composed here; training battles carry no aux.
+	/// campaign rosters + aux themselves), so every seat's roster is composed
+	/// here: `.base` per seat, plus `.aux` for the attacking side of a survival
+	/// battle (2× army — mirrors campaign assaults, where the attacker brings
+	/// an army roster and aux against the defender's core).
 	func makeSim() -> TacticalSim {
 		TacticalSim(
 			players: seats.map { s in
@@ -49,7 +54,13 @@ extension Replay {
 					tier: s.tier
 				)
 			},
-			units: seats.flatMap { s -> [COR.Unit] in .base(s.country, lvl: s.baseLevel) },
+			units: seats.flatMap { s -> [COR.Unit] in
+				if case let .survive(team, _) = objective, s.country.team != team {
+					.base(s.country, lvl: s.baseLevel) + .aux(s.country, lvl: s.baseLevel)
+				} else {
+					.base(s.country, lvl: s.baseLevel)
+				}
+			},
 			seed: Int(seed),
 			objective: objective,
 			forts: Int(forts)

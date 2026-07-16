@@ -8,7 +8,7 @@
 /// screen has.
 public struct SimObservation {
 	public static let side = 32
-	public static let planeCount = 53
+	public static let planeCount = 49
 	public static let globalCount = 12
 	public static let planeSize = side * side
 
@@ -19,61 +19,79 @@ public struct SimObservation {
 
 /// Plane indices — the tensor contract. Append-only: reordering or repurposing
 /// an index invalidates every trained weight file.
+///
+/// Units are encoded by *mechanic properties*, not a `UnitType` one-hot: the
+/// rules never branch on the type directly — they read the target class
+/// (`Unit.atk`), the move type (terrain costs), and the art/AA families
+/// (attack-after-move, level bonuses, support auras). Property planes hand the
+/// net exactly those features and absorb future unit types without another
+/// contract break.
 public enum Plane {
 	public static let onMap = 0
 
 	// Terrain, one-hot by mechanic group.
 	public static let river = 1
-	public static let bridge = 2
-	public static let field = 3
-	public static let forest = 4
-	public static let hill = 5
-	public static let forestHill = 6
-	public static let mountain = 7
-	public static let city = 8
-	public static let airfield = 9
-	public static let village = 10
-	public static let road = 11
+	public static let sea = 2
+	public static let bridge = 3
+	public static let field = 4
+	public static let forest = 5
+	public static let hill = 6
+	public static let forestHill = 7
+	public static let mountain = 8
+	public static let city = 9
+	public static let fort = 10
+	public static let airfield = 11
+	public static let village = 12
+	public static let road = 13
 
-	public static let entrench = 12		// baseEntrenchment / 3
-	public static let income = 13		// income / 24
+	public static let entrench = 14		// baseEntrenchment / 3
+	public static let income = 15		// income / 24
 
-	public static let controlOwn = 14	// control == acting country
-	public static let controlTeam = 15	// control.team == acting team
-	public static let controlEnemy = 16
+	public static let controlOwn = 16	// control == acting country
+	public static let controlTeam = 17	// control.team == acting team
+	public static let controlEnemy = 18
 
-	public static let unitFriendly = 17	// own-team unit on tile
-	public static let unitEnemy = 18	// visible enemy-team unit on tile
+	public static let unitFriendly = 19	// own-team unit on tile
+	public static let unitEnemy = 20	// visible enemy-team unit on tile
 
 	// Unit scalars (drawn for any unit present on the tile).
-	public static let hp = 19
-	public static let ammo = 20
-	public static let ent = 21
-	public static let mp = 22
-	public static let ap = 23
-	public static let lvl = 24
+	public static let hp = 21
+	public static let ammo = 22
+	public static let ent = 23
+	public static let mp = 24
+	public static let ap = 25
+	public static let lvl = 26
 
-	public static let type0 = 25		// 14 `UnitType` one-hot planes: 25…38
+	// `TargetType` one-hot — which attack stat enemies use against the unit.
+	public static let classSoft = 27
+	public static let classHard = 28
+	public static let classAir = 29
+	public static let classNaval = 30
 
-	public static let transport = 39
-	public static let hasCargo = 40
-	public static let transportable = 41
+	// Ground move type; air/naval movement is implied by the class planes.
+	public static let moveLeg = 31
+	public static let moveWheel = 32
+	public static let moveTrack = 33
+
+	public static let isArt = 34		// art, wheelArt, trackArt
+	public static let isAA = 35			// aa, wheelAA, trackAA, fighter, destroyer
+
+	public static let transport = 36
+	public static let hasCargo = 37
+	public static let transportable = 38
 
 	// Model stats, normalized — generalizes across the `UnitStats` table.
-	public static let softAtk = 42
-	public static let hardAtk = 43
-	public static let airAtk = 44
-	public static let groundDef = 45
-	public static let airDef = 46
-	public static let mov = 47
-	public static let rng = 48
-	public static let ini = 49
+	public static let softAtk = 39
+	public static let hardAtk = 40
+	public static let airAtk = 41
+	public static let navAtk = 42
+	public static let groundDef = 43
+	public static let airDef = 44
+	public static let mov = 45
+	public static let rng = 46
+	public static let ini = 47
 
-	public static let visible = 50		// acting player's fog of war
-
-	// Appended terrain groups (previously folded into city / river).
-	public static let fort = 51
-	public static let sea = 52
+	public static let visible = 48		// acting player's fog of war
 }
 
 /// Global scalar indices, same append-only contract as `Plane`.
@@ -150,7 +168,21 @@ public extension TacticalSim {
 			put(xy, Plane.mp, Float(u.mp) / Float(u.maxMP))
 			put(xy, Plane.ap, Float(u.ap))
 			put(xy, Plane.lvl, Float(u.lvl) / 8)
-			put(xy, Plane.type0 + Int(u.type.rawValue), 1)
+
+			switch u.type.targetType {
+			case .soft: put(xy, Plane.classSoft, 1)
+			case .hard: put(xy, Plane.classHard, 1)
+			case .air: put(xy, Plane.classAir, 1)
+			case .naval: put(xy, Plane.classNaval, 1)
+			}
+			switch u.type.moveType {
+			case .leg: put(xy, Plane.moveLeg, 1)
+			case .wheel: put(xy, Plane.moveWheel, 1)
+			case .track: put(xy, Plane.moveTrack, 1)
+			case .air, .naval: break
+			}
+			if u.isArt { put(xy, Plane.isArt, 1) }
+			if u.isAA { put(xy, Plane.isAA, 1) }
 
 			if u[.transport] { put(xy, Plane.transport, 1) }
 			if cargo[i] != .none { put(xy, Plane.hasCargo, 1) }
@@ -159,6 +191,7 @@ public extension TacticalSim {
 			put(xy, Plane.softAtk, min(1, Float(u.softAtk) / 20))
 			put(xy, Plane.hardAtk, min(1, Float(u.hardAtk) / 20))
 			put(xy, Plane.airAtk, min(1, Float(u.airAtk) / 20))
+			put(xy, Plane.navAtk, min(1, Float(u.navAtk) / 20))
 			put(xy, Plane.groundDef, min(1, Float(u.groundDef) / 20))
 			put(xy, Plane.airDef, min(1, Float(u.airDef) / 20))
 			put(xy, Plane.mov, min(1, Float(u.mov) / 8))

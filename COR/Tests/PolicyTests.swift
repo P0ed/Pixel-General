@@ -75,6 +75,47 @@ struct PolicyTests {
 		#expect(friendly > 0)
 	}
 
+	/// Naval units encode through the property planes like everyone else:
+	/// exactly one target-class plane, no move plane (implied by class), and
+	/// the transport flag only for actual transports — the old `UnitType`
+	/// one-hot overflowed naval types into the transport/cargo flags.
+	@Test func observationEncodesNavalUnitsByProperties() {
+		let players = [
+			Player(country: .ger, type: .ai, prestige: .rich),
+			Player(country: .usa, type: .ai, prestige: .rich),
+		]
+		let sim = Scenario(
+			players: players,
+			units: .base(.ger) + .base(.usa),
+			terrain: Scenario.cornerTerrain(seaLevel: 2, seed: 7),
+			seed: 7
+		).makeSim()
+
+		let obs = sim.observation()
+		let c = SimObservation.planeCount
+		func plane(_ xy: XY, _ p: Int) -> Float { obs.planes[(xy.y * SimObservation.side + xy.x) * c + p] }
+
+		var naval = 0
+		sim.units.forEachAlive { i, u in
+			guard u.country == sim.player.country, !sim.offMap(unit: i.uid) else { return }
+			let xy = sim.position[i]
+
+			let classes = [Plane.classSoft, Plane.classHard, Plane.classAir, Plane.classNaval]
+			#expect(classes.map { plane(xy, $0) }.reduce(0, +) == 1, "\(u.model) has no single class")
+
+			guard u.type.isNaval else { return }
+			naval += 1
+			#expect(plane(xy, Plane.classNaval) == 1)
+			#expect(plane(xy, Plane.moveLeg) + plane(xy, Plane.moveWheel) + plane(xy, Plane.moveTrack) == 0)
+			#expect(plane(xy, Plane.transport) == (u[.transport] ? 1 : 0), "\(u.model) transport flag")
+			#expect(plane(xy, Plane.isAA) == (u.isAA ? 1 : 0), "\(u.model) AA flag")
+			#expect(plane(xy, Plane.navAtk) == min(1, Float(u.navAtk) / 20))
+		}
+		// The coastline grants a five-ship fleet: cruiser (no transport, no AA),
+		// destroyers (AA), cargo ships (transports) — all three shapes covered.
+		#expect(naval == 5)
+	}
+
 	// MARK: - Action space
 
 	/// Every action the heuristic AI emits must be representable, legal under

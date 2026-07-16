@@ -53,13 +53,22 @@ then end turn.
 ### `SimObservation` — `Encoding.swift`
 
 Everything the acting player may know, immediately before each of its actions, as
-32×32×**53** planes (HWC, index `(y*32 + x)*53 + plane`) plus **12** global scalars,
-all normalized to 0…1. Planes: on-map, terrain one-hot (13 mechanic groups; fort and
-sea appended after the fog plane, previously folded into city / river) +
+32×32×**49** planes (HWC, index `(y*32 + x)*49 + plane`) plus **12** global scalars,
+all normalized to 0…1. Planes: on-map, terrain one-hot (13 mechanic groups) +
 entrenchment/income, control (own / ally / enemy), unit presence and scalars (hp,
-ammo, entrenchment, mp, ap, level), `UnitType` one-hot (14), normalized model stats,
-vision. Globals: prestige, day, seat, tier, base level, unit/settlement counts,
-objective, deadline, map size.
+ammo, entrenchment, mp, ap, level), unit mechanic properties, normalized model
+stats (soft/hard/air/naval attack, defenses, mov, rng, ini), vision. Globals:
+prestige, day, seat, tier, base level, unit/settlement counts, objective,
+deadline, map size.
+
+Units carry **property planes, not a `UnitType` one-hot** — the rules never
+branch on the type directly, only on properties derived from it, so the tensor
+encodes those: `TargetType` one-hot (soft/hard/air/naval — which attack stat
+enemies use against the unit, the `Unit.atk` switch), ground move type
+(leg/wheel/track; air/naval movement is implied by the class), `isArt`, `isAA`,
+and the transport flags. This hands the net the features the rules actually
+read, and new unit types map onto existing planes instead of forcing another
+contract break.
 
 **Fog rule (load-bearing)**: enemy units are drawn iff `isVisible`; embarked cargo only
 as the transport's cargo flag. The policy sees exactly what a human sees.
@@ -83,10 +92,10 @@ the same sim-level `can*` predicates that guard the reducers (`canMove`, `canAtt
 `Docs/Architecture.md`), so a masked sample can never no-op — reducers silently
 ignoring illegal input is what makes "state mutated" a legality oracle in tests.
 
-### Network (~295k params, 35 tensors)
+### Network (~293k params, 35 tensors)
 
 ```
-obs 32×32×53 ── conv3×3 ReLU ×5 (same-pad, 53→48 then 48→48, dilations 1,2,4,8,1) ──► trunk 32×32×48
+obs 32×32×49 ── conv3×3 ReLU ×5 (same-pad, 49→48 then 48→48, dilations 1,2,4,8,1) ──► trunk 32×32×48
 trunk ── mean pools: full grid (48) ⊕ four 16×16 quadrants (4×48) ⊕ globals (12) ── fc 252→128 ReLU ── LSTM H=128 ──► h
 kind    h ── fc 128→7
 actor   per tile [trunk(48) ⊕ proj(h→16)] ── 1×1 64→16 ReLU ── 16→1
@@ -144,8 +153,12 @@ drift, and regeneration is cheap. Older versions are deliberately rejected: all
 existing corpora must be regenerated before BC or RL so demonstrations from different
 teachers or battle recipes cannot be mixed. v3 (same layout as v2) marks the factory
 contract change (`a25d286`): the factory places exactly the units it is given, so
-`makeSim()` composes every seat's `.base` roster itself (training battles carry no aux).
+`makeSim()` composes every seat's `.base` roster itself.
 v4 removes the runtime map-size byte because every tactical map is 32×32.
+v5 gives the attacking side of a survival battle `.base + .aux` (2× army,
+mirroring campaign assaults) — a 1:1 attacker rarely cracks the fort ring, so
+older corpora under-sampled successful assaults; arena numbers straddling v5
+(and the 49-plane property encoding, landed together) are not comparable.
 
 ## Training runs
 
