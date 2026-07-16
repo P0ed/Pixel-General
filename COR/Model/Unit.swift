@@ -65,6 +65,7 @@ public extension Unit {
 	var traits: Traits { stats.traits }
 
 	var isAir: Bool { type.isAir }
+	var isLand: Bool { !type.isAir && !type.isNaval }
 	var untouched: Bool { fullAP && fullMP }
 	var hasActions: Bool { canMove || canAttack }
 	var canMove: Bool { mp > 0 }

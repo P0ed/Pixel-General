@@ -8,7 +8,7 @@ extension TacticalSim {
 
 		return u.country == country
 		&& t.country == country
-		&& u.transportable
+		&& u.transportable || t.type == .cargo && u.isLand
 		&& t[.transport]
 		&& (!t.isAir || u[.elite])
 		&& u.canMove
