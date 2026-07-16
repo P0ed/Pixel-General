@@ -31,11 +31,13 @@
 ## AI
 
 - Strengthen the neural opponent toward >60% vs the heuristic, then self-play for
-  emergent behavior. Bundled: bc6 ckpt-14000 — pure BC at 16× scale (3840-battle
-  mixed corpus, 16000 steps), 37.4% (311W) in the paired 832-battle mixed arena vs
-  bc5 29.1%, bc4 25.4%, best PPO 26.2%; BC-scale gains per 4× still growing. Next:
-  32× BC — pure BC of a deterministic teacher caps near 50%, so >60% ultimately needs RL;
-  revisit PPO at even matchups (`--curriculum 0`) from a prior strong enough to sample wins.
+  emergent behavior. Bundled: bc8 final — pure BC at 64× scale (15360-battle mixed
+  corpus, 64000 steps) on the 49-plane/replay-v5/embark-fixed contract, 45.2% (376W)
+  in the paired 832-battle mixed arena, seat 0 alone 50.7% (first to beat the
+  heuristic); pre-break numbers (bc7 46.0% on 53 planes) are not comparable. Pure BC
+  of a deterministic teacher caps near 50%, so >60% needs RL: revisit PPO at even
+  matchups (`--curriculum 0`) from this prior, or DAgger to close the covariate-shift
+  gap, then self-play.
 
 ## Multiplayer
 
