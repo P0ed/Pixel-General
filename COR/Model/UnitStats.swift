@@ -83,7 +83,6 @@ public extension UnitStats {
 		type: .cargo,
 		tier: 1,
 		mov: 6,
-		rng: 3,
 		ini: 1,
 		groundDef: 6,
 		airDef: 3,

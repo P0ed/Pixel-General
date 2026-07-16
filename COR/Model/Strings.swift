@@ -19,6 +19,7 @@ public extension Unit {
 				add("AD: \(airDef)")
 				add("IN: \(ini)")
 				add("MV: \(mov)")
+				add("RN: \(rng)")
 				add("EN: \(entDef)")
 			}
 			status += skillsString
