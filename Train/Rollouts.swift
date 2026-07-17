@@ -3,11 +3,12 @@ import COR
 
 enum RolloutSuite: String, Sendable {
 	case fair
+	case classic
 	case mixed
 
 	static func parse(_ value: String) throws -> Self {
 		guard let suite = Self(rawValue: value) else {
-			throw TrainError.usage("--suite must be classic or mixed")
+			throw TrainError.usage("--suite must be fair, classic or mixed")
 		}
 		return suite
 	}

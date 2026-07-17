@@ -59,7 +59,7 @@ enum PPOTrainer {
 		var evalN = 96
 		var curriculum: Float = 1.0
 		var anneal: Float = 0.6
-		var suite: RolloutSuite = .mixed
+		var suite: RolloutSuite = .classic
 		var vwarm = 0
 		var lam: Float = 1
 		var cfg = Config()
