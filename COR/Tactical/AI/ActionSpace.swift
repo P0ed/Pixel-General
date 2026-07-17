@@ -197,7 +197,7 @@ public extension TacticalSim {
 	// MARK: - Actor predicates
 
 	private func hasMoveTarget(_ uid: UID) -> Bool {
-		moves(for: uid).hasMoves
+		hasMoves(for: uid)
 	}
 
 	private func hasAttackTarget(_ uid: UID) -> Bool {

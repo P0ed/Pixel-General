@@ -159,6 +159,38 @@ struct PolicyTests {
 		#expect(steps > 100)
 	}
 
+	/// The early-exit `hasMoves(for:)` (the `actionMasks()` fast path) must
+	/// agree with the full fill it duplicates, for every alive on-map unit
+	/// at every state a battle actually reaches — including boxed-in units,
+	/// fog edges, and transports. Any drift between the two loops in
+	/// `TacticalMove.swift` fails here.
+	@Test func hasMovesMatchesFullFill() {
+		for seed in [3, 5, 11] {
+			var sim = Self.makeSim(seed: seed)
+			var ai = AI.Plan()
+
+			var steps = 0
+			var checked = 0
+			while steps < 500, sim.aliveTeams.nonzeroBitCount > 1, sim.day <= 16 {
+				let uids = sim.units.compactMapAlive { i, _ in
+					sim.offMap(unit: i.uid) ? nil : i.uid
+				}
+				for uid in uids {
+					let fast = sim.hasMoves(for: uid)
+					let full = sim.moves(for: uid).hasMoves
+					if fast != full {
+						Issue.record("hasMoves(for:) \(fast) != full fill \(full) for unit \(uid.index) at step \(steps), seed \(seed)")
+						return
+					}
+					checked += 1
+				}
+				_ = sim.reduce(sim.run(ai: &ai))
+				steps += 1
+			}
+			#expect(checked > 1000)
+		}
+	}
+
 	// MARK: - Weights & policy
 
 	/// `PGW1` must round-trip bit-exactly and reject anything malformed —

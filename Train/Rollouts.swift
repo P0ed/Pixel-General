@@ -25,7 +25,7 @@ enum Rollouts {
 	static let tiers: [(UInt8, UInt8)] = [(3, 3), (2, 2), (3, 2), (2, 3)]
 
 	static let maxActions = 65_000
-	static let maxDays = 61
+	static let maxDays = 60
 
 	static func run(_ args: [String]) throws {
 		var n = 8

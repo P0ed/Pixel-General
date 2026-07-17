@@ -11,12 +11,8 @@ public struct Map<let size: Int, Element>: ~Copyable {
 	}
 
 	public subscript(xy: XY) -> Element {
-		_read {
-			if contains(xy) {
-				yield tiles[xy.y][xy.x]
-			} else {
-				yield zero
-			}
+		get {
+			contains(xy) ? tiles[xy.y][xy.x] : zero
 		}
 		_modify {
 			if contains(xy) {

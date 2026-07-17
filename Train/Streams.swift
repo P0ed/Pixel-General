@@ -90,6 +90,11 @@ final class Batcher {
 	let t: Int
 	var n: Int { b * t }
 
+	// Producer state (streams + the two content buffers): touched only by
+	// `buildNext()`. Consumer state (the carried recurrent states): touched
+	// only by `finalize`/`carry`. The two sets are disjoint stored
+	// properties so `drain` can run `buildNext()` on a background thread
+	// while the caller steps the GPU and carries.
 	private let files: [URL]
 	private var episodes: [(replay: Replay, seat: Int, scale: Float)] = []
 	private let onePass: Bool
@@ -97,16 +102,16 @@ final class Batcher {
 	private var order: [Int] = []
 	private var cursor = 0
 	private var lanes: [Lane]
-	private var buf: Window
+	private var bufA: Window
+	private var bufB: Window
+	private var useB = false
+	private var lastEnded: [Bool]
+	private var carryH, carryC, carryHr, carryCr: [Float]		// [b * hidden], lane-major
 
 	private struct Lane {
 		var stream: SampleStream?
 		var scale: Float = 1
 		var id: Int32 = -1
-		var h = [Float](repeating: 0, count: LSTMWeights.hidden)
-		var c = [Float](repeating: 0, count: LSTMWeights.hidden)
-		var hr = [Float](repeating: 0, count: LSTMWeights.hidden)
-		var cr = [Float](repeating: 0, count: LSTMWeights.hidden)
 	}
 
 	/// One `Batcher` owns a single `Window` buffer that `window()` mutates and
@@ -133,6 +138,12 @@ final class Batcher {
 		/// reference branch (which must run its *own* h/c under its own
 		/// weights); zeros and unused everywhere else.
 		var h0r, c0r: [Float]
+		/// Lane lifecycle, decided at build time: `restarted` = the lane
+		/// began this window without a carried-over stream (feed zero h0);
+		/// `ended` = no live stream continues past this window (the GPU's
+		/// final h/c for the lane must not be carried).
+		var restarted: [Bool]
+		var ended: [Bool]
 		var samples = 0
 
 		init(b: Int, t: Int) {
@@ -156,6 +167,8 @@ final class Batcher {
 			epi = [Int32](repeating: -1, count: n)
 			h0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 			c0r = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+			restarted = [Bool](repeating: false, count: b)
+			ended = [Bool](repeating: false, count: b)
 		}
 
 		/// Clears only the gating fields so a reused buffer reads as a fresh
@@ -172,6 +185,10 @@ final class Batcher {
 				slotW[i] = 0
 				epi[i] = -1
 			}
+			for lane in restarted.indices {
+				restarted[lane] = false
+				ended[lane] = false
+			}
 		}
 	}
 
@@ -182,7 +199,13 @@ final class Batcher {
 		onePass = false
 		rng = D20(seed: seed)
 		lanes = [Lane](repeating: Lane(), count: b)
-		buf = Window(b: b, t: t)
+		bufA = Window(b: b, t: t)
+		bufB = Window(b: b, t: t)
+		lastEnded = [Bool](repeating: false, count: b)
+		carryH = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryC = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryHr = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryCr = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 	}
 
 	init(episodes: [(replay: Replay, seat: Int, scale: Float)], b: Int, t: Int) {
@@ -193,7 +216,13 @@ final class Batcher {
 		onePass = true
 		rng = D20(seed: 0)
 		lanes = [Lane](repeating: Lane(), count: b)
-		buf = Window(b: b, t: t)
+		bufA = Window(b: b, t: t)
+		bufB = Window(b: b, t: t)
+		lastEnded = [Bool](repeating: false, count: b)
+		carryH = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryC = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryHr = [Float](repeating: 0, count: b * LSTMWeights.hidden)
+		carryCr = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 	}
 
 	/// BC: streams are battle-seat pairs, shuffled anew each epoch.
@@ -219,31 +248,59 @@ final class Batcher {
 		return (SampleStream(replay: replay, seat: id % 2), 1, Int32(id))
 	}
 
+	/// The serial API (BC/RL): build + finalize in one call, carry keyed by
+	/// the flags of the window just built.
 	func window() -> Window {
+		var w = buildNext()
+		finalize(&w)
+		return w
+	}
+
+	/// Builds the next window's *content* — stream pulls, labels, masks,
+	/// lane lifecycle flags — into the alternate buffer, leaving h0/c0 for
+	/// `finalize` (they depend on the previous window's GPU carry, which a
+	/// look-ahead build must not wait for). Touches only producer state.
+	func buildNext() -> Window {
+		if useB { fill(&bufB) } else { fill(&bufA) }
+		defer { useB.toggle() }
+		let w = useB ? bufB : bufA
+		lastEnded = w.ended
+		return w
+	}
+
+	/// Fills h0/c0 (and the reference branch's h0r/c0r) from the carried
+	/// lane states — zeros for lanes that (re)started in this window,
+	/// matching the fresh-stream reset the serial path always applied.
+	func finalize(_ w: inout Window) {
+		let H = LSTMWeights.hidden
+		for lane in 0 ..< b {
+			let fresh = w.restarted[lane]
+			for i in 0 ..< H {
+				w.h0[lane * H + i] = fresh ? 0 : carryH[lane * H + i]
+				w.c0[lane * H + i] = fresh ? 0 : carryC[lane * H + i]
+				w.h0r[lane * H + i] = fresh ? 0 : carryHr[lane * H + i]
+				w.c0r[lane * H + i] = fresh ? 0 : carryCr[lane * H + i]
+			}
+		}
+	}
+
+	private func fill(_ buf: inout Window) {
 		let planeCount = SimObservation.planeSize * SimObservation.planeCount
 		buf.reset()
 
 		for lane in 0 ..< b {
 			if lanes[lane].stream == nil {
+				buf.restarted[lane] = true
 				let next = nextStream()
 				lanes[lane].stream = next?.0
 				lanes[lane].scale = next?.1 ?? 1
 				lanes[lane].id = next?.2 ?? -1
-				lanes[lane].h = [Float](repeating: 0, count: LSTMWeights.hidden)
-				lanes[lane].c = [Float](repeating: 0, count: LSTMWeights.hidden)
-				lanes[lane].hr = [Float](repeating: 0, count: LSTMWeights.hidden)
-				lanes[lane].cr = [Float](repeating: 0, count: LSTMWeights.hidden)
-			}
-			for i in 0 ..< LSTMWeights.hidden {
-				buf.h0[lane * LSTMWeights.hidden + i] = lanes[lane].h[i]
-				buf.c0[lane * LSTMWeights.hidden + i] = lanes[lane].c[i]
-				buf.h0r[lane * LSTMWeights.hidden + i] = lanes[lane].hr[i]
-				buf.c0r[lane * LSTMWeights.hidden + i] = lanes[lane].cr[i]
 			}
 
 			for step in 0 ..< t {
 				guard let s = lanes[lane].stream?.next() else {
 					lanes[lane].stream = nil		// pad the rest; fresh stream next window
+					buf.ended[lane] = true
 					break
 				}
 				let i = step * b + lane
@@ -273,20 +330,69 @@ final class Batcher {
 				buf.samples += 1
 			}
 		}
-		return buf
 	}
 
-	/// Carries the window-final hidden state into each lane that still has a
-	/// live stream (`h`/`c` are `[b * hidden]`, lane-major). `hr`/`cr` carry
-	/// the PPO reference branch's independent state the same way.
+	/// Carries the window-final hidden state into each lane whose stream
+	/// survived that window (`h`/`c` are `[b * hidden]`, lane-major).
+	/// `hr`/`cr` carry the PPO reference branch's independent state the
+	/// same way. The serial overload keys on the last built window; the
+	/// pipelined path must pass that window's `ended` explicitly, because
+	/// by carry time the look-ahead build has already advanced the lanes.
 	func carry(h: [Float], c: [Float], hr: [Float]? = nil, cr: [Float]? = nil) {
-		for lane in 0 ..< b where lanes[lane].stream != nil {
-			for i in 0 ..< LSTMWeights.hidden {
-				lanes[lane].h[i] = h[lane * LSTMWeights.hidden + i]
-				lanes[lane].c[i] = c[lane * LSTMWeights.hidden + i]
-				if let hr { lanes[lane].hr[i] = hr[lane * LSTMWeights.hidden + i] }
-				if let cr { lanes[lane].cr[i] = cr[lane * LSTMWeights.hidden + i] }
+		carry(h: h, c: c, hr: hr, cr: cr, ended: lastEnded)
+	}
+
+	func carry(h: [Float], c: [Float], hr: [Float]?, cr: [Float]?, ended: [Bool]) {
+		let H = LSTMWeights.hidden
+		for lane in 0 ..< b where !ended[lane] {
+			for i in 0 ..< H {
+				carryH[lane * H + i] = h[lane * H + i]
+				carryC[lane * H + i] = c[lane * H + i]
+				if let hr { carryHr[lane * H + i] = hr[lane * H + i] }
+				if let cr { carryCr[lane * H + i] = cr[lane * H + i] }
 			}
 		}
+	}
+
+	/// Drains every window with one-window look-ahead: while `body` runs
+	/// the GPU on window k, the batcher builds window k+1's content on a
+	/// background thread — the stream replay (sim + observation encoding)
+	/// hides behind the GPU wait instead of serializing with it. `body`
+	/// returns the window-final recurrent state to carry. Returns the
+	/// window count. Windows are byte-identical to the serial path: build
+	/// order, buffer alternation, and padding semantics are unchanged.
+	func drain(
+		_ body: (Int, Window) throws -> (h: [Float], c: [Float], hr: [Float]?, cr: [Float]?)
+	) throws -> Int {
+		let queue = DispatchQueue(label: "batcher.prefetch")
+		let this = UnsafeSendable(self)
+		var pending = buildNext()
+		var k = 0
+		while pending.samples > 0 {
+			var w = pending
+			let slot = Prefetched()
+			let out = UnsafeSendable(slot)
+			let built = DispatchSemaphore(value: 0)
+			queue.async {
+				out.value.window = this.value.buildNext()
+				built.signal()
+			}
+			finalize(&w)
+			do {
+				let m = try body(k, w)
+				carry(h: m.h, c: m.c, hr: m.hr, cr: m.cr, ended: w.ended)
+			} catch {
+				built.wait()		// never abandon a running build
+				throw error
+			}
+			built.wait()
+			pending = slot.window!
+			k += 1
+		}
+		return k
+	}
+
+	private final class Prefetched {
+		var window: Window?
 	}
 }

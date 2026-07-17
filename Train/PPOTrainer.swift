@@ -126,20 +126,16 @@ enum PPOTrainer {
 
 			let tCache = clock.now
 			// Read pass: per-sample old log-prob and value under the collection
-			// weights, cached per window ordinal.
+			// weights, cached per window ordinal. `drain` builds window k+1 on
+			// a background thread while the GPU runs window k.
 			var cache = [PPOGraph.Cached]()
-			do {
-				let batcher = Batcher(episodes: episodeList, b: b, t: t)
-				while true {
-					let w = batcher.window()
-					guard w.samples > 0 else { break }
-					let r = graph.read(w)
-					batcher.carry(h: r.h, c: r.c)
-					cache.append(PPOGraph.Cached(
-						oldLogp: r.logp, value: r.value, epi: w.epi,
-						valid: w.kindW, samples: w.samples
-					))
-				}
+			_ = try Batcher(episodes: episodeList, b: b, t: t).drain { _, w in
+				let r = graph.read(w)
+				cache.append(PPOGraph.Cached(
+					oldLogp: r.logp, value: r.value, epi: w.epi,
+					valid: w.kindW, samples: w.samples
+				))
+				return (r.h, r.c, nil, nil)
 			}
 			let tWin = clock.now
 
@@ -154,11 +150,7 @@ enum PPOTrainer {
 			var sums = PPOGraph.Metrics()
 			var windows = 0
 			for _ in 0 ..< cfg.epochs {
-				let batcher = Batcher(episodes: episodeList, b: b, t: t)
-				var k = 0
-				while true {
-					let w = batcher.window()
-					guard w.samples > 0 else { break }
+				let drained = try Batcher(episodes: episodeList, b: b, t: t).drain { k, w in
 					guard k < cache.count, w.epi == cache[k].epi, w.samples == cache[k].samples else {
 						throw TrainError.failed("PPO window \(k) does not match the read pass")
 					}
@@ -169,13 +161,12 @@ enum PPOTrainer {
 						lr: Net.correctedLR(lr, step: warming ? valueStep : policyStep) * fill,
 						polCoef: warming ? 0 : 1, valueOnly: warming
 					)
-					batcher.carry(h: m.h, c: m.c, hr: m.hr, cr: m.cr)
 					sums.add(m)
 					windows += 1
-					k += 1
+					return (m.h, m.c, m.hr, m.cr)
 				}
-				guard k == cache.count else {
-					throw TrainError.failed("PPO epoch produced \(k) windows, read pass had \(cache.count)")
+				guard drained == cache.count else {
+					throw TrainError.failed("PPO epoch produced \(drained) windows, read pass had \(cache.count)")
 				}
 			}
 			sums.scale(1 / Float(max(windows, 1)))

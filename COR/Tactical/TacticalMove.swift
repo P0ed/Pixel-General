@@ -76,6 +76,82 @@ public extension TacticalSim {
 		return mov
 	}
 
+	/// `moves(for: uid).hasMoves` with an early exit — the expansion loop is
+	/// a copy of `moves(for:)` (keep the two in lockstep; the
+	/// `hasMovesMatchesFullFill` test pins them) that returns at the first
+	/// reached tile the unit could actually stop on: never `start` (the
+	/// fill skips already-assigned tiles), and not under a visible alive
+	/// unit — exactly the tiles the trailing pass of `moves(for:)` leaves
+	/// non-zero. In the common case (an open adjacent tile) this touches a
+	/// handful of tiles instead of filling and scanning the whole map,
+	/// which is what `actionMasks()` cost per unit per step.
+	func hasMoves(for uid: UID) -> Bool {
+		let unit = units[uid]
+		if !unit.canMove { return false }
+
+		let team = unit.country.team
+		let air = unit.isAir
+		let visible = vision[playerIndex]
+
+		func enemy(at xy: XY) -> Bool {
+			!visible[xy] ? false : unitAt(xy).map { u in
+				u.country.team != team && u.isAir == air
+			} ?? false
+		}
+		func canStop(at xy: XY) -> Bool {
+			!(visible[xy] && uidAt(xy) != nil)
+		}
+
+		let r = unit.mov
+		var mov = Moves(start: position[uid])
+		mov.moves[position[uid]] = r * 2 + 1
+		var front = CArray<1024, XY>(head: position[uid], tail: .zero)
+		var next = CArray<1024, XY>(tail: .zero)
+
+		for _ in 0 ..< r where !front.isEmpty {
+			for fi in front.indices {
+				let from = front[fi]
+				let mp = mov.moves[from]
+				let n4 = from.n4
+				let enemies = n4.reduce(into: 0 as UInt8) { r, xy in
+					if enemy(at: xy) { r += 1 }
+				}
+
+				for i in n4.indices {
+					let xy = n4[i]
+					if mov[xy] { continue }
+					if enemy(at: xy) { continue }
+
+					let moveCost = map[xy].moveCost(unit) * 2 + enemies
+					if moveCost + 1 <= mp {
+						if canStop(at: xy) { return true }
+						mov.moves[xy] = mp - moveCost
+						if mp - moveCost != 1 { next.add(xy) }
+					}
+				}
+				if enemies == 0 {
+					let x4 = from.x4
+					for i in x4.indices {
+						let xy = x4[i]
+						if mov[xy] { continue }
+						if enemy(at: xy) { continue }
+
+						let moveCost = map[xy].moveCost(unit) * 3 + enemies
+						if moveCost + 1 <= mp {
+							if canStop(at: xy) { return true }
+							mov.moves[xy] = mp - moveCost
+							if mp - moveCost != 1 { next.add(xy) }
+						}
+					}
+				}
+			}
+			front.erase()
+			front.add(next)
+			next.erase()
+		}
+		return false
+	}
+
 	func canMove(unit uid: UID) -> Bool {
 		units[uid].country == country && units[uid].canMove && !offMap(unit: uid)
 	}
