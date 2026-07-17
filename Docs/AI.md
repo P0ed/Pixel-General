@@ -270,6 +270,7 @@ the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFO
 |---|---|---|
 | settlements | 1.0 | Δ(own − enemy settlement count) over the episode / total on map |
 | units | 0.5 | enemy value killed − own value lost, as fractions of each side's start (hp-weighted cost, accumulated per step so purchases don't pollute it) |
+| kills | 0.25 | enemy units destroyed − own units lost, as fractions of each side's starting unit count — the units term pays for damage, this pays extra for finishing units off |
 | prestige | 0.25 | (mine − theirs) / (mine + theirs) at episode end |
 | outcome | 0.5 | ±0.5 on a decided battle; timeouts score 0 and are judged by the dense terms |
 
@@ -371,7 +372,7 @@ the reliable lever since; RL is worth revisiting only at even matchups
   `arenaWin` at checkpoints is real strength. Both stuck at the BC level means the run
   is too timid (raise `--lr` / `--episodes`); loss spikes or a win collapse mean the
   opposite (halve `--lr`).
-- The `settle`/`units`/`prestige` columns are the batch-mean reward components — they
+- The `settle`/`units`/`kills`/`prestige` columns are the batch-mean reward components — they
   show *what* the policy is trading. Rising `settle` with flat wins is real progress;
   rising `units` with falling `settle` means it's kiting for kills instead of taking
   ground.

@@ -49,8 +49,8 @@ enum PPOTrainer {
 		var weightsPath: String?
 		var refPath: String?
 		var out = "tmp/runs/ppo"
-		var iters = 24
-		var episodes = 16
+		var iters = 12
+		var episodes = 12
 		var b = 16
 		var t = 16
 		var lr: Float = 1e-5
@@ -109,7 +109,7 @@ enum PPOTrainer {
 		var valueStep = 0
 		var policyStep = 0
 		var schedule = RLTrainer.Curriculum(level: curriculum, anneal: anneal)
-		var csv = "iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin\n"
+		var csv = "iter,wins,losses,draws,meanR,ev,madv,settle,units,kills,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
 
@@ -183,7 +183,7 @@ enum PPOTrainer {
 			print("checkpoint: \(tCache - tIter)\ncache: \(tWin - tCache)\nwindows: \(clock.now - tWin)")
 
 			let stats = RLTrainer.BatchStats(batch)
-			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
+			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  kills \(f(stats.kills))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
 			if !warming, let move = schedule.update(winRate: Float(stats.wins) / Float(batch.count)) {
 				print("  \(move)")
@@ -196,7 +196,7 @@ enum PPOTrainer {
 					evalN: evalN, suite: suite, batch: batch
 				)
 			}
-			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(ev),\(madv),\(stats.settle),\(stats.units),\(stats.prestige),\(stats.days),\(stats.samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(schedule.difficulty),\(arena)\n"
+			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(ev),\(madv),\(stats.settle),\(stats.units),\(stats.kills),\(stats.prestige),\(stats.days),\(stats.samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(schedule.difficulty),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("ppo-log.csv"), atomically: true, encoding: .utf8)
 		}
 

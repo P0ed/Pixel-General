@@ -21,11 +21,11 @@ enum Rollouts {
 
 	static let pairs: [(Country, Country)] = [(.ger, .usa), (.fin, .isr), (.swe, .pak), (.ned, .usa)]
 	static let prestiges: [(UInt16, UInt16)] = [(.poor, .poor), (.rich, .poor), (.poor, .rich), (.rich, .rich)]
-	static let baseLevels: [(UInt8, UInt8)] = [(0, 0), (5, 0), (0, 5), (2, 2)]
-	static let tiers: [(UInt8, UInt8)] = [(3, 3), (0, 0), (3, 0), (0, 3)]
+	static let baseLevels: [(UInt8, UInt8)] = [(0, 0), (3, 0), (0, 3), (2, 2)]
+	static let tiers: [(UInt8, UInt8)] = [(3, 3), (2, 2), (3, 2), (2, 3)]
 
 	static let maxActions = 65_000
-	static let maxDays = 80
+	static let maxDays = 61
 
 	static func run(_ args: [String]) throws {
 		var n = 8

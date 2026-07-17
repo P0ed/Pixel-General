@@ -23,6 +23,9 @@ import COR
 ///   units        enemy value killed − own value lost, each as a fraction
 ///                of that side's starting value (hp-weighted unit cost,
 ///                accumulated per step so purchases don't pollute it)
+///   kills        enemy units destroyed − own units lost, each as a fraction
+///                of that side's starting unit count — the value term pays
+///                for damage; this pays extra for finishing units off
 ///   prestige     (mine − theirs) / (mine + theirs) at episode end
 ///   outcome      ±wOutcome on a decided battle; timeouts score 0 here and
 ///                are judged by the dense terms instead
@@ -33,6 +36,7 @@ enum RLTrainer {
 	static let wOutcome: Float = 0.5
 	static let wSettlements: Float = 1.0
 	static let wUnits: Float = 0.5
+	static let wKills: Float = 0.25
 	static let wPrestige: Float = 0.25
 
 	struct Episode {
@@ -44,6 +48,7 @@ enum RLTrainer {
 		var samples = 0
 		var settleTerm: Float = 0
 		var unitTerm: Float = 0
+		var killTerm: Float = 0
 		var prestigeTerm: Float = 0
 	}
 
@@ -58,6 +63,7 @@ enum RLTrainer {
 		var meanR: Float = 0
 		var settle: Float = 0
 		var units: Float = 0
+		var kills: Float = 0
 		var prestige: Float = 0
 
 		init(_ batch: [Episode]) {
@@ -70,6 +76,7 @@ enum RLTrainer {
 			meanR = batch.reduce(0) { $0 + $1.reward } / n
 			settle = batch.reduce(0) { $0 + $1.settleTerm } / n
 			units = batch.reduce(0) { $0 + $1.unitTerm } / n
+			kills = batch.reduce(0) { $0 + $1.killTerm } / n
 			prestige = batch.reduce(0) { $0 + $1.prestigeTerm } / n
 		}
 	}
@@ -171,7 +178,7 @@ enum RLTrainer {
 		var battleIndex = seed
 		var globalStep = 0
 		var schedule = Curriculum(level: curriculum, anneal: anneal)
-		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin\n"
+		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,kills,prestige,days,samples,loss,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
 
@@ -240,7 +247,7 @@ enum RLTrainer {
 			loss /= Float(max(windows, 1))
 
 			let stats = BatchStats(batch)
-			print("iter \(iter)  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  |A| \(f(meanAbs))  settle \(f(stats.settle))  units \(f(stats.units))  prestige \(f(stats.prestige))  days \(stats.days)  samples \(stats.samples)  loss \(f(loss))\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
+			print("iter \(iter)  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  |A| \(f(meanAbs))  settle \(f(stats.settle))  units \(f(stats.units))  kills \(f(stats.kills))  prestige \(f(stats.prestige))  days \(stats.days)  samples \(stats.samples)  loss \(f(loss))\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
 			if let move = schedule.update(winRate: Float(stats.wins) / n) {
 				print("  \(move)")
@@ -253,7 +260,7 @@ enum RLTrainer {
 					evalN: evalN, suite: suite, batch: batch
 				)
 			}
-			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(meanAbs),\(stats.settle),\(stats.units),\(stats.prestige),\(stats.days),\(stats.samples),\(loss),\(windows),\(schedule.difficulty),\(arena)\n"
+			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(meanAbs),\(stats.settle),\(stats.units),\(stats.kills),\(stats.prestige),\(stats.days),\(stats.samples),\(loss),\(windows),\(schedule.difficulty),\(arena)\n"
 			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
 		}
 
@@ -376,9 +383,12 @@ enum RLTrainer {
 		let mine = replay.seats[seat].country.team
 		let theirs = replay.seats[1 - seat].country.team
 		let start = census(sim, mine: mine, theirs: theirs)
-		var prev = (mine: start.mineValue, theirs: start.theirsValue)
+		var prev = (mine: start.mineValue, theirs: start.theirsValue,
+		            mineUnits: start.mineUnits, theirsUnits: start.theirsUnits)
 		var killed: Float = 0
 		var lost: Float = 0
+		var kills: Float = 0
+		var deaths: Float = 0
 
 		while replay.actions.count < Rollouts.maxActions {
 			if sim.winner != nil { break }
@@ -402,6 +412,8 @@ enum RLTrainer {
 			let cur = unitValues(sim, mine: mine)
 			killed += max(0, prev.theirs - cur.theirs)
 			lost += max(0, prev.mine - cur.mine)
+			kills += max(0, prev.theirsUnits - cur.theirsUnits)
+			deaths += max(0, prev.mineUnits - cur.mineUnits)
 			prev = cur
 		}
 		replay.winner = sim.winner ?? .none
@@ -415,12 +427,16 @@ enum RLTrainer {
 		episode.unitTerm = clamp(
 			killed / max(start.theirsValue, 1) - lost / max(start.mineValue, 1)
 		)
+		episode.killTerm = clamp(
+			kills / max(start.theirsUnits, 1) - deaths / max(start.mineUnits, 1)
+		)
 		let pMine = Float(sim.players[seat].prestige)
 		let pTheirs = Float(sim.players[1 - seat].prestige)
 		episode.prestigeTerm = (pMine - pTheirs) / max(pMine + pTheirs, 1)
 
 		episode.reward = wSettlements * episode.settleTerm
 			+ wUnits * episode.unitTerm
+			+ wKills * episode.killTerm
 			+ wPrestige * episode.prestigeTerm
 		if replay.winner == mine {
 			episode.reward += wOutcome
@@ -436,6 +452,8 @@ enum RLTrainer {
 	struct Census {
 		var mineValue: Float = 0
 		var theirsValue: Float = 0
+		var mineUnits: Float = 0
+		var theirsUnits: Float = 0
 		var ownSettlements = 0
 		var theirsSettlements = 0
 		var settlements = 0
@@ -448,6 +466,8 @@ enum RLTrainer {
 		let value = unitValues(sim, mine: mine)
 		c.mineValue = value.mine
 		c.theirsValue = value.theirs
+		c.mineUnits = value.mineUnits
+		c.theirsUnits = value.theirsUnits
 		sim.settlements.forEach { xy in
 			c.settlements += 1
 			let team = sim.control[xy].team
@@ -457,14 +477,20 @@ enum RLTrainer {
 		return c
 	}
 
-	static func unitValues(_ sim: borrowing TacticalSim, mine: Team) -> (mine: Float, theirs: Float) {
-		sim.units.reduceAlive(into: (mine: Float(0), theirs: Float(0))) { r, i, u in
+	static func unitValues(
+		_ sim: borrowing TacticalSim, mine: Team
+	) -> (mine: Float, theirs: Float, mineUnits: Float, theirsUnits: Float) {
+		sim.units.reduceAlive(into: (
+			mine: Float(0), theirs: Float(0), mineUnits: Float(0), theirsUnits: Float(0)
+		)) { r, i, u in
 			guard !sim.offMap(unit: i.uid) else { return }
 			let v = Float(u.cost) * Float(u.hp) / 15
 			if u.country.team == mine {
 				r.mine += v
+				r.mineUnits += 1
 			} else {
 				r.theirs += v
+				r.theirsUnits += 1
 			}
 		}
 	}
