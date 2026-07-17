@@ -53,7 +53,7 @@ enum PPOTrainer {
 		var episodes = 12
 		var b = 16
 		var t = 16
-		var lr: Float = 5e-6
+		var lr: Float = 3e-6
 		var seed = 0x7FF
 		var ckpt = 12
 		var evalN = 96
@@ -116,7 +116,6 @@ enum PPOTrainer {
 		let start = clock.now
 
 		for iter in 1 ... iters {
-			let tIter = clock.now
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
 			let batch = RLTrainer.collect(
@@ -126,7 +125,6 @@ enum PPOTrainer {
 			battleIndex += episodes
 			let episodeList = batch.map { ($0.replay, $0.seat, Float(1)) }
 
-			let tCache = clock.now
 			// Read pass: per-sample old log-prob and value under the collection
 			// weights, cached per window ordinal. `drain` builds window k+1 on
 			// a background thread while the GPU runs window k.
@@ -139,7 +137,6 @@ enum PPOTrainer {
 				))
 				return (r.h, r.c, nil, nil)
 			}
-			let tWin = clock.now
 
 			// GAE over each episode's value sequence (γ = 1; terminal-only
 			// reward). λ = 1 telescopes to exactly A_t = R − V(s_t); the value
@@ -172,8 +169,6 @@ enum PPOTrainer {
 				}
 			}
 			sums.scale(1 / Float(max(windows, 1)))
-
-			print("checkpoint: \(tCache - tIter)\ncache: \(tWin - tCache)\nwindows: \(clock.now - tWin)")
 
 			let stats = RLTrainer.BatchStats(batch)
 			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  kills \(f(stats.kills))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
