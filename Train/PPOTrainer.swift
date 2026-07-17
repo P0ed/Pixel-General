@@ -43,20 +43,22 @@ enum PPOTrainer {
 		var temp: Float = 1
 	}
 
+	static let currentRun = 5
+
 	static func run(_ args: [String]) throws {
-		var weightsPath: String?
+		var weightsPath: String = "tmp/policy.pgw"
 		var refPath: String?
-		var out = "tmp/runs/ppo"
-		var iters = 100
-		var episodes = 32
+		var out = "tmp/runs/ppo\(currentRun)"
+		var iters = 8
+		var episodes = 64
 		var b = 16
 		var t = 16
-		var lr: Float = 5e-6
+		var lr: Float = 1e-5
 		var seed = 1000
-		var ckpt = 10
+		var ckpt = 8
 		var evalN = 8
-		var curriculum: Float = 0
-		var anneal: Float = 0.30
+		var curriculum: Float = 2
+		var anneal: Float = 0.60
 		var suite: RolloutSuite = .mixed
 		var vwarm = 5
 		var lam: Float = 1
@@ -90,9 +92,6 @@ enum PPOTrainer {
 			}
 		}
 
-		guard let weightsPath else {
-			throw TrainError.usage("ppo needs --weights <pgw> (a BC checkpoint)")
-		}
 		guard (0 ... 3).contains(curriculum) else {
 			throw TrainError.usage("--curriculum must be between 0 and 3")
 		}
@@ -104,12 +103,6 @@ enum PPOTrainer {
 
 		let graph = try PPOGraph(weights: weights, ref: ref, b: b, t: t, cfg: cfg)
 		var battleIndex = seed
-		// Adam bias correction is per update path: warmup windows never touch
-		// the actor/trunk moments, so the live path must start its correction
-		// at t = 1 — under one shared counter the first policy updates land on
-		// zero moments with a matured correction factor, ~3–5× too large. The
-		// value head's moments are older than policyStep claims; the stale-low
-		// correction only damps its first live steps, which is benign.
 		var valueStep = 0
 		var policyStep = 0
 		var schedule = RLTrainer.Curriculum(level: curriculum, anneal: anneal)
@@ -127,6 +120,7 @@ enum PPOTrainer {
 			battleIndex += episodes
 			let episodeList = batch.map { ($0.replay, $0.seat, Float(1)) }
 
+			let tCache = clock.now
 			// Read pass: per-sample old log-prob and value under the collection
 			// weights, cached per window ordinal.
 			var cache = [PPOGraph.Cached]()
@@ -143,6 +137,7 @@ enum PPOTrainer {
 					))
 				}
 			}
+			print("cache: \(clock.now - tCache)")
 
 			// GAE over each episode's value sequence (γ = 1; terminal-only
 			// reward). λ = 1 telescopes to exactly A_t = R − V(s_t); the value
@@ -151,12 +146,6 @@ enum PPOTrainer {
 			// order the streams produced them.
 			let (adv, ret, madv, ev) = advantages(cache: cache, batch: batch, b: b, t: t, lam: lam)
 
-			// Value warmup: the head starts at random init, and letting its
-			// loss backprop into the shared trunk would shift the policy
-			// heads' inputs under them — so the first iterations update the
-			// value head alone, and the curriculum stays frozen (the BC prior
-			// already wins ~40% at level 3; winEMA would fire the descent
-			// while the policy isn't training).
 			let warming = iter <= vwarm
 			var sums = PPOGraph.Metrics()
 			var windows = 0
@@ -170,11 +159,6 @@ enum PPOTrainer {
 						throw TrainError.failed("PPO window \(k) does not match the read pass")
 					}
 					if warming { valueStep += 1 } else { policyStep += 1 }
-					// The loss is mean-per-valid-sample and Adam normalizes
-					// gradient scale away, so every window would otherwise step
-					// equally hard — scaling lr by the fill keeps a near-empty
-					// tail window (the longest episodes' remainders) from
-					// voting like a full one.
 					let fill = Float(w.samples) / Float(b * t)
 					let m = graph.step(
 						w, oldLogp: cache[k].oldLogp, adv: adv[k], ret: ret[k],
@@ -195,8 +179,6 @@ enum PPOTrainer {
 			let stats = RLTrainer.BatchStats(batch)
 			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
-			// Self-paced curriculum, unchanged v3.1 semantics (see RLTrainer);
-			// frozen while the value head warms up.
 			if !warming, let move = schedule.update(winRate: Float(stats.wins) / Float(batch.count)) {
 				print("  \(move)")
 			}
