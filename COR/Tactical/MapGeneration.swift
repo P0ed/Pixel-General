@@ -597,19 +597,29 @@ public extension Map<32, Terrain> {
 	/// `centers` — the defending side's cities.
 	/// Only open ground (field/forest/hill) turns into fort, so roads keep
 	/// their gaps through the ring and rivers/settlements stay untouched.
-	/// At most `level * size / 4` tiles land in total, centers served in
-	/// order. No RNG — placement is a pure function of the map and inputs.
+	/// At most `3 * level * size / 4` tiles land in total, one per center
+	/// per round-robin pass so the budget spreads evenly across cities.
+	/// No RNG — placement is a pure function of the map and inputs.
 	mutating func placeForts(around centers: [XY], level: Int) {
-		var budget = level * size / 4
-		for center in centers {
-			let ring = center.r12
-			for i in ring.indices {
+		var budget = 3 * level * size / 4
+		var cursors = [Int](repeating: 0, count: centers.count)
+		var placed = true
+		while budget > 0, placed {
+			placed = false
+			for k in centers.indices {
 				guard budget > 0 else { return }
-				switch self[ring[i]] {
-				case .field, .forest, .hill:
-					self[ring[i]] = .fort
-					budget -= 1
-				default: break
+				let ring = centers[k].r12
+				scan: while cursors[k] < ring.count {
+					let xy = ring[cursors[k]]
+					cursors[k] += 1
+					switch self[xy] {
+					case .field, .forest, .hill:
+						self[xy] = .fort
+						budget -= 1
+						placed = true
+						break scan
+					default: break
+					}
 				}
 			}
 		}

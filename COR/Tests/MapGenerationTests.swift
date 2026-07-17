@@ -354,7 +354,33 @@ struct MapGenerationTests {
 				return count
 			}
 			#expect(forts(3) >= forts(1), "Level 3 placed fewer forts than level 1 for seed \(seed)")
-			#expect(forts(3) <= 3 * 32 / 4, "Level 3 exceeded the fort cap for seed \(seed)")
+			#expect(forts(3) <= 3 * 3 * 32 / 4, "Level 3 exceeded the fort cap for seed \(seed)")
+		}
+	}
+
+	@Test func fortsSpreadAcrossAllCities() {
+		// Round-robin placement: every city whose ring has open ground
+		// must get at least one fort, even at the lowest level.
+		for seed in [0, 7, 42] {
+			let base = Map<32, Terrain>(seed: seed)
+			var map = clone(base)
+			let centers = cities(of: base)
+			map.placeForts(around: centers, level: 1)
+			for c in centers {
+				let ring = c.r12
+				var open = false
+				var fort = false
+				for i in ring.indices {
+					switch base[ring[i]] {
+					case .field, .forest, .hill: open = true
+					default: break
+					}
+					if map[ring[i]] == .fort { fort = true }
+				}
+				if open, !fort {
+					Issue.record("City at \(c) got no fort for seed \(seed)")
+				}
+			}
 		}
 	}
 
