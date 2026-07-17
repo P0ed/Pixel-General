@@ -19,10 +19,10 @@ enum RolloutSuite: String, Sendable {
 /// is fully determined by its index: re-running produces byte-identical files.
 enum Rollouts {
 
-	static let pairs: [(Country, Country)] = [(.ger, .usa), (.swe, .isr), (.ned, .irn), (.nor, .rus)]
-	static let prestiges: [(UInt16, UInt16)] = [(.poor, .poor), (.rich, .poor), (.poor, .rich), (.rich, .rich)]
-	static let baseLevels: [(UInt8, UInt8)] = [(0, 0), (2, 2), (2, 0), (0, 2)]
-	static let tiers: [(UInt8, UInt8)] = [(3, 3), (2, 2), (3, 2), (2, 3)]
+	static let pairs: [(Country, Country)] = [(.swe, .usa), (.nor, .isr), (.den, .irn)]
+	static let prestiges: [(UInt16, UInt16)] = [(.poor, .poor), (.rich, .rich)]
+	static let baseLevels: [(UInt8, UInt8)] = [(0, 0), (2, 2)/*, (2, 0), (0, 2)*/]
+	static let tiers: [(UInt8, UInt8)] = [(3, 3), (2, 2)/*, (3, 2), (2, 3)*/]
 
 	static let maxActions = 65_000
 	static let maxDays = 60
@@ -80,9 +80,9 @@ enum Rollouts {
 	/// so nearby indices vary the matchup before the economy knobs.
 	static func replay(index: Int, suite: RolloutSuite) -> Replay {
 		let pair = pairs[index % pairs.count]
-		let prestige = prestiges[(index / 4) % prestiges.count]
-		let level = baseLevels[(index / 16) % baseLevels.count]
-		let tier = tiers[(index / 64) % tiers.count]
+		let prestige = prestiges[(index / 3) % prestiges.count]
+		let level = baseLevels[(index / 6) % baseLevels.count]
+		let tier = tiers[(index / 12) % tiers.count]
 		var replay = Replay(
 			seed: Int64(index),
 			seats: [

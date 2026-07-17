@@ -35,9 +35,9 @@ enum RLTrainer {
 
 	static let wOutcome: Float = 0.5
 	static let wSettlements: Float = 1.0
-	static let wUnits: Float = 0.5
-	static let wKills: Float = 0.25
-	static let wPrestige: Float = 0.25
+	static let wUnits: Float = 0.25
+	static let wKills: Float = 0.5
+	static let wPrestige: Float = 0.1
 
 	struct Episode {
 		var replay: Replay
