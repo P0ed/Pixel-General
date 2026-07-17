@@ -58,11 +58,12 @@ enum PPOTrainer {
 		var ckpt = 12
 		var evalN = 96
 		var curriculum: Float = 1.0
-		var anneal: Float = 0.65
+		var anneal: Float = 0.6
 		var suite: RolloutSuite = .mixed
 		var vwarm = 0
 		var lam: Float = 1
 		var cfg = Config()
+		var csvLog = true
 
 		try Args(args).parse { flag, next in
 			switch flag {
@@ -88,6 +89,7 @@ enum PPOTrainer {
 			case "--ent": cfg.ent = try Float(next()) ?? cfg.ent
 			case "--vwarm": vwarm = try Int(next()) ?? vwarm
 			case "--lam": lam = try Float(next()) ?? lam
+			case "--csvLog": csvLog = try next() == "true"
 			default: throw TrainError.usage("unknown option \(flag)")
 			}
 		}
@@ -184,11 +186,13 @@ enum PPOTrainer {
 			if iter % ckpt == 0 || iter == iters {
 				arena = try RLTrainer.dumpCheckpoint(
 					graph.checkpoint(), iter: iter, outDir: outDir,
-					evalN: evalN, suite: suite, batch: batch
+					evalN: evalN, suite: .fair, batch: batch
 				)
 			}
-			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(ev),\(madv),\(stats.settle),\(stats.units),\(stats.kills),\(stats.prestige),\(stats.days),\(stats.samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(schedule.difficulty),\(arena)\n"
-			try csv.write(to: outDir.appendingPathComponent("ppo-log.csv"), atomically: true, encoding: .utf8)
+			if csvLog {
+				csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(ev),\(madv),\(stats.settle),\(stats.units),\(stats.kills),\(stats.prestige),\(stats.days),\(stats.samples),\(sums.loss),\(sums.surr),\(sums.vloss),\(sums.kl),\(sums.ent),\(sums.clipFrac),\(sums.akl),\(windows),\(schedule.difficulty),\(arena)\n"
+				try csv.write(to: outDir.appendingPathComponent("ppo-log.csv"), atomically: true, encoding: .utf8)
+			}
 		}
 
 		try graph.checkpoint().data().write(to: outDir.appendingPathComponent("policy.pgw"))

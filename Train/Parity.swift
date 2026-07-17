@@ -57,7 +57,7 @@ enum Parity {
 		}
 
 		while compared < steps {
-			var sim = Rollouts.replay(index: battle, suite: .classic).makeSim()
+			var sim = Rollouts.replay(index: battle, suite: .fair).makeSim()
 			battle += 1
 			policy.reset()
 			var ai = AI.Plan()

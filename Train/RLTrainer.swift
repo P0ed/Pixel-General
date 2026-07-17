@@ -33,10 +33,10 @@ import COR
 /// strength on the same configs `Train eval` reports.
 enum RLTrainer {
 
-	static let wOutcome: Float = 0.5
+	static let wOutcome: Float = 0.68
 	static let wSettlements: Float = 1.0
 	static let wUnits: Float = 0.25
-	static let wKills: Float = 0.5
+	static let wKills: Float = 0.68
 	static let wPrestige: Float = 0.1
 
 	struct Episode {

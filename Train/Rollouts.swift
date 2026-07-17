@@ -2,7 +2,7 @@ import Foundation
 import COR
 
 enum RolloutSuite: String, Sendable {
-	case classic
+	case fair
 	case mixed
 
 	static func parse(_ value: String) throws -> Self {
@@ -79,10 +79,10 @@ enum Rollouts {
 	/// Battle configuration derived purely from the index; strides are chosen
 	/// so nearby indices vary the matchup before the economy knobs.
 	static func replay(index: Int, suite: RolloutSuite) -> Replay {
-		let pair = pairs[index % pairs.count]
-		let prestige = prestiges[(index / 3) % prestiges.count]
-		let level = baseLevels[(index / 6) % baseLevels.count]
-		let tier = tiers[(index / 12) % tiers.count]
+		let pair = pairs[suite == .fair ? 0 : index % pairs.count]
+		let prestige = prestiges[suite == .fair ? 0 : (index / 3) % prestiges.count]
+		let level = baseLevels[suite == .fair ? 0 : (index / 6) % baseLevels.count]
+		let tier = tiers[suite == .fair ? 0 : (index / 12) % tiers.count]
 		var replay = Replay(
 			seed: Int64(index),
 			seats: [
