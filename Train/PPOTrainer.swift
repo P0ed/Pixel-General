@@ -53,12 +53,12 @@ enum PPOTrainer {
 		var episodes = 12
 		var b = 16
 		var t = 16
-		var lr: Float = 1e-5
+		var lr: Float = 5e-6
 		var seed = 0x7FF
 		var ckpt = 12
-		var evalN = 384
+		var evalN = 96
 		var curriculum: Float = 1.0
-		var anneal: Float = 0.60
+		var anneal: Float = 0.65
 		var suite: RolloutSuite = .mixed
 		var vwarm = 0
 		var lam: Float = 1
