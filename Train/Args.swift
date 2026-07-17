@@ -25,6 +25,24 @@ struct Args {
 	}
 }
 
+struct DefaultArgs: Codable {
+	var bc: [String]?
+	var rl: [String]?
+	var ppo: [String]?
+}
+
+extension DefaultArgs {
+
+	static var `default`: DefaultArgs? {
+		(
+			try? Data(contentsOf: URL(filePath: "tmp/run.json"))
+		)
+		.flatMap { data in
+			try? JSONDecoder().decode(DefaultArgs.self, from: data)
+		}
+	}
+}
+
 extension LSTMWeights {
 	static func load(_ path: String) throws -> LSTMWeights {
 		guard let w = LSTMWeights(data: try Data(contentsOf: URL(fileURLWithPath: path))) else {

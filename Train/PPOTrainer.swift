@@ -43,24 +43,24 @@ enum PPOTrainer {
 		var temp: Float = 1
 	}
 
-	static let currentRun = 5
-
 	static func run(_ args: [String]) throws {
-		var weightsPath: String = "tmp/policy.pgw"
+		let args = args.isEmpty ? DefaultArgs.default?.ppo ?? [] : args
+
+		var weightsPath: String?
 		var refPath: String?
-		var out = "tmp/runs/ppo\(currentRun)"
-		var iters = 8
-		var episodes = 64
+		var out = "tmp/runs/ppo"
+		var iters = 24
+		var episodes = 16
 		var b = 16
 		var t = 16
 		var lr: Float = 1e-5
-		var seed = 1000
-		var ckpt = 8
-		var evalN = 8
-		var curriculum: Float = 2
+		var seed = 0x7FF
+		var ckpt = 12
+		var evalN = 384
+		var curriculum: Float = 1.0
 		var anneal: Float = 0.60
 		var suite: RolloutSuite = .mixed
-		var vwarm = 5
+		var vwarm = 0
 		var lam: Float = 1
 		var cfg = Config()
 
@@ -92,6 +92,9 @@ enum PPOTrainer {
 			}
 		}
 
+		guard let weightsPath else {
+			throw TrainError.usage("ppo needs --weights <pgw>")
+		}
 		guard (0 ... 3).contains(curriculum) else {
 			throw TrainError.usage("--curriculum must be between 0 and 3")
 		}
@@ -111,6 +114,7 @@ enum PPOTrainer {
 		let start = clock.now
 
 		for iter in 1 ... iters {
+			let tIter = clock.now
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
 			let batch = RLTrainer.collect(
@@ -137,7 +141,7 @@ enum PPOTrainer {
 					))
 				}
 			}
-			print("cache: \(clock.now - tCache)")
+			let tWin = clock.now
 
 			// GAE over each episode's value sequence (γ = 1; terminal-only
 			// reward). λ = 1 telescopes to exactly A_t = R − V(s_t); the value
@@ -175,6 +179,8 @@ enum PPOTrainer {
 				}
 			}
 			sums.scale(1 / Float(max(windows, 1)))
+
+			print("checkpoint: \(tCache - tIter)\ncache: \(tWin - tCache)\nwindows: \(clock.now - tWin)")
 
 			let stats = RLTrainer.BatchStats(batch)
 			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")

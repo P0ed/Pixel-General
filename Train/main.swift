@@ -55,10 +55,8 @@ do {
 			 [--curriculum <level 0-3>] [--suite classic|mixed]
 			  REINFORCE fine-tune vs the frozen heuristic: sampled episodes,
 			  leave-one-out baseline, advantage-weighted CE; arena eval at checkpoints.
-			  --curriculum starts collection with the policy seat economically
-			  boosted (3 = rich+lvl5+tier3 vs poor) and anneals toward 0 as
-			  the sampled win rate clears 35%.
-		  ppo [--weights <pgw>] [--ref <pgw>] [--out <dir>] [--iters <n>]
+			  --curriculum starts collection with the policy seat economically boosted.
+		  ppo --weights <pgw> [--ref <pgw>] [--out <dir>] [--iters <n>]
 			 [--episodes <per iter>] [--epochs <passes>] [--clip <ε>]
 			 [--vcoef <c>] [--kl <β>] [--ent <c>] [--vwarm <iters>] [--lam <λ>]
 			 [--b --t --lr --temp --seed --ckpt --evaln --curriculum --anneal --suite]
