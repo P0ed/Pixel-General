@@ -159,6 +159,12 @@ v5 gives the attacking side of a survival battle `.base + .aux` (2× army,
 mirroring campaign assaults) — a 1:1 attacker rarely cracks the fort ring, so
 older corpora under-sampled successful assaults; arena numbers straddling v5
 (and the 49-plane property encoding, landed together) are not comparable.
+Map generation is part of the recipe too: the density knob (`bd363de`) rebuilds
+default maps with 12 cities (`Scenario.cityLevel` 0; formerly 16), and
+elimination became team-wide alongside it (`1bcd99a`) — arena numbers straddling
+those commits are not comparable either. The header stores no density; replays
+always rebuild at the `Scenario` default, so a nonzero-density corpus would need
+a header field first.
 
 ## Training runs
 

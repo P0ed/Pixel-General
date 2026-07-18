@@ -5,7 +5,7 @@ public extension Map<32, Terrain> {
 	/// `terrain` is the dominant terrain of the generated map: hills and
 	/// mountains lift the height field, while forests raise humidity. Campaign
 	/// battles pass the contested province's strategic terrain here.
-	init(seed: Int, players: Int = 4, terrain: Terrain = .field, density: Int) {
+	init(seed: Int, players: Int = 4, terrain: Terrain = .field, density: Int = 1) {
 		self.init(
 			seed: seed,
 			players: players,
@@ -24,7 +24,7 @@ public extension Map<32, Terrain> {
 	/// Campaign battles rotate their sample so the attacker is at 3 and the
 	/// defender at 4. Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
-	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int) {
+	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int = 1) {
 		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))

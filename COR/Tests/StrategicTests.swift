@@ -699,7 +699,8 @@ struct StrategicTests {
 		let plains = Map<32, Terrain>(
 			seed: target.x + target.y * 32,
 			players: 2,
-			terrain: .field
+			terrain: .field,
+			density: 0
 		)
 		var tacticalForests = 0, plainsForests = 0
 		// The defended strategic province is the center third (index 4) of

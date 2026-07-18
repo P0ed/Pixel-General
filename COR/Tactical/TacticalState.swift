@@ -28,7 +28,7 @@ public struct TacticalSim: ~Copyable {
 	case survive(Team, day: UInt16)
 
 	public var defender: Team? {
-		if case .survive(let team, let day) = self { team } else { nil }
+		if case .survive(let team, _) = self { team } else { nil }
 	}
 }
 

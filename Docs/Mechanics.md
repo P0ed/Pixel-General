@@ -380,9 +380,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   requires cross-team. The European nations back the [campaign map](#campaign).
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
-  reflags it to the unit's country. A player with no remaining
-  settlements is eliminated (`alive = false`). Last team standing wins,
-  unless an `Objective` decides the battle first.
+  reflags it to the unit's country. A player whose team controls no
+  settlements is eliminated (`alive = false`) — a country with no
+  settlements of its own stays alive while a teammate still holds one.
+  Last team standing wins, unless an `Objective` decides the battle first.
 
 ### Objectives & victory
 
@@ -399,7 +400,8 @@ Every battle carries an `Objective` on `TacticalSim`:
 
 Campaign battles are 1v1, so a single objective covers both sides: `survive` is
 the defender's goal and, from the attacker's view, the deadline it must beat by
-annihilating the defender (capturing every settlement eliminates a player). The
+annihilating the defender (capturing the defending team's every settlement
+eliminates it). The
 result is the computed property `TacticalSim.winner` (`TacticalTurns.swift`),
 returning `Team?`; it stays `nil` while the battle is undecided. `Core.complete`
 reads `won = sim.winner == humanTeam`, so a repulse is `winner` being the
