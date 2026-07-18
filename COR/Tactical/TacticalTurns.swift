@@ -78,13 +78,18 @@ extension TacticalSim {
 		}
 		if reflag {
 			assignControl()
-			eliminatePlayers()
+
+			players.modifyEach { i, p in
+				p.alive = p.alive && settlements.contains { [team = p.country.team] xy in
+					control[xy].team == team
+				}
+			}
 		}
 	}
 
 	mutating func assignControl() {
-		var anchors = CArray<1024, XY>(tail: .zero)
-		var owners = CArray<1024, Country>(tail: .default)
+		var anchors = CArray<128, XY>(tail: .zero)
+		var owners = CArray<128, Country>(tail: .default)
 		settlements.forEach { xy in
 			anchors.add(xy)
 			owners.add(control[xy])
@@ -100,15 +105,6 @@ extension TacticalSim {
 			}
 			control[xy] = owners[best]
 		}
-	}
-
-	private mutating func eliminatePlayers() {
-		let alive = players.map { i, p in p.alive && countryHasSettlements(p.country) }
-		players.modifyEach { i, p in p.alive = alive[i] }
-	}
-
-	private func countryHasSettlements(_ country: Country) -> Bool {
-		settlements.contains { xy in control[xy] == country }
 	}
 }
 

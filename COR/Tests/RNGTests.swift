@@ -71,8 +71,7 @@ struct RNGTests {
 	@Test func damageCurveTable() throws {
 		// The tuning view of the curve: the exact per-round damage distribution
 		// for each `dif`, derived from `Duel.thresholds` (faces of the d20 above
-		// each threshold — no dice involved). Written to the repository-level
-		// `tmp/damage-curve.md` so a threshold tweak in `Duel` shows up as a table diff.
+		// each threshold — no dice involved).
 		var md = """
 		# Duel damage curve
 
@@ -105,17 +104,6 @@ struct RNGTests {
 			md += unsafe "\n| \(dif) | \(ts[0]) \(ts[1]) \(ts[2]) \(ts[3]) | \(percents) "
 				+ "| \(String(format: "%.2f", Double(perRound) / 20)) | \(e15) |"
 		}
-
-		let url = URL(fileURLWithPath: #filePath)
-			.deletingLastPathComponent()
-			.deletingLastPathComponent()
-			.deletingLastPathComponent()
-			.appendingPathComponent("tmp/damage-curve.md")
-		try FileManager.default.createDirectory(
-			at: url.deletingLastPathComponent(),
-			withIntermediateDirectories: true
-		)
-		try md.write(to: url, atomically: true, encoding: .utf8)
 		print(md)
 	}
 
