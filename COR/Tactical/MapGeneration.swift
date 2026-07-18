@@ -65,12 +65,13 @@ public extension Map<32, Terrain> {
 		terrain: [9 of Terrain]
 	) -> Terrain {
 		let dominant = strategicTerrain(at: xy, terrain: terrain)
+		let elevationBias = 0.22 * Float(dominant.elevationLevel)
 		let humidityBias: Float = switch dominant {
-		case .forest, .forestHill: 0.5
+		case .forest, .forestHill: 0.33
 		default: 0.0
 		}
 		return Terrain(
-			height: height.value(at: xy.simd) + 0.25 * Float(dominant.elevationLevel),
+			height: height.value(at: xy.simd) + elevationBias,
 			humidity: humidity.value(at: xy.simd) + humidityBias
 		)
 	}
