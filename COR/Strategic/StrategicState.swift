@@ -176,19 +176,34 @@ public extension StrategicSim {
 		capture(at: tile, by: ArmyID(country: country, slot: slot))
 	}
 
-	/// Deterministically resolves a strategic battle without entering Tactical.
-	/// The stronger local force wins; AI callers separately require a 3:1 edge.
+	/// Deterministically resolves a strategic battle without entering Tactical
+	/// by playing the same scenario an interactive battle would open, the
+	/// heuristic AI driving both seats without reinforcement purchases — the
+	/// armies fight with what they brought and treasuries stay home. Both
+	/// sides' casualties write back like a fought battle and a win annexes as
+	/// usual; AI callers separately require a 3:1 edge before launching one.
 	@discardableResult
 	mutating func autoResolveAttack(at tile: XY, by army: ArmyID) -> Bool? {
 		guard canAttack(tile, with: army) else { return nil }
 
 		let defender = owner[tile]
-		let attack = localStrength(of: army.country, near: tile)
-		let defence = localStrength(of: defender, near: tile)
+		let defendingArmy = defendingArmy(for: defender, near: tile)
+		let sim = battleScenario(at: tile, by: army).autoResolve()
 		armies[Int(army.country.rawValue)][army.index].mp = 0
-		let won = attack >= max(1, defence)
+
+		settle(sim, of: army)
+		if let defendingArmy { settle(sim, of: defendingArmy) }
+
+		let won = sim.offensiveSucceeded(by: army.country.team, against: defender.team)
 		if won { capture(at: tile, by: army) }
 		return won
+	}
+
+	/// Survivors return to the army that fought; an emptied side army
+	/// disbands.
+	private mutating func settle(_ sim: borrowing TacticalSim, of army: ArmyID) {
+		setRoster(sim.survivingRoster(for: army.country), slot: army.index, for: army.country)
+		disbandIfWipedOut(army.index, for: army.country)
 	}
 
 	func hasLocalAdvantage(_ army: ArmyID, attacking tile: XY, ratio: Int = 3) -> Bool {

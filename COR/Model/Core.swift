@@ -88,70 +88,26 @@ public extension Core {
 
 	mutating func startCampaignBattle(at tile: XY, by requestedSlot: Int? = nil) {
 		guard location == .strategic,
-			  let defender = strategic?.owner(at: tile),
 			  let slot = requestedSlot ?? strategic?.attackingArmy(at: tile),
 			  strategic?.canAttack(tile, with: ArmyID(country: strategic!.player.country, slot: slot)) == true
 		else { return }
 
-		let human = strategic!.player.country
-		var humanPlayer = strategic!.player
-		humanPlayer.prestige.increment(by: civilBonus(for: human))
-
-		let players = [
-			humanPlayer,
-			Player(country: defender, type: .ai, prestige: .poor + civilBonus(for: defender)),
-		]
-		let units = strategic!.roster(slot).compactMap { u in u.alive ? u : nil }
-			+ (strategic?.defendingCore(for: defender, near: tile) ?? [])
-			+ campaignAux(for: human)
-			+ campaignAux(for: defender)
-		let terrain = strategic!.battleTerrain(at: tile, by: slot)
-		let fortLevel = strategic!.fortLevel(at: tile)
-		strategic?.launchBattle(at: tile, by: slot)
-
-		let buildingsMask = [
-			strategic?.buildingsMask(of: human) ?? 0xFF,
-			strategic?.buildingsMask(of: defender) ?? 0xFF,
-			0xFF, 0xFF,
-		] as [4 of UInt8]
-
-		let scenario = Scenario(
-			players: players,
-			units: units,
-			terrain: terrain,
-			fortLevel: fortLevel,
-			seed: tile.x + tile.y * 32,
-			objective: .survive(defender.team, day: 20),
-			buildingsMask: buildingsMask
+		let scenario = strategic!.battleScenario(
+			at: tile,
+			by: ArmyID(country: strategic!.player.country, slot: slot)
 		)
+		strategic?.launchBattle(at: tile, by: slot)
 		tactical = scenario.makeSim()
 		location = .tactical
 	}
 
-	/// Resolves the selected human offensive entirely on the campaign map.
+	/// Resolves the selected human offensive entirely on the campaign map by
+	/// simulating its battle headlessly.
 	@discardableResult
 	mutating func autoResolveCampaignBattle(at tile: XY, by slot: Int) -> Bool? {
 		guard location == .strategic, strategic != nil else { return nil }
 		let country = strategic!.player.country
 		return strategic?.autoResolveAttack(at: tile, by: ArmyID(country: country, slot: slot))
-	}
-
-	/// Recurring campaign income: every battle starts with +40 prestige per
-	/// civil factory level the country owns.
-	private func civilBonus(for country: Country) -> UInt16 {
-		UInt16(40 * (strategic?.buildingsTotal(.civil, of: country) ?? 0))
-	}
-
-	/// The auxiliary force a country fields in a campaign battle, sized by its
-	/// country-wide military factory totals.
-	private func campaignAux(for country: Country) -> [Unit] {
-		.aux(
-			country,
-			army: strategic?.buildingsTotal(.army, of: country) ?? 0,
-			armor: strategic?.buildingsTotal(.armor, of: country) ?? 0,
-			air: strategic?.buildingsTotal(.air, of: country) ?? 0,
-			aa: strategic?.buildingsTotal(.aa, of: country) ?? 0
-		)
 	}
 
 	mutating func startCampaign(_ hq: borrowing HQSim, _ strategic: borrowing StrategicSim) {
@@ -164,7 +120,7 @@ public extension Core {
 
 	mutating func complete(_ sim: borrowing TacticalSim) {
 		let c = strategic?.player.country ?? hq.player.country
-		let roster = survivingRoster(for: c, in: sim)
+		let roster = sim.survivingRoster(for: c)
 		let battleTile = strategic?.battle
 		let defender = battleTile.map { strategic?.owner(at: $0) ?? .none } ?? .none
 		let defendingArmy = battleTile.flatMap { strategic?.defendingArmy(for: defender, near: $0) }
@@ -178,7 +134,7 @@ public extension Core {
 			strategic?.setRoster(roster, slot: slot)
 			strategic?.disbandIfWipedOut(slot)
 			if let defendingArmy {
-				let defenders = survivingRoster(for: defendingArmy.country, in: sim)
+				let defenders = sim.survivingRoster(for: defendingArmy.country)
 				strategic?.setRoster(
 					defenders,
 					slot: defendingArmy.index,
@@ -198,15 +154,4 @@ public extension Core {
 		}
 	}
 
-	private func survivingRoster(
-		for country: Country,
-		in sim: borrowing TacticalSim
-	) -> [16 of Unit] {
-		let units: [Unit] = sim.units.compactMapAlive { _, unit in
-			unit.country != country || unit[.aux] ? nil : modifying(unit) { unit in
-				unit.reset()
-			}
-		}
-		return [16 of Unit](head: Array(units.prefix(16)), tail: .empty)
-	}
 }

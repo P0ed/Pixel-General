@@ -54,10 +54,18 @@ struct StrategicTests {
 		modifying(COR.Unit(model: .regular, country: country)) { unit in unit.reset() }
 	}
 
+	/// A 4×3 land block split between Finland (west) and Russia (east). The
+	/// full block keeps the battle neighborhood of either border tile on land,
+	/// so autoresolved playouts fight the land battle the fixture strengths
+	/// imply instead of drowning in naval auxiliaries.
 	private static func borderSim(russianUnits: Int) -> StrategicSim {
 		var owner = Map<32, Country>(zero: .none)
-		owner[XY(1, 1)] = .fin
-		owner[XY(2, 1)] = .rus
+		for y in 0 ... 2 {
+			owner[XY(0, y)] = .fin
+			owner[XY(1, y)] = .fin
+			owner[XY(2, y)] = .rus
+			owner[XY(3, y)] = .rus
+		}
 		var sim = StrategicSim(
 			owner: owner,
 			player: Player(country: .fin, type: .human)
@@ -73,6 +81,12 @@ struct StrategicTests {
 		sim.armies[rus][0].mp = Army.moveSpeed
 		for index in 0 ..< russianUnits {
 			sim.armies[rus][0].units[index] = infantry(.rus)
+		}
+		// Occupy the side slots so the strategic AI cannot muster a second
+		// army onto the spare Russian provinces — the 2:1 vs 3:1 fixtures
+		// depend on army 0 being Russia's whole local strength.
+		for slot in 1 ..< 4 {
+			sim.armies[rus][slot].active = true
 		}
 		return sim
 	}
@@ -535,10 +549,57 @@ struct StrategicTests {
 		)
 		let owner = sim.owner[XY(2, 1)]
 		let mp = sim.armies[fin][0].mp
+		let survivors = sim.armies[fin][0].strength
 		#expect(result == true)
 		#expect(owner == .fin)
 		#expect(mp == 0)
 		#expect(sim.battle == nil)
+		#expect(survivors > 0, "the winning roster did not return from the playout")
+	}
+
+	/// Autoresolve runs a real playout: the fought armies come back with
+	/// casualties, and the annexation matches the simulated outcome.
+	@Test func autoresolvedBattleWritesCasualtiesBack() {
+		var sim = StrategicSim.europe(country: .fin)
+		var target: XY?
+		var from: XY?
+		outer: for xy in sim.owner.indices where sim.owner[xy] == .bel {
+			let n4 = xy.n4
+			for i in 0 ..< n4.count {
+				let n = n4[i]
+				if sim.owner.contains(n), sim.owner[n] == .pol {
+					target = xy
+					from = n
+					break outer
+				}
+			}
+		}
+		guard let target, let from else {
+			Issue.record("no Polish–Belarusian border to contest")
+			return
+		}
+		let pol = Int(Country.pol.rawValue)
+		let bel = Int(Country.bel.rawValue)
+		sim.armies[pol][0].position = from
+		sim.armies[pol][0].mp = Army.moveSpeed
+		sim.armies[bel][0].position = target
+		let attackerBefore = sim.armies[pol][0].strength
+		let defenderBefore = sim.armies[bel][0].strength
+
+		let won = sim.autoResolveAttack(at: target, by: ArmyID(country: .pol, slot: 0))
+
+		let attackerAfter = sim.armies[pol][0].strength
+		let defenderAfter = sim.armies[bel][0].strength
+		let owner = sim.owner[target]
+		let mp = sim.armies[pol][0].mp
+		#expect(won != nil)
+		#expect(mp == 0)
+		#expect(sim.battle == nil)
+		#expect(
+			attackerAfter < attackerBefore || defenderAfter < defenderBefore,
+			"a fought battle cost neither side casualties"
+		)
+		#expect((won == true) == (owner == .pol), "outcome and annexation disagree")
 	}
 
 	@Test func startCampaignMakesStrategicMainRosterAuthoritative() {
