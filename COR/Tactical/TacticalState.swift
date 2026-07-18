@@ -26,6 +26,10 @@ public struct TacticalSim: ~Copyable {
 @frozen public enum Objective: Equatable, BitwiseCopyable {
 	case none
 	case survive(Team, day: UInt16)
+
+	public var defender: Team? {
+		if case .survive(let team, let day) = self { team } else { nil }
+	}
 }
 
 public extension TacticalSim {

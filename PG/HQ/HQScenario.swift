@@ -17,6 +17,7 @@ extension HQNodes {
 		}
 		var forts: UInt8 = 0
 		var sea: UInt8 = 0
+		var density: UInt8 = 0
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
@@ -109,21 +110,27 @@ extension HQNodes {
 			.space, .space,.space, .space,
 			.space, .space,.space, .space,
 
+			.init(icon: .toggle4(density), status: .init(text: "Density: \(density)"), update: { m in
+				modifying(m) { m in
+					density.toggle4()
+					m.items[28].icon = .toggle4(density)
+					m.items[28].status.text = "Density: \(density)"
+				}
+			}),
 			.init(icon: .toggle4(forts), status: .init(text: "Forts: \(forts)"), update: { m in
 				modifying(m) { m in
 					forts.toggle4()
-					m.items[28].icon = .toggle4(forts)
-					m.items[28].status.text = "Forts: \(forts)"
+					m.items[29].icon = .toggle4(forts)
+					m.items[29].status.text = "Forts: \(forts)"
 				}
 			}),
 			.init(icon: .toggle4(sea), status: .init(text: "Sea: \(sea)"), update: { m in
 				modifying(m) { m in
 					sea.toggle4()
-					m.items[29].icon = .toggle4(sea)
-					m.items[29].status.text = "Sea: \(sea)"
+					m.items[30].icon = .toggle4(sea)
+					m.items[30].status.text = "Sea: \(sea)"
 				}
 			}),
-			.space,
 			.close(icon: .start, status: "Start", update: { _ in
 				guard let scene else { return }
 
@@ -138,6 +145,7 @@ extension HQNodes {
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: units,
 					terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
+					cityLevel: Int(density),
 					fortLevel: Int(forts),
 					seed: seed
 				).makeSim())

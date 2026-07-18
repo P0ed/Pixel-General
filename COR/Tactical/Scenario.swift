@@ -7,6 +7,7 @@ public struct Scenario {
 	/// Strategic 3×3 neighborhood, row-major north-west to south-east. The
 	/// attacker occupies index 3 and the defender index 4.
 	public var terrain: [9 of Terrain]
+	public var cityLevel: Int
 	public var fortLevel: Int
 	public var seed: Int
 	public var objective: Objective
@@ -16,6 +17,7 @@ public struct Scenario {
 		players: [Player],
 		units: [Unit],
 		terrain: [9 of Terrain] = .init(repeating: .field),
+		cityLevel: Int = 0,
 		fortLevel: Int = 0,
 		seed: Int = 0,
 		objective: Objective = .none,
@@ -24,35 +26,21 @@ public struct Scenario {
 		self.players = players
 		self.units = Self.addingNavalAux(to: units, for: players, terrain: terrain)
 		self.terrain = terrain
+		self.cityLevel = cityLevel
 		self.fortLevel = fortLevel
 		self.seed = seed
 		self.objective = objective
 		self.buildingsMask = buildingsMask
 	}
 
-	public func makeSim() -> TacticalSim {
-		TacticalSim(
-			players: players,
-			units: units,
-			seed: seed,
-			terrain: terrain,
-			objective: objective,
-			forts: fortLevel,
-			buildingsMask: buildingsMask
-		)
-	}
+	public func makeSim() -> TacticalSim { TacticalSim(new: self) }
 
-	/// A coastline large enough to field ships grants every participating
-	/// country a five-ship auxiliary fleet: one cruiser, two destroyers, and two
-	/// cargo ships. Existing non-fleet aux slots are replaced as needed to keep
-	/// the force at its 16-unit cap so four full rosters still fit.
 	private static func addingNavalAux(
 		to units: [Unit],
 		for players: [Player],
 		terrain: [9 of Terrain]
 	) -> [Unit] {
-		var seaTiles = 0
-		for i in terrain.indices where terrain[i] == .sea { seaTiles += 1 }
+		let seaTiles = terrain.reduce(into: 0) { r, t in r += t == .sea ? 1 : 0 }
 		guard seaTiles >= 3 else { return units }
 
 		var result = units

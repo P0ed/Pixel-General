@@ -1,47 +1,39 @@
 public extension TacticalSim {
 
-	init(
-		players: [Player],
-		units: [Unit],
-		seed: Int,
-		terrain: [9 of Terrain],
-		objective: Objective = .none,
-		forts: Int = 0,
-		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
-	) {
-		var map = Map<32, Terrain>(seed: seed, players: players.count, terrain: terrain)
-		let defending: Team? = switch objective {
-		case .survive(let team, _): team
-		case .none: nil
-		}
+	init(new scenario: Scenario) {
+		var map = Map<32, Terrain>(
+			seed: scenario.seed,
+			players: scenario.players.count,
+			terrain: scenario.terrain,
+			density: scenario.cityLevel
+		)
+		let defending: Team? = scenario.objective.defender
 		let cities = Self.cities(
-			countries: players.map { p in p.country },
+			countries: scenario.players.map { p in p.country },
 			defending: defending,
 			map: map
 		)
-		// Fort rings guard the defender's cities; without a defending team
-		// (sandbox scenarios) every city gets one.
 		map.placeForts(
 			around: cities.compactMap { xy, c in
 				defending.map { team in c.team == team } ?? true ? xy : nil
 			},
-			level: forts
+			level: scenario.fortLevel
 		)
-		let units = units.mapInPlace { u in u.reset() }
+		let units = scenario.units.mapInPlace { u in u.reset() }
 
 		self.init(
 			map: map,
-			players: players,
+			players: scenario.players,
 			cities: cities,
 			units: units,
-			buildingsMask: buildingsMask,
+			buildingsMask: scenario.buildingsMask,
 			navalCenters: Self.navalCenters(
-				players: players,
-				terrain: terrain,
+				players: scenario.players,
+				terrain: scenario.terrain,
 				cities: cities
 			)
 		)
-		self.objective = objective
+		self.objective = scenario.objective
 	}
 
 	/// Assign each participating team a distinct strategic sea cell near the
@@ -117,15 +109,15 @@ public extension TacticalSim {
 		forts: Int = 0,
 		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 	) {
-		self.init(
+		self.init(new: Scenario(
 			players: players,
 			units: units,
-			seed: seed,
 			terrain: [9 of Terrain](repeating: terrain),
+			fortLevel: forts,
+			seed: seed,
 			objective: objective,
-			forts: forts,
 			buildingsMask: buildingsMask
-		)
+		))
 	}
 
 	private static func cities(

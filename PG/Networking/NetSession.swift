@@ -172,11 +172,12 @@ final class NetSession {
 		guard players.count > 1 else { return }
 		countries = players.map { $0.country }
 
-		let sim = TacticalSim(
+		let sim = TacticalSim(new: Scenario(
 			players: players,
 			units: units,
+			terrain: .init(repeating: .field),
 			seed: .random(in: 0 ..< 128)
-		)
+		))
 		started = true
 		server?.broadcast(.start(encode(sim)))
 		core.startScenario(sim)

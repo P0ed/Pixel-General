@@ -146,7 +146,7 @@ private extension EditorState {
 	}
 
 	mutating func randomizeMap(into events: inout [EditorEvent]) {
-		map = Map(seed: Int.random(in: 0 ... .max))
+		map = Map(seed: Int.random(in: 0 ... .max), density: Int.random(in: 0 ... 3))
 		events.append(.redraw)
 	}
 

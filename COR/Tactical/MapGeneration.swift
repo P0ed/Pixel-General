@@ -5,11 +5,12 @@ public extension Map<32, Terrain> {
 	/// `terrain` is the dominant terrain of the generated map: hills and
 	/// mountains lift the height field, while forests raise humidity. Campaign
 	/// battles pass the contested province's strategic terrain here.
-	init(seed: Int, players: Int = 4, terrain: Terrain = .field) {
+	init(seed: Int, players: Int = 4, terrain: Terrain = .field, density: Int) {
 		self.init(
 			seed: seed,
 			players: players,
-			terrain: [9 of Terrain](repeating: terrain)
+			terrain: [9 of Terrain](repeating: terrain),
+			density: density
 		)
 	}
 
@@ -23,7 +24,7 @@ public extension Map<32, Terrain> {
 	/// Campaign battles rotate their sample so the attacker is at 3 and the
 	/// defender at 4. Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
-	init(seed: Int, players: Int = 4, terrain: [9 of Terrain]) {
+	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int) {
 		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
@@ -38,7 +39,7 @@ public extension Map<32, Terrain> {
 			terrain: terrain
 		)
 		placeRivers(height: height, d20: &d20)
-		let cities = placeCities(d20: &d20, players: players, mainland: mainland)
+		let cities = placeCities(d20: &d20, players: players, mainland: mainland, density: density)
 		connectCities(cities: cities)
 		shapeRoads()
 	}
@@ -378,8 +379,8 @@ public extension Map<32, Terrain> {
 		xy.n4.contains { p in self[p].isSea }
 	}
 
-	private mutating func placeCities(d20: inout D20, players: Int, mainland: SetXY) -> [XY] {
-		let citiesCount = min(16, max(6, count / 48))
+	private mutating func placeCities(d20: inout D20, players: Int, mainland: SetXY, density: Int) -> [XY] {
+		let citiesCount = 12 + density * 4
 
 		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
 		let rows = (citiesCount + cols - 1) / cols
