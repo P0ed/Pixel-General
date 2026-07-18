@@ -5,7 +5,6 @@ public struct StrategicSim: ~Copyable {
 	public var terrain: Map<32, Terrain>
 	public var provinces: Map<32, Province>
 	public var player: Player
-	/// Four army slots for each possible `Country.rawValue`.
 	public var armies: CArray<64, CArray<4, Army>>
 	public var turn: UInt32
 	public var battle: XY?
@@ -396,36 +395,43 @@ NNGGGGGGGPPPPPPPPUUUUUUUUUZZZZZZ
 """
 
 /// Terrain overlay for `mapASCII` (same 32×32 grid): `^` mountain, `n` hill,
-/// `f` forest, `.` field. Rough real-world ranges — the northern European
-/// forests; Scandinavian spine, Kola and Lapland fells; Valdai and Central
-/// Russian uplands; German uplands; Sudetes/Ore Mountains; the Alps; and the
-/// Carpathian arc.
+/// `f` forest, `.` field. Forests follow the real vegetation belts:
+/// continuous taiga across Fennoscandia and northern Russia down to ~55°N,
+/// thinning to fell tundra on the Finnmark and Kola coasts; the mixed-forest
+/// belt of the Baltics, Belarus, and central Russia, broken by the Zemgale
+/// and mid-Lithuanian farm lowlands; the farmed European plain where only
+/// the named woodlands remain — Lüneburg Heath, the Mecklenburg–Brandenburg
+/// pine belt, Franconia, Tuchola, Masuria, Białowieża, the Polesia belt
+/// along the Pripyat, Silesian, Sandomierz, Bryansk, and the Oka forests;
+/// and open steppe from central Ukraine eastward. Uplands:
+/// Scandinavian spine and fells, Valdai and Central Russian uplands, German
+/// uplands, Sudetes/Ore Mountains, the Alps, and the Carpathian arc.
 private let terrainASCII = """
 ................................
 ................................
-.............n^^nffff...........
-...........f^^nffnfffnnff.ff....
-..........^^nfffffnfffnf.fff...f
-.........^^nfffffffffff...f.....
-........^^nffff...ffff.ff....f.f
-.......^^nfffff..ffffffff..ff.ff
-.....n^^nfffff..ffffffff.fff.fff
-...fn^^^nfff...ffffffff.fnn.fff.
-..fn^^^nffff...fffffff.fnnnfff.f
-..ff^^^nffff....fffff.fffnfff.ff
-..ffnnnffffff........fff.fff.fff
-...nn..ffffff...fffffff.fff.fff.
-.......fnnff.....fffff.fff.fff.f
-........fff....ffffff.fff.fff.ff
-........f......ffffff.ff.fff.fff
-................fff...f..f..f..f
-............f...f...f...f..f..f.
-..........f...f...f...ff..f..f..
-............f...f...f.......f..f
-..........f...f............nn.f.
-.....n.nn...f...f..........nn...
+.............n^^n..ff...........
+...........f^^nffnff.nn.........
+..........^^nfffffnfffnffffff..f
+.........^^nffffffffffff..ff...f
+........^^nffff...fffffff....fff
+.......^^nfffff..fffffffff.fffff
+.....n^^nfffff..ffffffffffffffff
+...fn^^^nfff...ffffffffffnnfffff
+..fn^^^nffff...fffffffffnnnfffff
+..ff^^^nffff....fffffffffnffffff
+..ffnnnffffff........ff.fff.ffff
+...nn..ffffff...f.fff.fff.fff.ff
+.......fnnff.....ff.fff.fff.fff.
+........fff....ff.fff.fff.fff.ff
+...............f.ff.fff.fff.fff.
+...........ff..fffffffffffffffff
+..........ff.....fff..ff.fff..ff
+.......f.ff......fff.ff.fff.....
+.....f.ff.......ff.ff.ff.ff.....
+........ff.......ffffffff..nn...
+.....n.nn..................nn...
 ....nnn^nn....f.................
-....n...n...n^^nnn..............
+....n.f.n...n^^nnn..............
 .....nn^^^nnn...^^nn............
 ....^^^^^nn....n^^n.............
 ........nnn....^^^n.............
