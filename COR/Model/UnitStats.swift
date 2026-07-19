@@ -84,7 +84,7 @@ public extension UnitStats {
 		tier: 1,
 		mov: 6,
 		ini: 1,
-		groundDef: 6,
+		groundDef: 5,
 		airDef: 3,
 		traits: .transport
 	)
@@ -97,8 +97,8 @@ public extension UnitStats {
 		softAtk: 10,
 		hardAtk: 10,
 		airAtk: 10,
-		navAtk: 14,
-		groundDef: 10,
+		navAtk: 12,
+		groundDef: 8,
 		airDef: 9,
 		traits: [.radar, .optics]
 	)
@@ -109,10 +109,10 @@ public extension UnitStats {
 		rng: 4,
 		ini: 8,
 		softAtk: 12,
-		hardAtk: 9,
+		hardAtk: 10,
 		airAtk: 6,
-		navAtk: 16,
-		groundDef: 12,
+		navAtk: 14,
+		groundDef: 10,
 		airDef: 8,
 		traits: [.optics]
 	)
