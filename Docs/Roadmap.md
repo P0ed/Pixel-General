@@ -11,17 +11,14 @@
 - Separate layer for air units.
 - Explosion animations (three levels).
 - Movement sounds depending on unit type (leg, wheel, track, heli, jet).
-
-## Campaign (HoI lite)
-
-- Dynamic diplomacy.
-- - Rename `Country` to `Flag` [or `Tag`?].
-- - Add `struct Country { var flag: Flag, var team: Team }`.
-- - - Bitpack into `rawValue: UInt8`, 64 flags, 4 teams.
-- - - Allow to select a team in new scenario / LAN lobby.
-- - Allow to join a team if current team is `.none`.
-- Tier unlock mechanics.
-- - Has enough factories/buildings + fixed cost.
+- Spawn locations, specified in XY to [3x3] per player in `Scenario`.
+- - All settlements are assigned from specified locations.
+- - - At map gen ensure the cities at spawn point has airfield.
+- - Passed from campaign layer.
+- - For custom scenarios set to: `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]`.
+- - - Each seat gets a toggle in menu that selects a spawn point with 6 options: `I, II, III, IV, V, Random`.
+- Map validation — refuse maps that violate gen invariants
+  (orphan rivers, isolated cities, no spawn tiles per country, settlements > 64).
 
 ## Controls
 
@@ -49,10 +46,3 @@
 - Allow to choose a port when hosting a game.
 - Optimistic client-side apply to hide LAN latency.
 - Bonjour discovery so clients pick a host instead of typing `ip:port`.
-
-## Editor
-
-- Replace/Bucket tool replaces the same tiles under cursor with the selected tile.
-- Undo stack for tile edits.
-- Map validation on save — refuse maps that violate gen invariants
-  (orphan rivers, isolated cities, no spawn tiles per country).

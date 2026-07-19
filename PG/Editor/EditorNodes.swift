@@ -87,7 +87,7 @@ private extension EditorNodes {
 				)
 			} + [
 				.space,
-				.close(icon: .new, status: "Randomize", action: .randomize),
+				.close(icon: .rnd, status: "Randomize", action: .randomize),
 
 				.close(icon: .empty, status: "Clear map", action: .clear),
 				.close(icon: .save, status: "Save map", action: .save),
