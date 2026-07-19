@@ -7,16 +7,27 @@ public struct Scenario {
 	/// Strategic 3×3 neighborhood, row-major north-west to south-east. The
 	/// attacker occupies index 3 and the defender index 4.
 	public var terrain: [9 of Terrain]
+	/// Per-player spawn cells of the 3×3 neighborhood as (column,
+	/// row-from-south), each 0…2 — parallel to `players`. When present, every
+	/// settlement is assigned from these locations and map generation
+	/// guarantees an airfield at each spawn city; empty keeps the legacy
+	/// index-proportional settlement split.
+	public var spawns: [XY]
 	public var cityLevel: Int
 	public var fortLevel: Int
 	public var seed: Int
 	public var objective: Objective
 	public var buildingsMask: [4 of UInt8]
 
+	/// The five spawn options of a custom scenario — menu toggles I…V:
+	/// south, north, east, west, center.
+	public static var spawnPoints: [XY] { [XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)] }
+
 	public init(
 		players: [Player],
 		units: [Unit],
 		terrain: [9 of Terrain] = .init(repeating: .field),
+		spawns: [XY] = [],
 		cityLevel: Int = 0,
 		fortLevel: Int = 0,
 		seed: Int = 0,
@@ -26,6 +37,7 @@ public struct Scenario {
 		self.players = players
 		self.units = Self.addingNavalAux(to: units, for: players, terrain: terrain)
 		self.terrain = terrain
+		self.spawns = spawns
 		self.cityLevel = cityLevel
 		self.fortLevel = fortLevel
 		self.seed = seed
@@ -123,6 +135,15 @@ public struct Scenario {
 			terrain[index] = .sea
 		}
 		return terrain
+	}
+}
+
+public extension XY {
+
+	/// Tactical-map center of a 3×3 strategic cell; `self` is the cell as
+	/// (column, row-from-south), each 0…2.
+	func cellCenter(size: Int) -> XY {
+		XY((x * 2 + 1) * size / 6, (y * 2 + 1) * size / 6)
 	}
 }
 

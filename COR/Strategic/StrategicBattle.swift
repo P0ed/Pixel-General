@@ -15,6 +15,9 @@ public extension StrategicSim {
 			players: [battlePlayer(for: army.country), battlePlayer(for: defender)],
 			units: units,
 			terrain: battleTerrain(at: tile, attackingFrom: self.army(army).position),
+			// The attacker holds terrain index 3 (west-middle), the defender
+			// index 4 — the defended center province.
+			spawns: [XY(0, 1), XY(1, 1)],
 			fortLevel: fortLevel(at: tile),
 			seed: tile.x + tile.y * 32,
 			objective: .survive(defender.team, day: 24),

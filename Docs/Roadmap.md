@@ -11,12 +11,6 @@
 - Separate layer for air units.
 - Explosion animations (three levels).
 - Movement sounds depending on unit type (leg, wheel, track, heli, jet).
-- Spawn locations, specified in XY to [3x3] per player in `Scenario`.
-- - All settlements are assigned from specified locations.
-- - - At map gen ensure the cities at spawn point has airfield.
-- - Passed from campaign layer.
-- - For custom scenarios set to: `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]`.
-- - - Each seat gets a toggle in menu that selects a spawn point with 6 options: `I, II, III, IV, V, Random`.
 - Map validation — refuse maps that violate gen invariants
   (orphan rivers, isolated cities, no spawn tiles per country, settlements > 64).
 

@@ -18,6 +18,17 @@ extension UIImage {
 		default: .value3
 		}
 	}
+
+	static func spawn(_ value: UInt8) -> UIImage {
+		switch value {
+		case 0: .I
+		case 1: .II
+		case 2: .III
+		case 3: .IV
+		case 4: .V
+		default: .rnd
+		}
+	}
 }
 
 extension CGImage {

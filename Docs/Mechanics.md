@@ -385,6 +385,28 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   settlements of its own stays alive while a teammate still holds one.
   Last team standing wins, unless an `Objective` decides the battle first.
 
+### Spawn locations
+
+`COR/Tactical/Scenario.swift`, `COR/Tactical/TacticalSimFactory.swift`,
+`COR/Tactical/MapGeneration.swift`
+
+- `Scenario.spawns` holds one cell of the strategic 3×3 neighborhood per
+  player as (column, row-from-south), each 0…2. When present, all settlements
+  are assigned from these locations: cities go greedily to the nearest spawn
+  center under defender-weighted quotas (so counts stay balanced and each
+  seat's holdings cluster around its spawn), and villages/airfields follow
+  their nearest city as usual. Map generation guarantees the city nearest
+  each spawn center an adjacent airfield, clearing forest or hill for the
+  strip if it must. An empty `spawns` keeps the legacy index-proportional
+  split — trainers and tests are byte-identical to before.
+- Campaign battles spawn the attacker at `XY(0, 1)` (terrain index 3) and
+  the defender at `XY(1, 1)` — the defended center province.
+- Custom scenarios offer five spawn options
+  `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
+  west, center); each seat picks **I, II, III, IV, V, Random** with a menu
+  toggle. Random seats draw from the options no seat picked explicitly. LAN
+  battles spread seats in order over the same options: S, N, E, W.
+
 ### Objectives & victory
 
 `COR/Tactical/TacticalState.swift`, `COR/Tactical/TacticalTurns.swift`

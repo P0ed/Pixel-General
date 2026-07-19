@@ -35,6 +35,35 @@ struct MapGenerationTests {
 		#expect(noRiverSeeds.isEmpty, "Seeds with no river: \(noRiverSeeds)")
 	}
 
+	@Test func spawnPointCitiesHaveAirfields() {
+		for seed in 0 ..< 8 {
+			let spawns = Scenario.spawnPoints
+			let map = Map<32, Terrain>(
+				seed: seed * 13,
+				terrain: .init(repeating: .field),
+				spawns: spawns
+			)
+			let cities = cities(of: map)
+			for spawn in spawns {
+				let center = spawn.cellCenter(size: map.size)
+				guard let city = cities.min(by: { a, b in
+					(a.manhattanDistance(to: center), a.x, a.y)
+						< (b.manhattanDistance(to: center), b.x, b.y)
+				}) else {
+					Issue.record("Seed \(seed * 13) generated no cities")
+					continue
+				}
+				let hasAirfield = city.n4.contains { xy in
+					map.contains(xy) && map[xy] == .airfield
+				}
+				#expect(
+					hasAirfield,
+					"Seed \(seed * 13): spawn \(spawn) city \(city) has no airfield"
+				)
+			}
+		}
+	}
+
 	@Test func isDeterministicForSameSeed() {
 		for seed in [0, 1, 7, 100, 999, 1023] {
 			let a = Map<32, Terrain>(seed: seed)

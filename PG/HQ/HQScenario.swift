@@ -18,6 +18,8 @@ extension HQNodes {
 		var forts: UInt8 = 0
 		var sea: UInt8 = 0
 		var density: UInt8 = 0
+		// Per-seat spawn selection: 0…4 = options I…V, 5 = Random.
+		var spawns: [4 of UInt8] = .init(repeating: 5)
 
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
@@ -106,8 +108,20 @@ extension HQNodes {
 				}
 			)
 		}
+		let spawn = (0..<4).map { idx in
+			MenuItem<HQAction>(
+				icon: .spawn(spawns[idx]),
+				status: .init(text: "Spawn"),
+				update: { menu in
+					modifying(menu) { menu in
+						spawns[idx].toggle6()
+						menu.items[20 + idx].icon = .spawn(spawns[idx])
+						menu.cursor = 20 + idx
+					}
+				}
+			)
+		}
 		let start: [MenuItem<HQAction>] = [
-			.space, .space,.space, .space,
 			.space, .space,.space, .space,
 
 			.init(icon: .toggle4(density), status: .init(text: "Density: \(density)"), update: { m in
@@ -141,10 +155,27 @@ extension HQNodes {
 				+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
 				let seed = Int.random(in: 0 ..< 128)
 
+				let options = Scenario.spawnPoints
+				var pool = options.indices.filter { option in
+					!(0 ..< 4).contains { i in
+						players[i].alive && spawns[i] == UInt8(option)
+					}
+				}.shuffled()
+				var resolved: [XY] = []
+				for idx in 0 ..< 4 where players[idx].alive {
+					if spawns[idx] < 5 {
+						resolved.append(options[Int(spawns[idx])])
+					} else {
+						if pool.isEmpty { pool = Array(options.indices).shuffled() }
+						resolved.append(options[pool.removeFirst()])
+					}
+				}
+
 				core.startScenario(Scenario(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: units,
 					terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
+					spawns: resolved,
 					cityLevel: Int(density),
 					fortLevel: Int(forts),
 					seed: seed
@@ -155,7 +186,7 @@ extension HQNodes {
 		]
 
 		return MenuState(
-			items: countries + types + prestige + exp + tier + start,
+			items: countries + types + prestige + exp + tier + spawn + start,
 			close: { _ in menu }
 		)
 	}

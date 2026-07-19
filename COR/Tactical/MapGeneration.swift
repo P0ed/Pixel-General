@@ -24,7 +24,9 @@ public extension Map<32, Terrain> {
 	/// Campaign battles rotate their sample so the attacker is at 3 and the
 	/// defender at 4. Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
-	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int = 1) {
+	/// `spawns` are the players' spawn cells of the neighborhood — the city
+	/// nearest each spawn center is guaranteed an adjacent airfield.
+	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int = 1, spawns: [XY] = []) {
 		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
@@ -39,7 +41,13 @@ public extension Map<32, Terrain> {
 			terrain: terrain
 		)
 		placeRivers(height: height, d20: &d20)
-		let cities = placeCities(d20: &d20, players: players, mainland: mainland, density: density)
+		let cities = placeCities(
+			d20: &d20,
+			players: players,
+			mainland: mainland,
+			density: density,
+			spawns: spawns
+		)
 		connectCities(cities: cities)
 		shapeRoads()
 	}
@@ -380,7 +388,13 @@ public extension Map<32, Terrain> {
 		xy.n4.contains { p in self[p].isSea }
 	}
 
-	private mutating func placeCities(d20: inout D20, players: Int, mainland: SetXY, density: Int) -> [XY] {
+	private mutating func placeCities(
+		d20: inout D20,
+		players: Int,
+		mainland: SetXY,
+		density: Int,
+		spawns: [XY]
+	) -> [XY] {
 		let citiesCount = 12 + density * 4
 
 		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
@@ -429,23 +443,52 @@ public extension Map<32, Terrain> {
 
 		var airfieldCount = placed.count - cities.count
 		for city in cities where airfieldCount < players {
-			let hasAirfield = city.n4.contains { ap in
-				contains(ap) && self[ap] == .airfield
-			}
-			if !hasAirfield, placeAirfield(near: city, placed: &placed, d20: &d20) {
+			if !hasAirfield(near: city), placeAirfield(near: city, placed: &placed, d20: &d20) {
 				airfieldCount += 1
+			}
+		}
+
+		// Each spawn cell's nearest city fields the seat's air force: walk
+		// cities nearest-first from the spawn center until one already has an
+		// adjacent airfield or accepts a new one — clearing forest or hill for
+		// the strip when no open field is adjacent.
+		for spawn in spawns {
+			let center = spawn.cellCenter(size: size)
+			let ranked = cities.sorted { a, b in
+				(a.manhattanDistance(to: center), a.x, a.y)
+					< (b.manhattanDistance(to: center), b.x, b.y)
+			}
+			for city in ranked {
+				if hasAirfield(near: city)
+					|| placeAirfield(near: city, placed: &placed, d20: &d20, clearing: true) {
+					break
+				}
 			}
 		}
 
 		return placed
 	}
 
+	private func hasAirfield(near city: XY) -> Bool {
+		city.n4.contains { ap in contains(ap) && self[ap] == .airfield }
+	}
+
 	@discardableResult
-	private mutating func placeAirfield(near city: XY, placed: inout [XY], d20: inout D20) -> Bool {
-		guard let ap = city.n4
-			.compactMap({ p in contains(p) && self[p] == .field ? p : nil })
-			.randomElement(using: &d20)
-		else { return false }
+	private mutating func placeAirfield(
+		near city: XY,
+		placed: inout [XY],
+		d20: inout D20,
+		clearing: Bool = false
+	) -> Bool {
+		var candidates = city.n4.compactMap { p in
+			contains(p) && self[p] == .field ? p : nil
+		}
+		if clearing, candidates.isEmpty {
+			candidates = city.n4.compactMap { p in
+				contains(p) && [.forest, .hill, .forestHill].contains(self[p]) ? p : nil
+			}
+		}
+		guard let ap = candidates.randomElement(using: &d20) else { return false }
 		self[ap] = .airfield
 		placed.append(ap)
 		return true

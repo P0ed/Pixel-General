@@ -5,12 +5,14 @@ public extension TacticalSim {
 			seed: scenario.seed,
 			players: scenario.players.count,
 			terrain: scenario.terrain,
-			density: scenario.cityLevel
+			density: scenario.cityLevel,
+			spawns: scenario.spawns
 		)
 		let defending: Team? = scenario.objective.defender
 		let cities = Self.cities(
 			countries: scenario.players.map { p in p.country },
 			defending: defending,
+			spawns: scenario.spawns,
 			map: map
 		)
 		map.placeForts(
@@ -55,12 +57,7 @@ public extension TacticalSim {
 		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
 
 		func strategicCenter(_ index: Int) -> XY {
-			let column = index % 3
-			let rowFromSouth = 2 - index / 3
-			return XY(
-				(column * 2 + 1) * 32 / 6,
-				(rowFromSouth * 2 + 1) * 32 / 6
-			)
+			XY(index % 3, 2 - index / 3).cellCenter(size: 32)
 		}
 
 		let teamCenters = teams.map { team in
@@ -120,9 +117,15 @@ public extension TacticalSim {
 		))
 	}
 
+	/// Settlement ownership. With `spawns` present each seat's share of the
+	/// cities clusters around its spawn cell: cities go greedily to the
+	/// nearest spawn under per-seat quotas, so counts keep the defender
+	/// weighting and duplicate spawns still split their cluster. Without
+	/// spawns the legacy index-proportional slicing applies.
 	private static func cities(
 		countries: [Country],
 		defending: Team?,
+		spawns: [XY],
 		map: borrowing Map<32, Terrain>
 	) -> [(XY, Country)] {
 		let cityXYs: [XY] = map.indices.compactMap { xy in
@@ -136,10 +139,33 @@ public extension TacticalSim {
 			acc.append((acc.last ?? 0) + w)
 		}
 
+		guard spawns.count == countries.count, !spawns.isEmpty else {
+			return cityXYs.enumerated().map { i, xy in
+				let pos = i * total / n
+				let idx = thresholds.firstIndex { pos < $0 } ?? countries.count - 1
+				return (xy, countries[idx])
+			}
+		}
+
+		let centers = spawns.map { s in s.cellCenter(size: map.size) }
+		var quotas = thresholds.enumerated().map { idx, t in
+			t * n / total - (idx > 0 ? thresholds[idx - 1] : 0) * n / total
+		}
+		var pairs: [(d: Int, p: Int, c: Int)] = []
+		for c in cityXYs.indices {
+			for p in countries.indices {
+				pairs.append((cityXYs[c].manhattanDistance(to: centers[p]), p, c))
+			}
+		}
+		pairs.sort { a, b in (a.d, a.p, a.c) < (b.d, b.p, b.c) }
+
+		var owner = [Int?](repeating: nil, count: n)
+		for pair in pairs where owner[pair.c] == nil && quotas[pair.p] > 0 {
+			owner[pair.c] = pair.p
+			quotas[pair.p] -= 1
+		}
 		return cityXYs.enumerated().map { i, xy in
-			let pos = i * total / n
-			let idx = thresholds.firstIndex { pos < $0 } ?? countries.count - 1
-			return (xy, countries[idx])
+			(xy, countries[owner[i] ?? countries.count - 1])
 		}
 	}
 }

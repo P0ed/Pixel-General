@@ -84,6 +84,54 @@ struct TacticalTests {
 		#expect(sim.players.count == 2)
 	}
 
+	@Test func spawnsClusterSettlementsAndKeepDefenderWeight() {
+		let players = [
+			Player(country: .fin, type: .human),
+			Player(country: .rus, type: .ai),
+		]
+		for seed in 0 ..< 8 {
+			let spawns = [XY(0, 1), XY(2, 1)]
+			let sim = Scenario(
+				players: players,
+				units: [],
+				spawns: spawns,
+				seed: seed * 11,
+				objective: .survive(.soviet, day: 12)
+			).makeSim()
+
+			var counts = [0, 0]
+			var nearestOwner = [Country.default, Country.default]
+			var nearestDistance = [Int.max, Int.max]
+			for xy in sim.map.indices where sim.map[xy] == .city {
+				let owner = sim.control[xy]
+				if let idx = players.firstIndex(where: { p in p.country == owner }) {
+					counts[idx] += 1
+				}
+				for (i, spawn) in spawns.enumerated() {
+					let d = xy.manhattanDistance(to: spawn.cellCenter(size: sim.map.size))
+					if d < nearestDistance[i] {
+						nearestDistance[i] = d
+						nearestOwner[i] = owner
+					}
+				}
+			}
+			#expect(
+				counts[0] > 0 && counts[1] > 0,
+				"Seed \(seed * 11): a seat owns no city (\(counts))"
+			)
+			#expect(
+				counts[1] > counts[0],
+				"Seed \(seed * 11): defender weighting lost (\(counts))"
+			)
+			for i in players.indices {
+				#expect(
+					nearestOwner[i] == players[i].country,
+					"Seed \(seed * 11): city nearest spawn \(i) belongs to \(nearestOwner[i])"
+				)
+			}
+		}
+	}
+
 	@Test func scenarioAddsNavalAuxAtThreeSeaTiles() {
 		let players = [
 			Player(country: .fin, type: .human, baseLevel: 2),
