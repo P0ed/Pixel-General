@@ -9,7 +9,6 @@
 - Add unit deployment phase before day 1.
 - Unit surrenders if can't retreat.
 - Separate layer for air units.
-- Explosion animations (three levels).
 - Movement sounds depending on unit type (leg, wheel, track, heli, jet).
 - Map validation — refuse maps that violate gen invariants
   (orphan rivers, isolated cities, no spawn tiles per country, settlements > 64).
@@ -22,13 +21,9 @@
 ## AI
 
 - Strengthen the neural opponent toward >60% vs the heuristic, then self-play for
-  emergent behavior. Bundled: bc8 final — pure BC at 64× scale (15360-battle mixed
-  corpus, 64000 steps) on the 49-plane/replay-v5/embark-fixed contract, 45.2% (376W)
-  in the paired 832-battle mixed arena, seat 0 alone 50.7% (first to beat the
-  heuristic); pre-break numbers (bc7 46.0% on 53 planes) are not comparable. Pure BC
-  of a deterministic teacher caps near 50%, so >60% needs RL: revisit PPO at even
-  matchups (`--curriculum 0`) from this prior, or DAgger to close the covariate-shift
-  gap, then self-play.
+  emergent behavior. Bundled: bc8. Pure BC of a deterministic teacher caps near 50%,
+  so >60% needs RL: revisit PPO at even matchups (`--curriculum 0`) from this prior,
+  or DAgger to close the covariate-shift gap, then self-play.
 
 ## Multiplayer
 
