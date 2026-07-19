@@ -96,11 +96,24 @@ private extension TacticalNodes {
 
 		if dmg > 0, hp == 0 {
 			sounds.boomL.play()
+			showExplosion(2, at: dst)
 		} else if dmg > 0 {
 			sounds.boomM.play()
+			showExplosion(1, at: dst)
 		} else {
 			sounds.boomS.play()
+			showExplosion(0, at: dst)
 		}
+	}
+
+	func showExplosion(_ size: Int, at dst: UID) {
+		guard let node = units[dst] else { return }
+		scene?.showExplosion(
+			size,
+			at: node.position,
+			zPosition: node.zPosition + 3,
+			scale: settings.animationScale
+		)
 	}
 
 	func update(_ id: UID, _ state: borrowing TacticalState) {
