@@ -112,7 +112,7 @@ public extension Unit {
 
 	var canAttackAfterMove: Bool {
 		switch type {
-		case .art, .aa: false
+		case .art, .aa, .wheelAA: false
 		default: true
 		}
 	}
@@ -313,7 +313,7 @@ public extension UnitType {
 
 	var isArt: Bool {
 		switch self {
-		case .art, .wheelArt, .trackArt: true;
+		case .art, .wheelArt, .trackArt, .cruiser: true;
 		default: false
 		}
 	}
@@ -348,10 +348,10 @@ public extension UnitType {
 
 	// Allies
 	case ranger, delta, m2A2, m113, m48, m1A1, m1A2,
-		 m777, m270, patriot, mh6, f16, f35, mq9
+		 m777, m109, m147, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, leo1, leo2a6, strv103, strv122,
+	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, m270, leo1, leo2a6, strv103, strv122,
 		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet

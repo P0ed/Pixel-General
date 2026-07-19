@@ -51,8 +51,8 @@ extension Unit {
 		// Artillery
 		case .art155, .m777, .art105: .art
 		case .sp105: .akatsiya
-		case .m270: .m270
-		case .pzh: .PZH
+		case .m270, .m147: .m270
+		case .pzh, .m109: .PZH
 
 		// Anti-air
 		case .patriot, .nasams: .NASAMS

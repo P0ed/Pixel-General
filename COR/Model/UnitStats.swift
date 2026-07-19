@@ -75,7 +75,7 @@ public extension UnitStats {
 		ini: 1,
 		softAtk: 11,
 		hardAtk: 7,
-		navAtk: 4,
+		navAtk: 5,
 		groundDef: 5,
 		airDef: 4
 	)
@@ -144,7 +144,8 @@ public extension UnitStats {
 		case .m1A1: .m1A1
 		case .m1A2: .m1A2
 		case .m777: .m777
-		case .m270: .m270
+		case .m109: .m109A7
+		case .m147: .m147
 		case .patriot: .patriot
 		case .mh6: .mh6
 		case .f16: .f16
@@ -160,6 +161,7 @@ public extension UnitStats {
 		case .kf41: .kf41
 		case .cv9035: .cv9035
 		case .pzh: .pzh
+		case .m270: .m270
 		case .leo1: .leo1
 		case .leo2a6: .leo2a6
 		case .strv103: .strv103

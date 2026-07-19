@@ -104,11 +104,11 @@ extension UnitStats {
 		ini: 1,
 		softAtk: 11,
 		hardAtk: 7,
-		navAtk: 4,
+		navAtk: 5,
 		groundDef: 5,
 		airDef: 4
 	)
-	@safe nonisolated(unsafe) static let m270 = UnitStats(
+	@safe nonisolated(unsafe) static let m109A7 = UnitStats(
 		type: .trackArt,
 		tier: 1,
 		mov: 5,
@@ -116,21 +116,33 @@ extension UnitStats {
 		ini: 4,
 		softAtk: 11,
 		hardAtk: 7,
-		navAtk: 4,
+		navAtk: 5,
+		groundDef: 5,
+		airDef: 4
+	)
+	@safe nonisolated(unsafe) static let m147 = UnitStats(
+		type: .wheelArt,
+		tier: 1,
+		mov: 7,
+		rng: 4,
+		ini: 4,
+		softAtk: 11,
+		hardAtk: 9,
+		navAtk: 9,
 		groundDef: 5,
 		airDef: 4
 	)
 
 	// MARK: AA
 	@safe nonisolated(unsafe) static let patriot = UnitStats(
-		type: .aa,
+		type: .wheelAA,
 		tier: 1,
-		mov: 2,
+		mov: 7,
 		rng: 3,
 		ini: 9,
 		airAtk: 14,
 		groundDef: 4,
-		airDef: 7,
+		airDef: 8,
 		traits: .radar
 	)
 

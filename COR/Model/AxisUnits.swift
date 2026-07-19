@@ -114,6 +114,18 @@ extension UnitStats {
 		groundDef: 6,
 		airDef: 5
 	)
+	@safe nonisolated(unsafe) static let m270 = UnitStats(
+		type: .trackArt,
+		tier: 1,
+		mov: 5,
+		rng: 4,
+		ini: 4,
+		softAtk: 12,
+		hardAtk: 9,
+		navAtk: 10,
+		groundDef: 5,
+		airDef: 4
+	)
 
 	// MARK: Tanks
 	@safe nonisolated(unsafe) static let leo1 = UnitStats(
@@ -192,14 +204,14 @@ extension UnitStats {
 		airDef: 7
 	)
 	@safe nonisolated(unsafe) static let nasams = UnitStats(
-		type: .aa,
+		type: .wheelAA,
 		tier: 1,
-		mov: 2,
+		mov: 7,
 		rng: 3,
 		ini: 9,
 		airAtk: 14,
 		groundDef: 4,
-		airDef: 7,
+		airDef: 8,
 		traits: .radar
 	)
 	@safe nonisolated(unsafe) static let lvkv90 = UnitStats(

@@ -66,6 +66,7 @@ public extension Shop {
 
 			art1,
 			art2,
+			art3,
 
 			aa1,
 			aa2,

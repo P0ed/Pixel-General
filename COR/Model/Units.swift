@@ -163,8 +163,17 @@ extension Shop {
 	var art2: Unit? {
 		switch country.team {
 		case .axis: Unit(model: .pzh, country: country)
-		case .allies: Unit(model: .m270, country: country)
+		case .allies: Unit(model: .m109, country: country)
 		case .soviet: Unit(model: .art155, country: country)
+		case .none: nil
+		}
+	}
+
+	var art3: Unit? {
+		switch country.team {
+		case .axis: Unit(model: .m270, country: country)
+		case .allies: Unit(model: .m147, country: country)
+		case .soviet: Unit(model: .sp105, country: country).veteran
 		case .none: nil
 		}
 	}
