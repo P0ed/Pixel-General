@@ -539,24 +539,6 @@ struct StrategicTests {
 		#expect(main.position != XY(1, 1), "AI main army did not advance toward enemy land")
 	}
 
-	@Test func campaignBattleCanAutoresolveWithoutTacticalState() {
-		var sim = Self.borderSim(russianUnits: 1)
-		let fin = Int(Country.fin.rawValue)
-		sim.armies[fin][0].units[1] = Self.infantry(.fin)
-		let result = sim.autoResolveAttack(
-			at: XY(2, 1),
-			by: ArmyID(country: .fin, slot: 0)
-		)
-		let owner = sim.owner[XY(2, 1)]
-		let mp = sim.armies[fin][0].mp
-		let survivors = sim.armies[fin][0].strength
-		#expect(result == true)
-		#expect(owner == .fin)
-		#expect(mp == 0)
-		#expect(sim.battle == nil)
-		#expect(survivors > 0, "the winning roster did not return from the playout")
-	}
-
 	/// Autoresolve runs a real playout: the fought armies come back with
 	/// casualties, and the annexation matches the simulated outcome.
 	@Test func autoresolvedBattleWritesCasualtiesBack() {

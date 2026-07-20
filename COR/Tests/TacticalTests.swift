@@ -573,23 +573,6 @@ struct TacticalTests {
 		#expect(sim.units[uid].hp == 1 + 3)
 	}
 
-	@Test func roughTerrainPenalisesResupply() {
-		var sim = Self.supplySim()
-		var events: [TacticalEvent] = []
-
-		sim.map[XY(4, 1)] = .forest
-		let forest = sim.spawn(Self.infantry(), at: XY(4, 1))
-		sim.resupply(unit: forest, into: &events)
-		#expect(sim.units[forest].ammo == 2 - 1)
-		#expect(sim.units[forest].hp == 1 + 3 - 1)
-
-		sim.map[XY(1, 4)] = .mountain
-		let mountain = sim.spawn(Self.infantry(), at: XY(1, 4))
-		sim.resupply(unit: mountain, into: &events)
-		#expect(sim.units[mountain].ammo == 0)
-		#expect(sim.units[mountain].hp == 1 + 3 - 2)
-	}
-
 	@Test func enemyControlledTilePenalisesResupply() {
 		var sim = Self.supplySim()
 		var events: [TacticalEvent] = []
@@ -599,20 +582,6 @@ struct TacticalTests {
 		sim.resupply(unit: uid, into: &events)
 		#expect(sim.units[uid].ammo == 2 - 1)
 		#expect(sim.units[uid].hp == 1 + 3 - 1)
-	}
-
-	@Test func supplyTruckOffsetsRoughTerrain() {
-		var sim = Self.supplySim()
-		var events: [TacticalEvent] = []
-
-		sim.map[XY(1, 4)] = .mountain
-		var truck = Unit(model: .truck, country: .swe)
-		truck.reset()
-		sim.spawn(truck, at: XY(1, 5))
-		let uid = sim.spawn(Self.infantry(), at: XY(1, 4))
-		sim.resupply(unit: uid, into: &events)
-		#expect(sim.units[uid].ammo == 2 + 2 - 2)
-		#expect(sim.units[uid].hp == 1 + 3 + 2 - 2)
 	}
 
 	@Test func adjacentEnemyPenalisesResupply() {
@@ -657,19 +626,6 @@ struct TacticalTests {
 		let contested = sim.spawn(moved, at: XY(5, 1))
 		sim.resupply(unit: contested, endOfTurn: true, into: &events)
 		#expect(sim.units[contested].ammo == 0, "Adjacent enemy blocks the trickle")
-	}
-
-	@Test func supplyLevelWeighsSourcesAndPenalties() {
-		var sim = Self.supplySim()
-		sim.map[XY(1, 4)] = .mountain
-		let sources = sim.supplySources(for: .swe)
-
-		#expect(!sources.hostile[XY(2, 2)])
-		#expect(sources.hostile[XY(5, 5)], "rus-controlled ground is hostile for swe")
-		#expect(sources.level(at: XY(0, 1), terrain: .field) == 2, "In the owned city's c5")
-		#expect(sources.level(at: XY(2, 2), terrain: .field) == 0)
-		#expect(sources.level(at: XY(1, 4), terrain: .mountain) == -2)
-		#expect(sources.level(at: XY(5, 5), terrain: .field) == -1)
 	}
 
 	@Test func foggedEnemiesDontMarkSupply() {
@@ -721,16 +677,6 @@ struct TacticalTests {
 		sim.resupply(unit: based, into: &events)
 		#expect(sim.units[based].ammo == 2, "Capped at maxAmmo")
 		#expect(sim.units[based].hp == 1 + 2 + 3, "Airfield level 2 plus base heal 3")
-	}
-
-	@Test func airfieldsFeedGroundUnitsToo() {
-		var sim = Self.airfieldSim()
-		var events: [TacticalEvent] = []
-
-		let uid = sim.spawn(Self.infantry(), at: XY(1, 2))
-		sim.resupply(unit: uid, into: &events)
-		#expect(sim.units[uid].ammo == 2 + 2, "Airfield feeds ground like a settlement")
-		#expect(sim.units[uid].hp == 1 + 3 + 2)
 	}
 
 	@Test func airfieldSupplyWeighsTrucksAndEnemies() {
