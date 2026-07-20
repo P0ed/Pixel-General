@@ -11,10 +11,6 @@ struct TacticalNodes {
 	@IO var lit: SetXY = .empty
 	@IO var baseKey: BaseKey = .terrain
 
-	/// Everything the map-mode base layer depends on, as one equatable
-	/// repaint key: the layer repaints exactly when the key changes. A new
-	/// mode adds a case here and a render case in `baseGroup` — the change
-	/// detection itself never grows.
 	enum BaseKey: Equatable {
 		case terrain
 		case team
