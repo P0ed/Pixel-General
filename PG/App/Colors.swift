@@ -60,15 +60,11 @@ extension Country {
 
 	/// Per-nation identity color, HoI/EU-style: derived from each flag's most
 	/// distinctive color, with tones spread so campaign-map neighbors never
-	/// blur together. Read two ways, both must hold up: a subtle 10% tint over
-	/// grayscale unit sprites, and a full opaque fill in "country" map mode.
-	/// So: mid-tone, moderate saturation (no neon, no near-black/white).
-	/// Verified with CIEDE2000: ≥ 16 for every campaign border pair (and vs
-	/// the 0x808080 sea), ≥ 8 for any two countries (tactical matchups).
+	/// blur together.
 	/// Europe's flags are mostly red/white/blue, so where a border pair shares
 	/// a flag color, one side takes a secondary flag color or shifts tone —
 	/// e.g. Norway goes salmon next to crimson Russia, Austria takes its white
-	/// stripe (the classic EU-game silver) amid red-flagged neighbors.
+	/// stripe amid red-flagged neighbors.
 	var color: SKColor {
 		switch self {
 			// Nordics
