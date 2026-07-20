@@ -2,6 +2,7 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	public var trucks: SetXY
 	public var buildings: SetXY
 	public var airfields: SetXY
+	public var roads: SetXY
 	public var hostile: SetXY
 	public var enemies: SetXY
 
@@ -10,6 +11,7 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 			trucks: .empty,
 			buildings: .empty,
 			airfields: .empty,
+			roads: .empty,
 			hostile: .empty,
 			enemies: .empty
 		)
@@ -19,13 +21,17 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 		trucks.formUnion(other.trucks)
 		buildings.formUnion(other.buildings)
 		airfields.formUnion(other.airfields)
+		roads.formUnion(other.roads)
 		hostile.formUnion(other.hostile)
 		enemies.formUnion(other.enemies)
 	}
 
 	public func level(at xy: XY, terrain: Terrain) -> Int8 {
-		Int8(trucks[xy] ? 2 : 0) + Int8(buildings[xy] ? 2 : 0)
-		+ terrain.supply - Int8(hostile[xy] ? 1 : 0) - Int8(enemies[xy] ? 2 : 0)
+		Int8(trucks[xy] ? 2 : 0)
+		+ terrain.supply
+		+ Int8(buildings[xy] ? 2 : 0)
+		+ Int8(hostile[xy] ? -1 : 0)
+		+ Int8(enemies[xy] ? -2 : roads[xy] ? 1 : 0)
 	}
 
 	public func airLevel(at xy: XY) -> Int8 {
@@ -39,10 +45,9 @@ extension Terrain {
 
 	var supply: Int8 {
 		switch self {
-		case .forest, .hill: -1
-		case .forestHill, .mountain, .river, .sea: -2
-		case _ where hasRoad: 1
-		default: 0
+		case .forest, .hill, .river, .sea: -2
+		case .forestHill, .mountain: -3
+		default: hasRoad ? 1 : 0
 		}
 	}
 }
@@ -58,6 +63,9 @@ public extension TacticalSim {
 			if map[xy] == .airfield {
 				xy.c5.forEach { n in sources.airfields[n] = true }
 			}
+		}
+		for xy in map.indices where xy.c5.contains({ xy in map[xy].hasRoad }) {
+			sources.roads[xy] = true
 		}
 		for xy in map.indices where control[xy].team != country.team {
 			sources.hostile[xy] = true

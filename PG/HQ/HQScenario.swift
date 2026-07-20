@@ -21,6 +21,8 @@ extension HQNodes {
 		// Per-seat spawn selection: 0…4 = options I…V, 5 = Random.
 		var spawns: [4 of UInt8] = .init(repeating: 5)
 
+
+
 		let countries = (0..<4).map { idx in
 			MenuItem<HQAction>(
 				icon: players[idx].country.flag,
@@ -153,33 +155,18 @@ extension HQNodes {
 				+ (players[2].alive ? .base(players[2].country, lvl: players[2].baseLevel) : [])
 				+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
 				+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
-				let seed = Int.random(in: 0 ..< 128)
+				let seed = Int.random(in: 0 ..< 1024)
+				let options = XY.one.c5
 
-				let options = Scenario.spawnPoints
-				var pool = options.indices.filter { option in
-					!(0 ..< 4).contains { i in
-						players[i].alive && spawns[i] == UInt8(option)
-					}
-				}.shuffled()
-				var resolved: [XY] = []
-				for idx in 0 ..< 4 where players[idx].alive {
-					if spawns[idx] < 5 {
-						resolved.append(options[Int(spawns[idx])])
-					} else {
-						if pool.isEmpty { pool = Array(options.indices).shuffled() }
-						resolved.append(options[pool.removeFirst()])
-					}
-				}
-
-				core.startScenario(Scenario(
+				core.startScenario(.init(new: Scenario(
 					players: players.compactMap { $0.alive ? $0 : nil },
 					units: units,
 					terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
-					spawns: resolved,
+					spawns: .init { i in spawns[i] < spawns.count ? options[spawns.count - i] : nil },
 					cityLevel: Int(density),
 					fortLevel: Int(forts),
 					seed: seed
-				).makeSim())
+				)))
 				core.save()
 				view.present(.auto)
 			})

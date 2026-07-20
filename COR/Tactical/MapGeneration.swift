@@ -33,7 +33,7 @@ public extension Map<32, Terrain> {
 		let seed = Int32(bitPattern: UInt32(seed & Int(UInt32.max)))
 		let height = GKNoiseMap.height(size: noiseSize, seed: seed)
 		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed + 1)
-		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
+		var d20 = D20(seed: Int(seed))
 
 		let mainland = generateTerrain(
 			height: height,

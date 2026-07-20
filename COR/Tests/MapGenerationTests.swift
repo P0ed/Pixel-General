@@ -37,7 +37,7 @@ struct MapGenerationTests {
 
 	@Test func spawnPointCitiesHaveAirfields() {
 		for seed in 0 ..< 8 {
-			let spawns = Scenario.spawnPoints
+			let spawns = Array(XY.one.n4)
 			let map = Map<32, Terrain>(
 				seed: seed * 13,
 				terrain: .init(repeating: .field),

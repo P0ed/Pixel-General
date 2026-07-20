@@ -35,11 +35,11 @@ extension SKColor {
 	static var darkSurface: SKColor { .hex(0x8F8F8F) }
 	static var graySurface: SKColor { Country.none.color }
 
-	static func redToGreen8(_ level: UInt8) -> SKColor {
+	static func amberGreen8(_ level: UInt8) -> SKColor {
 		let cl = UInt32(min(level, 7))
-		let r = 0xAF - 0xF * cl as UInt32
-		let g = 0x4F + 0xF * cl as UInt32
-		let b = 0x2F as UInt32
+		let r = 0xBF - 9 * cl as UInt32
+		let g = 0x9F + 9 * cl as UInt32
+		let b = 0x2F - 5 * cl as UInt32
 		return .hex(r << 16 | g << 8 | b)
 	}
 }

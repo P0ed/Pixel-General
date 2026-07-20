@@ -23,7 +23,6 @@ public struct Bits: OptionSet, Equatable {
 
 public extension Bits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
-	static var hardAtkUpgrade: Self { .init(rawValue: 1 << 1) }
 }
 
 public struct Skills: OptionSet, Equatable {
@@ -87,16 +86,16 @@ public extension Unit {
 		case .supply, .cargo: 0
 		case .fighter, .cas: rng > 1 ? 2 : 3
 		case .heli: rng > 0 ? 3 : 0
-		case .art: 6
-		case .wheelArt, .trackArt: 5
+		case .art: rng > 3 ? 5 : 6
+		case .wheelArt, .trackArt: rng > 3 ? 4 : 5
 		case .aa: rng > 1 ? 5 : 6
 		case .wheelAA, .trackAA: rng > 1 ? 4 : 5
 		case .inf: 6
 		case .lightWheel: 6
 		case .lightTrack: 6
 		case .heavyTrack: 6
-		case .destroyer: 12
-		case .cruiser: 14
+		case .destroyer: 9
+		case .cruiser: 12
 		}
 	}
 
@@ -191,24 +190,23 @@ public extension Unit {
 	}
 
 	var cost: UInt16 {
-		(typeCost + traitCost + skillCost + weightedStats) / 7
+		(typeCost + traitCost + skillCost + weightedStats) / 8
 	}
 
 	private var traitCost: UInt16 {
-		UInt16(traits.rawValue.nonzeroBitCount) * 15
+		UInt16(traits.rawValue.nonzeroBitCount) * 100
 	}
 
 	private var skillCost: UInt16 {
-		UInt16(skills.rawValue.nonzeroBitCount) * 15
+		UInt16(skills.rawValue.nonzeroBitCount) * 100
 	}
 
 	private var typeCost: UInt16 {
 		switch type {
-		case .inf, .aa, .art: 10
-		case .supply, .wheelAA, .wheelArt, .lightWheel: 100
-		case .trackAA, .lightTrack: 150
-		case .trackArt, .heavyTrack: 220
-		case .heli: 270
+		case .inf, .aa, .art: 1
+		case .supply, .lightWheel, .wheelArt, .wheelAA: 100
+		case .lightTrack, .trackArt, .trackAA: 150
+		case .heavyTrack, .heli: 220
 		case .fighter, .cas: 330
 		case .cargo: 220
 		case .destroyer: 470
@@ -218,15 +216,15 @@ public extension Unit {
 
 	private var weightedStats: UInt16 {
 		UInt16(lvl + 7) * (
-			UInt16(softAtk * 4)
-			+ UInt16(hardAtk * 5)
-			+ UInt16(airAtk * 6)
-			+ UInt16(navAtk * 5)
-			+ UInt16(groundDef * 4)
-			+ UInt16(airDef * 4)
-			+ UInt16(ini * 4)
-			+ UInt16(mov * 4)
-			+ UInt16(rng * 7)
+			UInt16(softAtk) * 4
+			+ UInt16(hardAtk) * 5
+			+ UInt16(airAtk) * 6
+			+ UInt16(navAtk) * 5
+			+ UInt16(groundDef) * 4
+			+ UInt16(airDef) * 4
+			+ UInt16(ini) * 4
+			+ UInt16(mov) * 4
+			+ UInt16(rng * rng) * 5
 		)
 	}
 }

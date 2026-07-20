@@ -175,8 +175,6 @@ final class NetSession {
 		let sim = TacticalSim(new: Scenario(
 			players: players,
 			units: units,
-			terrain: .init(repeating: .field),
-			spawns: (0 ..< players.count).map { i in Scenario.spawnPoints[i] },
 			seed: .random(in: 0 ..< 128)
 		))
 		started = true

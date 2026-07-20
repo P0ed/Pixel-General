@@ -9,8 +9,6 @@ public struct TacticalSim: ~Copyable {
 
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
-	/// Per-seat shop gating (bit = `BuildingType.rawValue`) — campaign battles
-	/// set it from the country's factories; `0xFF` opens every class.
 	public var buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 
 	public var units: Speicher<128, Unit>
@@ -45,12 +43,12 @@ public extension TacticalSim {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
 		self.units = .init(head: units, tail: .empty)
-		self.position = .init(repeating: .zero)
+		self.buildingsMask = buildingsMask
+		position = .init(repeating: .zero)
 		vision = .init(repeating: .empty)
 		cargo = .init(repeating: .none)
 		unitsMap = .init(zero: .none)
 		control = .init(zero: .default)
-		self.buildingsMask = buildingsMask
 		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }
 		settlements.forEach { xy in

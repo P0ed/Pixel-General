@@ -4,30 +4,19 @@
 public struct Scenario {
 	public var players: [Player]
 	public var units: [Unit]
-	/// Strategic 3×3 neighborhood, row-major north-west to south-east. The
-	/// attacker occupies index 3 and the defender index 4.
 	public var terrain: [9 of Terrain]
-	/// Per-player spawn cells of the 3×3 neighborhood as (column,
-	/// row-from-south), each 0…2 — parallel to `players`. When present, every
-	/// settlement is assigned from these locations and map generation
-	/// guarantees an airfield at each spawn city; empty keeps the legacy
-	/// index-proportional settlement split.
-	public var spawns: [XY]
+	public var spawns: [4 of XY?]
 	public var cityLevel: Int
 	public var fortLevel: Int
 	public var seed: Int
 	public var objective: Objective
 	public var buildingsMask: [4 of UInt8]
 
-	/// The five spawn options of a custom scenario — menu toggles I…V:
-	/// south, north, east, west, center.
-	public static var spawnPoints: [XY] { [XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)] }
-
 	public init(
 		players: [Player],
 		units: [Unit],
 		terrain: [9 of Terrain] = .init(repeating: .field),
-		spawns: [XY] = [],
+		spawns: [4 of XY?] = .init(repeating: nil),
 		cityLevel: Int = 0,
 		fortLevel: Int = 0,
 		seed: Int = 0,
@@ -47,13 +36,6 @@ public struct Scenario {
 
 	public func makeSim() -> TacticalSim { TacticalSim(new: self) }
 
-	/// Plays the scenario to completion without a UI: the deterministic
-	/// tactical heuristic drives every seat regardless of player type, and the
-	/// finished sim comes back for outcome and casualty readback. Purchases
-	/// are suppressed — an autoresolved battle is fought with the forces
-	/// present, so the outcome tracks the armies rather than the treasuries.
-	/// A `.survive` deadline bounds the loop; the action cap is only a
-	/// runaway guard.
 	public func autoResolve() -> TacticalSim {
 		var sim = makeSim()
 		var plan = AI.Plan()
@@ -111,30 +93,42 @@ public struct Scenario {
 		return result
 	}
 
-	/// Field neighborhood with zero or two to four cumulative sea squares in
-	/// a corner. The canonical north-east pattern is:
-	///
-	///     3 1 1
-	///     L L 2
-	///     L L L
-	///
-	/// A seeded draw rotates that pattern to one of the four corners, keeping
-	/// replays deterministic while varying standalone scenario coastlines.
 	public static func cornerTerrain(seaLevel: UInt8, seed: Int) -> [9 of Terrain] {
 		var terrain = [9 of Terrain](repeating: .field)
 		guard seaLevel > 0 else { return terrain }
 
-		var d20 = D20(seed: UInt64(bitPattern: Int64(seed)))
-		let tiles: [Int] = switch Int.random(in: 0 ..< 4, using: &d20) {
-		case 0: [2, 1, 5, 0] // north-east
-		case 1: [0, 1, 3, 2] // north-west
-		case 2: [6, 7, 3, 8] // south-west
+		var d20 = D20(seed: seed)
+		let tiles: [Int] = switch d20() {
+		case ..<5: [2, 1, 5, 0] // north-east
+		case ..<10: [0, 1, 3, 2] // north-west
+		case ..<15: [6, 7, 3, 8] // south-west
 		default: [8, 7, 5, 2] // south-east
 		}
 		for index in tiles.prefix(Int(min(seaLevel + 1, 4))) {
 			terrain[index] = .sea
 		}
 		return terrain
+	}
+
+	var resolvedSpawnPoints: [XY] {
+		let options: [5 of XY] = XY.one.c5
+		var d20 = D20(seed: seed)
+		var pool = Array(options).filter { option in
+			!players.indices.contains { i in players[i].alive && spawns[i] == option }
+		}
+		.shuffled(using: &d20)
+
+		var resolved: [XY] = []
+		for idx in players.indices where players[idx].alive {
+			if let xy = spawns[idx] {
+				resolved.append(xy)
+			} else {
+				if pool.isEmpty { pool = Array(XY.one.x4) }
+				resolved.append(pool.removeFirst())
+			}
+		}
+
+		return resolved
 	}
 }
 

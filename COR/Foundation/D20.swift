@@ -4,6 +4,10 @@ public struct D20: Hashable {
 	public init(seed: UInt64 = 0) {
 		self.seed = seed
 	}
+
+	public init(seed: Int) {
+		self.seed = UInt64(bitPattern: Int64(seed))
+	}
 }
 
 extension D20: RandomNumberGenerator {

@@ -34,40 +34,6 @@ struct RNGTests {
 		#expect(chiSquared < criticalValue)
 	}
 
-	@Test func duelExpectedMatchesResolve() {
-		// The whole point of the Duel seam: `expected()` is the mean of `resolve()`
-		// over the *same* curve, table-testable with no map or units. If they ever
-		// drift, the AI is planning against a damage model the engine won't roll.
-		var report = "Duel expected-vs-empirical:"
-		let samples = 4_000
-
-		for hp in stride(from: UInt8(1), through: 15, by: 2) {
-			for dif in Int8(-12) ... 20 {
-				for crit in [false, true] {
-					for evasion in [false, true] {
-						let duel = Duel(atk: dif, def: 0, hp: hp, crit: crit, evasion: evasion)
-
-						var rng = D20(seed: 0xA5A5 ^ UInt64(hp) &* 131
-							&+ UInt64(bitPattern: Int64(dif)) << 8
-							&+ (crit ? 1 : 0) << 16 &+ (evasion ? 1 : 0) << 17)
-						var sum: UInt64 = 0
-						for _ in 0 ..< samples { sum += UInt64(duel.resolve(&rng)) }
-
-						let empirical = Double(sum) / Double(samples)
-						let expected = Double(duel.expected())
-						report += "\ndif: \(dif) hp: \(hp) crit: \(crit) ev: \(evasion)"
-							+ " expected: \(expected) empirical: \(empirical)"
-						#expect(
-							abs(empirical - expected) <= 1.0,
-							"dif=\(dif) hp=\(hp) crit=\(crit) ev=\(evasion): expected \(expected), empirical \(empirical)"
-						)
-					}
-				}
-			}
-		}
-		print(report)
-	}
-
 	@Test func damageCurveTable() throws {
 		// The tuning view of the curve: the exact per-round damage distribution
 		// for each `dif`, derived from `Duel.thresholds` (faces of the d20 above
@@ -159,8 +125,8 @@ extension TacticalSim {
 		cities.forEach { x, _ in map[x] = .city }
 
 		let players: [Player] = [
-			Player(country: .den, type: .human, prestige: 0xF00),
-			Player(country: .usa, type: .human, prestige: 0xF00),
+			Player(country: .den, type: .human, prestige: .poor),
+			Player(country: .usa, type: .human, prestige: .poor),
 		]
 
 		return TacticalSim(

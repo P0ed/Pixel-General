@@ -1,18 +1,19 @@
 public extension TacticalSim {
 
 	init(new scenario: Scenario) {
+		let spawns = scenario.resolvedSpawnPoints
 		var map = Map<32, Terrain>(
 			seed: scenario.seed,
 			players: scenario.players.count,
 			terrain: scenario.terrain,
 			density: scenario.cityLevel,
-			spawns: scenario.spawns
+			spawns: spawns
 		)
 		let defending: Team? = scenario.objective.defender
 		let cities = Self.cities(
 			countries: scenario.players.map { p in p.country },
 			defending: defending,
-			spawns: scenario.spawns,
+			spawns: spawns,
 			map: map
 		)
 		map.placeForts(

@@ -90,7 +90,7 @@ struct TacticalTests {
 			Player(country: .rus, type: .ai),
 		]
 		for seed in 0 ..< 8 {
-			let spawns = [XY(0, 1), XY(2, 1)]
+			let spawns: [4 of XY?] = [XY(0, 1), XY(2, 1), nil, nil]
 			let sim = Scenario(
 				players: players,
 				units: [],
@@ -107,7 +107,8 @@ struct TacticalTests {
 				if let idx = players.firstIndex(where: { p in p.country == owner }) {
 					counts[idx] += 1
 				}
-				for (i, spawn) in spawns.enumerated() {
+				for i in spawns.indices where spawns[i] != nil {
+					let spawn = spawns[i]!
 					let d = xy.manhattanDistance(to: spawn.cellCenter(size: sim.map.size))
 					if d < nearestDistance[i] {
 						nearestDistance[i] = d

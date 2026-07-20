@@ -20,7 +20,7 @@ enum TileSurface: Hashable {
 		case .sea: .seaSurface
 		case .team(let team): team.color
 		case .country(let country): country.color
-		case .supply(let level): .redToGreen8(level)
+		case .supply(let level): .amberGreen8(level)
 		}
 	}
 

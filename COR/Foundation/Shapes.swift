@@ -1,4 +1,4 @@
-extension XY {
+public extension XY {
 
 	/// ```
 	/// .*.

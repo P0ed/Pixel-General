@@ -110,7 +110,7 @@ extension UnitStats {
 		ini: 4,
 		softAtk: 11,
 		hardAtk: 7,
-		navAtk: 4,
+		navAtk: 6,
 		groundDef: 6,
 		airDef: 5
 	)
@@ -124,7 +124,8 @@ extension UnitStats {
 		hardAtk: 9,
 		navAtk: 10,
 		groundDef: 5,
-		airDef: 4
+		airDef: 4,
+		traits: .elite
 	)
 
 	// MARK: Tanks
@@ -184,7 +185,7 @@ extension UnitStats {
 		ini: 10,
 		softAtk: 12,
 		hardAtk: 16,
-		navAtk: 7,
+		navAtk: 6,
 		groundDef: 14,
 		airDef: 8,
 		traits: .elite

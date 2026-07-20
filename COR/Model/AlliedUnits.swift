@@ -130,7 +130,8 @@ extension UnitStats {
 		hardAtk: 9,
 		navAtk: 9,
 		groundDef: 5,
-		airDef: 4
+		airDef: 4,
+		traits: .elite
 	)
 
 	// MARK: AA
