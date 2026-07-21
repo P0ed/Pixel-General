@@ -146,7 +146,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		if let input = pending {
 			pending = nil
 			apply(input)
-		} else if let action = mode.ai(state) {
+		} else if let action = mode.next(state) {
 			send(action)
 		}
 	}

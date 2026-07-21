@@ -24,10 +24,10 @@ extension TacticalMode {
 		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			ai: { state in
+			next: { state in
 				let ai = settings.aiKind > 0 ? lstm : heuristic
-				if let net { return net.nextAction(state.sim, ai) }
-				return ai(state.sim)
+				return net.flatMap { net in net.nextAction(state.sim, ai) }
+					?? ai(state.sim)
 			},
 			relay: { state, action in net?.relay(state.sim, action) ?? false },
 			reduce: { state, action in state.reduce(action) },

@@ -8,14 +8,14 @@ or invalid). It is trained by behavior-cloning the heuristic `run(ai:)` — BC s
 surrogate, value-head baseline, KL anchor to the BC prior) lifted a weak BC prior
 once but stopped adding over strong ones, and an earlier REINFORCE learner
 plateaued at the BC level — entirely
-with `MetalPerformanceShadersGraph` (OS built-in, no Python, no packages). Inference is dependency-free Swift in COR, so the
+with `MetalPerformanceShadersGraph`. Inference is dependency-free Swift in COR, so the
 shipping app never touches MPSGraph.
 
 Training rests on properties of the core: `reduce` is a pure function of
-`(sim, action)` (test-proven, `COR/Tests/MultiplayerTests.swift`), a whole battle
-bitwise-serializes via `encode`/`decode`, and the AI interface is one `TacticalAction`
-per call — exactly a policy's step function. Battles are therefore stored as *replays*
-and regenerated deterministically instead of storing states.
+`(sim, action)`, a whole battle bitwise-serializes via `encode`/`decode`,
+and the AI interface is one `TacticalAction` per call — exactly a policy's
+step function. Battles are therefore stored as *replays* and regenerated
+deterministically instead of storing states.
 
 ## Heuristic teacher
 

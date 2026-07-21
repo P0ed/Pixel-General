@@ -95,12 +95,11 @@ extension TacticalSim {
 	/// deployment tiles have cleared.
 	public func run(ai: inout AI.Plan) -> TacticalAction {
 		let signature = refresh(&ai)
-		let turnChanged = ai.turn != turn || ai.country != country
+		let turnChanged = ai.turn != turn
 		if turnChanged { ai.actionsThisTurn = 0 }
 		if turnChanged || ai.rosterSignature != signature {
 			buildPlan(&ai, signature: signature)
 		}
-		// Runaway guard: a turn is capped at 256 actions whatever the plan says.
 		guard ai.actionsThisTurn < 256 else { return .end }
 		ai.actionsThisTurn += 1
 
