@@ -730,8 +730,6 @@ extension TacticalSim {
 		var bestScore = Int.min
 		settlements.forEach { xy in
 			guard control[xy] == country, unitsMap[xy] == .none else { return }
-			// `shopUnits` owns the tile half of the buy rule and the guards
-			// above plus the prestige check below imply `canBuy(slot:at:)`.
 			let shop = shopUnits(at: xy)
 			guard !shop.isEmpty else { return }
 			var locationScore = threat(at: xy, from: ai.enemies) * (ai.stance == .defendSurvival ? 5 : 2)
