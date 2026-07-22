@@ -26,8 +26,11 @@ extension TacticalMode {
 			input: { state, input in state.apply(input) },
 			next: { state in
 				let ai = settings.aiKind > 0 ? lstm : heuristic
-				return net.flatMap { net in net.nextAction(state.sim, ai) }
-					?? ai(state.sim)
+				return if let net {
+					net.nextAction(state.sim, state.auto ? ai : { _ in nil })
+				} else {
+					(state.auto ? ai(state.sim) : nil)
+				}
 			},
 			relay: { state, action in net?.relay(state.sim, action) ?? false },
 			reduce: { state, action in state.reduce(action) },
@@ -39,5 +42,12 @@ extension TacticalMode {
 			mouse: { nodes, point in nodes.map.tile(at: point) },
 			save: { state in core.store(state.sim); core.save() }
 		)
+	}
+}
+
+private extension TacticalState {
+
+	var auto: Bool {
+		sim.player.type == .ai || (sim.player.type == .human && ui.autoBattle)
 	}
 }

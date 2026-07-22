@@ -11,6 +11,7 @@ struct TacticalUI: ~Copyable {
 	var selectable: SetXY?
 	var scale: Int = 1
 	var mapMode: MapMode = .terrain
+	var autoBattle: Bool = false
 }
 
 struct TacticalState: ~Copyable {
@@ -116,7 +117,10 @@ extension TacticalState {
 		_ action: InputAction,
 		modifiers: InputModifiers
 	) -> TacticalInputReaction {
-		if modifiers.contains(.right) { return setMapMode(action) }
+		if modifiers == [.left, .right] { return toggleSettings(action) }
+		if modifiers == .right { return setMapMode(action) }
+		if modifiers == .left { return .none }
+
 		return switch action {
 		case .a: primaryAction()
 		case .b: secondaryAction()
@@ -131,6 +135,16 @@ extension TacticalState {
 		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
 		case .c: ui.mapMode = .supply
 		case .d: ui.mapMode = .defense
+		}
+		return .none
+	}
+
+	private mutating func toggleSettings(_ action: InputAction) -> TacticalInputReaction {
+		switch action {
+		case .a: break
+		case .b: break
+		case .c: break
+		case .d: ui.autoBattle.toggle()
 		}
 		return .none
 	}

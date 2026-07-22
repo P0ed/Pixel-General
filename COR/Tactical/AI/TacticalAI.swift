@@ -66,17 +66,13 @@ public enum AI {
 
 	public static var heuristic: (borrowing TacticalSim) -> TacticalAction? {
 		var plan = Plan()
-		return { sim in
-			guard sim.player.type == .ai else { return nil }
-			return sim.run(ai: &plan)
-		}
+		return { sim in sim.run(ai: &plan) }
 	}
 
 	public static func lstm(_ weights: LSTMWeights?) -> (borrowing TacticalSim) -> TacticalAction? {
 		guard let weights else { return heuristic }
 		var policies = [Int: LSTMPolicy]()
 		return { sim in
-			guard sim.player.type == .ai else { return nil }
 			let seat = sim.playerIndex
 			if policies[seat] == nil { policies[seat] = LSTMPolicy(weights: weights) }
 			return policies[seat]!.action(for: sim)

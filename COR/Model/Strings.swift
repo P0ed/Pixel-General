@@ -91,7 +91,7 @@ public extension Unit {
 		case .m777: "M777"
 		case .m109: "M109A7"
 		case .m147: "M147"
-		case .mars: "M270"
+		case .mars: "MARS"
 		case .pzh: "PzH 2000"
 
 		// Anti-air
