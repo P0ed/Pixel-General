@@ -6,29 +6,28 @@ public extension Unit {
 
 	func status(cargo: Bool = false) -> String {
 		.make { status in
-			status += "\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")"
-			status.pad(to: 15)
-			status += "\(apString)  "
-			status += .makeStatus(pad: 7) { add in
-				add("AM: \(ammo)")
+			status += "\(skillsString)\n"
+			status += .makeStatus(pad: 8) { add in
 				add("SA: \(softAtk)")
 				add("HA: \(hardAtk)")
 				add("AA: \(airAtk)")
 				add("NA: \(navAtk)")
 				add("GD: \(groundDef)")
 				add("AD: \(airDef)")
-				add("IN: \(ini)")
-				add("MV: \(mov)")
-				add("RN: \(rng)")
-				add("EN: \(entDef)")
+				add("INI: \(ini)")
+				add("MOV: \(mov)")
+				add("RNG: \(rng)")
 			}
-			status += skillsString
+			status += .make { s in
+				s = "\n\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")"
+				s.pad(to: 20)
+				s += "\(apString) LVL: \(xpString)  AMMO: \(ammo)  ENT: \(entDef)"
+			}
 		}
 	}
 
 	private var skillsString: String {
-		("XP: \(xpString)  ")
-		+ (self[.leadership] ? "[LR]" : "")
+		(self[.leadership] ? "[LR]" : "")
 		+ (self[.recon] ? "[RC]" : "")
 		+ (self[.crit] ? "[CR]" : "")
 		+ (self[.evasion] ? "[EV]" : "")

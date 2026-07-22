@@ -88,9 +88,19 @@ extension BaseNodes {
 	}
 
 	func updateStatus(_ data: Status) {
-		status.text = data.text
-		action.text = data.action
+		status.attributedText = text(data.text)
+		action.attributedText = text(data.action)
 		icon.texture = data.flag.map(SKTexture.init(image:))
 		icon.texture?.filteringMode = .nearest
 	}
+}
+
+private func text(_ string: String) -> NSAttributedString {
+	let s = NSMutableParagraphStyle()
+	s.lineSpacing = 2.0
+	return NSAttributedString(string: string, attributes: [
+		.paragraphStyle: s,
+		.font: UIFont(name: "Menlo", size: 14.0)!,
+		.foregroundColor: UIColor.white
+	])
 }
