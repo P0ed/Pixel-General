@@ -436,7 +436,7 @@ struct PolicyTests {
 		let sim = Self.duelSim(
 			units: [
 				Unit(model: .regular, country: .ger),	// weak
-				Unit(model: .m270, country: .ger),		// strong
+				Unit(model: .mars, country: .ger),		// strong
 				Unit(model: .militia, country: .usa),	// target
 			],
 			at: [XY(4, 3), XY(3, 3), XY(5, 3)]
@@ -454,7 +454,7 @@ struct PolicyTests {
 	@Test func attackSelectionFocusesWoundedTargets() {
 		var sim = Self.duelSim(
 			units: [
-				Unit(model: .m270, country: .ger),
+				Unit(model: .mars, country: .ger),
 				Unit(model: .militia, country: .usa),	// full
 				Unit(model: .militia, country: .usa),	// wounded
 			],
@@ -532,7 +532,7 @@ struct PolicyTests {
 		let sim = Self.duelSim(
 			cities: [(XY(0, 1), .ger), (XY(9, 1), .usa)],
 			units: [
-				Unit(model: .m270, country: .ger),
+				Unit(model: .mars, country: .ger),
 				Unit(model: .militia, country: .usa),
 			],
 			at: [XY(1, 1), XY(6, 1)]

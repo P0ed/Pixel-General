@@ -75,29 +75,12 @@ public extension Unit {
 	var maxHP: UInt8 { 0xF }
 	var maxAP: UInt8 { rng == 0 ? 0 : 1 }
 	var maxMP: UInt8 { isAir ? 2 : 1 }
+	var maxAmmo: UInt8 { stats.ammo }
 
 	var fullHP: Bool { hp == maxHP }
 	var fullAP: Bool { ap == maxAP }
 	var fullMP: Bool { mp == maxMP }
 	var fullAmmo: Bool { ammo == maxAmmo }
-
-	var maxAmmo: UInt8 {
-		switch type {
-		case .supply, .cargo: 0
-		case .fighter, .cas: rng > 1 ? 2 : 3
-		case .heli: rng > 0 ? 3 : 0
-		case .art: rng > 3 ? 5 : 6
-		case .wheelArt, .trackArt: rng > 3 ? 4 : 5
-		case .aa: rng > 1 ? 5 : 6
-		case .wheelAA, .trackAA: rng > 1 ? 4 : 5
-		case .inf: 6
-		case .lightWheel: 6
-		case .lightTrack: 6
-		case .heavyTrack: 6
-		case .destroyer: 9
-		case .cruiser: 12
-		}
-	}
 
 	var isAA: Bool { type.isAA }
 	var isArt: Bool { type.isArt }
@@ -280,23 +263,11 @@ public extension UnitType {
 
 	var moveType: MoveType {
 		switch self {
-		case .inf: .leg
-		case .art: .leg
-		case .aa: .leg
-		case .supply: .wheel
-		case .wheelArt: .wheel
-		case .wheelAA: .wheel
-		case .lightWheel: .wheel
-		case .trackArt: .track
-		case .trackAA: .track
-		case .lightTrack: .track
-		case .heavyTrack: .track
-		case .heli: .air
-		case .fighter: .air
-		case .cas: .air
-		case .cargo: .naval
-		case .destroyer: .naval
-		case .cruiser: .naval
+		case .inf, .art, .aa: .leg
+		case .supply, .wheelArt, .wheelAA, .lightWheel: .wheel
+		case .trackArt, .trackAA, .lightTrack, .heavyTrack: .track
+		case .heli, .fighter, .cas: .air
+		case .cargo, .destroyer, .cruiser: .naval
 		}
 	}
 
@@ -342,14 +313,14 @@ public extension UnitType {
 	case none
 
 	// Common
-	case truck, regular, engineer, art155, cargo, destroyer, cruiser
+	case truck, regular, engineer, fpv, art155, cargo, destroyer, cruiser
 
 	// Allies
 	case ranger, delta, m2A2, m113, m48, m1A1, m1A2,
 		 m777, m109, m147, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, m270, leo1, leo2a6, strv103, strv122,
+	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, mars, leo1, leo2a6, strv103, strv122,
 		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet

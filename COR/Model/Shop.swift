@@ -53,12 +53,12 @@ public extension Shop {
 			inf1,
 			inf2,
 			inf3,
+			fpv1,
 
 			recon1,
-			recon2,
-
 			ifv1,
 			ifv2,
+			ifv3,
 
 			tank1,
 			tank2,
@@ -87,16 +87,10 @@ public extension Shop {
 
 public extension Shop {
 
-	/// Upgrade families mirror the shop categories. A deployed unit can be
-	/// re-equipped with any *other* model in the same family that the current
-	/// tier unlocks, carrying its experience and skills across (see
-	/// `Unit.upgraded(to:)`). Supply (the truck) belongs to no family and so
-	/// cannot be upgraded.
 	private var families: [[Unit?]] {
 		[
 			[inf1, inf2, inf3],
-			[recon1, recon2],
-			[ifv1, ifv2],
+			[recon1, ifv1, ifv2, ifv3],
 			[tank1, tank2, tank3],
 			[art1, art2],
 			[aa1, aa2, aa3],

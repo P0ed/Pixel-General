@@ -62,19 +62,16 @@ extension Shop {
 		}
 	}
 
+	var fpv1: Unit? {
+		Unit(model: .fpv, country: country)
+	}
+
 	var recon1: Unit? {
 		switch country.team {
 		case .axis: Unit(model: .fennek, country: country)
 		case .allies: nil
 		case .soviet: Unit(model: .brdm2, country: country)
 		case .none: nil
-		}
-	}
-
-	var recon2: Unit? {
-		switch country {
-		case .swe: Unit(model: .strf90v, country: country)
-		default: nil
 		}
 	}
 
@@ -97,6 +94,13 @@ extension Shop {
 			case .soviet: nil
 			case .none: nil
 			}
+		}
+	}
+
+	var ifv3: Unit? {
+		switch country {
+		case .swe: Unit(model: .strf90v, country: country)
+		default: nil
 		}
 	}
 
@@ -171,7 +175,7 @@ extension Shop {
 
 	var art3: Unit? {
 		switch country.team {
-		case .axis: Unit(model: .m270, country: country)
+		case .axis: Unit(model: .mars, country: country)
 		case .allies: Unit(model: .m147, country: country)
 		case .soviet: Unit(model: .sp105, country: country).veteran
 		case .none: nil

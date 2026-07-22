@@ -26,10 +26,11 @@ extension TacticalSim {
 		let (st, dt) = (map[sp], map[dp])
 		let ranged = su.isArt && !surprise
 
+		let retaliates = !su[.noRetaliation] && !du[.noRetaliation] && (!ranged || du.isArt)
 		let ruggedDefence: Bool = ranged ? false : (
-			UInt8(d20()) + su.ini * 2 + su.lvl
+			Int(su.ini * 2 + su.lvl) + (surprise ? -5 : 5) + d20() / 5
 		) < (
-			du.ent * 2 + du.ini * 2 + du.lvl + (surprise ? 10 : 0)
+			Int(du.entDef * 2 + du.ini * 2 + du.lvl) + d20() / 5
 		)
 		if ruggedDefence {
 			events.append(.ruggedDefence(dp))
@@ -39,7 +40,7 @@ extension TacticalSim {
 			+ (ruggedDefence ? -3 : 0)
 			+ (du.ammo == 0 ? 5 : 0)
 		let dstDef: Int8 = defenderMod(defender: dst, attacker: src, ranged: ranged)
-			+ (ruggedDefence ? -3 : 0)
+			+ (ruggedDefence ? 3 : 0)
 
 		units[si].ap.decrement()
 
@@ -53,7 +54,7 @@ extension TacticalSim {
 			fire(src: src, dst: dst, defMod: dstDef, into: &events)
 			units[di].ent.decrement(by: su.entDamage)
 		}
-		if units[di].alive, units[si].alive, unitCanHit(dst, src), !ranged || du.isArt {
+		if retaliates, units[di].alive, units[si].alive, unitCanHit(dst, src) {
 			fire(src: dst, dst: src, defMod: srcDef, into: &events)
 		}
 		if ruggedDefence, units[si].alive {

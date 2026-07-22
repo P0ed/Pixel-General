@@ -82,6 +82,7 @@ public extension Unit {
 		case .ksk: "KSK"
 		case .delta: "Delta Force"
 		case .speznas: "Speznas"
+		case .fpv: "FPV"
 
 		// Artillery
 		case .art105: "105mm"
@@ -90,7 +91,7 @@ public extension Unit {
 		case .m777: "M777"
 		case .m109: "M109A7"
 		case .m147: "M147"
-		case .m270: "M270"
+		case .mars: "M270"
 		case .pzh: "PzH 2000"
 
 		// Anti-air
@@ -108,8 +109,8 @@ public extension Unit {
 		case .brdm2: "BRDM"
 		case .m113: "M113"
 		case .m2A2: "M2A2"
-		case .strf90: "Strf 90"
-		case .strf90v: "Strf 90 mkV"
+		case .strf90: "Strf 90 IV"
+		case .strf90v: "Strf 90 V"
 		case .kf41: "KF41"
 		case .cv9035: "CV9035"
 		case .bmp: "BMP"

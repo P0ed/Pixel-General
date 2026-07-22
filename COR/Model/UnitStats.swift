@@ -3,6 +3,7 @@ public struct UnitStats {
 	public var tier: UInt8 = 0
 	public var mov: UInt8 = 0
 	public var rng: UInt8 = 0
+	public var ammo: UInt8 = 0
 	public var ini: UInt8 = 0
 	public var softAtk: UInt8 = 0
 	public var hardAtk: UInt8 = 0
@@ -27,8 +28,7 @@ public extension Traits {
 	static var engineer: Self { .init(rawValue: 1 << 2) }
 	static var optics: Self { .init(rawValue: 1 << 3) }
 	static var radar: Self { .init(rawValue: 1 << 4) }
-	static var atgm: Self { .init(rawValue: 1 << 5) }
-	static var aam: Self { .init(rawValue: 1 << 6) }
+	static var noRetaliation: Self { .init(rawValue: 1 << 5) }
 }
 
 public extension UnitStats {
@@ -46,6 +46,7 @@ public extension UnitStats {
 		tier: 1,
 		mov: 3,
 		rng: 1,
+		ammo: 6,
 		ini: 4,
 		softAtk: 7,
 		hardAtk: 2,
@@ -58,6 +59,7 @@ public extension UnitStats {
 		tier: 2,
 		mov: 3,
 		rng: 1,
+		ammo: 6,
 		ini: 5,
 		softAtk: 8,
 		hardAtk: 6,
@@ -67,11 +69,27 @@ public extension UnitStats {
 		airDef: 5,
 		traits: .engineer
 	)
+	@safe nonisolated(unsafe) static let fpv = UnitStats(
+		type: .art,
+		tier: 2,
+		mov: 3,
+		rng: 4,
+		ammo: 4,
+		ini: 5,
+		softAtk: 8,
+		hardAtk: 9,
+		airAtk: 2,
+		navAtk: 4,
+		groundDef: 6,
+		airDef: 5,
+		traits: [.noRetaliation]
+	)
 	@safe nonisolated(unsafe) static let art155 = UnitStats(
 		type: .art,
 		tier: 1,
 		mov: 2,
 		rng: 3,
+		ammo: 6,
 		ini: 1,
 		softAtk: 11,
 		hardAtk: 7,
@@ -93,6 +111,7 @@ public extension UnitStats {
 		tier: 2,
 		mov: 7,
 		rng: 2,
+		ammo: 9,
 		ini: 9,
 		softAtk: 10,
 		hardAtk: 10,
@@ -107,6 +126,7 @@ public extension UnitStats {
 		tier: 2,
 		mov: 6,
 		rng: 4,
+		ammo: 12,
 		ini: 8,
 		softAtk: 12,
 		hardAtk: 10,
@@ -130,6 +150,7 @@ public extension UnitStats {
 		case .truck: .truck
 		case .regular: .regular
 		case .engineer: .engineer
+		case .fpv: .fpv
 		case .art155: .art155
 		case .cargo: .cargo
 		case .destroyer: .destroyer
@@ -161,7 +182,7 @@ public extension UnitStats {
 		case .kf41: .kf41
 		case .cv9035: .cv9035
 		case .pzh: .pzh
-		case .m270: .m270
+		case .mars: .mars
 		case .leo1: .leo1
 		case .leo2a6: .leo2a6
 		case .strv103: .strv103

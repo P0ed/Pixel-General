@@ -47,11 +47,12 @@ extension Unit {
 		// Infantry
 		case .regular, .engineer, .ranger, .militia: .reg
 		case .delta, .ksk, .speznas: .SF
+		case .fpv: .FPV
 
 		// Artillery
 		case .art155, .m777, .art105: .art
 		case .sp105: .akatsiya
-		case .m270, .m147: .m270
+		case .mars, .m147: .m270
 		case .pzh, .m109: .PZH
 
 		// Anti-air
