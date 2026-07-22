@@ -535,7 +535,7 @@ struct PolicyTests {
 				Unit(model: .mars, country: .ger),
 				Unit(model: .militia, country: .usa),
 			],
-			at: [XY(1, 1), XY(6, 1)]
+			at: [XY(1, 1), XY(7, 1)]
 		)
 		let range = Int(sim.units[0].rng) * 2 + 1
 		#expect(sim.position[0].stepDistance(to: sim.position[1]) > range)
