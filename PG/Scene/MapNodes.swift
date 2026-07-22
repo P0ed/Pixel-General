@@ -4,8 +4,8 @@ import COR
 @MainActor
 struct MapNodes {
 	var layers: [SKTileMapNode]
-	var decorationLayers: [SKTileMapNode]
 	var fogLayers: [SKTileMapNode]
+	var decorationLayers: [SKTileMapNode]
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
@@ -83,8 +83,8 @@ extension MapNodes {
 		}
 		return MapNodes(
 			layers: addLayers(tiles, z: 0.0),
-			decorationLayers: decorations ? addLayers(.decorations, z: TileZ.decoration) : [],
 			fogLayers: fog ? addLayers(.fog, z: TileZ.fog) : [],
+			decorationLayers: decorations ? addLayers(.decorations, z: TileZ.decoration) : [],
 			size: size,
 			cursor: addCursor(root: root),
 			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)

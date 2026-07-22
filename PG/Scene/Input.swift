@@ -17,8 +17,8 @@ struct InputModifiers: OptionSet, Equatable, Sendable {
 
 enum Input: Equatable {
 	case direction(Direction?, modifiers: InputModifiers)
-	case target(Target?)
 	case action(InputAction?, modifiers: InputModifiers)
+	case target(Target?)
 	case menu
 	case tile(XY)
 	case scale(Int)
@@ -40,10 +40,19 @@ extension XY {
 
 	func neighbor(_ direction: Direction) -> XY {
 		switch direction {
-		case .right: XY(1, 0) + self
-		case .up: XY(0, 1) + self
-		case .left: XY(-1, 0) + self
-		case .down: XY(0, -1) + self
+		case .right: XY(x + 1, y)
+		case .up: XY(x, y + 1)
+		case .left: XY(x - 1, y)
+		case .down: XY(x, y - 1)
+		}
+	}
+
+	func diagonal(_ direction: Direction) -> XY {
+		switch direction {
+		case .right: XY(x + 1, y + 1)
+		case .up: XY(x - 1, y + 1)
+		case .left: XY(x - 1, y - 1)
+		case .down: XY(x + 1, y - 1)
 		}
 	}
 }

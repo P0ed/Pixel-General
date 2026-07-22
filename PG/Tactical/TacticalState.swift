@@ -91,7 +91,6 @@ extension TacticalState {
 		return switch input {
 		case .direction(let direction?, modifiers: let modifiers):
 			directionalAction(direction, modifiers: modifiers)
-		case .menu: .presentation(.menu)
 		case .action(let action?, modifiers: let modifiers):
 			buttonAction(action, modifiers: modifiers)
 		case .target(.prev): prevUnit()
@@ -99,6 +98,7 @@ extension TacticalState {
 		case .tile(let xy): select(xy)
 		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let dxy): handlePan(dxy)
+		case .menu: .presentation(.menu)
 		default: .none
 		}
 	}
@@ -137,15 +137,15 @@ extension TacticalState {
 
 	private mutating func zoom(_ direction: Direction) -> TacticalInputReaction {
 		switch direction {
-		case .up: ui.scale = max(1, ui.scale / 2)
-		case .down: ui.scale = min(4, ui.scale * 2)
+		case .up: ui.scale = min(4, ui.scale * 2)
+		case .down: ui.scale = max(1, ui.scale / 2)
 		case .left, .right: break
 		}
 		return .none
 	}
 
 	private mutating func moveCamera(_ direction: Direction) -> TacticalInputReaction {
-		ui.camera = ui.camera.neighbor(direction).clamped(sim.map.size)
+		ui.camera = ui.camera.diagonal(direction).clamped(sim.map.size)
 		return .none
 	}
 

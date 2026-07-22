@@ -42,16 +42,21 @@ extension Input {
 	@MainActor
 	init?(key: UIKey) {
 		let shift = key.modifierFlags.contains(.shift)
+		let option = key.modifierFlags.contains(.alternate)
+		let mods: InputModifiers = [
+			shift ? .right : [],
+			option ? .left : [],
+		]
 
 		switch key.keyCode {
 		case .keyboardReturnOrEnter, .keyboardSpacebar: self = .action(.a)
 		case .keyboardDeleteOrBackspace: self = .action(.b)
 		case .keyboardEscape: self = .menu
 		case .keyboardTab: self = .target(shift ? .prev : .next)
-		case .keyboardLeftArrow: self = .direction(.left)
-		case .keyboardRightArrow: self = .direction(.right)
-		case .keyboardDownArrow: self = .direction(.down)
-		case .keyboardUpArrow: self = .direction(.up)
+		case .keyboardLeftArrow: self = .direction(.left, modifiers: mods)
+		case .keyboardRightArrow: self = .direction(.right, modifiers: mods)
+		case .keyboardDownArrow: self = .direction(.down, modifiers: mods)
+		case .keyboardUpArrow: self = .direction(.up, modifiers: mods)
 
 		default: switch key.charactersIgnoringModifiers {
 		case "1": self = .action(.a, modifiers: .right)
@@ -60,10 +65,10 @@ extension Input {
 		case "4": self = .action(.d, modifiers: .right)
 		case "[": self = .target(.prev)
 		case "]": self = .target(.next)
-		case "a": self = .action(.a)
-		case "s": self = .action(.b)
-		case "q": self = .action(.c)
-		case "w": self = .action(.d)
+		case "a": self = .action(.a, modifiers: mods)
+		case "s": self = .action(.b, modifiers: mods)
+		case "q": self = .action(.c, modifiers: mods)
+		case "w": self = .action(.d, modifiers: mods)
 		case "z": self = .scale(1)
 		case "x": self = .scale(2)
 		case "c": self = .scale(4)
