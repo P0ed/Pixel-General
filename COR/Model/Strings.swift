@@ -5,41 +5,48 @@ extension XY: CustomStringConvertible {
 public extension Unit {
 
 	func status(cargo: Bool = false) -> String {
-		.make { status in
-			status += "\(skillsString)\n"
-			status += .makeStatus(pad: 8) { add in
-				add("SA: \(softAtk)")
-				add("HA: \(hardAtk)")
-				add("AA: \(airAtk)")
-				add("NA: \(navAtk)")
-				add("GD: \(groundDef)")
-				add("AD: \(airDef)")
-				add("INI: \(ini)")
-				add("MOV: \(mov)")
-				add("RNG: \(rng)")
-			}
-			status += .make { s in
-				s = "\n\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")"
-				s.pad(to: 20)
-				s += "\(apString) LVL: \(xpString)  AMMO: \(ammo)  ENT: \(entDef)"
-			}
+		.make { s in
+			if self[.leadership] { s += "[LDR]" }
+			if self[.recon] { s += "[RCN]" }
+			if self[.crit] { s += "[CRT]" }
+			if self[.evasion] { s += "[EVA]" }
+			if self[.regen] { s += "[REG]" }
+			if self[.mountaineer] { s += "[MTN]" }
+			if self[.mhtn] { s += "[MHT]" }
+			if self[.diag] { s += "[DIA]" }
+			if kills != 0 { s += "[\(kills)]" }
+			if !s.isEmpty { s += "\n" }
+
+			s += .padding(8, [
+				"SA: \(softAtk)",
+				"HA: \(hardAtk)",
+				"AA: \(airAtk)",
+				"NA: \(navAtk)",
+				"GD: \(groundDef)",
+				"AD: \(airDef)",
+				"INI: \(ini)",
+				"MOV: \(mov)",
+				"RNG: \(rng)",
+			])
+			s += "\n"
+			s += .padding(24, [
+				"\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")",
+				.padding(16, [
+					.padding(5, [
+						 canMove ? "MOV" : "",
+						 canAttack ? (ammo > 0 ? "ATK" : "LOW") : ""
+					]),
+					"LVL: \(lvl).\(subLvl)  AMMO: \(ammo)  ENT: \(entDef)",
+				]),
+			])
 		}
 	}
 
 	private var skillsString: String {
-		(self[.leadership] ? "[LR]" : "")
-		+ (self[.recon] ? "[RC]" : "")
-		+ (self[.crit] ? "[CR]" : "")
-		+ (self[.evasion] ? "[EV]" : "")
-		+ (self[.regen] ? "[RG]" : "")
-		+ (self[.mountaineer] ? "[MT]" : "")
-		+ (self[.mhtn] ? "[MH]" : "")
-		+ (self[.diag] ? "[DI]" : "")
-		+ (kills != 0 ? "[\(kills)]" : "")
-	}
+		.make { s in
 
-	private var apString: String { "[\(canMove ? "M" : " ")|\(canAttack ? (ammo > 0 ? "A" : "L") : " ")]" }
-	private var xpString: String { "\(lvl).\(subLvl)" }
+		}
+	}
 }
 
 public extension String {
@@ -51,17 +58,15 @@ public extension String {
 		}
 	}
 
-	static func makeStatus(pad: Int = 12, _ mk: ((String) -> Void) -> Void) -> String {
+	static func padding<let cnt: Int>(_ pad: Int, _ strings: [cnt of String]) -> String {
 		.make { str in
 			var padding = 0
 
-			func add(_ s: String) {
+			strings.forEach { s in
 				str += s
 				padding += pad
 				str.pad(to: padding)
 			}
-
-			mk(add)
 		}
 	}
 }

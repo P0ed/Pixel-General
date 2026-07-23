@@ -24,9 +24,9 @@ extension HQState {
 
 	var status: Status {
 		Status(
-			text: ui.selected != .none ? sim.units[ui.selected.index].status() : .makeStatus { add in
-				add("prestige: \(sim.player.prestige)")
-			},
+			text: ui.selected != .none
+				? sim.units[ui.selected.index].status()
+				: "prestige: \(sim.player.prestige)",
 			action: actionHint
 		)
 	}

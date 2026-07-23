@@ -28,18 +28,18 @@ extension StrategicState {
 		let xy = ui.cursor
 		let province = sim.provinces[xy]
 		return Status(
-			text: .makeStatus(pad: 12) { add in
-				add("\(sim.owner[xy])")
-				add("day: \(sim.turn + 1)")
-				if let army = sim.army(at: xy) {
-					let fieldArmy = sim.army(army)
-					add("\(army.country) \(unitCount(army))/16 mp \(fieldArmy.mp)")
+			text: .padding(12, [
+				"\(sim.owner[xy])",
+				"day: \(sim.turn + 1)",
+				sim.army(at: xy).map { army in
+					"\(army.country) \(unitCount(army))/16 mp \(sim.army(army).mp)"
+				} ?? "",
+				sim.owner[xy] == .none ? "" : .make { s in
+					for t in BuildingType.allCases where province[t] > 0 {
+						s += "\(t.tag) \(province[t])  "
+					}
 				}
-				guard sim.owner[xy] != .none else { return }
-				for t in BuildingType.allCases where province[t] > 0 {
-					add("\(t.tag) \(province[t])")
-				}
-			},
+			]),
 			action: actionHint
 		)
 	}
