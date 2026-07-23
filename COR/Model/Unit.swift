@@ -173,42 +173,44 @@ public extension Unit {
 	}
 
 	var cost: UInt16 {
-		(typeCost + traitCost + skillCost + weightedStats) / 8
+		country.team == .soviet ? value * 7 / 8 : value
+	}
+	var value: UInt16 {
+		(typeValue + traitValue + statsValue) * valueMultiplyer / 8
 	}
 
-	private var traitCost: UInt16 {
-		UInt16(traits.rawValue.nonzeroBitCount) * 100
+	private var valueMultiplyer: UInt16 {
+		UInt16(self[.cheap] ? 5 : 7) + UInt16(lvl)
 	}
 
-	private var skillCost: UInt16 {
-		UInt16(skills.rawValue.nonzeroBitCount) * 100
-	}
-
-	private var typeCost: UInt16 {
-		switch type {
-		case .inf, .aa, .art: 1
-		case .supply, .lightWheel, .wheelArt, .wheelAA: 100
-		case .lightTrack, .trackArt, .trackAA: 150
-		case .heavyTrack, .heli: 220
-		case .fighter, .cas: 330
-		case .cargo: 220
-		case .destroyer: 470
-		case .cruiser: 680
+	private var typeValue: UInt16 {
+		switch type.moveType {
+		case .leg: 1
+		case .wheel: 22
+		case .track: 47
+		case .air: 68
+		case .naval: 100
 		}
 	}
 
-	private var weightedStats: UInt16 {
-		UInt16(lvl + 7) * (
-			UInt16(softAtk) * 4
-			+ UInt16(hardAtk) * 5
-			+ UInt16(airAtk) * 6
-			+ UInt16(navAtk) * 5
-			+ UInt16(groundDef) * 4
-			+ UInt16(airDef) * 4
-			+ UInt16(ini) * 4
-			+ UInt16(mov) * 4
-			+ UInt16(rng * rng) * 5
-		)
+	private var traitValue: UInt16 {
+		UInt16(traits.rawValue.nonzeroBitCount) * 22
+		+ UInt16(skills.rawValue.nonzeroBitCount) * 22
+		+ (isAA ? 47 : 0)
+		+ (isArt ? 33 : 0)
+		+ (isArmor ? 22 : 0)
+	}
+
+	private var statsValue: UInt16 {
+		UInt16(softAtk) * 4
+		+ UInt16(hardAtk) * 5
+		+ UInt16(airAtk) * 6
+		+ UInt16(navAtk) * 6
+		+ UInt16(groundDef) * 4
+		+ UInt16(airDef) * 4
+		+ UInt16(ini) * 4
+		+ UInt16(mov) * 6
+		+ UInt16(rng * rng) * 4
 	}
 }
 

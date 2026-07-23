@@ -7,8 +7,8 @@ extension UnitStats {
 		rng: 1,
 		ammo: 5,
 		ini: 3,
-		softAtk: 5,
-		hardAtk: 1,
+		softAtk: 6,
+		hardAtk: 2,
 		navAtk: 1,
 		groundDef: 5,
 		airDef: 3
@@ -109,7 +109,8 @@ extension UnitStats {
 		hardAtk: 5,
 		navAtk: 3,
 		groundDef: 5,
-		airDef: 4
+		airDef: 4,
+		traits: .cheap
 	)
 
 	@safe nonisolated(unsafe) static let sp105 = UnitStats(

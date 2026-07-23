@@ -7,11 +7,11 @@ extension UnitStats {
 		mov: 3,
 		rng: 1,
 		ammo: 6,
-		ini: 5,
-		softAtk: 8,
+		ini: 6,
+		softAtk: 9,
 		hardAtk: 3,
 		navAtk: 1,
-		groundDef: 7,
+		groundDef: 6,
 		airDef: 5
 	)
 	@safe nonisolated(unsafe) static let delta = UnitStats(
@@ -23,7 +23,7 @@ extension UnitStats {
 		ini: 9,
 		softAtk: 11,
 		hardAtk: 5,
-		airAtk: 2,
+		airAtk: 3,
 		navAtk: 2,
 		groundDef: 9,
 		airDef: 8,
@@ -137,8 +137,8 @@ extension UnitStats {
 		ammo: 3,
 		ini: 3,
 		softAtk: 11,
-		hardAtk: 9,
-		navAtk: 9,
+		hardAtk: 11,
+		navAtk: 10,
 		groundDef: 5,
 		airDef: 4,
 		traits: [.elite, .noRetaliation]

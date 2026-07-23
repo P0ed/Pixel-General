@@ -11,7 +11,7 @@ public struct Player {
 		type: PlayerType = .human,
 		prestige: UInt16 = .poor,
 		baseLevel: UInt8 = 0,
-		tier: UInt8 = 0,
+		tier: UInt8 = 3,
 		alive: Bool = true
 	) {
 		self.country = country

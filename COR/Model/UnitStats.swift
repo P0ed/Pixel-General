@@ -29,6 +29,7 @@ public extension Traits {
 	static var optics: Self { .init(rawValue: 1 << 3) }
 	static var radar: Self { .init(rawValue: 1 << 4) }
 	static var noRetaliation: Self { .init(rawValue: 1 << 5) }
+	static var cheap: Self { .init(rawValue: 1 << 6) }
 }
 
 public extension UnitStats {
@@ -47,12 +48,12 @@ public extension UnitStats {
 		mov: 3,
 		rng: 1,
 		ammo: 6,
-		ini: 4,
-		softAtk: 7,
-		hardAtk: 2,
+		ini: 5,
+		softAtk: 8,
+		hardAtk: 3,
 		navAtk: 1,
 		groundDef: 6,
-		airDef: 4
+		airDef: 5
 	)
 	@safe nonisolated(unsafe) static let engineer = UnitStats(
 		type: .inf,
@@ -61,12 +62,12 @@ public extension UnitStats {
 		rng: 1,
 		ammo: 6,
 		ini: 5,
-		softAtk: 8,
+		softAtk: 9,
 		hardAtk: 6,
 		airAtk: 2,
 		navAtk: 2,
 		groundDef: 7,
-		airDef: 5,
+		airDef: 6,
 		traits: .engineer
 	)
 	@safe nonisolated(unsafe) static let fpv = UnitStats(
@@ -76,12 +77,12 @@ public extension UnitStats {
 		rng: 4,
 		ammo: 4,
 		ini: 5,
-		softAtk: 7,
-		hardAtk: 9,
-		navAtk: 4,
+		softAtk: 8,
+		hardAtk: 11,
+		navAtk: 5,
 		groundDef: 6,
 		airDef: 5,
-		traits: [.noRetaliation]
+		traits: [.noRetaliation, .cheap]
 	)
 	@safe nonisolated(unsafe) static let art155 = UnitStats(
 		type: .art,
@@ -94,7 +95,8 @@ public extension UnitStats {
 		hardAtk: 7,
 		navAtk: 5,
 		groundDef: 5,
-		airDef: 4
+		airDef: 4,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let cargo = UnitStats(
 		type: .cargo,

@@ -456,7 +456,7 @@ extension TacticalSim {
 		let target = units[tid]
 		let targetXY = position[tid]
 		let removedHP = min(damage, target.hp)
-		let removedValue = Int(removedHP) * Int(target.cost) / Int(target.maxHP)
+		let removedValue = Int(removedHP) * Int(target.value) / Int(target.maxHP)
 		let kill = damage >= target.hp
 
 		var counterDamage: UInt8 = 0

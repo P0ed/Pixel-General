@@ -574,8 +574,8 @@ struct PolicyTests {
 	@Test func survivalHeuristicTurnsRemainBounded() {
 		var sim = TacticalSim(
 			players: [
-				Player(country: .fin, type: .ai, prestige: .poor, tier: 3),
-				Player(country: .isr, type: .ai, prestige: .poor, tier: 3),
+				Player(country: .fin, type: .ai, prestige: .poor),
+				Player(country: .isr, type: .ai, prestige: .poor),
 			],
 			units: .base(.fin),
 			seed: 1,

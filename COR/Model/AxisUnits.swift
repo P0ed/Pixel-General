@@ -130,8 +130,8 @@ extension UnitStats {
 		ammo: 3,
 		ini: 3,
 		softAtk: 12,
-		hardAtk: 9,
-		navAtk: 10,
+		hardAtk: 12,
+		navAtk: 11,
 		groundDef: 5,
 		airDef: 4,
 		traits: [.elite, .noRetaliation]
@@ -217,7 +217,8 @@ extension UnitStats {
 		airAtk: 11,
 		navAtk: 3,
 		groundDef: 6,
-		airDef: 7
+		airDef: 7,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let nasams = UnitStats(
 		type: .wheelAA,
@@ -253,10 +254,13 @@ extension UnitStats {
 		rng: 3,
 		ammo: 4,
 		ini: 5,
+		softAtk: 5,
+		hardAtk: 7,
 		airAtk: 9,
+		navAtk: 6,
 		groundDef: 6,
 		airDef: 5,
-		traits: [.noRetaliation]
+		traits: [.noRetaliation, .cheap]
 	)
 
 	// MARK: Air

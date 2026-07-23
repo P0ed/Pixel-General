@@ -91,6 +91,7 @@ public extension Shop {
 	private var families: [[Unit?]] {
 		[
 			[inf1, inf2, inf3],
+			[fpv1, fpv2],
 			[recon1, ifv1, ifv2, ifv3],
 			[tank1, tank2, tank3],
 			[art1, art2],

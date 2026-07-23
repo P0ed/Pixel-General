@@ -92,7 +92,7 @@ extension TacticalSim {
 				events.append(.update(cargoId))
 			}
 		}
-		source.exp.increment(by: UInt16(dmg) * destination.cost / (destination.alive ? 32 : 24))
+		source.exp.increment(by: UInt16(dmg) * destination.value / (destination.alive ? 32 : 24))
 		if !destination.alive {
 			vacate(dst)
 			source.kills.increment(by: 1)

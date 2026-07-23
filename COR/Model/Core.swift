@@ -29,7 +29,7 @@ public extension Core {
 	static func new(country: Country) -> Core {
 		Core(
 			hq: HQSim(
-				player: Player(country: country, type: .human, tier: 3),
+				player: Player(country: country, type: .human),
 				units: .init(
 					head: modifying(.base(country)) { base in
 						base.modifyEach { u in u.reset() }

@@ -33,8 +33,7 @@ struct TacticalPerformanceTests {
 						country: c,
 						type: .ai,
 						prestige: c == .fin ? .rich : .poor,
-						baseLevel: c == .fin ? 3 : 0,
-						tier: 3
+						baseLevel: c == .fin ? 3 : 0
 					)
 				},
 				units: .base(Self.countries[0], lvl: 3)
