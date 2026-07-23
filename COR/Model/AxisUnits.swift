@@ -8,7 +8,7 @@ extension UnitStats {
 		rng: 1,
 		ammo: 6,
 		ini: 9,
-		softAtk: 10,
+		softAtk: 11,
 		hardAtk: 5,
 		airAtk: 3,
 		navAtk: 2,
@@ -30,7 +30,7 @@ extension UnitStats {
 		navAtk: 1,
 		groundDef: 6,
 		airDef: 6,
-		traits: .optics
+		traits: [.optics, .cheap]
 	)
 	@safe nonisolated(unsafe) static let boxer = UnitStats(
 		type: .lightWheel,

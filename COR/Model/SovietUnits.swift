@@ -11,7 +11,8 @@ extension UnitStats {
 		hardAtk: 2,
 		navAtk: 1,
 		groundDef: 5,
-		airDef: 3
+		airDef: 3,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let speznas = UnitStats(
 		type: .inf,
@@ -41,7 +42,8 @@ extension UnitStats {
 		airAtk: 2,
 		navAtk: 2,
 		groundDef: 7,
-		airDef: 6
+		airDef: 6,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let bmp = UnitStats(
 		type: .lightTrack,
@@ -69,7 +71,8 @@ extension UnitStats {
 		hardAtk: 11,
 		navAtk: 4,
 		groundDef: 10,
-		airDef: 5
+		airDef: 5,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let t72 = UnitStats(
 		type: .heavyTrack,
@@ -135,7 +138,8 @@ extension UnitStats {
 		ini: 8,
 		airAtk: 12,
 		groundDef: 4,
-		airDef: 7
+		airDef: 7,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let s300 = UnitStats(
 		type: .wheelAA,
