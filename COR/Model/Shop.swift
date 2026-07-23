@@ -54,6 +54,7 @@ public extension Shop {
 			inf2,
 			inf3,
 			fpv1,
+			fpv2,
 
 			recon1,
 			ifv1,

@@ -320,7 +320,7 @@ public extension UnitType {
 		 m777, m109, m147, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, mars, leo1, leo2a6, strv103, strv122,
+	case ksk, p1sun, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, mars, leo1, leo2a6, strv103, strv122,
 		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet

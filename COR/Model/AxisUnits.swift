@@ -246,6 +246,18 @@ extension UnitStats {
 		airDef: 9,
 		traits: .radar
 	)
+	@safe nonisolated(unsafe) static let p1sun = UnitStats(
+		type: .aa,
+		tier: 2,
+		mov: 3,
+		rng: 3,
+		ammo: 4,
+		ini: 5,
+		airAtk: 9,
+		groundDef: 6,
+		airDef: 5,
+		traits: [.noRetaliation]
+	)
 
 	// MARK: Air
 	@safe nonisolated(unsafe) static let skeldar = UnitStats(

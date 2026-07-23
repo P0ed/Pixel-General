@@ -4,7 +4,7 @@ extension XY: CustomStringConvertible {
 
 public extension Unit {
 
-	func status(cargo: Bool = false) -> String {
+	func status(friendly: Bool = true, cargo: String? = nil) -> String {
 		.make { s in
 			if self[.leadership] { s += "[LDR]" }
 			if self[.recon] { s += "[RCN]" }
@@ -12,8 +12,8 @@ public extension Unit {
 			if self[.evasion] { s += "[EVA]" }
 			if self[.regen] { s += "[REG]" }
 			if self[.mountaineer] { s += "[MTN]" }
-			if self[.mhtn] { s += "[MHT]" }
-			if self[.diag] { s += "[DIA]" }
+			if self[.mhtn] { s += "[+++]" }
+			if self[.diag] { s += "[×××]" }
 			if kills != 0 { s += "[\(kills)]" }
 			if !s.isEmpty { s += "\n" }
 
@@ -29,22 +29,20 @@ public extension Unit {
 				"RNG: \(rng)",
 			])
 			s += "\n"
-			s += .padding(24, [
-				"\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo ? "⏺" : "")",
-				.padding(16, [
-					.padding(5, [
+			s += .padding(32, [
+				"\(self[.aux] ? "☆" : "★") \(typeDescription) \(cargo.map { "[\($0)]"} ?? "")",
+				.padding(11, [
+					!friendly ? "" : .padding(5, [
 						 canMove ? "MOV" : "",
-						 canAttack ? (ammo > 0 ? "ATK" : "LOW") : ""
+						 canAttack ? (ammo > 0 ? "ATK" : "LOW") : "",
 					]),
-					"LVL: \(lvl).\(subLvl)  AMMO: \(ammo)  ENT: \(entDef)",
+					!friendly ? "" : "AMMO: \(ammo)",
+					.padding(10, [
+						"LVL: \(lvl).\(subLvl)",
+						"ENT: \(entDef)",
+					]),
 				]),
 			])
-		}
-	}
-
-	private var skillsString: String {
-		.make { s in
-
 		}
 	}
 }
@@ -87,6 +85,7 @@ public extension Unit {
 		case .delta: "Delta Force"
 		case .speznas: "Speznas"
 		case .fpv: "FPV"
+		case .p1sun: "P1SUN"
 
 		// Artillery
 		case .art105: "105mm"

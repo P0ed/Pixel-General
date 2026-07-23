@@ -47,7 +47,7 @@ extension Unit {
 		// Infantry
 		case .regular, .engineer, .ranger, .militia: .reg
 		case .delta, .ksk, .speznas: .SF
-		case .fpv: .FPV
+		case .fpv, .p1sun: .FPV
 
 		// Artillery
 		case .art155, .m777, .art105: .art

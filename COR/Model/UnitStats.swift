@@ -78,7 +78,6 @@ public extension UnitStats {
 		ini: 5,
 		softAtk: 7,
 		hardAtk: 9,
-		airAtk: 2,
 		navAtk: 4,
 		groundDef: 6,
 		airDef: 5,
@@ -175,6 +174,7 @@ public extension UnitStats {
 
 		// Axis
 		case .ksk: .ksk
+		case .p1sun: .p1sun
 		case .fennek: .fennek
 		case .boxer: .boxer
 		case .strf90: .strf90
