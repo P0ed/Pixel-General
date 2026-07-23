@@ -43,10 +43,15 @@ extension MenuState {
 
 	var rows: Int { 4 }
 	var cols: Int { 4 }
+	var page: Int { rows * cols }
+
+	var pages: Int { (items.count - 1) / page + 1 }
 
 	mutating func apply(_ input: Input) {
 		switch input {
 		case .direction(let direction?, modifiers: _): moveCursor(direction)
+		case .target(.next): cursor = (cursor / page + 1) % pages * page
+		case .target(.prev): cursor = (pages + cursor / page - 1) % pages * page
 		case .tile(let xy) where xy.x != cursor: cursor = xy.x
 		case .action(.a, modifiers: _), .tile: action = .action(cursor)
 		case .menu, .action(.b, modifiers: _): action = .close
