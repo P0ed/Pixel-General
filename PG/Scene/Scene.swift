@@ -183,35 +183,27 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		}
 	}
 
-	/// Opens `menu` as a fresh root, dropping whatever stack was there.
 	func showMenu(_ menu: MenuState<Action>?) {
 		setMenu(menu.map { m in [m] } ?? [])
 	}
 
-	/// Opens `menu` over the one already showing, the way a `push` item does.
 	func pushMenu(_ menu: MenuState<Action>) {
 		setMenu(menuStack + [menu])
 		redrawMenu()
 	}
 
-	/// Drops the top menu, uncovering the one below — or closing the menu
-	/// altogether when it was the root.
 	func popMenu() {
 		guard !menuStack.isEmpty else { return }
 		setMenu(modifying(menuStack) { stk in stk.removeLast() })
 		redrawMenu()
 	}
 
-	/// Swaps the menu on top for a rebuilt one — how a live source like the LAN
-	/// lobby refreshes itself without disturbing the stack under it.
 	func replaceMenu(_ menu: MenuState<Action>) {
 		guard !menuStack.isEmpty else { return }
 		setMenu(modifying(menuStack) { stk in stk[stk.count - 1] = menu })
 		redrawMenu()
 	}
 
-	/// Menus swapped from outside an item's `update` change every icon, so the
-	/// node tree is rebuilt rather than merely re-highlighted.
 	private func redrawMenu() {
 		if let menuState { baseNodes?.redrawMenu(menuState) }
 	}
@@ -306,8 +298,6 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		)
 	}
 
-	/// Side buttons have no cursor to describe them, so the pointer resting on
-	/// one borrows the status line from the grid cursor.
 	@objc func handleHover(_ gesture: UIHoverGestureRecognizer) {
 		guard let view = gesture.view, menuState != nil, let baseNodes else {
 			hoveredSlot = nil
@@ -404,8 +394,6 @@ extension MenuState {
 		cursor < items.count ? items[cursor].status : Status()
 	}
 
-	/// A hovered button describes itself; the padding slots have nothing to say,
-	/// so the cursor keeps the line.
 	func status(hovering slot: MenuSlot?) -> Status {
 		guard let slot else { return status }
 		let hovered = self[slot].status
