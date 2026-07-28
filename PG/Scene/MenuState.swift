@@ -60,6 +60,9 @@ extension MenuItem {
 			update: { menu in update(menu); return .none }
 		)
 	}
+	static func apply(icon: UIImage, status: String, action: Action? = nil) -> Self {
+		.init(icon: icon, status: .init(text: status), action: action, update: { m in m })
+	}
 }
 
 extension MenuState {

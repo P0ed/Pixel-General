@@ -93,8 +93,8 @@ private extension EditorNodes {
 				.space,
 			],
 			rightButtons: [
-				.close(icon: .empty, status: "Clear map", action: .clear),
-				.close(icon: .rnd, status: "Randomize", action: .randomize),
+				.apply(icon: .empty, status: "Clear map", action: .clear),
+				.apply(icon: .rnd, status: "Randomize", action: .randomize),
 				.close(icon: .save, status: "Save map", action: .save),
 				.close(icon: .load, status: "Load map", action: .load),
 			]
