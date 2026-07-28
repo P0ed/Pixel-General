@@ -74,7 +74,8 @@ extension HQNodes {
 								session.close(seat: idx)
 								menu = rebuilt(cursor: idx)
 							}
-						]
+						],
+						leftButtons: [.back, .space, .space, .space]
 					))
 				}
 			)

@@ -4,7 +4,7 @@ import SpriteKit
 @MainActor
 struct MenuState<Action> {
 	var items: [MenuItem<Action>]
-	var leftButtons: [4 of MenuItem<Action>] = [.back, .space, .space, .space]
+	var leftButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var cursor: Int = 0
 	var action: MenuSlot?
@@ -184,7 +184,8 @@ extension MenuItem {
 				.space,
 				.space,
 				.close(icon: .plus, status: "Confirm", update: action),
-			]
+			],
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 
@@ -196,7 +197,8 @@ extension MenuItem {
 					core = .load(slot: slot)
 					view.present(.auto)
 				}
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 }

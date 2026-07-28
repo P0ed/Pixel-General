@@ -22,6 +22,7 @@ extension TacticalNodes {
 				.space,
 				.space,
 			],
+			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [.space, .space, .prefs, .space]
 		))
 	}

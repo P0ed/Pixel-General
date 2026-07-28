@@ -12,7 +12,8 @@ extension HQNodes {
 					core.save()
 					view.present(.auto)
 				}
-			]
+			],
+			leftButtons: [.back, .space, .space, .space]
 		)
 	}
 }

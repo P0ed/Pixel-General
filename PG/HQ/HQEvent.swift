@@ -40,7 +40,8 @@ extension HQNodes {
 					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
 					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
 				)
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 
@@ -57,7 +58,8 @@ extension HQNodes {
 					status: .init(text: result.status(), action: .init("\(unit.upgradeCost(to: option.model)) / \(prestige)")),
 					action: .upgrade(uid.index, option.model)
 				)
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 
@@ -72,7 +74,8 @@ extension HQNodes {
 						core.save()
 						view.present(.auto)
 					},
-				]
+				],
+				leftButtons: [.back, .space, .space, .space]
 			))
 		}
 
@@ -94,6 +97,7 @@ extension HQNodes {
 					return campaignMenu(scene.state)
 				}),
 			],
+			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [
 				.push(icon: .plus, status: "New", menu: {
 					guard let scene else { return nil }

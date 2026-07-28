@@ -40,7 +40,8 @@ extension HQNodes {
 								menu.items[idx].icon = .neutral
 								menu.cursor = idx
 							}
-						]
+						],
+						leftButtons: [.back, .space, .space, .space]
 					))
 				}
 			)
@@ -79,6 +80,7 @@ extension HQNodes {
 
 		return MenuState(
 			items: countries + types + prestige + exp + tier + spawn,
+			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [
 				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
 				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
