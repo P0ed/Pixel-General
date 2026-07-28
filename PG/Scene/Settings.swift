@@ -26,10 +26,6 @@ extension Settings {
 		animationSpeed.toggle4()
 	}
 
-	mutating func toggleCampaignAutoresolve() {
-		campaignAutoresolve.toggle()
-	}
-
 	var animationScale: Double {
 		Double(animationSpeed + 1) / Double(animationSpeed * 2 + 1)
 	}

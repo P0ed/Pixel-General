@@ -62,7 +62,6 @@ extension StrategicNodes {
 					view.present(.auto)
 				},
 			],
-			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [.space, .space, .prefs, .space]
 		))
 	}

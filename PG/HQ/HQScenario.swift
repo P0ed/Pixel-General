@@ -24,7 +24,7 @@ extension HQNodes {
 			MenuItem<HQAction>(
 				icon: players[idx].country.flag,
 				status: .init(text: "Player \(idx)"),
-				update: { stk in
+				update: { stk, _ in
 					guard idx > 0 else { return }
 					stk.append(MenuState<HQAction>(
 						items: countriesLeft.map { c in
@@ -40,90 +40,49 @@ extension HQNodes {
 								menu.items[idx].icon = .neutral
 								menu.cursor = idx
 							}
-						],
-						leftButtons: [.back, .space, .space, .space]
+						]
 					))
 				}
 			)
 		}
 		let types = (0..<4).map { idx in
-			MenuItem<HQAction>.update(
-				icon: players[idx].type.icon,
-				status: "Player \(idx)",
-				menu: { menu in
-					guard idx > 0 else { return }
-					players[idx].type.toggle()
-					menu.items[4 + idx].icon = players[idx].type.icon
-					menu.cursor = 4 + idx
-				}
-			)
+			MenuItem<HQAction>.toggle(icon: players[idx].type.icon, status: "Player \(idx)") {
+				guard idx > 0 else { return }
+				players[idx].type.toggle()
+			}
 		}
 		let prestige = (0..<4).map { idx in
-			MenuItem<HQAction>.update(
+			MenuItem<HQAction>.toggle(
 				icon: players[idx].prestige < .rich ? .prestige1 : .prestige2,
-				status: "Prestige",
-				menu: { menu in
-					players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
-					menu.items[8 + idx].icon = players[idx].prestige < .rich ? .prestige1 : .prestige2
-					menu.cursor = 8 + idx
-				}
-			)
+				status: "Prestige"
+			) {
+				players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
+			}
 		}
 		let exp = (0..<4).map { idx in
-			MenuItem<HQAction>.update(
-				icon: .toggle4(players[idx].baseLevel),
-				status: "Experience",
-				menu: { menu in
-					guard idx > 0 else { return }
-					players[idx].baseLevel.toggle4()
-					menu.items[12 + idx].icon = .toggle4(players[idx].baseLevel)
-					menu.cursor = 12 + idx
-				}
-			)
+			MenuItem<HQAction>.toggle(icon: .toggle4(players[idx].baseLevel), status: "Experience") {
+				guard idx > 0 else { return }
+				players[idx].baseLevel.toggle4()
+			}
 		}
 		let tier = (0..<4).map { idx in
-			MenuItem<HQAction>.update(
-				icon: .toggle4(players[idx].tier),
-				status: "Tier",
-				menu: { menu in
-					guard idx > 0 else { return }
-					players[idx].tier.toggle4()
-					menu.items[16 + idx].icon = .toggle4(players[idx].tier)
-					menu.cursor = 16 + idx
-				}
-			)
+			MenuItem<HQAction>.toggle(icon: .toggle4(players[idx].tier), status: "Tier") {
+				guard idx > 0 else { return }
+				players[idx].tier.toggle4()
+			}
 		}
 		let spawn = (0..<4).map { idx in
-			MenuItem<HQAction>.update(
-				icon: .spawn(spawns[idx]),
-				status: "Spawn",
-				menu: { menu in
-					spawns[idx].toggle6()
-					menu.items[20 + idx].icon = .spawn(spawns[idx])
-					menu.cursor = 20 + idx
-				}
-			)
+			MenuItem<HQAction>.toggle(icon: .spawn(spawns[idx]), status: "Spawn") {
+				spawns[idx].toggle6()
+			}
 		}
 
 		return MenuState(
 			items: countries + types + prestige + exp + tier + spawn,
-			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [
-				.update(icon: .toggle4(density), status: "Density: \(density)", menu: { m in
-					density.toggle4()
-					m.items[28].icon = .toggle4(density)
-					m.items[28].status.text = "Density: \(density)"
-				}),
-				.update(icon: .toggle4(forts), status: "Forts: \(forts)", menu: { m in
-					forts.toggle4()
-					m.items[29].icon = .toggle4(forts)
-					m.items[29].status.text = "Forts: \(forts)"
-				}),
-				.update(icon: .toggle4(sea), status: "Sea: \(sea)", menu: { m in
-					sea.toggle4()
-					m.items[30].icon = .toggle4(sea)
-					m.items[30].status.text = "Sea: \(sea)"
-				}),
+				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
+				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
+				.toggle(icon: .toggle4(sea), status: "Sea: \(sea)") { sea.toggle4() },
 				.close(icon: .start, status: "Start", update: { [weak scene] in
 					guard let scene else { return }
 

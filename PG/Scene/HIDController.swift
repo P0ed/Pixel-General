@@ -3,16 +3,17 @@ import COR
 
 extension InputModifiers {
 
+	private static let altKeys: [GCKeyCode] = [.leftAlt, .rightAlt]
+	private static let shiftKeys: [GCKeyCode] = [.leftShift, .rightShift]
+
 	/// Whether a key standing for this modifier is physically down, read from
 	/// the HID keyboard: UIKit never delivers the key-up of a bare modifier on
 	/// Mac Catalyst, so a held chord has to watch the key itself.
 	@MainActor
 	var isKeyDown: Bool {
 		guard let keyboard = GCKeyboard.coalesced?.keyboardInput else { return false }
-		let codes: [GCKeyCode] = contains(.left)
-			? [.leftAlt, .rightAlt]
-			: [.leftShift, .rightShift]
-		return codes.contains { keyboard.button(forKeyCode: $0)?.isPressed == true }
+		return (contains(.left) ? Self.altKeys : Self.shiftKeys)
+			.contains { code in keyboard.button(forKeyCode: code)?.isPressed == true }
 	}
 }
 

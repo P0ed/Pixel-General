@@ -3,6 +3,7 @@
 ## General
 
 - Preheat sounds.
+- Remove hover.
 
 ## Scenario
 

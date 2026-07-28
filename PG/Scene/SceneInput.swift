@@ -71,14 +71,10 @@ extension Scene where State: ~Copyable {
 				.contains(where: { n in n == baseNodes.menu })
 			else { return apply(.action(.b)) }
 
-			switch baseNodes.menuSlot(at: scenePoint, in: self) {
 			// Side buttons latch on touch down and fire on release the way a
 			// physical button does; grid cells stay instant.
-			case .left(let index): press(.left(index))
-			case .right(let index): press(.right(index))
-			case .item(let index): Input(slot: .item(index)).map(apply)
-			case .none: break
-			}
+			guard let slot = baseNodes.menuSlot(at: scenePoint, in: self) else { return }
+			if slot.modifier != nil { press(slot) } else { apply(Input(slot: slot)) }
 		}
 	}
 
@@ -111,7 +107,7 @@ extension Scene where State: ~Copyable {
 		chordModifier = nil
 		baseNodes?.setMenuButton(slot, pressed: false)
 		sounds.play(.click)
-		if fire, menuState != nil { Input(slot: slot).map(apply) }
+		if fire, menuState != nil { apply(Input(slot: slot)) }
 	}
 }
 

@@ -267,7 +267,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			}
 			setMenu(modifying(menuStack) { stk in
 				stk[stk.count - 1].action = nil
-				item.update(&stk)
+				item.update(&stk, slot)
 			})
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
@@ -306,11 +306,8 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		switch gesture.state {
 		case .began, .changed:
 			let point = convertPoint(fromView: gesture.location(in: view))
-			hoveredSlot = switch baseNodes.menuSlot(at: point, in: self) {
-			case .left(let index): .left(index)
-			case .right(let index): .right(index)
-			case .item, .none: nil
-			}
+			let slot = baseNodes.menuSlot(at: point, in: self)
+			hoveredSlot = slot?.modifier == nil ? nil : slot
 		default:
 			hoveredSlot = nil
 		}

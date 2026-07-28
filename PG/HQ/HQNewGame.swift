@@ -15,8 +15,7 @@ extension HQNodes {
 						view.present(.auto)
 					}
 				)
-			},
-			leftButtons: [.back, .space, .space, .space]
+			}
 		)
 	}
 }

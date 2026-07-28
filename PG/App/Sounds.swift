@@ -13,10 +13,9 @@ enum Sound: String, CaseIterable {
 @MainActor
 final class Sounds {
 
-	private static let voices = 3
+	private static let voices = 2
 
 	private var pool: [Sound: [AVAudioPlayer]] = [:]
-	private var next: [Sound: Int] = [:]
 
 	init() {
 		for sound in Sound.allCases {
@@ -33,11 +32,9 @@ final class Sounds {
 
 	func play(_ sound: Sound) {
 		let volume = settings.outputVolume
-		guard volume > 0.0, let voices = pool[sound], !voices.isEmpty else { return }
-		let index = (next[sound] ?? 0) % voices.count
-		next[sound] = index + 1
-
-		let player = voices[index]
+		guard volume > 0.0, let voices = pool[sound],
+			let player = voices.first(where: { p in !p.isPlaying }) ?? voices.first
+		else { return }
 		player.volume = volume
 		player.currentTime = 0.0
 		player.play()

@@ -4,7 +4,7 @@ import SpriteKit
 @MainActor
 struct MenuState<Action> {
 	var items: [MenuItem<Action>]
-	var leftButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
+	var leftButtons: [4 of MenuItem<Action>] = [.back, .space, .space, .space]
 	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var cursor: Int = 0
 	var action: MenuSlot?
@@ -36,7 +36,9 @@ struct MenuItem<Action> {
 	var icon: UIImage
 	var status: Status
 	var action: Action?
-	var update: (inout [MenuState<Action>]) -> Void
+	/// Runs against the whole stack, told which slot fired so a control can
+	/// write back to itself without knowing where it sits.
+	var update: (inout [MenuState<Action>], MenuSlot) -> Void
 }
 
 extension MenuItem {
@@ -58,7 +60,7 @@ extension MenuItem {
 			icon: icon,
 			status: status,
 			action: action,
-			update: { stk in update(); stk = [] }
+			update: { stk, _ in update(); stk = [] }
 		)
 	}
 
@@ -72,13 +74,30 @@ extension MenuItem {
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
 	) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk in
+		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
 			menu(&stk[stk.count - 1])
 		})
 	}
 
+	/// A control that redraws itself in place: `change` mutates the value the
+	/// item stands for, then icon and status are recomputed from it. The item
+	/// addresses itself through the slot it fired from, so reordering a menu
+	/// can never leave it pointing at a neighbour.
+	static func toggle(
+		icon: @autoclosure @MainActor @escaping () -> UIImage,
+		status: @autoclosure @MainActor @escaping () -> String,
+		action: Action? = nil,
+		change: @MainActor @escaping () -> Void
+	) -> Self {
+		.init(icon: icon(), status: .init(text: status()), action: action, update: { stk, slot in
+			change()
+			stk[stk.count - 1][slot].icon = icon()
+			stk[stk.count - 1][slot].status.text = status()
+		})
+	}
+
 	static func push(icon: UIImage, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk in stk.append(menu) })
+		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.append(menu) })
 	}
 
 	static func push(
@@ -87,13 +106,13 @@ extension MenuItem {
 		action: Action? = nil,
 		menu: @escaping () -> MenuState<Action>?
 	) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk in
+		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
 			menu().map { m in stk.append(m) }
 		})
 	}
 
 	static func pop(icon: UIImage, status: String, action: Action? = nil) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk in stk.removeLast() })
+		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.removeLast() })
 	}
 
 	static func pop(
@@ -102,7 +121,7 @@ extension MenuItem {
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
 	) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk in
+		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
 			stk.removeLast()
 			if !stk.isEmpty { menu(&stk[stk.count - 1]) }
 		})
@@ -111,27 +130,32 @@ extension MenuItem {
 
 extension MenuState {
 
-	var rows: Int { 4 }
 	var cols: Int { 4 }
-	var page: Int { rows * cols }
-
-	var pages: Int { (items.count - 1) / page + 1 }
 
 	subscript(slot: MenuSlot) -> MenuItem<Action> {
-		switch slot {
-		case .item(let index): items[index]
-		case .left(let index): leftButtons[index]
-		case .right(let index): rightButtons[index]
+		get {
+			switch slot {
+			case .item(let index): items[index]
+			case .left(let index): leftButtons[index]
+			case .right(let index): rightButtons[index]
+			}
+		}
+		set {
+			switch slot {
+			case .item(let index): items[index] = newValue
+			case .left(let index): leftButtons[index] = newValue
+			case .right(let index): rightButtons[index] = newValue
+			}
 		}
 	}
 
 	mutating func apply(_ input: Input) {
+		if let slot = input.menuSlot {
+			action = slot
+			return
+		}
 		switch input {
 		case .direction(let direction?, modifiers: _): moveCursor(direction)
-		case .action(let button?, let modifiers) where modifiers.contains(.left):
-			action = .left(button.index)
-		case .action(let button?, let modifiers) where modifiers.contains(.right):
-			action = .right(button.index)
 		case .tile(let xy) where xy.x != cursor: cursor = xy.x
 		case .action(.a, modifiers: _), .tile: action = .item(cursor)
 		case .menu, .action(.b, modifiers: _): action = .back
@@ -160,8 +184,7 @@ extension MenuItem {
 				.space,
 				.space,
 				.close(icon: .plus, status: "Confirm", update: action),
-			],
-			leftButtons: [.back, .space, .space, .space]
+			]
 		))
 	}
 
@@ -173,8 +196,7 @@ extension MenuItem {
 					core = .load(slot: slot)
 					view.present(.auto)
 				}
-			},
-			leftButtons: [.back, .space, .space, .space]
+			}
 		))
 	}
 }

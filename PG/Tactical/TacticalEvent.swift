@@ -144,8 +144,7 @@ private extension TacticalNodes {
 
 		if !items.isEmpty {
 			scene?.showMenu(MenuState(
-				items: items,
-				leftButtons: [.back, .space, .space, .space]
+				items: items
 			))
 		}
 	}

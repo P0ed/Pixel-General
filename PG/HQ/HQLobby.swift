@@ -11,11 +11,17 @@ extension HQNodes {
 	func hostMenu(_ state: borrowing HQState) -> MenuState<HQAction>? {
 		let session = NetSession.host(player: state.sim.player)
 		net = session
+		watchLobby(session)
+		return lobby()
+	}
+
+	/// Seat edits land at any time, from either side of the wire: the open
+	/// lobby is rebuilt in place so the cursor stays where its owner left it.
+	private func watchLobby(_ session: NetSession) {
 		session.onLobby = { [weak scene] in
 			guard let scene, let open = scene.menuState else { return }
 			scene.replaceMenu(modifying(lobby()) { m in m.cursor = open.cursor })
 		}
-		return lobby()
 	}
 
 	/// Joining runs through an alert, so the lobby is pushed from the
@@ -24,10 +30,7 @@ extension HQNodes {
 		askForAddress { address in
 			let session = NetSession.join(address)
 			net = session
-			session.onLobby = { [weak scene] in
-				guard let scene, let open = scene.menuState else { return }
-				scene.replaceMenu(modifying(lobby()) { m in m.cursor = open.cursor })
-			}
+			watchLobby(session)
 			session.onEnd = { [weak scene] in
 				guard let scene, scene.menuState != nil else { return }
 				scene.popMenu()
@@ -58,7 +61,7 @@ extension HQNodes {
 			MenuItem<HQAction>(
 				icon: session.seats[idx].alive ? session.seats[idx].country.flag : .neutral,
 				status: .init(text: seatText(idx, session)),
-				update: { stk in
+				update: { stk, _ in
 					guard isHost, idx > 0 else { return }
 					stk.append(MenuState<HQAction>(
 						items: countriesLeft.map { c in
@@ -71,8 +74,7 @@ extension HQNodes {
 								session.close(seat: idx)
 								menu = rebuilt(cursor: idx)
 							}
-						],
-						leftButtons: [.back, .space, .space, .space]
+						]
 					))
 				}
 			)
@@ -105,7 +107,7 @@ extension HQNodes {
 			MenuItem(
 				icon: .start,
 				status: .init(text: "Start", action: .init(Address.me.string)),
-				update: { [weak scene] stk in
+				update: { [weak scene] stk, _ in
 					guard let scene else { return }
 					session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })
 					if session.started { stk = [] }
