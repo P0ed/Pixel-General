@@ -8,6 +8,7 @@ extension BaseNodes {
 	static let sideSize = CGSize(width: 48.0, height: gridSize.height)
 	static let buttonSize = CGSize(width: 24.0, height: 24.0)
 	static let buttonIconSize = CGSize(width: 16.0, height: 16.0)
+	static let buttonTravel = 2.0 as CGFloat
 	static let menuSize = CGSize(
 		width: gridSize.width + sideSize.width * 2.0,
 		height: gridSize.height
@@ -87,18 +88,40 @@ extension BaseNodes {
 			frame.fillColor = .lightSurface.withAlphaComponent(0.15)
 			frame.strokeColor = .lightSurface.withAlphaComponent(0.4)
 			frame.lineWidth = 1.0
-			frame.position = CGPoint(
-				x: 0.0,
-				y: Self.gridSize.height / 2.0
-					- Self.itemSize.height / 2.0
-					- CGFloat(index) * Self.itemSize.height
-			)
+			frame.position = CGPoint(x: 0.0, y: Self.buttonY(index))
 			side.addChild(frame)
 
 			let sprite = SKSpriteNode(texture: SKTexture(image: buttons[index].icon))
 			sprite.texture?.filteringMode = .nearest
 			sprite.size = Self.buttonIconSize
 			frame.addChild(sprite)
+		}
+	}
+
+	/// Resting `y` of the side button at `index`, aligned with the grid row of
+	/// the same index.
+	private static func buttonY(_ index: Int) -> CGFloat {
+		gridSize.height / 2.0
+			- itemSize.height / 2.0
+			- CGFloat(index) * itemSize.height
+	}
+
+	/// Sinks a side button by `buttonTravel` and brightens its face while held,
+	/// mirroring the travel of a physical button.
+	func setMenuButton(_ slot: MenuSlot, pressed: Bool) {
+		guard let (name, index) = Self.sideName(for: slot),
+			let frame = menu.childNode(withName: "//\(name)\(index)") as? SKShapeNode
+		else { return }
+		frame.fillColor = .lightSurface.withAlphaComponent(pressed ? 0.5 : 0.15)
+		frame.strokeColor = .lightSurface.withAlphaComponent(pressed ? 0.9 : 0.4)
+		frame.position.y = Self.buttonY(index) - (pressed ? Self.buttonTravel : 0.0)
+	}
+
+	private static func sideName(for slot: MenuSlot) -> (String, Int)? {
+		switch slot {
+		case .left(let index): (leftName, index)
+		case .right(let index): (rightName, index)
+		case .item: nil
 		}
 	}
 
@@ -111,15 +134,13 @@ extension BaseNodes {
 		}
 	}
 
-	/// Maps a tap inside the menu onto the input the same control would send
-	/// from a keyboard or gamepad: grid cells move/fire the cursor, side
-	/// buttons fire as `L`/`R` modified actions.
-	func menuInput(at scenePoint: CGPoint, in scene: SKScene) -> Input? {
+	/// Which menu panel sits under a point in scene coordinates, if any.
+	func menuSlot(at scenePoint: CGPoint, in scene: SKScene) -> MenuSlot? {
 		let point = menu.convert(scenePoint, from: scene)
 		for node in menu.nodes(at: point) {
 			var current: SKNode? = node
 			while let hit = current {
-				if let input = hit.name.flatMap(Input.init(menuNode:)) { return input }
+				if let slot = hit.name.flatMap(MenuSlot.init(menuNode:)) { return slot }
 				current = hit.parent
 			}
 		}
@@ -127,7 +148,7 @@ extension BaseNodes {
 	}
 }
 
-private extension Input {
+private extension MenuSlot {
 
 	@MainActor
 	init?(menuNode name: String) {
@@ -136,13 +157,42 @@ private extension Input {
 		}
 
 		if let idx = index(BaseNodes.itemName) {
-			self = .tile(XY(idx, 0))
-		} else if let idx = index(BaseNodes.leftName), idx < InputAction.all.count {
-			self = .action(InputAction.all[idx], modifiers: .left)
-		} else if let idx = index(BaseNodes.rightName), idx < InputAction.all.count {
-			self = .action(InputAction.all[idx], modifiers: .right)
+			self = .item(idx)
+		} else if let idx = index(BaseNodes.leftName) {
+			self = .left(idx)
+		} else if let idx = index(BaseNodes.rightName) {
+			self = .right(idx)
 		} else {
 			return nil
+		}
+	}
+}
+
+extension Input {
+
+	/// The side button this chord addresses, if any — the same precedence
+	/// `MenuState.apply` reads the modifiers with.
+	@MainActor
+	var menuSlot: MenuSlot? {
+		guard case .action(let button?, let modifiers) = self else { return nil }
+		if modifiers.contains(.left) { return .left(button.index) }
+		if modifiers.contains(.right) { return .right(button.index) }
+		return nil
+	}
+
+	/// The input the same control would send from a keyboard or gamepad: grid
+	/// cells move/fire the cursor, side buttons fire as `L`/`R` modified actions.
+	@MainActor
+	init?(slot: MenuSlot) {
+		switch slot {
+		case .item(let index):
+			self = .tile(XY(index, 0))
+		case .left(let index):
+			guard index < InputAction.all.count else { return nil }
+			self = .action(InputAction.all[index], modifiers: .left)
+		case .right(let index):
+			guard index < InputAction.all.count else { return nil }
+			self = .action(InputAction.all[index], modifiers: .right)
 		}
 	}
 }

@@ -4,9 +4,7 @@ import SpriteKit
 @MainActor
 struct MenuState<Action> {
 	var items: [MenuItem<Action>]
-	/// Side panel buttons, `A`...`D` top to bottom, fired by `L+A`...`L+D`.
 	var leftButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
-	/// Side panel buttons, `A`...`D` top to bottom, fired by `R+A`...`R+D`.
 	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var cursor: Int = 0
 	var close: (MenuState<Action>) -> MenuState<Action>? = { _ in nil }
@@ -17,6 +15,24 @@ enum MenuAction { case close, action(MenuSlot) }
 
 /// Which of the menu's three panels fired: the grid, or a side button index.
 enum MenuSlot: Equatable { case item(Int), left(Int), right(Int) }
+
+extension MenuSlot {
+
+	var index: Int {
+		switch self {
+		case .item(let index), .left(let index), .right(let index): index
+		}
+	}
+
+	/// The modifier whose chord fires this button, `nil` for the grid.
+	var modifier: InputModifiers? {
+		switch self {
+		case .left: .left
+		case .right: .right
+		case .item: nil
+		}
+	}
+}
 
 @MainActor
 struct MenuItem<Action> {

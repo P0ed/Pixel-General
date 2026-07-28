@@ -85,14 +85,18 @@ private extension EditorNodes {
 					status: .init(text: "Brush: \(terrain)"),
 					action: .setBrush(terrain)
 				)
-			} + [
+			},
+			leftButtons: [
+				.close(icon: .HQ, status: "HQ", action: .hq),
 				.space,
-				.close(icon: .rnd, status: "Randomize", action: .randomize),
-
+				.space,
+				.space,
+			],
+			rightButtons: [
 				.close(icon: .empty, status: "Clear map", action: .clear),
+				.close(icon: .rnd, status: "Randomize", action: .randomize),
 				.close(icon: .save, status: "Save map", action: .save),
 				.close(icon: .load, status: "Load map", action: .load),
-				.close(icon: .HQ, status: "HQ", action: .hq),
 			]
 		))
 	}

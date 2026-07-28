@@ -76,39 +76,42 @@ extension HQNodes {
 			]))
 			return
 		}
-		scene?.showMenu(MenuState(items: [
-			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
-				guard let scene else { return nil }
-				return scenarioMenu(m, scene.state)
-			}),
-			.init(icon: .remote, status: .init(text: "Host LAN"), update: { m in
-				guard let scene else { return nil }
-				return hostMenu(m, scene.state)
-			}),
-			.init(icon: .remote, status: .init(text: "Join LAN"), update: { m in
-				joinMenu(m)
-			}),
-			.space,
-
-			.init(icon: .start, status: .init(text: "Campaign"), update: { m in
-				guard let scene else { return nil }
-				return campaignMenu(m, scene.state)
-			}),
-			.space, .space, .space,
-
-			.space, .space, .space, .space,
-
-			.init(icon: .new, status: .init(text: "New")) { _ in
-				guard let scene else { return nil }
-				return newGameMenu(scene.state)
-			},
-			.load { scene?.saveState() },
-			.space,
-			.close(icon: .chess, status: .init(text: "Editor")) { _ in
-				guard let scene else { return }
-				core.store(scene.state.sim)
-				view.present(.editor)
-			},
-		]))
+		scene?.showMenu(MenuState(
+			items: [
+				.init(icon: .start, status: .init(text: "Scenario"), update: { m in
+					guard let scene else { return nil }
+					return scenarioMenu(m, scene.state)
+				}),
+				.init(icon: .remote, status: .init(text: "Host LAN"), update: { m in
+					guard let scene else { return nil }
+					return hostMenu(m, scene.state)
+				}),
+				.init(icon: .remote, status: .init(text: "Join LAN"), update: { m in
+					joinMenu(m)
+				}),
+				.space,
+				
+					.init(icon: .start, status: .init(text: "Campaign"), update: { m in
+						guard let scene else { return nil }
+						return campaignMenu(m, scene.state)
+					}),
+				.space, .space, .space,
+				
+					.space, .space, .space, .space,
+			],
+			rightButtons: [
+				.init(icon: .new, status: .init(text: "New")) { _ in
+					guard let scene else { return nil }
+					return newGameMenu(scene.state)
+				},
+				.load { scene?.saveState() },
+				.space,
+				.close(icon: .chess, status: .init(text: "Editor")) { _ in
+					guard let scene else { return }
+					core.store(scene.state.sim)
+					view.present(.editor)
+				},
+			]
+		))
 	}
 }
