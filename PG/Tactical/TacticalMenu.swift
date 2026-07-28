@@ -1,5 +1,4 @@
 import SpriteKit
-import AVFoundation
 import COR
 
 extension TacticalNodes {
@@ -9,14 +8,8 @@ extension TacticalNodes {
 			return _ = scene?.showMenu(.none)
 		}
 
-		var vol: Int {
-			let v = scene.audioEngine.mainMixerNode.outputVolume
-			return v < 0.1 ? 0 : v < 0.5 ? 1 : 2
-		}
-		let toggleVol = { [audioEngine = scene.audioEngine] in
-			settings.toggleSound()
-			audioEngine.mainMixerNode.outputVolume = settings.outputVolume
-		}
+		var vol: Int { Int(settings.soundLevel) }
+		let toggleVol = { settings.toggleSound() }
 
 		scene.showMenu(MenuState(
 			items: [

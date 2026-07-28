@@ -6,7 +6,6 @@ struct TacticalNodes {
 	weak var scene: TacticalScene?
 	var camera: SKCameraNode
 	var map: MapNodes
-	var sounds: SoundNodes
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
 	@IO var baseKey: BaseKey = .terrain
@@ -20,23 +19,13 @@ struct TacticalNodes {
 	}
 }
 
-@MainActor
-struct SoundNodes {
-	var boomS: SKAudioNode
-	var boomM: SKAudioNode
-	var boomL: SKAudioNode
-	var mov: SKAudioNode
-	var ruggedDefence: SKAudioNode
-}
-
 extension TacticalNodes {
 
 	init(scene: TacticalScene) {
 		self = TacticalNodes(
 			scene: scene,
 			camera: Self.addCamera(root: scene),
-			map: Self.addMap(root: scene, state: scene.state),
-			sounds: Self.addSounds(root: scene)
+			map: Self.addMap(root: scene, state: scene.state)
 		)
 		units = .init(
 			head: scene.state.sim.units.map { i, u in
@@ -51,30 +40,6 @@ extension TacticalNodes {
 				return sprite
 			},
 			tail: nil
-		)
-	}
-
-	private static func addSounds(root: SKNode) -> SoundNodes {
-		let mk = { name in
-			let node = SKAudioNode(fileNamed: name)
-			node.autoplayLooped = false
-			node.isPositional = false
-			return node
-		}
-		let boomS = mk("boom-s")
-		let boomM = mk("boom-m")
-		let boomL = mk("boom-l")
-		let mov = mk("mov")
-		let rd = mk("getcrew")
-
-		[boomS, boomM, boomL, mov, rd].forEach(root.addChild)
-
-		return SoundNodes(
-			boomS: boomS,
-			boomM: boomM,
-			boomL: boomL,
-			mov: mov,
-			ruggedDefence: rd
 		)
 	}
 

@@ -8,7 +8,6 @@ struct BaseNodes {
 	var status: SKLabelNode
 	var action: SKLabelNode
 	var icon: SKSpriteNode
-	var click: SKAudioNode
 }
 
 struct Status {
@@ -25,18 +24,8 @@ extension Scene where State: ~Copyable {
 			alert: addAlert(),
 			status: addStatus(),
 			action: addStatus(alignment: .right),
-			icon: addIcon(),
-			click: addClick()
+			icon: addIcon()
 		)
-	}
-
-	/// The click a menu side button makes on the way down and on the way up.
-	func addClick() -> SKAudioNode {
-		let node = SKAudioNode(fileNamed: "boom-s")
-		node.autoplayLooped = false
-		node.isPositional = false
-		addChild(node)
-		return node
 	}
 
 	func addAlert() -> SKNode {

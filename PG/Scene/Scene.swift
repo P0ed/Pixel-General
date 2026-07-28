@@ -1,5 +1,4 @@
 import SpriteKit
-import AVFAudio
 import UIKit
 import COR
 
@@ -41,7 +40,6 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	override func sceneDidLoad() {
 		backgroundColor = .black
 		scaleMode = .aspectFit
-		audioEngine.mainMixerNode.outputVolume = settings.outputVolume
 
 		enterBackground = NotificationCenter.default.addMainActorObserver(
 			forName: UIApplication.didEnterBackgroundNotification,

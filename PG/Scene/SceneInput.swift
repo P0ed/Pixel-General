@@ -100,7 +100,7 @@ extension Scene where State: ~Copyable {
 		// `1`…`4` bindings carry `R` without one, as does a pointer press.
 		chordModifier = slot.modifier.flatMap { $0.isKeyDown ? $0 : nil }
 		baseNodes?.setMenuButton(slot, pressed: true)
-		baseNodes?.click.play()
+		sounds.play(.click)
 	}
 
 	/// Lets the button back up — it clicks either way, but only a press that
@@ -110,7 +110,7 @@ extension Scene where State: ~Copyable {
 		pressedSlot = nil
 		chordModifier = nil
 		baseNodes?.setMenuButton(slot, pressed: false)
-		baseNodes?.click.play()
+		sounds.play(.click)
 		if fire, menuState != nil { Input(slot: slot).map(apply) }
 	}
 }

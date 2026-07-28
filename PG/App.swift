@@ -6,6 +6,7 @@ import COR
 @MainActor var settings: Settings = UserDefaults.standard.settings {
 	didSet { UserDefaults.standard.settings = settings }
 }
+@MainActor let sounds = Sounds()
 @MainActor let view = View()
 @MainActor let controller = ViewController()
 @MainActor var net: NetSession?

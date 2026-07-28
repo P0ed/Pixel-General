@@ -19,14 +19,6 @@ extension SKLabelNode {
 	}
 }
 
-extension SKAudioNode {
-
-	func play() {
-		run(.stop())
-		run(.play())
-	}
-}
-
 extension CGPath {
 
 	static func make(_ transform: (CGMutablePath) -> Void) -> CGPath {
