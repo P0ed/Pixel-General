@@ -12,14 +12,10 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private(set) var cameraTracking = false
 	private var panOrigin: CGPoint?
 	private var panTranslation: CGPoint?
-	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
-	/// The side button held down by the current touch or chord, drawn sunken
-	/// until it lifts.
+	private(set) var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
+	var menuState: MenuState<Action>? { menuStack.last }
 	var pressedSlot: MenuSlot?
-	/// The modifier key holding that chord together, watched frame by frame
-	/// because its key-up never arrives.
 	var chordModifier: InputModifiers?
-	/// The side button under the pointer, whose status replaces the cursor's.
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
@@ -29,7 +25,11 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private var panRecognizer: UIPanGestureRecognizer?
 	private var hoverRecognizer: UIHoverGestureRecognizer?
 
-	init(mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>, state: consuming State, size: CGSize = .scene) {
+	init(
+		mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>,
+		state: consuming State,
+		size: CGSize = .scene
+	) {
 		self.state = state
 		self.mode = mode
 		super.init(size: size)
@@ -126,8 +126,8 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			case .menu: alertState = nil
 			default: break
 			}
-		} else if menuState != nil {
-			menuState?.apply(input)
+		} else if !menuStack.isEmpty {
+			menuStack[menuStack.count - 1].apply(input)
 		} else if processing, case .pan = input {
 			_ = mode.input(&state, input)
 		} else if processing {
@@ -183,10 +183,42 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		}
 	}
 
+	/// Opens `menu` as a fresh root, dropping whatever stack was there.
 	func showMenu(_ menu: MenuState<Action>?) {
-		menuState = modifying(menu) { m in
-			m = m.flatMap { m in m.items.isEmpty ? nil : m }
-			m?.padItems()
+		setMenu(menu.map { m in [m] } ?? [])
+	}
+
+	/// Opens `menu` over the one already showing, the way a `push` item does.
+	func pushMenu(_ menu: MenuState<Action>) {
+		setMenu(menuStack + [menu])
+		redrawMenu()
+	}
+
+	/// Drops the top menu, uncovering the one below — or closing the menu
+	/// altogether when it was the root.
+	func popMenu() {
+		guard !menuStack.isEmpty else { return }
+		setMenu(modifying(menuStack) { stk in stk.removeLast() })
+		redrawMenu()
+	}
+
+	/// Swaps the menu on top for a rebuilt one — how a live source like the LAN
+	/// lobby refreshes itself without disturbing the stack under it.
+	func replaceMenu(_ menu: MenuState<Action>) {
+		guard !menuStack.isEmpty else { return }
+		setMenu(modifying(menuStack) { stk in stk[stk.count - 1] = menu })
+		redrawMenu()
+	}
+
+	/// Menus swapped from outside an item's `update` change every icon, so the
+	/// node tree is rebuilt rather than merely re-highlighted.
+	private func redrawMenu() {
+		if let menuState { baseNodes?.redrawMenu(menuState) }
+	}
+
+	private func setMenu(_ stack: [MenuState<Action>]) {
+		menuStack = stack.compactMap { m in
+			m.items.isEmpty ? nil : modifying(m) { m in m.padItems() }
 		}
 	}
 
@@ -236,21 +268,15 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			chordModifier = nil
 			hoveredSlot = nil
 		}
-		if let menuState, let action = menuState.action {
-			if case let .action(slot) = action {
-				let item = menuState[slot]
-				if let action = item.action {
-					react(.action(action))
-				}
-				showMenu(item.update(
-					modifying(menuState) { m in
-						m.action = nil
-						m.padItems()
-					}
-				))
-			} else {
-				showMenu(menuState.close(modifying(menuState) { m in m.action = nil }))
+		if let menuState, let slot = menuState.action {
+			let item = menuState[slot]
+			if let action = item.action {
+				react(.action(action))
 			}
+			setMenu(modifying(menuStack) { stk in
+				stk[stk.count - 1].action = nil
+				item.update(&stk)
+			})
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
 			}

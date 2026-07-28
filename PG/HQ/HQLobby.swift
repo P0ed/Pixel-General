@@ -8,39 +8,37 @@ import COR
 // so joins and kicks can re-render the menu live.
 extension HQNodes {
 
-	func hostMenu(_ root: MenuState<HQAction>, _ state: borrowing HQState) -> MenuState<HQAction>? {
+	func hostMenu(_ state: borrowing HQState) -> MenuState<HQAction>? {
 		let session = NetSession.host(player: state.sim.player)
 		net = session
 		session.onLobby = { [weak scene] in
-			guard let scene, scene.menuState != nil else { return }
-			scene.showMenu(modifying(lobby(root)) { m in
-				m.cursor = scene.menuState?.cursor ?? 0
-			})
+			guard let scene, let open = scene.menuState else { return }
+			scene.replaceMenu(modifying(lobby()) { m in m.cursor = open.cursor })
 		}
-		return lobby(root)
+		return lobby()
 	}
 
-	func joinMenu(_ root: MenuState<HQAction>) -> MenuState<HQAction>? {
+	/// Joining runs through an alert, so the lobby is pushed from the
+	/// completion rather than returned — nothing to open yet at call time.
+	func joinMenu() -> MenuState<HQAction>? {
 		askForAddress { address in
 			let session = NetSession.join(address)
 			net = session
 			session.onLobby = { [weak scene] in
-				guard let scene, scene.menuState != nil else { return }
-				scene.showMenu(modifying(lobby(root)) { m in
-					m.cursor = scene.menuState?.cursor ?? 0
-				})
+				guard let scene, let open = scene.menuState else { return }
+				scene.replaceMenu(modifying(lobby()) { m in m.cursor = open.cursor })
 			}
 			session.onEnd = { [weak scene] in
 				guard let scene, scene.menuState != nil else { return }
-				scene.showMenu(root)
+				scene.popMenu()
 			}
-			scene?.showMenu(lobby(root))
+			scene?.pushMenu(lobby())
 		}
-		return root
+		return nil
 	}
 
-	private func lobby(_ root: MenuState<HQAction>) -> MenuState<HQAction> {
-		guard let session = net else { return root }
+	private func lobby() -> MenuState<HQAction> {
+		guard let session = net else { return MenuState(items: []) }
 
 		let isHost = session.role == .host
 		var countriesLeft: [Country] {
@@ -50,78 +48,82 @@ extension HQNodes {
 				}
 			}
 		}
+		/// The seat table is rebuilt wholesale after every edit: one toggle can
+		/// move several icons at once.
 		func rebuilt(cursor: Int) -> MenuState<HQAction> {
-			modifying(lobby(root)) { m in m.cursor = cursor }
+			modifying(lobby()) { m in m.cursor = cursor }
 		}
 
 		let countries = (0 ..< 4).map { idx in
 			MenuItem<HQAction>(
 				icon: session.seats[idx].alive ? session.seats[idx].country.flag : .neutral,
 				status: .init(text: seatText(idx, session)),
-				update: { menu in
-					guard isHost, idx > 0 else { return menu }
-					return MenuState<HQAction>(
+				update: { stk in
+					guard isHost, idx > 0 else { return }
+					stk.append(MenuState<HQAction>(
 						items: countriesLeft.map { c in
-							MenuItem<HQAction>(
-								icon: c.flag,
-								status: .init(text: "\(c)"),
-								update: { _ in
-									session.set(seat: idx, country: c)
-									return rebuilt(cursor: idx)
-								}
-							)
+							.pop(icon: c.flag, status: "\(c)") { menu in
+								session.set(seat: idx, country: c)
+								menu = rebuilt(cursor: idx)
+							}
 						} + [
-							.init(icon: .neutral, status: .init(text: "Off"), update: { _ in
+							.pop(icon: .neutral, status: "Off") { menu in
 								session.close(seat: idx)
-								return rebuilt(cursor: idx)
-							})
+								menu = rebuilt(cursor: idx)
+							}
 						],
-						close: { _ in rebuilt(cursor: idx) }
-					)
+						leftButtons: [.back, .space, .space, .space]
+					))
 				}
 			)
 		}
 		let types = (0 ..< 4).map { idx in
-			MenuItem<HQAction>(
+			MenuItem<HQAction>.update(
 				icon: session.seats[idx].alive ? session.seats[idx].type.icon : .clear,
-				status: .init(text: seatText(idx, session)),
-				update: { menu in
-					guard isHost, idx > 0, session.seats[idx].alive else { return menu }
+				status: seatText(idx, session),
+				menu: { menu in
+					guard isHost, idx > 0, session.seats[idx].alive else { return }
 					session.toggle(seat: idx)
-					return rebuilt(cursor: 4 + idx)
+					menu = rebuilt(cursor: 4 + idx)
 				}
 			)
 		}
 		let prestige = (0 ..< 4).map { idx in
-			MenuItem<HQAction>(
+			MenuItem<HQAction>.update(
 				icon: session.seats[idx].prestige < 0x1400 ? .prestige1 : .prestige2,
-				status: .init(text: seatText(idx, session)),
-				update: { menu in
-					guard isHost, session.seats[idx].alive else { return menu }
+				status: seatText(idx, session),
+				menu: { menu in
+					guard isHost, session.seats[idx].alive else { return }
 					session.togglePrestige(seat: idx)
-					return rebuilt(cursor: 8 + idx)
+					menu = rebuilt(cursor: 8 + idx)
 				}
 			)
 		}
 		let bottom: [MenuItem<HQAction>] = isHost ? [
-			.init(icon: .empty, status: .init(text: Address.me.string), update: id),
+			.apply(icon: .empty, status: Address.me.string),
 			.space, .space,
-			.init(icon: .start, status: .init(text: "Start", action: .init(Address.me.string)), update: { menu in
-				guard let scene else { return nil }
-				session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })
-				return session.started ? nil : menu
-			}),
+			MenuItem(
+				icon: .start,
+				status: .init(text: "Start", action: .init(Address.me.string)),
+				update: { [weak scene] stk in
+					guard let scene else { return }
+					session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })
+					if session.started { stk = [] }
+				}
+			),
 		] : [
 			.space, .space, .space,
-			.init(icon: .empty, status: .init(text: "waiting for host"), update: id),
+			.apply(icon: .empty, status: "waiting for host"),
 		]
 
 		return MenuState(
 			items: countries + types + prestige + bottom,
-			close: { _ in
-				net?.leave()
-				return root
-			}
+			leftButtons: [
+				.pop(icon: .minus, status: "Leave") { _ in net?.leave() },
+				.space,
+				.space,
+				.space,
+			]
 		)
 	}
 

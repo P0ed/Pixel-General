@@ -61,19 +61,9 @@ extension StrategicNodes {
 					core.save()
 					view.present(.auto)
 				},
-
-				MenuItem(
-					icon: .toggle4(settings.campaignAutoresolve ? 3 : 0),
-					status: .init(text: "Battle autoresolve"),
-					update: { menu in
-						modifying(menu) { menu in
-							settings.toggleCampaignAutoresolve()
-							menu.items[4].icon = .toggle4(settings.campaignAutoresolve ? 3 : 0)
-						}
-					}
-				),
-				.space, .space, .space,
-			]
+			],
+			leftButtons: [.back, .space, .space, .space],
+			rightButtons: [.space, .space, .prefs, .space]
 		))
 	}
 }

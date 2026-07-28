@@ -25,7 +25,7 @@ extension TacticalMode {
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
 			next: { state in
-				let ai = settings.aiKind > 0 ? lstm : heuristic
+				let ai = settings.ai ? lstm : heuristic
 				return if let net {
 					net.nextAction(state.sim, state.auto ? ai : { _ in nil })
 				} else {
