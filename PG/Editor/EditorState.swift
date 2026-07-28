@@ -7,6 +7,8 @@ struct EditorState: ~Copyable {
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var scale: Int = 1
+	var cellular = Cellular()
+	var d20 = D20(seed: Int.random(in: 0 ... .max))
 }
 
 enum EditorAction {
@@ -14,6 +16,9 @@ enum EditorAction {
 	case setBrush(Terrain)
 	case clear
 	case randomize
+	case cellular(Cellular, steps: Int)
+	case scatter
+	case flatten
 	case save
 	case load
 	case hq
@@ -63,6 +68,9 @@ extension EditorState {
 		case .setBrush(let terrain): brush = terrain
 		case .clear: clearMap(into: &events)
 		case .randomize: randomizeMap(into: &events)
+		case .cellular(let rule, let steps): cellularStep(rule, steps, into: &events)
+		case .scatter: scatterMap(into: &events)
+		case .flatten: flattenMap(into: &events)
 		case .save: saveMap()
 		case .load: loadMap(into: &events)
 		case .hq: events.append(.hq)
@@ -76,6 +84,10 @@ extension EditorState {
 			action: "A: paint  B: brush  ↩ menu"
 		)
 	}
+
+	/// The automaton config, read out through a method so the menu never
+	/// projects a stored field out of the noncopyable state.
+	func cellularRule() -> Cellular { cellular }
 }
 
 private extension EditorState {
@@ -147,6 +159,28 @@ private extension EditorState {
 
 	mutating func randomizeMap(into events: inout [EditorEvent]) {
 		map = Map(seed: Int.random(in: 0 ... .max), density: Int.random(in: 0 ... 3))
+		events.append(.redraw)
+	}
+
+	/// Runs the height automaton `steps` generations and stores the rule, so
+	/// the config survives closing the menu. Structures can be swallowed by a
+	/// rising massif, so the surviving road network is re-autotiled.
+	mutating func cellularStep(_ rule: Cellular, _ steps: Int, into events: inout [EditorEvent]) {
+		cellular = rule
+		map.cellular(rule, steps: steps, d20: &d20)
+		map.shapeRoads()
+		events.append(.redraw)
+	}
+
+	mutating func scatterMap(into events: inout [EditorEvent]) {
+		map.scatterHeights(d20: &d20)
+		map.shapeRoads()
+		events.append(.redraw)
+	}
+
+	mutating func flattenMap(into events: inout [EditorEvent]) {
+		map.flattenHeights()
+		map.shapeRoads()
 		events.append(.redraw)
 	}
 

@@ -79,6 +79,27 @@ public extension Terrain {
 		}
 	}
 
+	/// Tree cover, preserved across an elevation change by the editor's
+	/// cellular automaton. `.mountain` has no wooded variant, so a tile lifted
+	/// to level 2 loses it for good.
+	var isWooded: Bool {
+		switch self {
+		case .forest, .forestHill: true
+		default: false
+		}
+	}
+
+	/// The open-ground tile for an `elevationLevel`. Water, settlements and
+	/// roads have no elevated variant, so anything the automaton raises or
+	/// lowers collapses to field/forest/hill/forestHill/mountain.
+	static func ground(_ level: Int, wooded: Bool) -> Terrain {
+		switch level {
+		case 1: wooded ? .forestHill : .hill
+		case 2: .mountain
+		default: wooded ? .forest : .field
+		}
+	}
+
 	func moveCost(_ stats: Unit) -> UInt8 {
 		switch stats.type.moveType {
 		case .leg:

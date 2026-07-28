@@ -49,6 +49,12 @@ public extension XY {
 		clamped(0 ... size - 1)
 	}
 
+	/// Wraps into `0 ..< size` on both axes — the editor's cellular automaton
+	/// treats the map as a torus, so every cell has a full neighborhood.
+	func wrapped(_ size: Int) -> XY {
+		XY((x % size + size) % size, (y % size + size) % size)
+	}
+
 	func clamped(_ range: ClosedRange<Int>) -> XY {
 		XY(
 			max(range.lowerBound, min(range.upperBound, x)),

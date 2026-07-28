@@ -88,6 +88,9 @@ private extension EditorNodes {
 			} + [
 				.space,
 				.close(icon: .rnd, status: "Randomize", action: .randomize),
+				.init(icon: .new, status: .init(text: "Cellular…"), update: { m in
+					cellularMenu(m, scene.state)
+				}),
 
 				.close(icon: .empty, status: "Clear map", action: .clear),
 				.close(icon: .save, status: "Save map", action: .save),
