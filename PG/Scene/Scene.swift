@@ -200,11 +200,12 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 
 	private func didSetMenu() {
 		if let menuState, let action = menuState.action {
-			if case let .action(idx) = action {
-				if let action = menuState.items[idx].action {
+			if case let .action(slot) = action {
+				let item = menuState[slot]
+				if let action = item.action {
 					react(.action(action))
 				}
-				showMenu(menuState.items[idx].update(
+				showMenu(item.update(
 					modifying(menuState) { m in
 						m.action = nil
 						m.padItems()

@@ -68,9 +68,6 @@ extension Scene where State: ~Copyable {
 
 extension BaseNodes {
 
-	static let itemSize = CGSize(width: 48.0, height: 48.0)
-	static let menuSize = CGSize(width: itemSize.width * 4, height: itemSize.height * 4)
-
 	func layout(size: CGSize) {
 		let inset = 4.0 as CGFloat
 		status.position = CGPoint(

@@ -28,11 +28,7 @@ extension Scene where State: ~Copyable {
 				.contains(where: { n in n == baseNodes.menu })
 			else { return apply(.action(.b)) }
 
-			baseNodes.menu.nodes(at: baseNodes.menu.convert(scenePoint, from: self))
-				.compactMap { n in n as? SKShapeNode }.first
-				.flatMap { n in n.name == nil ? n : nil }
-				.flatMap(baseNodes.menu.children.firstIndex)
-				.map { idx in apply(.tile(XY(idx, 0))) }
+			baseNodes.menuInput(at: scenePoint, in: self).map(apply)
 		}
 	}
 }
@@ -58,7 +54,9 @@ extension Input {
 		case .keyboardDownArrow: self = .direction(.down, modifiers: mods)
 		case .keyboardUpArrow: self = .direction(.up, modifiers: mods)
 
-		default: switch key.charactersIgnoringModifiers {
+		// `charactersIgnoringModifiers` still applies shift, so `R+A` arrives
+		// as "A" — fold the case to keep the letter bindings modifier agnostic.
+		default: switch key.charactersIgnoringModifiers.lowercased() {
 		case "1": self = .action(.a, modifiers: .right)
 		case "2": self = .action(.b, modifiers: .right)
 		case "3": self = .action(.c, modifiers: .right)

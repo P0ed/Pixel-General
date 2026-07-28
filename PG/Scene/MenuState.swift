@@ -4,12 +4,19 @@ import SpriteKit
 @MainActor
 struct MenuState<Action> {
 	var items: [MenuItem<Action>]
+	/// Side panel buttons, `A`...`D` top to bottom, fired by `L+A`...`L+D`.
+	var leftButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
+	/// Side panel buttons, `A`...`D` top to bottom, fired by `R+A`...`R+D`.
+	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var cursor: Int = 0
 	var close: (MenuState<Action>) -> MenuState<Action>? = { _ in nil }
 	var action: MenuAction?
 }
 
-enum MenuAction { case close, action(Int) }
+enum MenuAction { case close, action(MenuSlot) }
+
+/// Which of the menu's three panels fired: the grid, or a side button index.
+enum MenuSlot: Equatable { case item(Int), left(Int), right(Int) }
 
 @MainActor
 struct MenuItem<Action> {
@@ -47,13 +54,23 @@ extension MenuState {
 
 	var pages: Int { (items.count - 1) / page + 1 }
 
+	subscript(slot: MenuSlot) -> MenuItem<Action> {
+		switch slot {
+		case .item(let index): items[index]
+		case .left(let index): leftButtons[index]
+		case .right(let index): rightButtons[index]
+		}
+	}
+
 	mutating func apply(_ input: Input) {
 		switch input {
 		case .direction(let direction?, modifiers: _): moveCursor(direction)
-		case .target(.next): cursor = (cursor / page + 1) % pages * page
-		case .target(.prev): cursor = (pages + cursor / page - 1) % pages * page
+		case .action(let button?, let modifiers) where modifiers.contains(.left):
+			action = .action(.left(button.index))
+		case .action(let button?, let modifiers) where modifiers.contains(.right):
+			action = .action(.right(button.index))
 		case .tile(let xy) where xy.x != cursor: cursor = xy.x
-		case .action(.a, modifiers: _), .tile: action = .action(cursor)
+		case .action(.a, modifiers: _), .tile: action = .action(.item(cursor))
 		case .menu, .action(.b, modifiers: _): action = .close
 		default: break
 		}
