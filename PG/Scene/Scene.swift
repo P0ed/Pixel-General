@@ -205,7 +205,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	private func redrawMenu() {
-		if let menuState { baseNodes?.redrawMenu(menuState) }
+		if let menuState { baseNodes?.menu.redrawMenu(menuState) }
 	}
 
 	private func setMenu(_ stack: [MenuState<Action>]) {
@@ -270,16 +270,16 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 				item.update(&stk, slot)
 			})
 			if let next = self.menuState {
-				baseNodes?.redrawMenu(next)
+				baseNodes?.menu.redrawMenu(next)
 			}
 		} else if let menuState {
-			if baseNodes?.menu.root.isHidden == true || baseNodes?.menuIsHiding == true {
-				baseNodes?.showMenu(menuState)
+			if baseNodes?.menu.root.isHidden == true || baseNodes?.menu.isHiding == true {
+				baseNodes?.menu.showMenu(menuState)
 			} else {
-				baseNodes?.updateMenu(menuState)
+				baseNodes?.menu.updateMenu(menuState)
 			}
 		} else if baseNodes?.menu.root.isHidden == false {
-			baseNodes?.hideMenu()
+			baseNodes?.menu.hideMenu()
 		}
 		updateStatus()
 		advance()
@@ -309,7 +309,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		switch gesture.state {
 		case .began, .changed:
 			let point = convertPoint(fromView: gesture.location(in: view))
-			let slot = baseNodes.menuSlot(at: point, in: self)
+			let slot = baseNodes.menu.menuSlot(at: point, in: self)
 			hoveredSlot = slot?.modifier == nil ? nil : slot
 		default:
 			hoveredSlot = nil
