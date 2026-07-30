@@ -36,8 +36,6 @@ struct MenuItem<Action> {
 	var icon: UIImage
 	var status: Status
 	var action: Action?
-	/// Runs against the whole stack, told which slot fired so a control can
-	/// write back to itself without knowing where it sits.
 	var update: (inout [MenuState<Action>], MenuSlot) -> Void
 }
 
@@ -130,8 +128,6 @@ extension MenuItem {
 
 extension MenuState {
 
-	var cols: Int { 4 }
-
 	subscript(slot: MenuSlot) -> MenuItem<Action> {
 		get {
 			switch slot {
@@ -165,8 +161,8 @@ extension MenuState {
 
 	mutating func moveCursor(_ direction: Direction) {
 		cursor = switch direction {
-		case .down: (cursor + min(cols, items.count)) % items.count
-		case .up: (cursor - min(cols, items.count) + items.count) % items.count
+		case .down: (cursor + min(4, items.count)) % items.count
+		case .up: (cursor - min(4, items.count) + items.count) % items.count
 		case .left: (cursor / 4 * 4 + (4 + cursor - 1) % 4) % items.count
 		case .right: (cursor / 4 * 4 + (cursor + 1) % 4) % items.count
 		}

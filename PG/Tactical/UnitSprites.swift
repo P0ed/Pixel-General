@@ -8,9 +8,8 @@ extension Unit {
 	var hqSprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(texture: SKTexture(image: image))
+		let sprite = SKSpriteNode(image: image)
 		sprite.zPosition = 0.2
-		sprite.texture?.filteringMode = .nearest
 		node.addChild(sprite)
 
 		return node
@@ -20,19 +19,18 @@ extension Unit {
 	var sprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(texture: SKTexture(image: image))
+		let sprite = SKSpriteNode(image: image)
 		sprite.blendMode = .alpha
 		sprite.colorBlendFactor = 0.1
 		sprite.color = country.color
 		sprite.zPosition = 0.2
 		sprite.xScale = country.team == .axis ? 1.0 : -1.0
-		sprite.texture?.filteringMode = .nearest
 		node.addChild(sprite)
 
 		let plate = SKSpriteNode(imageNamed: "HP\(hp)")
+		plate.texture?.filteringMode = .nearest
 		plate.position = CGPoint(x: 0, y: -12.0)
 		plate.zPosition = 2.3
-		plate.texture?.filteringMode = .nearest
 		plate.name = "hp"
 		node.addChild(plate)
 
@@ -133,8 +131,7 @@ extension SKNode {
 	}
 
 	func showSight(for duration: TimeInterval) {
-		let sight = SKSpriteNode(imageNamed: "Sight")
-		sight.texture?.filteringMode = .nearest
+		let sight = SKSpriteNode(image: .sight)
 		addChild(sight)
 
 		sight.run(.sequence([

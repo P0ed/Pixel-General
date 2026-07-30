@@ -1,32 +1,61 @@
 import SpriteKit
 import COR
 
+struct MenuNodes {
+	var root: SKNode
+	var items: [16 of MenuSlotNode]
+	var left: [4 of MenuSlotNode]
+	var right: [4 of MenuSlotNode]
+}
+
 extension BaseNodes {
+	private static let showMenuActionKey = "menu.show"
+	private static let hideMenuActionKey = "menu.hide"
 
 	static let itemSize = CGSize(width: 64.0, height: 64.0)
 	static let gridSize = CGSize(width: itemSize.width * 4, height: itemSize.height * 4)
-	static let sideSize = CGSize(width: 48.0, height: gridSize.height)
-	static let buttonSize = CGSize(width: 24.0, height: 24.0)
-	static let buttonIconSize = CGSize(width: 16.0, height: 16.0)
+	static let buttonSize = CGSize(width: 28.0, height: 30.0)
+	static let buttonIconSize = CGSize(width: 24.0, height: 24.0)
 	static let buttonTravel = 2.0 as CGFloat
+	static let side = 64.0 as CGFloat
+	static let bezel = 4.0 as CGFloat
+	static let depth = 8.0 as CGFloat
+
 	static let menuSize = CGSize(
-		width: gridSize.width + sideSize.width * 2.0,
-		height: gridSize.height
+		width: gridSize.width + side * 2.0,
+		height: gridSize.height + bezel * 2.0 + depth
 	)
 
 	func showMenu<Action>(_ menuState: MenuState<Action>) {
+		let wasHidden = menu.isHidden
+		menu.removeAction(forKey: Self.hideMenuActionKey)
+		menu.removeAction(forKey: Self.showMenuActionKey)
 		menu.isHidden = false
+		menu.removeAllChildren()
 		addMenuNodes(menuState)
 		updateMenu(menuState)
-		menu.setScale(0.01)
-		menu.run(.scale(to: 1.0, duration: 0.15))
+		if wasHidden { menu.position.y = hiddenMenuY }
+		menu.run(.moveTo(y: 0.0, duration: 0.22), withKey: Self.showMenuActionKey)
 	}
 
 	func hideMenu() {
-		menu.run(.scale(to: 0.01, duration: 0.15)) {
-			menu.isHidden = true
-			menu.removeAllChildren()
-		}
+		menu.removeAction(forKey: Self.showMenuActionKey)
+		menu.run(
+			.sequence([
+				.moveTo(y: hiddenMenuY, duration: 0.22),
+				.run {
+					menu.isHidden = true
+					menu.removeAllChildren()
+				},
+			]),
+			withKey: Self.hideMenuActionKey
+		)
+	}
+
+	var menuIsHiding: Bool { menu.action(forKey: Self.hideMenuActionKey) != nil }
+
+	private var hiddenMenuY: CGFloat {
+		((menu.scene?.size.height ?? CGSize.scene.height) + Self.menuSize.height) / 2.0
 	}
 
 	func redrawMenu<Action>(_ menuState: MenuState<Action>) {
@@ -43,21 +72,23 @@ extension BaseNodes {
 
 	private func addMenuItems<Action>(_ menuState: MenuState<Action>) {
 		menuState.items.enumerated().map { idx, item in
-			let frame = MenuSlotNode(rectOf: Self.itemSize)
+			let frame = MenuSlotNode(image: .clear)
+			frame.size = Self.itemSize
 			frame.slot = .item(idx)
-			frame.strokeColor = .clear
+			frame.zPosition = 1.0
 
-			let x = CGFloat(idx % menuState.cols) * Self.itemSize.width
-			let y = CGFloat(idx % 16 / menuState.cols) * Self.itemSize.height
+			let x = CGFloat(idx % 4) * Self.itemSize.width
+			let y = CGFloat(idx % 16 / 4) * Self.itemSize.height
 
 			frame.position = CGPoint(
 				x: Self.itemSize.width / 2.0 - Self.gridSize.width / 2.0 + x,
-				y: Self.gridSize.height / 2.0 - Self.itemSize.height / 2.0 - y
+				y: (Self.gridSize.height - Self.itemSize.height + Self.depth) / 2.0 - y
 			)
 
-			let sprite = SKSpriteNode(texture: SKTexture(image: item.icon))
-			sprite.texture?.filteringMode = .nearest
-			frame.addChild(sprite)
+			let icon = SKSpriteNode(image: item.icon)
+			icon.zPosition = 1.0
+			frame.icon = icon
+			frame.addChild(icon)
 
 			return frame
 		}
@@ -69,28 +100,23 @@ extension BaseNodes {
 		slot: (Int) -> MenuSlot,
 		sign: CGFloat
 	) {
-		let side = SKShapeNode(rectOf: Self.sideSize)
-		side.fillColor = .darkGray
-		side.strokeColor = .clear
-		side.position = CGPoint(
-			x: sign * (Self.gridSize.width + Self.sideSize.width) / 2.0,
-			y: 0.0
-		)
-		menu.addChild(side)
-
 		for index in buttons.indices {
-			let frame = MenuSlotNode(rectOf: Self.buttonSize, cornerRadius: 3.0)
+			let frame = MenuSlotNode(image: .BTN_0)
+			frame.size = Self.buttonSize
 			frame.slot = slot(index)
-			frame.fillColor = .lightSurface.withAlphaComponent(0.15)
-			frame.strokeColor = .lightSurface.withAlphaComponent(0.4)
-			frame.lineWidth = 1.0
-			frame.position = CGPoint(x: 0.0, y: Self.buttonY(index))
-			side.addChild(frame)
+			frame.zPosition = 1.0
+			frame.position = CGPoint(
+				x: sign * (Self.gridSize.width + Self.side) / 2.0,
+				y: Self.buttonY(index)
+			)
+			menu.addChild(frame)
 
-			let sprite = SKSpriteNode(texture: SKTexture(image: buttons[index].icon))
-			sprite.texture?.filteringMode = .nearest
-			sprite.size = Self.buttonIconSize
-			frame.addChild(sprite)
+			let icon = SKSpriteNode(image: buttons[index].icon)
+			icon.size = Self.buttonIconSize
+			icon.zPosition = 2.0
+			icon.position.y = Self.buttonTravel / 2.0
+			frame.icon = icon
+			frame.addChild(icon)
 		}
 	}
 
@@ -98,27 +124,26 @@ extension BaseNodes {
 		gridSize.height / 2.0
 			- itemSize.height / 2.0
 			- CGFloat(index) * itemSize.height
+			- buttonTravel
 	}
 
 	func setMenuButton(_ slot: MenuSlot, pressed: Bool) {
 		guard slot.modifier != nil, let frame = sideButton(slot) else { return }
-		frame.fillColor = .lightSurface.withAlphaComponent(pressed ? 0.5 : 0.15)
-		frame.strokeColor = .lightSurface.withAlphaComponent(pressed ? 0.9 : 0.4)
-		frame.position.y = Self.buttonY(slot.index) - (pressed ? Self.buttonTravel : 0.0)
+		frame.setImage(pressed ? .BTN_1 : .BTN_0)
+		frame.icon?.position.y = Self.buttonTravel / 2.0 * (pressed ? -1.0 : 1.0)
 	}
 
 	private func sideButton(_ slot: MenuSlot) -> MenuSlotNode? {
 		menu.children
-			.lazy
-			.flatMap(\.children)
 			.first { node in (node as? MenuSlotNode)?.slot == slot } as? MenuSlotNode
 	}
 
 	func updateMenu<Action>(_ menuState: MenuState<Action>) {
 		for case let frame as MenuSlotNode in menu.children {
-			let index = frame.slot.index
-			frame.fillColor = menuState.cursor == index ? .lightSurface.withAlphaComponent(0.9) : .clear
-			frame.isHidden = index / 16 != menuState.cursor / 16
+			if case .item(let index) = frame.slot {
+				frame.isHidden = index / 16 != menuState.cursor / 16
+				frame.setImage(menuState.cursor == index ? .highlighted : .clear)
+			}
 		}
 	}
 
@@ -135,8 +160,9 @@ extension BaseNodes {
 	}
 }
 
-final class MenuSlotNode: SKShapeNode {
+final class MenuSlotNode: SKSpriteNode {
 	var slot: MenuSlot = .item(0)
+	var icon: SKSpriteNode?
 }
 
 extension Input {

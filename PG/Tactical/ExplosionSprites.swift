@@ -8,18 +8,19 @@ import COR
 @MainActor
 enum ExplosionSprites {
 
-	private static var cache: [Int: [SKTexture]] = [:]
+	private static var cache: [3 of [SKTexture]] = .init(repeating: [])
 
 	static func frames(size: Int) -> [SKTexture] {
 		let size = min(max(size, 0), 2)
-		if let frames = cache[size] { return frames }
-		let frames = (0 ..< 8).map { frame in
+		let frames = cache[size]
+		if !frames.isEmpty { return frames }
+
+		cache[size] = (0 ..< 8).map { frame in
 			let texture = SKTexture(cgImage: .explosion(frame: frame, size: size))
 			texture.filteringMode = .nearest
 			return texture
 		}
-		cache[size] = frames
-		return frames
+		return cache[size]
 	}
 }
 

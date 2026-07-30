@@ -28,8 +28,7 @@ extension StrategicNodes {
 		for country in Country.playable {
 			for slot in 0 ..< 4 {
 				let image = country.flag
-				let flag = SKSpriteNode(texture: .init(image: image))
-				flag.texture?.filteringMode = .nearest
+				let flag = SKSpriteNode(image: image)
 				flag.size = image.size
 				flag.isHidden = true
 				root.addChild(flag)

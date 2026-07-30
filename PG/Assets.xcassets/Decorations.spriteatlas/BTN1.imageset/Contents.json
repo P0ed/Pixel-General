@@ -1,7 +1,8 @@
 {
   "images" : [
     {
-      "idiom" : "tv"
+      "filename" : "BTN1.png",
+      "idiom" : "universal"
     }
   ],
   "info" : {

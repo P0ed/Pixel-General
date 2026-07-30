@@ -272,11 +272,14 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
 			}
-		} else if (menuState == nil) != (baseNodes?.menu.isHidden == true) {
-			if let menuState { baseNodes?.showMenu(menuState) }
-			else { baseNodes?.hideMenu() }
 		} else if let menuState {
-			baseNodes?.updateMenu(menuState)
+			if baseNodes?.menu.isHidden == true || baseNodes?.menuIsHiding == true {
+				baseNodes?.showMenu(menuState)
+			} else {
+				baseNodes?.updateMenu(menuState)
+			}
+		} else if baseNodes?.menu.isHidden == false {
+			baseNodes?.hideMenu()
 		}
 		updateStatus()
 		advance()

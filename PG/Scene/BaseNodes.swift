@@ -39,9 +39,17 @@ extension Scene where State: ~Copyable {
 	}
 
 	func addMenu() -> SKNode {
-		let menu = SKShapeNode(rectOf: BaseNodes.menuSize)
-		menu.fillColor = .darkGray.withAlphaComponent(0.9)
-		menu.strokeColor = .clear
+		let image = UIImage.menu
+		let menu = SKSpriteNode(image: image)
+		menu.size = BaseNodes.menuSize
+
+		let insets = image.capInsets
+		menu.centerRect = CGRect(
+			x: insets.left / image.size.width,
+			y: insets.bottom / image.size.height,
+			width: (image.size.width - insets.left - insets.right) / image.size.width,
+			height: (image.size.height - insets.top - insets.bottom) / image.size.height
+		)
 		menu.zPosition = 68.0
 		menu.isHidden = true
 		camera?.addChild(menu)
@@ -87,8 +95,7 @@ extension BaseNodes {
 	func updateStatus(_ data: Status) {
 		status.attributedText = text(data.text)
 		action.attributedText = text(data.action)
-		icon.texture = data.flag.map(SKTexture.init(image:))
-		icon.texture?.filteringMode = .nearest
+		icon.setImage(data.flag)
 	}
 }
 

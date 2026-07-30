@@ -103,7 +103,7 @@ extension HQNodes {
 			)
 		}
 		let bottom: [MenuItem<HQAction>] = isHost ? [
-			.apply(icon: .empty, status: Address.me.string),
+			.apply(icon: .clear, status: Address.me.string),
 			.space, .space,
 			MenuItem(
 				icon: .start,
@@ -116,7 +116,7 @@ extension HQNodes {
 			),
 		] : [
 			.space, .space, .space,
-			.apply(icon: .empty, status: "waiting for host"),
+			.apply(icon: .clear, status: "waiting for host"),
 		]
 
 		return MenuState(
