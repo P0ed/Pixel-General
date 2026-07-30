@@ -28,6 +28,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C0CB157301B57F900521894 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 		5F919D2C2EA9564A0037A208 /* PG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB297482E79A39000FA039B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C0B000000000000000000002 /* CORTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CORTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -116,6 +117,7 @@
 				C0B000000000000000000003 /* Tests */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,
 				5FB297482E79A39000FA039B /* README.md */,
+				4C0CB157301B57F900521894 /* AGENTS.md */,
 				5FCB86362E77041800C2C69E /* Products */,
 			);
 			sourceTree = "<group>";

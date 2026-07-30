@@ -100,7 +100,6 @@ that class at all (returns 0). `def(src:)` is `groundDef` vs ground attackers or
 - `optics` — `spot = 3` (vision uses the precomputed n36 disc) instead of 2.
 - `radar` — when firing on an air target, a friendly radar aura (self or
   8-neighbour) adds +2 attack.
-- `atgm`, `aam` — reserved trait bits (see [Roadmap](./Roadmap.md)).
 
 **Bits** (`Bits`, per-instance): only `aux` today — marks an auxiliary unit
 (cheaper, drawn from a fixed pool, filtered out of campaign writeback).
