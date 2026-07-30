@@ -1,4 +1,4 @@
-import UIKit
+import SpriteKit
 import COR
 
 extension MenuItem {
@@ -23,12 +23,5 @@ extension MenuItem {
 				leftButtons: [.back, .space, .space, .space]
 			)
 		})
-	}
-}
-
-extension UIImage {
-
-	static func sound(_ level: UInt8) -> UIImage {
-		UIImage(named: "Sound\(level)") ?? .clear
 	}
 }

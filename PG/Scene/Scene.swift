@@ -14,7 +14,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private var panTranslation: CGPoint?
 	private(set) var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
 	var menuState: MenuState<Action>? { menuStack.last }
-	var pressedSlot: MenuSlot?
+	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
@@ -205,7 +205,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	private func redrawMenu() {
-		if let menuState { baseNodes?.redrawMenu(menuState) }
+		if let menuState { baseNodes?.menu.redrawMenu(menuState) }
 	}
 
 	private func setMenu(_ stack: [MenuState<Action>]) {
@@ -254,6 +254,12 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		mode.update(nodes, state)
 	}
 
+	private func didSetPressedSlot(_ oldValue: MenuSlot?) {
+		guard pressedSlot != oldValue else { return }
+		oldValue.map { slot in baseNodes?.menu.setMenuButton(slot, pressed: false) }
+		pressedSlot.map { slot in baseNodes?.menu.setMenuButton(slot, pressed: true) }
+	}
+
 	private func didSetMenu() {
 		if menuState == nil {
 			pressedSlot = nil
@@ -270,13 +276,16 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 				item.update(&stk, slot)
 			})
 			if let next = self.menuState {
-				baseNodes?.redrawMenu(next)
+				baseNodes?.menu.redrawMenu(next)
 			}
-		} else if (menuState == nil) != (baseNodes?.menu.isHidden == true) {
-			if let menuState { baseNodes?.showMenu(menuState) }
-			else { baseNodes?.hideMenu() }
 		} else if let menuState {
-			baseNodes?.updateMenu(menuState)
+			if baseNodes?.menu.root.isHidden == true || baseNodes?.menu.isHiding == true {
+				baseNodes?.menu.showMenu(menuState)
+			} else {
+				baseNodes?.menu.updateMenu(menuState)
+			}
+		} else if baseNodes?.menu.root.isHidden == false {
+			baseNodes?.menu.hideMenu()
 		}
 		updateStatus()
 		advance()
@@ -306,7 +315,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		switch gesture.state {
 		case .began, .changed:
 			let point = convertPoint(fromView: gesture.location(in: view))
-			let slot = baseNodes.menuSlot(at: point, in: self)
+			let slot = baseNodes.menu.menuSlot(at: point, in: self)
 			hoveredSlot = slot?.modifier == nil ? nil : slot
 		default:
 			hoveredSlot = nil

@@ -93,10 +93,10 @@ private extension EditorNodes {
 				.close(icon: .HQ, status: "HQ", action: .hq),
 			],
 			rightButtons: [
-				.apply(icon: .empty, status: "Clear map", action: .clear),
+				.apply(icon: .clear, status: "Clear map", action: .clear),
 				.apply(icon: .rnd, status: "Randomize", action: .randomize),
-				.close(icon: .save, status: "Save map", action: .save),
-				.close(icon: .load, status: "Load map", action: .load),
+				.close(icon: .arrowDown, status: "Save map", action: .save),
+				.close(icon: .arrowUp, status: "Load map", action: .load),
 			]
 		))
 	}
@@ -105,32 +105,7 @@ private extension EditorNodes {
 extension Terrain {
 
 	@MainActor
-	var image: UIImage {
-		switch self {
-		case .field: .tile(.field)
-		case .forest: .tile(.forest)
-		case .hill: .tile(.hill)
-		case .forestHill: .tile(.forestHill)
-		case .mountain: .tile(.mountain)
-		case .river: .tile(.river)
-		case .sea: .tile(.sea)
-		case .bridgeWE: .tile(.bridgeWE)
-		case .bridgeSN: .tile(.bridgeSN)
-		case .city: .tile(.city)
-		case .airfield: .tile(.airfield)
-		case .roadNW: .tile(.roadNW)
-		case .roadNE: .tile(.roadNE)
-		case .roadWE: .tile(.roadWE)
-		case .roadSN: .tile(.roadSN)
-		case .roadSW: .tile(.roadSW)
-		case .roadSE: .tile(.roadSE)
-		case .villageE: .tile(.villageE)
-		case .villageN: .tile(.villageN)
-		case .villageW: .tile(.villageW)
-		case .villageS: .tile(.villageS)
-		case .roadX: .tile(.roadX)
-		case .fort: .tile(.fort)
-		case .none: .clear
-		}
+	var image: SKTexture {
+		self == .none ? .clear : .tile(self)
 	}
 }

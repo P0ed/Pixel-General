@@ -3,7 +3,7 @@ import UIKit
 
 @MainActor
 struct BaseNodes {
-	var menu: SKNode
+	var menu: MenuNodes
 	var alert: SKNode
 	var status: SKLabelNode
 	var action: SKLabelNode
@@ -13,7 +13,7 @@ struct BaseNodes {
 struct Status {
 	var text: String = ""
 	var action: String = ""
-	var flag: UIImage?
+	var flag: SKTexture?
 }
 
 extension Scene where State: ~Copyable {
@@ -38,13 +38,9 @@ extension Scene where State: ~Copyable {
 		return alert
 	}
 
-	func addMenu() -> SKNode {
-		let menu = SKShapeNode(rectOf: BaseNodes.menuSize)
-		menu.fillColor = .darkGray.withAlphaComponent(0.9)
-		menu.strokeColor = .clear
-		menu.zPosition = 68.0
-		menu.isHidden = true
-		camera?.addChild(menu)
+	func addMenu() -> MenuNodes {
+		let menu = MenuNodes.make()
+		camera?.addChild(menu.root)
 		return menu
 	}
 
@@ -87,8 +83,7 @@ extension BaseNodes {
 	func updateStatus(_ data: Status) {
 		status.attributedText = text(data.text)
 		action.attributedText = text(data.action)
-		icon.texture = data.flag.map(SKTexture.init(image:))
-		icon.texture?.filteringMode = .nearest
+		icon.texture = data.flag
 	}
 }
 

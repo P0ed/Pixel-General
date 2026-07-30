@@ -1,0 +1,26 @@
+{
+  "images" : [
+    {
+      "filename" : "Menu.png",
+      "idiom" : "universal",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 12,
+          "left" : 64,
+          "right" : 64,
+          "top" : 4
+        },
+        "center" : {
+          "height" : 2,
+          "mode" : "tile",
+          "width" : 2
+        },
+        "mode" : "9-part"
+      }
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

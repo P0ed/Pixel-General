@@ -52,7 +52,7 @@ extension StrategicNodes {
 
 		scene.showMenu(MenuState(
 			items: [
-				.close(icon: .start, status: "Next turn", action: .endTurn),
+				.close(icon: .arrowRight, status: "Next turn", action: .endTurn),
 				.space,
 				.load { [weak scene] in scene?.saveState() },
 				.confirm(icon: .HQ, status: "Abandon campaign") { [weak scene] in

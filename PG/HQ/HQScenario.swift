@@ -85,7 +85,7 @@ extension HQNodes {
 				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
 				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
 				.toggle(icon: .toggle4(sea), status: "Sea: \(sea)") { sea.toggle4() },
-				.close(icon: .start, status: "Start", update: { [weak scene] in
+				.close(icon: .arrowRight, status: "Start", update: { [weak scene] in
 					guard let scene else { return }
 
 					let units: [Unit] = scene.state.sim.units.compactMap { u in u.alive ? u : nil }
@@ -123,7 +123,8 @@ extension PlayerType {
 		}
 	}
 
-	var icon: UIImage {
+	@MainActor
+	var icon: SKTexture {
 		switch self {
 		case .human: .human
 		case .ai: .AI

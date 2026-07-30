@@ -33,11 +33,9 @@ extension MenuSlot {
 
 @MainActor
 struct MenuItem<Action> {
-	var icon: UIImage
+	var icon: SKTexture
 	var status: Status
 	var action: Action?
-	/// Runs against the whole stack, told which slot fired so a control can
-	/// write back to itself without knowing where it sits.
 	var update: (inout [MenuState<Action>], MenuSlot) -> Void
 }
 
@@ -48,14 +46,14 @@ extension MenuItem {
 	}
 
 	static var back: Self {
-		.pop(icon: .minus, status: "Back")
+		.pop(icon: .arrowLeft, status: "Back")
 	}
 
-	static func close(icon: UIImage, status: String, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
+	static func close(icon: SKTexture, status: String, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
 		.close(icon: icon, status: .init(text: status), action: action, update: update)
 	}
 
-	static func close(icon: UIImage, status: Status, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
+	static func close(icon: SKTexture, status: Status, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
 		MenuItem(
 			icon: icon,
 			status: status,
@@ -64,12 +62,12 @@ extension MenuItem {
 		)
 	}
 
-	static func apply(icon: UIImage, status: String, action: Action? = nil) -> Self {
+	static func apply(icon: SKTexture, status: String, action: Action? = nil) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: ø)
 	}
 
 	static func update(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
@@ -79,29 +77,24 @@ extension MenuItem {
 		})
 	}
 
-	/// A control that redraws itself in place: `change` mutates the value the
-	/// item stands for, then icon and status are recomputed from it. The item
-	/// addresses itself through the slot it fired from, so reordering a menu
-	/// can never leave it pointing at a neighbour.
 	static func toggle(
-		icon: @autoclosure @MainActor @escaping () -> UIImage,
+		icon: @autoclosure @MainActor @escaping () -> SKTexture,
 		status: @autoclosure @MainActor @escaping () -> String,
-		action: Action? = nil,
 		change: @MainActor @escaping () -> Void
 	) -> Self {
-		.init(icon: icon(), status: .init(text: status()), action: action, update: { stk, slot in
+		.init(icon: icon(), status: .init(text: status()), update: { stk, slot in
 			change()
 			stk[stk.count - 1][slot].icon = icon()
 			stk[stk.count - 1][slot].status.text = status()
 		})
 	}
 
-	static func push(icon: UIImage, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
+	static func push(icon: SKTexture, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.append(menu) })
 	}
 
 	static func push(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping () -> MenuState<Action>?
@@ -111,12 +104,12 @@ extension MenuItem {
 		})
 	}
 
-	static func pop(icon: UIImage, status: String, action: Action? = nil) -> Self {
+	static func pop(icon: SKTexture, status: String, action: Action? = nil) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.removeLast() })
 	}
 
 	static func pop(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
@@ -129,8 +122,6 @@ extension MenuItem {
 }
 
 extension MenuState {
-
-	var cols: Int { 4 }
 
 	subscript(slot: MenuSlot) -> MenuItem<Action> {
 		get {
@@ -165,8 +156,8 @@ extension MenuState {
 
 	mutating func moveCursor(_ direction: Direction) {
 		cursor = switch direction {
-		case .down: (cursor + min(cols, items.count)) % items.count
-		case .up: (cursor - min(cols, items.count) + items.count) % items.count
+		case .down: (cursor + min(4, items.count)) % items.count
+		case .up: (cursor - min(4, items.count) + items.count) % items.count
 		case .left: (cursor / 4 * 4 + (4 + cursor - 1) % 4) % items.count
 		case .right: (cursor / 4 * 4 + (cursor + 1) % 4) % items.count
 		}
@@ -177,7 +168,7 @@ import Foundation
 
 extension MenuItem {
 
-	static func confirm(icon: UIImage, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
+	static func confirm(icon: SKTexture, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
 		.push(icon: icon, status: status, menu: MenuState(
 			items: [
 				.pop(icon: .minus, status: "Cancel"),
@@ -190,9 +181,9 @@ extension MenuItem {
 	}
 
 	static func load(save: @escaping () -> Void) -> MenuItem {
-		.push(icon: .load, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
+		.push(icon: .arrowUp, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
 			items: (0...3).map { slot in
-				.confirm(icon: .load, status: "Slot \(slot + 1)") {
+				.confirm(icon: .arrowUp, status: "Slot \(slot + 1)") {
 					save()
 					core = .load(slot: slot)
 					view.present(.auto)

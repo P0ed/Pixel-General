@@ -68,12 +68,12 @@ extension Scene where State: ~Copyable {
 			}
 		} else {
 			guard self.nodes(at: scenePoint)
-				.contains(where: { n in n == baseNodes.menu })
+				.contains(where: { n in n == baseNodes.menu.root })
 			else { return apply(.action(.b)) }
 
 			// Side buttons latch on touch down and fire on release the way a
 			// physical button does; grid cells stay instant.
-			guard let slot = baseNodes.menuSlot(at: scenePoint, in: self) else { return }
+			guard let slot = baseNodes.menu.menuSlot(at: scenePoint, in: self) else { return }
 			if slot.modifier != nil { press(slot) } else { apply(Input(slot: slot)) }
 		}
 	}
@@ -82,7 +82,7 @@ extension Scene where State: ~Copyable {
 	/// a physical button ignores a finger that slid away before release.
 	func releaseTouch(at scenePoint: CGPoint) {
 		guard let slot = pressedSlot else { return }
-		release(fire: baseNodes?.menuSlot(at: scenePoint, in: self) == slot)
+		release(fire: baseNodes?.menu.menuSlot(at: scenePoint, in: self) == slot)
 	}
 
 	func cancelPress() {
@@ -95,7 +95,6 @@ extension Scene where State: ~Copyable {
 		// Only a chord actually held by a modifier key is worth watching: the
 		// `1`…`4` bindings carry `R` without one, as does a pointer press.
 		chordModifier = slot.modifier.flatMap { $0.isKeyDown ? $0 : nil }
-		baseNodes?.setMenuButton(slot, pressed: true)
 		sounds.play(.click)
 	}
 
@@ -105,7 +104,6 @@ extension Scene where State: ~Copyable {
 		guard let slot = pressedSlot else { return }
 		pressedSlot = nil
 		chordModifier = nil
-		baseNodes?.setMenuButton(slot, pressed: false)
 		sounds.play(.click)
 		if fire, menuState != nil { apply(Input(slot: slot)) }
 	}
