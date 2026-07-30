@@ -106,7 +106,7 @@ extension HQNodes {
 			.apply(icon: .clear, status: Address.me.string),
 			.space, .space,
 			MenuItem(
-				icon: .start,
+				icon: .arrowRight,
 				status: .init(text: "Start", action: .init(Address.me.string)),
 				update: { [weak scene] stk, _ in
 					guard let scene else { return }

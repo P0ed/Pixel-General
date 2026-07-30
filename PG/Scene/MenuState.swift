@@ -46,7 +46,7 @@ extension MenuItem {
 	}
 
 	static var back: Self {
-		.pop(icon: .minus, status: "Back")
+		.pop(icon: .arrowLeft, status: "Back")
 	}
 
 	static func close(icon: UIImage, status: String, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
@@ -77,17 +77,12 @@ extension MenuItem {
 		})
 	}
 
-	/// A control that redraws itself in place: `change` mutates the value the
-	/// item stands for, then icon and status are recomputed from it. The item
-	/// addresses itself through the slot it fired from, so reordering a menu
-	/// can never leave it pointing at a neighbour.
 	static func toggle(
 		icon: @autoclosure @MainActor @escaping () -> UIImage,
 		status: @autoclosure @MainActor @escaping () -> String,
-		action: Action? = nil,
 		change: @MainActor @escaping () -> Void
 	) -> Self {
-		.init(icon: icon(), status: .init(text: status()), action: action, update: { stk, slot in
+		.init(icon: icon(), status: .init(text: status()), update: { stk, slot in
 			change()
 			stk[stk.count - 1][slot].icon = icon()
 			stk[stk.count - 1][slot].status.text = status()
@@ -186,9 +181,9 @@ extension MenuItem {
 	}
 
 	static func load(save: @escaping () -> Void) -> MenuItem {
-		.push(icon: .load, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
+		.push(icon: .arrowUp, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
 			items: (0...3).map { slot in
-				.confirm(icon: .load, status: "Slot \(slot + 1)") {
+				.confirm(icon: .arrowUp, status: "Slot \(slot + 1)") {
 					save()
 					core = .load(slot: slot)
 					view.present(.auto)

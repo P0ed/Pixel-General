@@ -81,7 +81,7 @@ extension HQNodes {
 
 		scene?.showMenu(MenuState(
 			items: [
-				.push(icon: .start, status: "Scenario", menu: {
+				.push(icon: .arrowRight, status: "Scenario", menu: {
 					guard let scene else { return nil }
 					return scenarioMenu(scene.state)
 				}),
@@ -92,7 +92,7 @@ extension HQNodes {
 				.push(icon: .remote, status: "Join LAN", menu: {
 					joinMenu()
 				}),
-				.push(icon: .start, status: "Campaign", menu: {
+				.push(icon: .arrowRight, status: "Campaign", menu: {
 					guard let scene else { return nil }
 					return campaignMenu(scene.state)
 				}),

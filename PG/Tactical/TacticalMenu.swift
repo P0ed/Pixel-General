@@ -10,7 +10,7 @@ extension TacticalNodes {
 
 		scene.showMenu(MenuState(
 			items: [
-				.close(icon: .start, status: "End turn", action: .end),
+				.close(icon: .arrowRight, status: "End turn", action: .end),
 				.space,
 				.load { [weak scene] in scene?.saveState() },
 				.close(icon: .HQ, status: "Abandon") { [weak scene] in
