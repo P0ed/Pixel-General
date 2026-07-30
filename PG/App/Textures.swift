@@ -146,3 +146,60 @@ extension SKTexture {
 		return texture
 	}
 }
+
+@MainActor
+extension SKTexture {
+
+	static func toggle(_ value: Bool) -> SKTexture {
+		value ? .plus : .minus
+	}
+
+	static func toggle4(_ value: UInt8) -> SKTexture {
+		switch value {
+		case 0: .value0
+		case 1: .value1
+		case 2: .value2
+		default: .value3
+		}
+	}
+
+	static func spawn(_ value: UInt8) -> SKTexture {
+		switch value {
+		case 0: .I
+		case 1: .II
+		case 2: .III
+		case 3: .IV
+		case 4: .V
+		default: .rnd
+		}
+	}
+
+	static func sound(_ level: UInt8) -> SKTexture {
+		switch level {
+		case 0: .sound0
+		case 1: .sound1
+		default: .sound2
+		}
+	}
+
+	static func hp(_ hp: UInt8) -> SKTexture {
+		switch hp {
+		case 0: .HP_0
+		case 1: .HP_1
+		case 2: .HP_2
+		case 3: .HP_3
+		case 4: .HP_4
+		case 5: .HP_5
+		case 6: .HP_6
+		case 7: .HP_7
+		case 8: .HP_8
+		case 9: .HP_9
+		case 10: .HP_10
+		case 11: .HP_11
+		case 12: .HP_12
+		case 13: .HP_13
+		case 14: .HP_14
+		default: .HP_15
+		}
+	}
+}

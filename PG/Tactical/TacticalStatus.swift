@@ -2,6 +2,7 @@ import COR
 
 extension TacticalState {
 
+	@MainActor
 	var status: Status {
 		if sim.player.type == .remote {
 			Status(text: "waiting for \(sim.player.country)", action: "day \(sim.day)")

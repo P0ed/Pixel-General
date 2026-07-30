@@ -262,18 +262,27 @@ extension SKTileMapNode {
 	}
 }
 
-extension UIImage {
+@MainActor
+extension SKTexture {
 
-	@MainActor
-	static func tile(_ terrain: Terrain) -> UIImage {
+	private static var tileCache: [Terrain: SKTexture] = [:]
+
+	/// `SKTileGroup.base` flattened into one texture, for the palette's icons.
+	static func tile(_ terrain: Terrain) -> SKTexture {
+		if let texture = tileCache[terrain] { return texture }
 		let elevation = terrain.elevationLevel
-		let image = ImageBuffer.tile.draw { ctx in
+		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
 			ctx.drawTile(UIImage.frame(elevation).cg)
 			ctx.drawTile(terrain.tileSurface.image(elevation: elevation))
 			ctx.drawTile(terrain.decoration?.cg)
-		}
-		return UIImage(cgImage: image)
+		})
+		texture.filteringMode = .nearest
+		tileCache[terrain] = texture
+		return texture
 	}
+}
+
+extension UIImage {
 
 	static func frame(_ elevation: Int) -> UIImage {
 		switch elevation {

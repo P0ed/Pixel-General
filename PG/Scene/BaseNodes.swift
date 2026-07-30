@@ -13,7 +13,7 @@ struct BaseNodes {
 struct Status {
 	var text: String = ""
 	var action: String = ""
-	var flag: UIImage?
+	var flag: SKTexture?
 }
 
 extension Scene where State: ~Copyable {
@@ -83,7 +83,7 @@ extension BaseNodes {
 	func updateStatus(_ data: Status) {
 		status.attributedText = text(data.text)
 		action.attributedText = text(data.action)
-		icon.setImage(data.flag)
+		icon.texture = data.flag
 	}
 }
 

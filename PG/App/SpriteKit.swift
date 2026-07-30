@@ -19,19 +19,6 @@ extension SKLabelNode {
 	}
 }
 
-extension SKSpriteNode {
-
-	convenience init(image: UIImage?) {
-		self.init(texture: image.map { img in SKTexture(image: img) })
-		texture?.filteringMode = .nearest
-	}
-
-	func setImage(_ image: UIImage?) {
-		texture = image.map { img in SKTexture(image: img) }
-		texture?.filteringMode = .nearest
-	}
-}
-
 extension CGPath {
 
 	static func make(_ transform: (CGMutablePath) -> Void) -> CGPath {

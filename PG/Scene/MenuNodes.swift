@@ -164,13 +164,13 @@ extension MenuNodes {
 			frame.slot = .item(index)
 			frame.isHidden = index >= menuState.items.count
 			frame.texture = menuState.cursor == index ? .highlighted : .clear
-			let image = index < menuState.items.count ? menuState.items[index].icon : nil
-			frame.icon?.setImage(image)
-			frame.icon?.size = image?.size ?? .zero
+			let texture = index < menuState.items.count ? menuState.items[index].icon : nil
+			frame.icon?.texture = texture
+			frame.icon?.size = texture?.size() ?? .zero
 		}
 		for index in 0 ..< 4 {
-			left[index].icon?.setImage(menuState.leftButtons[index].icon)
-			right[index].icon?.setImage(menuState.rightButtons[index].icon)
+			left[index].icon?.texture = menuState.leftButtons[index].icon
+			right[index].icon?.texture = menuState.rightButtons[index].icon
 		}
 	}
 

@@ -33,7 +33,7 @@ extension MenuSlot {
 
 @MainActor
 struct MenuItem<Action> {
-	var icon: UIImage
+	var icon: SKTexture
 	var status: Status
 	var action: Action?
 	var update: (inout [MenuState<Action>], MenuSlot) -> Void
@@ -49,11 +49,11 @@ extension MenuItem {
 		.pop(icon: .arrowLeft, status: "Back")
 	}
 
-	static func close(icon: UIImage, status: String, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
+	static func close(icon: SKTexture, status: String, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
 		.close(icon: icon, status: .init(text: status), action: action, update: update)
 	}
 
-	static func close(icon: UIImage, status: Status, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
+	static func close(icon: SKTexture, status: Status, action: Action? = nil, update: @MainActor @escaping () -> Void = ø) -> Self {
 		MenuItem(
 			icon: icon,
 			status: status,
@@ -62,12 +62,12 @@ extension MenuItem {
 		)
 	}
 
-	static func apply(icon: UIImage, status: String, action: Action? = nil) -> Self {
+	static func apply(icon: SKTexture, status: String, action: Action? = nil) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: ø)
 	}
 
 	static func update(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
@@ -78,7 +78,7 @@ extension MenuItem {
 	}
 
 	static func toggle(
-		icon: @autoclosure @MainActor @escaping () -> UIImage,
+		icon: @autoclosure @MainActor @escaping () -> SKTexture,
 		status: @autoclosure @MainActor @escaping () -> String,
 		change: @MainActor @escaping () -> Void
 	) -> Self {
@@ -89,12 +89,12 @@ extension MenuItem {
 		})
 	}
 
-	static func push(icon: UIImage, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
+	static func push(icon: SKTexture, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.append(menu) })
 	}
 
 	static func push(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping () -> MenuState<Action>?
@@ -104,12 +104,12 @@ extension MenuItem {
 		})
 	}
 
-	static func pop(icon: UIImage, status: String, action: Action? = nil) -> Self {
+	static func pop(icon: SKTexture, status: String, action: Action? = nil) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.removeLast() })
 	}
 
 	static func pop(
-		icon: UIImage,
+		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
 		menu: @escaping (inout MenuState<Action>) -> Void
@@ -168,7 +168,7 @@ import Foundation
 
 extension MenuItem {
 
-	static func confirm(icon: UIImage, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
+	static func confirm(icon: SKTexture, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
 		.push(icon: icon, status: status, menu: MenuState(
 			items: [
 				.pop(icon: .minus, status: "Cancel"),

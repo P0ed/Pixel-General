@@ -123,7 +123,8 @@ extension PlayerType {
 		}
 	}
 
-	var icon: UIImage {
+	@MainActor
+	var icon: SKTexture {
 		switch self {
 		case .human: .human
 		case .ai: .AI

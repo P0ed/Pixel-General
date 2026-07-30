@@ -8,7 +8,7 @@ extension Unit {
 	var hqSprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(image: image)
+		let sprite = SKSpriteNode(texture: image)
 		sprite.zPosition = 0.2
 		node.addChild(sprite)
 
@@ -19,7 +19,7 @@ extension Unit {
 	var sprite: SKNode {
 		let node = SKNode()
 
-		let sprite = SKSpriteNode(image: image)
+		let sprite = SKSpriteNode(texture: image)
 		sprite.blendMode = .alpha
 		sprite.colorBlendFactor = 0.1
 		sprite.color = country.color
@@ -27,8 +27,7 @@ extension Unit {
 		sprite.xScale = country.team == .axis ? 1.0 : -1.0
 		node.addChild(sprite)
 
-		let plate = SKSpriteNode(imageNamed: "HP\(hp)")
-		plate.texture?.filteringMode = .nearest
+		let plate = SKSpriteNode(texture: .hp(hp))
 		plate.position = CGPoint(x: 0, y: -12.0)
 		plate.zPosition = 2.3
 		plate.name = "hp"
@@ -37,7 +36,8 @@ extension Unit {
 		return node
 	}
 
-	var image: UIImage {
+	@MainActor
+	var image: SKTexture {
 		switch model {
 		case .none: .clear
 		case .truck: .truck
@@ -86,7 +86,8 @@ extension Unit {
 
 extension Country {
 
-	var flag: UIImage {
+	@MainActor
+	var flag: SKTexture {
 		switch self {
 		case .usa: .usa
 		case .swe: .swe
@@ -124,14 +125,11 @@ extension SKNode {
 	}
 
 	func update(hp: UInt8) {
-		unitHP.map {
-			$0.texture = .init(imageNamed: "HP\(hp)")
-			$0.texture?.filteringMode = .nearest
-		}
+		unitHP.map { $0.texture = .hp(hp) }
 	}
 
 	func showSight(for duration: TimeInterval) {
-		let sight = SKSpriteNode(image: .sight)
+		let sight = SKSpriteNode(texture: .sight)
 		addChild(sight)
 
 		sight.run(.sequence([

@@ -110,7 +110,7 @@ extension MapNodes {
 		let node = SKNode()
 		node.position = .init(x: -1.0, y: -1.0)
 
-		let cursor = SKSpriteNode(image: .cursor)
+		let cursor = SKSpriteNode(texture: .cursor)
 		if let color {
 			cursor.color = color
 			cursor.colorBlendFactor = 0.68
