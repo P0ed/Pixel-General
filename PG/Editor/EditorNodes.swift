@@ -82,17 +82,21 @@ private extension EditorNodes {
 			items: Terrain.palette.map { terrain in
 				.close(
 					icon: terrain.image,
-					status: .init(text: "Brush: \(terrain)"),
+					status: "Brush: \(terrain)",
 					action: .setBrush(terrain)
 				)
-			} + [
+			},
+			leftButtons: [
+				.back,
 				.space,
-				.close(icon: .rnd, status: "Randomize", action: .randomize),
-
-				.close(icon: .empty, status: "Clear map", action: .clear),
+				.space,
+				.close(icon: .HQ, status: "HQ", action: .hq),
+			],
+			rightButtons: [
+				.apply(icon: .empty, status: "Clear map", action: .clear),
+				.apply(icon: .rnd, status: "Randomize", action: .randomize),
 				.close(icon: .save, status: "Save map", action: .save),
 				.close(icon: .load, status: "Load map", action: .load),
-				.close(icon: .HQ, status: "HQ", action: .hq),
 			]
 		))
 	}

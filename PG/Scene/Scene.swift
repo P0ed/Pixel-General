@@ -1,5 +1,4 @@
 import SpriteKit
-import AVFAudio
 import UIKit
 import COR
 
@@ -13,15 +12,24 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private(set) var cameraTracking = false
 	private var panOrigin: CGPoint?
 	private var panTranslation: CGPoint?
-	private(set) var menuState: MenuState<Action>? { didSet { didSetMenu() } }
+	private(set) var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
+	var menuState: MenuState<Action>? { menuStack.last }
+	var pressedSlot: MenuSlot?
+	var chordModifier: InputModifiers?
+	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
 	private var enterBackground: Any?
 	private var panRecognizer: UIPanGestureRecognizer?
+	private var hoverRecognizer: UIHoverGestureRecognizer?
 
-	init(mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>, state: consuming State, size: CGSize = .scene) {
+	init(
+		mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>,
+		state: consuming State,
+		size: CGSize = .scene
+	) {
 		self.state = state
 		self.mode = mode
 		super.init(size: size)
@@ -32,7 +40,6 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	override func sceneDidLoad() {
 		backgroundColor = .black
 		scaleMode = .aspectFit
-		audioEngine.mainMixerNode.outputVolume = settings.outputVolume
 
 		enterBackground = NotificationCenter.default.addMainActorObserver(
 			forName: UIApplication.didEnterBackgroundNotification,
@@ -48,7 +55,8 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		baseNodes = makeBaseNodes()
 		baseNodes?.layout(size: size)
 
-		hid.send = { [weak self] input in self?.apply(input) }
+		hid.send = { [weak self] input in self?.pressInput(input) }
+		hid.up = { [weak self] input in self?.releaseInput(input) }
 
 		didSetState()
 		advance()
@@ -60,6 +68,9 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 
 	override func didMove(to view: SKView) {
 		controller.keyHandler = { [weak self] key in self?.handle(key: key) ?? false }
+		controller.keyUpHandler = { [weak self] key, cancelled in
+			self?.handle(keyUp: key, cancelled: cancelled) ?? false
+		}
 
 		let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
 		pan.minimumNumberOfTouches = 2
@@ -67,11 +78,17 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		pan.allowedScrollTypesMask = .all
 		view.addGestureRecognizer(pan)
 		panRecognizer = pan
+
+		let hover = UIHoverGestureRecognizer(target: self, action: #selector(handleHover(_:)))
+		view.addGestureRecognizer(hover)
+		hoverRecognizer = hover
 	}
 
 	override func willMove(from view: SKView) {
 		if let panRecognizer { view.removeGestureRecognizer(panRecognizer) }
+		if let hoverRecognizer { view.removeGestureRecognizer(hoverRecognizer) }
 		panRecognizer = nil
+		hoverRecognizer = nil
 	}
 
 	override func didChangeSize(_ oldSize: CGSize) {
@@ -84,6 +101,21 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		processTouch(at: touch.location(in: self))
 	}
 
+	/// Letting go of `L`/`R` before `A`…`D` takes the press back, and the only
+	/// way to see that on Mac Catalyst is to watch the key.
+	override func update(_ currentTime: TimeInterval) {
+		if let chordModifier, !chordModifier.isKeyDown { cancelPress() }
+	}
+
+	override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let touch = touches.first else { return }
+		releaseTouch(at: touch.location(in: self))
+	}
+
+	override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+		cancelPress()
+	}
+
 	func apply(_ input: Input) {
 		if alertState != nil {
 			switch input {
@@ -94,8 +126,8 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			case .menu: alertState = nil
 			default: break
 			}
-		} else if menuState != nil {
-			menuState?.apply(input)
+		} else if !menuStack.isEmpty {
+			menuStack[menuStack.count - 1].apply(input)
 		} else if processing, case .pan = input {
 			_ = mode.input(&state, input)
 		} else if processing {
@@ -152,9 +184,33 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	func showMenu(_ menu: MenuState<Action>?) {
-		menuState = modifying(menu) { m in
-			m = m.flatMap { m in m.items.isEmpty ? nil : m }
-			m?.padItems()
+		setMenu(menu.map { m in [m] } ?? [])
+	}
+
+	func pushMenu(_ menu: MenuState<Action>) {
+		setMenu(menuStack + [menu])
+		redrawMenu()
+	}
+
+	func popMenu() {
+		guard !menuStack.isEmpty else { return }
+		setMenu(modifying(menuStack) { stk in stk.removeLast() })
+		redrawMenu()
+	}
+
+	func replaceMenu(_ menu: MenuState<Action>) {
+		guard !menuStack.isEmpty else { return }
+		setMenu(modifying(menuStack) { stk in stk[stk.count - 1] = menu })
+		redrawMenu()
+	}
+
+	private func redrawMenu() {
+		if let menuState { baseNodes?.redrawMenu(menuState) }
+	}
+
+	private func setMenu(_ stack: [MenuState<Action>]) {
+		menuStack = stack.compactMap { m in
+			m.items.isEmpty ? nil : modifying(m) { m in m.padItems() }
 		}
 	}
 
@@ -199,20 +255,20 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	private func didSetMenu() {
-		if let menuState, let action = menuState.action {
-			if case let .action(idx) = action {
-				if let action = menuState.items[idx].action {
-					react(.action(action))
-				}
-				showMenu(menuState.items[idx].update(
-					modifying(menuState) { m in
-						m.action = nil
-						m.padItems()
-					}
-				))
-			} else {
-				showMenu(menuState.close(modifying(menuState) { m in m.action = nil }))
+		if menuState == nil {
+			pressedSlot = nil
+			chordModifier = nil
+			hoveredSlot = nil
+		}
+		if let menuState, let slot = menuState.action {
+			let item = menuState[slot]
+			if let action = item.action {
+				react(.action(action))
 			}
+			setMenu(modifying(menuStack) { stk in
+				stk[stk.count - 1].action = nil
+				item.update(&stk, slot)
+			})
 			if let next = self.menuState {
 				baseNodes?.redrawMenu(next)
 			}
@@ -238,8 +294,23 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 
 	private func updateStatus() {
 		baseNodes?.updateStatus(
-			menuState.map { $0.status } ?? mode.status(state)
+			menuState.map { $0.status(hovering: hoveredSlot) } ?? mode.status(state)
 		)
+	}
+
+	@objc func handleHover(_ gesture: UIHoverGestureRecognizer) {
+		guard let view = gesture.view, menuState != nil, let baseNodes else {
+			hoveredSlot = nil
+			return
+		}
+		switch gesture.state {
+		case .began, .changed:
+			let point = convertPoint(fromView: gesture.location(in: view))
+			let slot = baseNodes.menuSlot(at: point, in: self)
+			hoveredSlot = slot?.modifier == nil ? nil : slot
+		default:
+			hoveredSlot = nil
+		}
 	}
 
 	@objc func handlePan(_ gesture: UIPanGestureRecognizer) {
@@ -318,6 +389,12 @@ extension MenuState {
 
 	var status: Status {
 		cursor < items.count ? items[cursor].status : Status()
+	}
+
+	func status(hovering slot: MenuSlot?) -> Status {
+		guard let slot else { return status }
+		let hovered = self[slot].status
+		return hovered.text.isEmpty && hovered.action.isEmpty ? status : hovered
 	}
 
 	mutating func padItems() {

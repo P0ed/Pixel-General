@@ -10,6 +10,10 @@ extension UIImage {
 		cg?.tinted(color.cgColor).map { UIImage(cgImage: $0) } ?? self
 	}
 
+	static func toggle(_ value: Bool) -> UIImage {
+		value ? .plus : .minus
+	}
+
 	static func toggle4(_ value: UInt8) -> UIImage {
 		switch value {
 		case 0: .value0

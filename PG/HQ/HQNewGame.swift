@@ -9,13 +9,14 @@ extension HQNodes {
 				.close(
 					icon: c.flag,
 					status: "\(c)",
-					update: { _ in
+					update: {
 						core = .new(country: c)
 						core.save()
 						view.present(.auto)
 					}
 				)
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		)
 	}
 }

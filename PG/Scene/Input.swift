@@ -4,6 +4,21 @@ enum Direction { case right, up, left, down }
 enum Target { case prev, next }
 enum InputAction { case a, b, c, d }
 
+extension InputAction {
+
+	static let all: [InputAction] = [.a, .b, .c, .d]
+
+	/// Position on a menu side panel, `A` topmost.
+	var index: Int {
+		switch self {
+		case .a: 0
+		case .b: 1
+		case .c: 2
+		case .d: 3
+		}
+	}
+}
+
 struct InputModifiers: OptionSet, Equatable, Sendable {
 	let rawValue: UInt8
 

@@ -9,7 +9,7 @@ extension TacticalNodes {
 		case let .move(uid, path): await processMove(uid, path, state)
 		case let .fire(src, dst, dmg, hp): await processFire(src: src, dst: dst, dmg: dmg, hp: hp, state: state)
 		case let .update(id): update(id, state)
-		case .ruggedDefence: sounds.ruggedDefence.play()
+		case .ruggedDefence: sounds.play(.ruggedDefence)
 		case .end: endGame(state)
 		}
 	}
@@ -57,7 +57,7 @@ private extension TacticalNodes {
 			return
 		}
 
-		sounds.mov.play()
+		sounds.play(.mov)
 		node.isHidden = !state.sim.isVisibleToHuman(path[0])
 
 		let scale = settings.animationScale
@@ -95,13 +95,13 @@ private extension TacticalNodes {
 		await scene?.run(.wait(forDuration: 0.22 * scale))
 
 		if dmg > 0, hp == 0 {
-			sounds.boomL.play()
+			sounds.play(.boomL)
 			showExplosion(2, at: dst)
 		} else if dmg > 0 {
-			sounds.boomM.play()
+			sounds.play(.boomM)
 			showExplosion(1, at: dst)
 		} else {
-			sounds.boomS.play()
+			sounds.play(.boomS)
 			showExplosion(0, at: dst)
 		}
 	}
@@ -142,6 +142,11 @@ private extension TacticalNodes {
 			)
 		}
 
-		if !items.isEmpty { scene?.showMenu(MenuState(items: items)) }
+		if !items.isEmpty {
+			scene?.showMenu(MenuState(
+				items: items,
+				leftButtons: [.back, .space, .space, .space]
+			))
+		}
 	}
 }

@@ -40,7 +40,8 @@ extension HQNodes {
 					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
 					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
 				)
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 
@@ -57,58 +58,59 @@ extension HQNodes {
 					status: .init(text: result.status(), action: .init("\(unit.upgradeCost(to: option.model)) / \(prestige)")),
 					action: .upgrade(uid.index, option.model)
 				)
-			}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		))
 	}
 
 	private func processMenu() {
-		// During a campaign, HQ edits the selected army rather than acting
-		// as a standalone game mode.
 		guard core.strategic == nil else {
-			scene?.showMenu(MenuState(items: [
-				.close(icon: .HQ, status: "Back") { _ in
+			return _ = scene?.showMenu(MenuState(
+				items: [
+					.close(icon: .HQ, status: "Back") {
+						guard let scene else { return }
+						core.store(scene.state.sim)
+						core.closeArmy()
+						core.save()
+						view.present(.auto)
+					},
+				],
+				leftButtons: [.back, .space, .space, .space]
+			))
+		}
+
+		scene?.showMenu(MenuState(
+			items: [
+				.push(icon: .start, status: "Scenario", menu: {
+					guard let scene else { return nil }
+					return scenarioMenu(scene.state)
+				}),
+				.push(icon: .remote, status: "Host LAN", menu: {
+					guard let scene else { return nil }
+					return hostMenu(scene.state)
+				}),
+				.push(icon: .remote, status: "Join LAN", menu: {
+					joinMenu()
+				}),
+				.push(icon: .start, status: "Campaign", menu: {
+					guard let scene else { return nil }
+					return campaignMenu(scene.state)
+				}),
+			],
+			leftButtons: [.back, .space, .space, .space],
+			rightButtons: [
+				.push(icon: .plus, status: "New", menu: {
+					guard let scene else { return nil }
+					return newGameMenu(scene.state)
+				}),
+				.load { scene?.saveState() },
+				.prefs,
+				.close(icon: .chess, status: "Editor") {
 					guard let scene else { return }
 					core.store(scene.state.sim)
-					core.closeArmy()
-					core.save()
-					view.present(.auto)
+					view.present(.editor)
 				},
-			]))
-			return
-		}
-		scene?.showMenu(MenuState(items: [
-			.init(icon: .start, status: .init(text: "Scenario"), update: { m in
-				guard let scene else { return nil }
-				return scenarioMenu(m, scene.state)
-			}),
-			.init(icon: .remote, status: .init(text: "Host LAN"), update: { m in
-				guard let scene else { return nil }
-				return hostMenu(m, scene.state)
-			}),
-			.init(icon: .remote, status: .init(text: "Join LAN"), update: { m in
-				joinMenu(m)
-			}),
-			.space,
-
-			.init(icon: .start, status: .init(text: "Campaign"), update: { m in
-				guard let scene else { return nil }
-				return campaignMenu(m, scene.state)
-			}),
-			.space, .space, .space,
-
-			.space, .space, .space, .space,
-
-			.init(icon: .new, status: .init(text: "New")) { _ in
-				guard let scene else { return nil }
-				return newGameMenu(scene.state)
-			},
-			.load { scene?.saveState() },
-			.space,
-			.close(icon: .chess, status: .init(text: "Editor")) { _ in
-				guard let scene else { return }
-				core.store(scene.state.sim)
-				view.present(.editor)
-			},
-		]))
+			]
+		))
 	}
 }

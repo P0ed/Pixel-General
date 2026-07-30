@@ -1,17 +1,35 @@
 import GameController
 import COR
 
+extension InputModifiers {
+
+	private static let altKeys: [GCKeyCode] = [.leftAlt, .rightAlt]
+	private static let shiftKeys: [GCKeyCode] = [.leftShift, .rightShift]
+
+	/// Whether a key standing for this modifier is physically down, read from
+	/// the HID keyboard: UIKit never delivers the key-up of a bare modifier on
+	/// Mac Catalyst, so a held chord has to watch the key itself.
+	@MainActor
+	var isKeyDown: Bool {
+		guard let keyboard = GCKeyboard.coalesced?.keyboardInput else { return false }
+		return (contains(.left) ? Self.altKeys : Self.shiftKeys)
+			.contains { code in keyboard.button(forKeyCode: code)?.isPressed == true }
+	}
+}
+
 @MainActor
 struct HIDController {
 	@IO private var lifetime: Any?
 	@IO var send: (Input) -> Void = ø
+	/// Button and shoulder releases, which only a held menu side button reads.
+	@IO var up: (Input) -> Void = ø
 	@IO private var modifiers: InputModifiers = []
 	@IO private var usedModifiers: InputModifiers = []
 
 	init() {
 		lifetime = NotificationCenter.default.addMainActorObserver(
 			forName: .GCControllerDidBecomeCurrent,
-			using: { [_send, _modifiers, _usedModifiers] notification in
+			using: { [_send, _up, _modifiers, _usedModifiers] notification in
 				_modifiers.wrappedValue = []
 				_usedModifiers.wrappedValue = []
 				guard let gamepad = (notification.object as? GCController)?.extendedGamepad
@@ -30,6 +48,9 @@ struct HIDController {
 					_usedModifiers.wrappedValue.formUnion(current)
 					send(.action(action, modifiers: current))
 				}
+				let releaseAction = { action in
+					_up.wrappedValue(.action(action, modifiers: _modifiers.wrappedValue))
+				}
 				let shoulder = { modifier, target, pressed in
 					if pressed {
 						_modifiers.wrappedValue.insert(modifier)
@@ -38,6 +59,7 @@ struct HIDController {
 						let used = _usedModifiers.wrappedValue.contains(modifier)
 						_modifiers.wrappedValue.remove(modifier)
 						_usedModifiers.wrappedValue.remove(modifier)
+						_up.wrappedValue(.action(nil, modifiers: modifier))
 						if !used { send(.target(target)) }
 					}
 				}
@@ -65,20 +87,16 @@ struct HIDController {
 					shoulder(.right, .next, pressed)
 				}
 				gamepad.buttonA.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					sendAction(.a)
+					pressed ? sendAction(.a) : releaseAction(.a)
 				}
 				gamepad.buttonB.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					sendAction(.b)
+					pressed ? sendAction(.b) : releaseAction(.b)
 				}
 				gamepad.buttonX.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					sendAction(.c)
+					pressed ? sendAction(.c) : releaseAction(.c)
 				}
 				gamepad.buttonY.pressedChangedHandler = { _, _, pressed in
-					guard pressed else { return }
-					sendAction(.d)
+					pressed ? sendAction(.d) : releaseAction(.d)
 				}
 				gamepad.buttonMenu.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
