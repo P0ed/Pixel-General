@@ -14,7 +14,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private var panTranslation: CGPoint?
 	private(set) var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
 	var menuState: MenuState<Action>? { menuStack.last }
-	var pressedSlot: MenuSlot?
+	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
 	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
@@ -252,6 +252,12 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		guard let nodes, !processing else { return }
 		updateStatus()
 		mode.update(nodes, state)
+	}
+
+	private func didSetPressedSlot(_ oldValue: MenuSlot?) {
+		guard pressedSlot != oldValue else { return }
+		oldValue.map { slot in baseNodes?.menu.setMenuButton(slot, pressed: false) }
+		pressedSlot.map { slot in baseNodes?.menu.setMenuButton(slot, pressed: true) }
 	}
 
 	private func didSetMenu() {

@@ -13,7 +13,7 @@ extension MenuNodes {
 
 	static func make() -> MenuNodes {
 		let image = UIImage.menu
-		let root = SKSpriteNode(image: image)
+		let root = SKSpriteNode(texture: .menu)
 		root.size = menuSize
 
 		let insets = image.capInsets
@@ -27,7 +27,7 @@ extension MenuNodes {
 		root.isHidden = true
 
 		let items = [16 of MenuSlotNode] { index in
-			let frame = MenuSlotNode(image: .clear)
+			let frame = MenuSlotNode(texture: .clear)
 			frame.size = itemSize
 			frame.slot = .item(index)
 			frame.zPosition = 1.0
@@ -39,7 +39,7 @@ extension MenuNodes {
 				y: (gridSize.height - itemSize.height + depth) / 2.0 - y
 			)
 
-			let icon = SKSpriteNode(image: nil)
+			let icon = SKSpriteNode(texture: nil)
 			icon.zPosition = 1.0
 			frame.icon = icon
 			frame.addChild(icon)
@@ -49,7 +49,7 @@ extension MenuNodes {
 
 		func makeSide(slot: (Int) -> MenuSlot, sign: CGFloat) -> [4 of MenuSlotNode] {
 			[4 of MenuSlotNode] { index in
-				let frame = MenuSlotNode(image: .BTN_0)
+				let frame = MenuSlotNode(texture: .BTN_0)
 				frame.size = buttonSize
 				frame.slot = slot(index)
 				frame.zPosition = 1.0
@@ -61,7 +61,7 @@ extension MenuNodes {
 					+ buttonTravel * 1.5
 				)
 
-				let icon = SKSpriteNode(image: nil)
+				let icon = SKSpriteNode(texture: nil)
 				icon.size = buttonIconSize
 				icon.zPosition = 2.0
 				icon.position.y = buttonTravel / 2.0
@@ -143,7 +143,7 @@ extension MenuNodes {
 
 	func setMenuButton(_ slot: MenuSlot, pressed: Bool) {
 		guard let frame = sideButton(slot) else { return }
-		frame.setImage(pressed ? .BTN_1 : .BTN_0)
+		frame.texture = pressed ? .BTN_1 : .BTN_0
 		frame.icon?.position.y = Self.buttonTravel / 2.0 * (pressed ? -1.0 : 1.0)
 	}
 
@@ -163,7 +163,7 @@ extension MenuNodes {
 			let index = pageStart + offset
 			frame.slot = .item(index)
 			frame.isHidden = index >= menuState.items.count
-			frame.setImage(menuState.cursor == index ? .highlighted : .clear)
+			frame.texture = menuState.cursor == index ? .highlighted : .clear
 			let image = index < menuState.items.count ? menuState.items[index].icon : nil
 			frame.icon?.setImage(image)
 			frame.icon?.size = image?.size ?? .zero

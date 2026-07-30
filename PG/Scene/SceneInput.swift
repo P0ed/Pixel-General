@@ -95,7 +95,6 @@ extension Scene where State: ~Copyable {
 		// Only a chord actually held by a modifier key is worth watching: the
 		// `1`…`4` bindings carry `R` without one, as does a pointer press.
 		chordModifier = slot.modifier.flatMap { $0.isKeyDown ? $0 : nil }
-		baseNodes?.menu.setMenuButton(slot, pressed: true)
 		sounds.play(.click)
 	}
 
@@ -105,7 +104,6 @@ extension Scene where State: ~Copyable {
 		guard let slot = pressedSlot else { return }
 		pressedSlot = nil
 		chordModifier = nil
-		baseNodes?.menu.setMenuButton(slot, pressed: false)
 		sounds.play(.click)
 		if fire, menuState != nil { apply(Input(slot: slot)) }
 	}
