@@ -68,7 +68,7 @@ extension Scene where State: ~Copyable {
 			}
 		} else {
 			guard self.nodes(at: scenePoint)
-				.contains(where: { n in n == baseNodes.menu })
+				.contains(where: { n in n == baseNodes.menu.root })
 			else { return apply(.action(.b)) }
 
 			// Side buttons latch on touch down and fire on release the way a

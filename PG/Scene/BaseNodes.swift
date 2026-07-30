@@ -3,7 +3,7 @@ import UIKit
 
 @MainActor
 struct BaseNodes {
-	var menu: SKNode
+	var menu: MenuNodes
 	var alert: SKNode
 	var status: SKLabelNode
 	var action: SKLabelNode
@@ -38,21 +38,9 @@ extension Scene where State: ~Copyable {
 		return alert
 	}
 
-	func addMenu() -> SKNode {
-		let image = UIImage.menu
-		let menu = SKSpriteNode(image: image)
-		menu.size = BaseNodes.menuSize
-
-		let insets = image.capInsets
-		menu.centerRect = CGRect(
-			x: insets.left / image.size.width,
-			y: insets.bottom / image.size.height,
-			width: (image.size.width - insets.left - insets.right) / image.size.width,
-			height: (image.size.height - insets.top - insets.bottom) / image.size.height
-		)
-		menu.zPosition = 68.0
-		menu.isHidden = true
-		camera?.addChild(menu)
+	func addMenu() -> MenuNodes {
+		let menu = MenuNodes.make()
+		camera?.addChild(menu.root)
 		return menu
 	}
 

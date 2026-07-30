@@ -273,12 +273,12 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 				baseNodes?.redrawMenu(next)
 			}
 		} else if let menuState {
-			if baseNodes?.menu.isHidden == true || baseNodes?.menuIsHiding == true {
+			if baseNodes?.menu.root.isHidden == true || baseNodes?.menuIsHiding == true {
 				baseNodes?.showMenu(menuState)
 			} else {
 				baseNodes?.updateMenu(menuState)
 			}
-		} else if baseNodes?.menu.isHidden == false {
+		} else if baseNodes?.menu.root.isHidden == false {
 			baseNodes?.hideMenu()
 		}
 		updateStatus()
