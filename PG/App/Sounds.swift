@@ -43,7 +43,7 @@ final class Sounds {
 	}
 
 	private let engine: AVAudioEngine
-	private var banks: InlineArray<6, Bank?>
+	private let banks: InlineArray<6, Bank?>
 
 	init() {
 		try? AVAudioSession.sharedInstance().setCategory(.ambient)
@@ -75,14 +75,13 @@ final class Sounds {
 	}
 
 	func play(_ sound: Sound) {
-		let volume = settings.outputVolume
-		guard volume > 0.0, banks[sound.rawValue] != nil else { return }
+		guard settings.soundLevel != 0, banks[sound.rawValue] != nil else { return }
 
 		if !engine.isRunning {
 			try? AVAudioSession.sharedInstance().setActive(true)
 			guard (try? engine.start()) != nil else { return }
 		}
-		engine.mainMixerNode.outputVolume = volume
+		engine.mainMixerNode.outputVolume = settings.outputVolume
 
 		banks[sound.rawValue]?.play(rate: sound.variesPitch ? .random(in: 0.94 ... 1.06) : 1.0)
 	}
