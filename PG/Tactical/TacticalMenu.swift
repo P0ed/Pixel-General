@@ -11,20 +11,17 @@ extension TacticalNodes {
 		scene.showMenu(MenuState(
 			items: [
 				.close(icon: .arrowRight, status: "End turn", action: .end),
-				.space,
-				.load { [weak scene] in scene?.saveState() },
-				.close(icon: .HQ, status: "Abandon") { [weak scene] in
-					if let scene { endGame(scene.state) }
-				},
-
 				.apply(icon: .prestige1, status: "Prestige: \(state.sim.player.prestige)"),
-				.space,
-				.space,
-				.space,
 			],
 			leftButtons: [.back, .space, .space, .space],
-			rightButtons: [.space, .space, .prefs, .space]
+			rightButtons: [
+				.space,
+				.load { [weak scene] in scene?.saveState() },
+				.prefs,
+				.close(icon: .HQ, status: "Abandon") { [weak scene] in
+					if let scene { endGame(scene.state) }
+				}
+			]
 		))
 	}
-
 }

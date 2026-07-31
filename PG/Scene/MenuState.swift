@@ -183,7 +183,7 @@ extension MenuItem {
 	static func load(save: @escaping () -> Void) -> MenuItem {
 		.push(icon: .arrowUp, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
 			items: (0...3).map { slot in
-				.confirm(icon: .arrowUp, status: "Slot \(slot + 1)") {
+				.confirm(icon: .number(UInt8(slot)) ?? .clear, status: "Slot \(slot + 1)") {
 					save()
 					core = .load(slot: slot)
 					view.present(.auto)
