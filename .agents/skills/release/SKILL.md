@@ -1,5 +1,5 @@
 ---
-name: Publish release
+name: release
 description: Build, tag and publish a Pixel General release on GitHub.
 disable-model-invocation: true
 ---
