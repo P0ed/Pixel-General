@@ -6,13 +6,11 @@ struct BaseNodes {
 	var menu: MenuNodes
 	var alert: SKNode
 	var status: SKLabelNode
-	var action: SKLabelNode
 	var icon: SKSpriteNode
 }
 
 struct Status {
 	var text: String = ""
-	var action: String = ""
 	var flag: SKTexture?
 }
 
@@ -23,7 +21,6 @@ extension Scene where State: ~Copyable {
 			menu: addMenu(),
 			alert: addAlert(),
 			status: addStatus(),
-			action: addStatus(alignment: .right),
 			icon: addIcon()
 		)
 	}
@@ -44,12 +41,12 @@ extension Scene where State: ~Copyable {
 		return menu
 	}
 
-	func addStatus(alignment: SKLabelHorizontalAlignmentMode = .left) -> SKLabelNode {
+	func addStatus() -> SKLabelNode {
 		let label = SKLabelNode(size: .s)
 		camera?.addChild(label)
 		label.zPosition = 67.0
-		label.horizontalAlignmentMode = alignment
-		label.verticalAlignmentMode = .baseline
+		label.horizontalAlignmentMode = .left
+		label.verticalAlignmentMode = .bottom
 		return label
 	}
 
@@ -70,26 +67,21 @@ extension BaseNodes {
 			x: inset - size.width / 2.0,
 			y: inset - size.height / 2.0
 		)
-		action.position = CGPoint(
-			x: size.width / 2.0 - inset,
-			y: inset - size.height / 2.0
-		)
 		icon.position = CGPoint(
-			x: size.width / 2.0 - 18.0,
-			y: 12.0 - size.height / 2.0
+			x: size.width / 2.0 - 20.0,
+			y: size.height / 2.0 - 12.0
 		)
 	}
 
 	func updateStatus(_ data: Status) {
 		status.attributedText = text(data.text)
-		action.attributedText = text(data.action)
 		icon.texture = data.flag
 	}
 }
 
 private func text(_ string: String) -> NSAttributedString {
 	let s = NSMutableParagraphStyle()
-	s.lineSpacing = 2.0
+	s.lineSpacing = 4.0
 	return NSAttributedString(string: string, attributes: [
 		.paragraphStyle: s,
 		.font: UIFont(name: "Menlo", size: 14.0)!,

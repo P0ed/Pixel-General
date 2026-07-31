@@ -71,10 +71,7 @@ extension EditorState {
 	}
 
 	var status: Status {
-		Status(
-			text: "\(cursor) \(map[cursor])  brush: \(brush)",
-			action: "A: paint  B: brush  ↩ menu"
-		)
+		Status(text: "A: paint  B: brush  ↩ menu\n\(cursor) \(map[cursor])  brush: \(brush)")
 	}
 }
 

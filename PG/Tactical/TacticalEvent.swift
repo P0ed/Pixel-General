@@ -135,8 +135,7 @@ private extension TacticalNodes {
 			MenuItem<TacticalAction>.close(
 				icon: template.image,
 				status: .init(
-					text: template.status(),
-					action: .init("\(template.cost) / \(state.sim.player.prestige)")
+					text: "\(template.cost) / \(state.sim.player.prestige)\n" + template.status()
 				),
 				action: .purchase(i, xy)
 			)

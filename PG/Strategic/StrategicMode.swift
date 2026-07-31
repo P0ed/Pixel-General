@@ -28,7 +28,7 @@ extension StrategicState {
 		let xy = ui.cursor
 		let province = sim.provinces[xy]
 		return Status(
-			text: .padding(12, [
+			text: "\(actionHint)\n" + .padding(12, [
 				"\(sim.owner[xy])",
 				"day: \(sim.turn + 1)",
 				sim.army(at: xy).map { army in
@@ -39,8 +39,7 @@ extension StrategicState {
 						s += "\(t.tag) \(province[t])  "
 					}
 				}
-			]),
-			action: actionHint
+			])
 		)
 	}
 

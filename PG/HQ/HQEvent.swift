@@ -37,7 +37,7 @@ extension HQNodes {
 			items: Shop(country: state.sim.country, tier: state.sim.player.tier).units.enumerated().map { i, u in
 				.close(
 					icon: u.image,
-					status: .init(text: u.status(), action: .init("\(u.cost) / \(state.sim.player.prestige)")),
+					status: .init(text: "\(u.cost) / \(state.sim.player.prestige)\n" + u.status()),
 					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
 				)
 			},
@@ -55,7 +55,7 @@ extension HQNodes {
 				let result = unit.upgraded(to: option.model)
 				return .close(
 					icon: result.image,
-					status: .init(text: result.status(), action: .init("\(unit.upgradeCost(to: option.model)) / \(prestige)")),
+					status: .init(text: "\(unit.upgradeCost(to: option.model)) / \(prestige)\n" + result.status()),
 					action: .upgrade(uid.index, option.model)
 				)
 			},

@@ -107,7 +107,7 @@ extension HQNodes {
 			.space, .space,
 			MenuItem(
 				icon: .arrowRight,
-				status: .init(text: "Start", action: .init(Address.me.string)),
+				status: .init(text: "\(Address.me.string)\nStart"),
 				update: { [weak scene] stk, _ in
 					guard let scene else { return }
 					session.start(units: scene.state.sim.units.compactMap { u in u.alive ? u : nil })

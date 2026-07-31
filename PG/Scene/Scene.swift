@@ -403,7 +403,7 @@ extension MenuState {
 	func status(hovering slot: MenuSlot?) -> Status {
 		guard let slot else { return status }
 		let hovered = self[slot].status
-		return hovered.text.isEmpty && hovered.action.isEmpty ? status : hovered
+		return hovered.text.isEmpty ? status : hovered
 	}
 
 	mutating func padItems() {
