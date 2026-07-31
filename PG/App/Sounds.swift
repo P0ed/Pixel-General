@@ -29,19 +29,21 @@ enum Sound: Int, CaseIterable {
 @MainActor
 final class Sounds {
 
-	private struct Voice: ~Copyable {
-		let player = AVAudioPlayerNode()
-		let varispeed = AVAudioUnitVarispeed()
-	}
-
 	private struct Bank: ~Copyable {
 		let buffer: AVAudioPCMBuffer
-		let voices: InlineArray<2, Voice>
-		var next: Int = 0
+		let player = AVAudioPlayerNode()
+		let varispeed = AVAudioUnitVarispeed()
+
+		func play(rate: Float) {
+			varispeed.rate = rate
+			player.stop()
+			player.scheduleBuffer(buffer, completionHandler: nil)
+			player.play()
+		}
 	}
 
 	private let engine: AVAudioEngine
-	private var banks: InlineArray<5, Bank?>
+	private var banks: InlineArray<6, Bank?>
 
 	init() {
 		try? AVAudioSession.sharedInstance().setCategory(.ambient)
@@ -54,22 +56,22 @@ final class Sounds {
 				(try? file.read(into: buffer)) != nil
 			else { return nil }
 
-			return Bank(
-				buffer: buffer,
-				voices: InlineArray { _ in
-					let voice = Voice()
-					engine.attach(voice.player)
-					engine.attach(voice.varispeed)
-					engine.connect(voice.player, to: voice.varispeed, format: buffer.format)
-					engine.connect(voice.varispeed, to: engine.mainMixerNode, format: buffer.format)
-					return voice
-				}
-			)
+			let bank = Bank(buffer: buffer)
+			engine.attach(bank.player)
+			engine.attach(bank.varispeed)
+			engine.connect(bank.player, to: bank.varispeed, format: buffer.format)
+			engine.connect(bank.varispeed, to: engine.mainMixerNode, format: buffer.format)
+			return bank
 		}
 		self.engine = engine
 
-		engine.isAutoShutdownEnabled = true
 		engine.prepare()
+	}
+
+	func preheat() {
+		guard settings.outputVolume > 0.0, !engine.isRunning else { return }
+		try? AVAudioSession.sharedInstance().setActive(true)
+		try? engine.start()
 	}
 
 	func play(_ sound: Sound) {
@@ -82,15 +84,6 @@ final class Sounds {
 		}
 		engine.mainMixerNode.outputVolume = volume
 
-		let next = banks[sound.rawValue]?.next ?? 0
-		let voiceCount = banks[sound.rawValue]?.voices.count ?? 1
-		banks[sound.rawValue]?.next = (next + 1) % voiceCount
-
-		if let buffer = banks[sound.rawValue]?.buffer {
-			banks[sound.rawValue]?.voices[next].varispeed.rate = sound.variesPitch ? .random(in: 0.94 ... 1.06) : 1.0
-			banks[sound.rawValue]?.voices[next].player.stop()
-			banks[sound.rawValue]?.voices[next].player.scheduleBuffer(buffer, completionHandler: nil)
-			banks[sound.rawValue]?.voices[next].player.play()
-		}
+		banks[sound.rawValue]?.play(rate: sound.variesPitch ? .random(in: 0.94 ... 1.06) : 1.0)
 	}
 }
