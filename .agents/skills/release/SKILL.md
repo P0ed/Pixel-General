@@ -36,7 +36,24 @@ git tag -l "$TAG"; git ls-remote --tags origin "$TAG"   # both must be empty
 Stop and ask the user if any check fails. A tag that already exists means that release was
 likely already published — do not force it.
 
-## 2. Build and zip
+## 2. Bump version
+
+```sh
+VERSION="${1#v}"
+/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" PG/Info.plist
+```
+
+If it already matches `VERSION`, skip to step 3. Otherwise set it and commit directly to main
+(the build in step 3 must embed this version):
+
+```sh
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" PG/Info.plist
+git add PG/Info.plist
+git commit -m "Bump version to $VERSION"
+git push origin main
+```
+
+## 3. Build and zip
 
 ```sh
 TAG="v${1#v}"; DIR="tmp/release/$TAG"; mkdir -p "$DIR"
@@ -49,7 +66,7 @@ unzip -l "$DIR/PG.zip" | grep -q 'PG.app/Contents/MacOS/PG' && ls -lh "$DIR/PG.z
 
 `tmp/` is gitignored. Build failures are fatal — fix or report, never ship a stale binary.
 
-## 3. Changelog
+## 4. Changelog
 
 ```sh
 git log --no-merges --pretty=format:'- %s' "$(git describe --tags --abbrev=0)..HEAD"
@@ -57,19 +74,19 @@ git log --no-merges --pretty=format:'- %s' "$(git describe --tags --abbrev=0)..H
 
 Condense into a short bullet list of user-visible changes in the repo's style (see previous
 releases: a handful of terse bullets, no headings, no commit hashes). Drop pure-noise commits
-("Cleanup", "Simplify", doc tweaks). Write the result to `$DIR/notes.md`.
+("Cleanup", "Simplify", doc tweaks, "Bump version to ..."). Write the result to `$DIR/notes.md`.
 
-Show the user the tag, title and changelog, and get an explicit OK before step 4 — pushing the
+Show the user the tag, title and changelog, and get an explicit OK before step 5 — pushing the
 tag and publishing an immutable release cannot be undone.
 
-## 4. Tag and push
+## 5. Tag and push
 
 ```sh
 TAG="v${1#v}"
 git tag "$TAG" && git push origin "$TAG"
 ```
 
-## 5. Publish
+## 6. Publish
 
 Create the draft, upload the asset, then publish. Releases here are marked `prerelease: true`,
 matching every previous one.
