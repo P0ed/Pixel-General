@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild test *)",
+      "Bash(xcodebuild -project PG.xcodeproj -scheme PG -showdestinations)",
+      "Bash(xcodebuild -list *)",
+      "Bash(xcodebuild -version)",
+      "Bash(xcodebuild -project PG.xcodeproj -list)",
+      "Bash(xcodebuild -project PG.xcodeproj -scheme Train -configuration Release -destination 'platform=macOS' SYMROOT=tmp/build OBJROOT=tmp/build build)",
+      "Bash(xcodebuild build *)",
+      "Bash(swift test *)",
+      "Bash(swift build *)",
+      "Bash(xcodebuild -project PG.xcodeproj -target PG -configuration Debug build)"
+    ]
+  }
+}
