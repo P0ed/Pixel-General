@@ -44,6 +44,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		win.makeKeyAndVisible()
 		window = win
 
+		sounds.preheat()
 		view.present(.auto)
 	}
 }
