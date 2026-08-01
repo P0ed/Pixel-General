@@ -30,7 +30,7 @@ enum Rollouts {
 
 	static func run(_ args: [String]) throws {
 		var n = 8
-		var out = "tmp/runs/replays"
+		var out = "tmp/ai/runs/replays"
 		var seedBase = 0
 		var verify = false
 		var suite: RolloutSuite = .mixed

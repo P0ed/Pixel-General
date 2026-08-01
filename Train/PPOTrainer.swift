@@ -49,7 +49,7 @@ enum PPOTrainer {
 
 		var weightsPath: String?
 		var refPath: String?
-		var out = "tmp/runs/ppo"
+		var out = "tmp/ai/runs/ppo"
 		var iters = 128
 		var episodes = 32
 		var b = 16

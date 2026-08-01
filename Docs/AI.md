@@ -265,7 +265,7 @@ every MPSGraph head + h/c/value against the pure-Swift policy step by step. Gate
 |Δ| ~1e-7 and **0** argmax flips. Run after any change to `Net.swift`,
 `LSTMPolicy.swift`, or `Encoding.swift`.
 
-**`bc --data tmp/runs/replays --out tmp/runs/bc [--steps 600] [--b 16] [--t 16]
+**`bc --data tmp/ai/runs/replays --out tmp/ai/runs/bc [--steps 600] [--b 16] [--t 16]
 [--lr 3e-4] [--holdout 8] [--ckpt 200] [--wseed 13] [--resume <pgw>]`** — behavior
 cloning. Each battle yields two streams (one per seat, each under its own fog);
 truncated BPTT over `b` lanes × `t` steps with h/c carried across windows; masked CE
@@ -293,7 +293,7 @@ days, action counts, and illegal-action counts, and **hard-gates on 0 illegal ac
 (mutation oracle). Independent battles run concurrently while results remain ordered
 by config. `--wseed` plays random weights instead — the sanity floor.
 
-**`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
+**`rl --weights <pgw> [--out tmp/ai/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
 [--curriculum 0] [--anneal 0.35] [--suite fair|classic|mixed]`** — REINFORCE
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
@@ -358,7 +358,7 @@ batch carries almost no signal).
 Note `--resume` does not exist here: restarting from a checkpoint restarts Adam (pass
 the reached `--curriculum` level explicitly when continuing an annealed run).
 
-**`ppo --weights <pgw> [--ref <pgw>] [--out tmp/runs/ppo] [--iters 12]
+**`ppo --weights <pgw> [--ref <pgw>] [--out tmp/ai/runs/ppo] [--iters 12]
 [--episodes 12] [--epochs 3] [--clip 0.2] [--vcoef 0.5] [--kl 0.1] [--ent 0]
 [--vwarm 0] [--lam 1] [--b --t --lr --temp --seed --ckpt --evaln --curriculum
 --anneal --suite]`** — the stronger learner (`PPOTrainer.swift`), sharing

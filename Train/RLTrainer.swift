@@ -132,7 +132,7 @@ enum RLTrainer {
 
 	static func run(_ args: [String]) throws {
 		var weightsPath: String?
-		var out = "tmp/runs/rl"
+		var out = "tmp/ai/runs/rl"
 		var iters = 100
 		var episodes = 16
 		var b = 16
