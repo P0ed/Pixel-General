@@ -364,7 +364,7 @@ the reached `--curriculum` level explicitly when continuing an annealed run).
 --anneal --suite]`** — the stronger learner (`PPOTrainer.swift`), sharing
 collection, reward, and curriculum machinery with `rl` (default suite
 `classic`, lr 3e-6; checkpoint arenas always run the `fair` suite; with no
-CLI args at all, `tmp/run.json` supplies them via `DefaultArgs`). Three
+CLI args at all, `tmp/ai/run.json` supplies them via `DefaultArgs`). Three
 upgrades, each matched to a REINFORCE failure class:
 
 - **PPO-clip** — each batch is reused for `--epochs` optimization passes; the
