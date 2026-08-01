@@ -50,14 +50,14 @@ enum PPOTrainer {
 		var weightsPath: String?
 		var refPath: String?
 		var out = "tmp/runs/ppo"
-		var iters = 12
-		var episodes = 12
+		var iters = 128
+		var episodes = 32
 		var b = 16
 		var t = 16
 		var lr: Float = 3e-6
 		var seed = 0x7FF
-		var ckpt = 12
-		var evalN = 96
+		var ckpt = 24
+		var evalN = 32
 		var curriculum: Float = 1.0
 		var anneal: Float = 0.6
 		var suite: RolloutSuite = .classic
