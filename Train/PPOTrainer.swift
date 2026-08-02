@@ -13,12 +13,13 @@ import MetalPerformanceShadersGraph
 ///                   movement is bounded in distribution space, where the
 ///                   REINFORCE runs had to keep windows × lr under a hand-tuned
 ///                   displacement invariant (update shock: runs 4/5/10).
-///   value baseline  A(s_t) = R − V(s_t) from the (finally trained) value
-///                   head. V sees prestige/tier/baseLevel in the observation
-///                   globals, so it learns the matchup correction per state —
+///   value baseline  GAE (γ = 1, `--lam`) over the per-step reward slices
+///                   collection records: A(s_t) bootstraps through V(s_t)
+///                   from the value head, so each decision is credited with
+///                   what followed *it* rather than the episode total —
 ///                   replacing the stratified LOO baseline whose ~4-episode
 ///                   strata were noise (run 8), and the length-normalization
-///                   hack (timeout episodes converge to V ≈ R ⇒ A ≈ 0).
+///                   hack (timeout episodes converge to V ≈ G_t ⇒ A ≈ 0).
 ///   KL anchor       β · KL(π‖π_ref) per head toward the frozen starting
 ///                   weights, full-distribution, against an in-graph constant
 ///                   copy of the network — the policy can improve on the BC
@@ -48,15 +49,15 @@ enum PPOTrainer {
 
 		var weightsPath: String?
 		var refPath: String?
-		var out = "tmp/runs/ppo"
-		var iters = 12
-		var episodes = 12
+		var out = "tmp/ai/runs/ppo"
+		var iters = 128
+		var episodes = 32
 		var b = 16
 		var t = 16
 		var lr: Float = 3e-6
 		var seed = 0x7FF
-		var ckpt = 12
-		var evalN = 96
+		var ckpt = 24
+		var evalN = 32
 		var curriculum: Float = 1.0
 		var anneal: Float = 0.6
 		var suite: RolloutSuite = .classic
@@ -138,12 +139,14 @@ enum PPOTrainer {
 				return (r.h, r.c, nil, nil)
 			}
 
-			// GAE over each episode's value sequence (γ = 1; terminal-only
-			// reward). λ = 1 telescopes to exactly A_t = R − V(s_t); the value
-			// target is the λ-return A + V (= R at λ = 1). Sample order within
-			// an episode is windows-outer/steps-inner in its lane — the same
-			// order the streams produced them.
-			let (adv, ret, madv, ev) = advantages(cache: cache, batch: batch, b: b, t: t, lam: lam)
+			// GAE over each episode's value sequence (γ = 1) with the per-step
+			// reward slices collection recorded — each decision is judged by
+			// what happened after *it*, not by the episode's total. λ = 1
+			// telescopes to A_t = G_t − V(s_t) (return-to-go); the value target
+			// is the λ-return A + V. Sample order within an episode is
+			// windows-outer/steps-inner in its lane — the same order the
+			// streams produced them.
+			let (adv, ret, madv, ev) = try advantages(cache: cache, batch: batch, b: b, t: t, lam: lam)
 
 			let warming = iter <= vwarm
 			var sums = PPOGraph.Metrics()
@@ -198,17 +201,18 @@ enum PPOTrainer {
 		print("  out:      \(outDir.path)/policy.pgw")
 	}
 
-	/// GAE per episode from the cached read pass, then batch-wide advantage
-	/// normalization (mean 0 / std 1, clamped ±5). Returns per-window
-	/// advantage and value-target arrays plus the raw mean |A| and the value
-	/// head's explained variance against the Monte-Carlo return — the health
-	/// metric that says whether the baseline is doing anything yet.
+	/// GAE per episode from the cached read pass and the collection-time
+	/// per-step rewards, then batch-wide advantage normalization (mean 0 /
+	/// std 1, clamped ±5). Returns per-window advantage and value-target
+	/// arrays plus the raw mean |A| and the value head's explained variance
+	/// against the Monte-Carlo return-to-go — the health metric that says
+	/// whether the baseline is doing anything yet.
 	static func advantages(
 		cache: [PPOGraph.Cached],
 		batch: [RLTrainer.Episode],
 		b: Int, t: Int,
 		lam: Float
-	) -> (adv: [[Float]], ret: [[Float]], madv: Float, ev: Float) {
+	) throws -> (adv: [[Float]], ret: [[Float]], madv: Float, ev: Float) {
 		var seq = [[(k: Int, i: Int)]](repeating: [], count: batch.count)
 		for (k, c) in cache.enumerated() {
 			for lane in 0 ..< b {
@@ -226,23 +230,28 @@ enum PPOTrainer {
 		var mcVarSum: Float = 0, mcSum: Float = 0, resSum: Float = 0
 		for (e, s) in seq.enumerated() {
 			guard !s.isEmpty else { continue }
-			let R = batch[e].reward
+			let rew = batch[e].stepRewards
+			guard rew.count == s.count else {
+				throw TrainError.failed(
+					"episode \(e): \(rew.count) reward slices vs \(s.count) stream samples"
+				)
+			}
 			var a: Float = 0
+			var g: Float = 0		// Monte-Carlo return-to-go
 			for j in s.indices.reversed() {
 				let v = cache[s[j].k].value[s[j].i]
-				let next = j == s.count - 1
-					? (r: R, v: Float(0))
-					: (r: 0, v: cache[s[j + 1].k].value[s[j + 1].i])
-				a = next.r + next.v - v + lam * a
+				let nextV = j == s.count - 1 ? Float(0) : cache[s[j + 1].k].value[s[j + 1].i]
+				a = rew[j] + nextV - v + lam * a
+				g += rew[j]
 				adv[s[j].k][s[j].i] = a
 				ret[s[j].k][s[j].i] = a + v
 				sum += a
 				sqsum += a * a
 				absSum += abs(a)
 				count += 1
-				mcSum += R
-				mcVarSum += R * R
-				resSum += (R - v) * (R - v)
+				mcSum += g
+				mcVarSum += g * g
+				resSum += (g - v) * (g - v)
 			}
 		}
 		guard count > 0 else { return (adv, ret, 0, 0) }

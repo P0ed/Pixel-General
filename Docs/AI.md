@@ -3,19 +3,62 @@
 The neural opponent for Tactical battles: a convolutional LSTM policy
 that plays any `.ai` seat, bundled as `PG/policy.pgw` and toggled with
 *Neural opponent* in the Tactical menu (heuristic fallback when the resource is missing
-or invalid). It is trained by behavior-cloning the heuristic `run(ai:)` — BC scale
-(corpus × steps) has been the reliable strength lever; PPO fine-tuning (clipped
-surrogate, value-head baseline, KL anchor to the BC prior) lifted a weak BC prior
-once but stopped adding over strong ones, and an earlier REINFORCE learner
-plateaued at the BC level — entirely
-with `MetalPerformanceShadersGraph`. Inference is dependency-free Swift in COR, so the
-shipping app never touches MPSGraph.
+or invalid). It is trained by behavior-cloning the heuristic `run(ai:)` and then
+PPO fine-tuning (clipped surrogate, value-head baseline, KL anchor to the BC
+prior) — entirely with `MetalPerformanceShadersGraph`. BC scale (corpus × steps)
+was long the only reliable strength lever; since per-step reward slices landed
+(2026-08-01, see Status) PPO reliably lifts strong priors too. An earlier
+REINFORCE learner plateaued at the BC level. Inference is dependency-free Swift
+in COR, so the shipping app never touches MPSGraph.
 
 Training rests on properties of the core: `reduce` is a pure function of
 `(sim, action)`, a whole battle bitwise-serializes via `encode`/`decode`,
 and the AI interface is one `TacticalAction` per call — exactly a policy's
 step function. Battles are therefore stored as *replays* and regenerated
 deterministically instead of storing states.
+
+## Status — handoff (2026-08-02)
+
+Credit assignment moved from episode level to per action: collection now
+records one reward slice per policy decision (`Episode.stepRewards` — deltas of
+the clamped cumulative dense terms between decisions, outcome + prestige on the
+last, telescoping to the episode total), and `Train ppo` runs GAE over those
+slices instead of one terminal scalar. The old scheme gave every action of a
+~5–10k-action episode the same signal; its workarounds (length normalization,
+stratified LOO baselines) and its failure mode ("stop acting" collapses) are
+retired with it. MCTS-style search was considered and deferred: hundreds of
+sims per action is unaffordable on this hardware, and search backups bottom
+out in the same value head — train the critic first. (The sim is
+`BitwiseCopyable`, so cheap state snapshots are available if search is ever
+revisited.)
+
+Results so far, all continuations of the bc8 prior with `--ref` pinned to it
+(`--lam 0.95`; 832-battle fair arenas, ~±2 pt):
+
+- `ppo-step1`/`ppo-step2` (12 episodes/iter, curriculum 1, 48+96 iters):
+  17.2% → 27.5% (`step2/ckpt-84`), flat in the second half.
+- `ppo-step3` (`--episodes 32 --curriculum 0`, 96 iters): wins tied at 26.7%
+  but losses 499 → 409 — even-matchup collection first bred timeout play
+  (draws doubled, a timeout's outcome 0 beat a loss's −0.47), then converted
+  the long games into defense. The economy curriculum is retired.
+- `ppo-step4` (from step3/ckpt-96, + `wDraw = 0.2` timeout penalty in the
+  outcome term, `--vcoef 1.0`, 512 iters, 9.8 h): flat ~26% through iter 240,
+  then a breakout — ckpt-264/312/408/480/512 scored 32.9 / 34.6 / 31.7 /
+  35.8 / **36.9%**, monotone-ish in training time and still rising at the
+  end. The heuristic is down to 43.8%. `ev` lifted off 0 (~0.3) only late.
+
+Best weights: `tmp/ai/runs/ppo-step4/ckpt-512.pgw` (36.9%), copied to
+`PG/policy.pgw` on 2026-08-02 for playtesting.
+
+Next levers, in order:
+
+1. Continue from step4/ckpt-512 with the same recipe — the curve had not
+   flattened at 512 iterations; nothing else is cheaper.
+2. Mixed-suite arena before judging the shipped opponent: the numbers above
+   are fair-suite; the app plays `mixed` objectives.
+3. The 64-battle checkpoint arenas (`--evaln 32`) swing ±6 pt and repeatedly
+   mislabeled checkpoints overnight — raise `--evaln` or arena-compare
+   shortlists at 832 battles before trusting any single reading.
 
 ## Heuristic teacher
 
@@ -44,7 +87,7 @@ then end turn.
 | `COR/Tactical/AI/LSTMWeights.swift` | `PGW1` weight format: IO, spec catalog, seeded random init |
 | `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
 | `COR/Tactical/AI/TacticalAI.swift` | `AI.heuristic` / `AI.lstm(_:)` — the app-side hooks |
-| `Train/` | macOS CLI (not shipped): rollouts, BC, RL, parity, eval |
+| `Train/` | macOS CLI (not shipped): rollouts, BC, REINFORCE/PPO, parity, eval |
 | `COR/Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
 | `PG/policy.pgw` | Bundled weights (synchronized folder group → app resource) |
 
@@ -144,7 +187,7 @@ neural/classic per battle in `TacticalMode.tactical`; `LSTMWeights.bundled` load
 
 ### Replays — `PGRP` (`Train/Replay.swift`)
 
-Version 4 stores magic, version, `MemoryLayout<TacticalAction>.size`,
+The v5 header stores magic, version, `MemoryLayout<TacticalAction>.size`,
 seats/winner/days/seed, the objective kind/team/deadline, fort level, and then the
 raw `encode(action)` stream (~10–100 KB).
 `makeSim()` rebuilds the exact initial state; `check()` = rebuild + replay + compare
@@ -186,16 +229,18 @@ redirected, so `tail -f run.log` works and nothing is lost on a kill.
 
 ### Pipeline
 
+Run artifacts live under `tmp/ai/runs/` (`tmp/` is not under version control).
+
 ```
-Train rollout --n 160 --out tmp/runs/replays --suite mixed --verify
-Train bc      --data tmp/runs/replays --out tmp/runs/bc      # behavior cloning
-Train eval    --weights tmp/runs/bc/policy.pgw --suite mixed # objective-mixed arena
-Train ppo     --weights tmp/runs/bc/policy.pgw --out tmp/runs/ppo \
-              --iters 150 --curriculum 3 --suite mixed
-Train eval    --weights tmp/runs/ppo/ckpt-90.pgw --n 416     # pick the winner
+Train rollout --n 160 --out tmp/ai/runs/replays --suite mixed --verify
+Train bc      --data tmp/ai/runs/replays --out tmp/ai/runs/bc     # behavior cloning
+Train eval    --weights tmp/ai/runs/bc/policy.pgw --suite mixed   # objective-mixed arena
+Train ppo     --weights tmp/ai/runs/bc/policy.pgw --ref tmp/ai/runs/bc/policy.pgw \
+              --vwarm 4 --lam 0.95 --iters 96 --out tmp/ai/runs/ppo-stepN
+Train eval    --weights tmp/ai/runs/ppo-stepN/ckpt-84.pgw --n 416 # pick the winner
                                 # (~0.85 s/battle; 832 battles resolves ~4pt at z≈2 —
                                 # configs are inhomogeneous, only compare paired runs)
-cp tmp/runs/ppo/ckpt-90.pgw PG/policy.pgw                    # ship it
+cp tmp/ai/runs/ppo-stepN/ckpt-84.pgw PG/policy.pgw                # ship it
 
 # Compare the bundled PGW1 policy with the strengthened teacher on the old arena:
 Train eval --weights PG/policy.pgw --n 32 --suite classic
@@ -203,14 +248,16 @@ Train eval --weights PG/policy.pgw --n 32 --suite classic
 
 ### Subcommands
 
-**`rollout --n 8 --out tmp/runs/replays --seed 0 [--suite classic|mixed] [--verify]`** — heuristic-vs-heuristic
+**`rollout --n 8 --out tmp/ai/runs/replays --seed 0 [--suite fair|classic|mixed] [--verify]`** — heuristic-vs-heuristic
 battles as `.pgr` files. The config is derived purely from the index (country pairs
-ger/usa, fin/isr, swe/pak, ned/usa × prestige and baseLevel/tier
+swe/usa, nor/isr, den/irn × prestige and baseLevel/tier
 variants), so corpora are reproducible byte-for-byte; `--verify` replays each battle
 after writing. `classic` is the exact historical `.none` mapping. The default `mixed`
 suite rotates `.none`, seat-0 survival defender, and seat-1 survival defender; survival
-deadlines are 40 days on 32×32 maps, with fort level 1. Budget: 65k
-actions / 80 days. Every loop stops as soon as `sim.winner` is non-nil, including a
+deadlines are 40 days on 32×32 maps, with fort level 1. `fair` pins one even
+config (only the map seed varies with the index) — the PPO checkpoint arena
+uses it. Budget: 65k
+actions / 60 days. Every loop stops as soon as `sim.winner` is non-nil, including a
 survival win with both teams alive.
 
 **`replay <file> ...`** — rebuild + verify recorded winner/days; use after toolchain or
@@ -221,7 +268,7 @@ every MPSGraph head + h/c/value against the pure-Swift policy step by step. Gate
 |Δ| ~1e-7 and **0** argmax flips. Run after any change to `Net.swift`,
 `LSTMPolicy.swift`, or `Encoding.swift`.
 
-**`bc --data tmp/runs/replays --out tmp/runs/bc [--steps 600] [--b 16] [--t 16]
+**`bc --data tmp/ai/runs/replays --out tmp/ai/runs/bc [--steps 600] [--b 16] [--t 16]
 [--lr 3e-4] [--holdout 8] [--ckpt 200] [--wseed 13] [--resume <pgw>]`** — behavior
 cloning. Each battle yields two streams (one per seat, each under its own fog);
 truncated BPTT over `b` lanes × `t` steps with h/c carried across windows; masked CE
@@ -242,16 +289,16 @@ not the final: held-out CE flattens and goes noisy near the end of a long run
 and is a poor proxy for arena strength — arena-eval the best-held-out AND
 final checkpoints.
 
-**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite classic|mixed]`** — the arena: pure-Swift
+**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite fair|classic|mixed]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
 (⇒ `2n` battles). Reports separate policy and heuristic wins/draws/losses, average
 days, action counts, and illegal-action counts, and **hard-gates on 0 illegal actions**
 (mutation oracle). Independent battles run concurrently while results remain ordered
 by config. `--wseed` plays random weights instead — the sanity floor.
 
-**`rl --weights <pgw> [--out tmp/runs/rl] [--iters 100] [--episodes 16] [--b 16]
+**`rl --weights <pgw> [--out tmp/ai/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
-[--curriculum 0] [--anneal 0.35] [--suite classic|mixed]`** — REINFORCE
+[--curriculum 0] [--anneal 0.35] [--suite fair|classic|mixed]`** — REINFORCE
 vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
 sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
 touched, and each episode is fully determined by its index, so runs are reproducible);
@@ -268,17 +315,21 @@ end early — unscaled, the update is dominated by "stop doing what long episode
 i.e. acting at all); then the episodes replay through the BC graph as
 advantage-weighted CE (Σ|w| normalization ≡ the policy gradient).
 
-Terminal reward = dense, symmetric progress terms (weights are the `w…` constants at
+Reward = dense, symmetric progress terms (weights are the `w…` constants at
 the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFORCE at
-~0% sampled wins:
+~0% sampled wins. Collection records the same reward twice: as the episode
+total (`rl` consumes it) and as per-decision slices (`Episode.stepRewards`,
+deltas of the clamped cumulative terms between one policy decision and the
+next — they telescope to the total; outcome + prestige land on the last slice;
+shaping before the first decision is dropped). `ppo`'s GAE consumes the slices.
 
 | Term | Weight | Meaning |
 |---|---|---|
-| settlements | 1.0 | Δ(own − enemy settlement count) over the episode / total on map |
-| units | 0.5 | enemy value killed − own value lost, as fractions of each side's start (hp-weighted cost, accumulated per step so purchases don't pollute it) |
-| kills | 0.25 | enemy units destroyed − own units lost, as fractions of each side's starting unit count — the units term pays for damage, this pays extra for finishing units off |
-| prestige | 0.25 | (mine − theirs) / (mine + theirs) at episode end |
-| outcome | 0.5 | ±0.5 on a decided battle; timeouts score 0 and are judged by the dense terms |
+| settlements | 0.47 | Δ(own − enemy settlement count) / total on map — control *is* the win condition made dense |
+| units | 0.10 | enemy value killed − own value lost, as fractions of each side's start (hp-weighted cost, accumulated per step so purchases don't pollute it) |
+| kills | 0.33 | enemy units destroyed − own units lost, as fractions of each side's starting unit count — the units term pays for damage, this pays extra for finishing units off |
+| prestige | 0.022 | (mine − theirs) / (mine + theirs) at episode end |
+| outcome | 0.47 | ±0.47 on a decided battle; a timeout costs −0.2 (`wDraw`, added 2026-08-02 after curriculum-0 PPO learned to stall for draws) |
 
 `--curriculum <0-3>` starts collection with the policy seat economically boosted;
 fractional values are accepted so a checkpoint can continue from its exact difficulty.
@@ -304,18 +355,20 @@ Every `--ckpt` iterations: `ckpt-N.pgw`, an **argmax** arena on eval configs
 `0…evaln−1` (same configs as `Train eval`), and episode dumps (`episodes-N/`, replay
 format — boosted seats are recorded in the header, so dumps stay replay-valid).
 `rl-log.csv`:
-`iter,wins,losses,draws,meanR,madv,settle,units,prestige,days,samples,loss,windows,level,arenaWin`
+`iter,wins,losses,draws,meanR,madv,settle,units,kills,prestige,days,samples,loss,windows,level,arenaWin`
 (`madv` = raw mean |advantage| before normalization — near the 0.1 floor means the
 batch carries almost no signal).
 Note `--resume` does not exist here: restarting from a checkpoint restarts Adam (pass
 the reached `--curriculum` level explicitly when continuing an annealed run).
 
-**`ppo --weights <pgw> [--ref <pgw>] [--out tmp/runs/ppo] [--iters 100]
-[--episodes 32] [--epochs 3] [--clip 0.2] [--vcoef 0.5] [--kl 0.1] [--ent 0]
-[--vwarm 5] [--lam 1] [--b --t --lr --temp --seed --ckpt --evaln --curriculum
+**`ppo --weights <pgw> [--ref <pgw>] [--out tmp/ai/runs/ppo] [--iters 12]
+[--episodes 12] [--epochs 3] [--clip 0.2] [--vcoef 0.5] [--kl 0.1] [--ent 0]
+[--vwarm 0] [--lam 1] [--b --t --lr --temp --seed --ckpt --evaln --curriculum
 --anneal --suite]`** — the stronger learner (`PPOTrainer.swift`), sharing
-collection, reward, curriculum, and arena machinery with `rl`. Three upgrades,
-each matched to a REINFORCE failure class:
+collection, reward, and curriculum machinery with `rl` (default suite
+`classic`, lr 3e-6; checkpoint arenas always run the `fair` suite; with no
+CLI args at all, `tmp/ai/run.json` supplies them via `DefaultArgs`). Three
+upgrades, each matched to a REINFORCE failure class:
 
 - **PPO-clip** — each batch is reused for `--epochs` optimization passes; the
   per-sample importance ratio is clipped at 1±ε so a sample whose probability
@@ -323,15 +376,18 @@ each matched to a REINFORCE failure class:
   movement is bounded in distribution space, retiring the hand-tuned
   windows × lr displacement invariant (update-shock runs 4/5/10) — watch the
   `clipfrac` column instead.
-- **Value-head baseline** — GAE (γ = 1, `--lam`, default 1 ⇒ A_t = R − V(s_t))
-  from the value head, trained here with `--vcoef` MSE. V sees
+- **Value-head baseline** — GAE (γ = 1, `--lam`) over the per-step reward
+  slices: at λ = 1 this is A_t = G_t − V(s_t) with G_t the return-to-go, at
+  λ < 1 TD bootstrapping through the value head localizes credit further. V is
+  trained here with `--vcoef` MSE against the λ-return; it sees
   prestige/tier/baseLevel in the observation globals, so it learns the matchup
   correction per state — replacing the stratified LOO baseline and the
   length-normalization hack. `--vwarm` iterations train the value head *alone*
   first (random-init V backpropagating into the shared trunk would shift the
-  policy heads' inputs under them); the curriculum is frozen meanwhile. The
-  `ev` column (explained variance vs the Monte-Carlo return) is the baseline's
-  health metric.
+  policy heads' inputs under them; unnecessary when continuing from a
+  checkpoint whose V is already trained); the curriculum is frozen meanwhile.
+  The `ev` column (explained variance vs the Monte-Carlo return-to-go) is the
+  baseline's health metric.
 - **KL anchor** — β = `--kl` times the full-distribution per-head
   KL(π‖π_ref) toward `--ref` (default: the starting weights, i.e. the BC
   prior), computed against an in-graph frozen constant copy of the network
@@ -346,7 +402,7 @@ and ratios are exact by construction even across runaway-turn-guard steps.
 Self-checks: during `--vwarm` the `kl` column must read ~0 (policy ≡ ref
 validates both the warmup freeze and the ref branch); `clipfrac`/`akl` near 0
 at epoch starts. `ppo-log.csv`:
-`iter,wins,losses,draws,meanR,ev,madv,settle,units,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin`.
+`iter,wins,losses,draws,meanR,ev,madv,settle,units,kills,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin`.
 
 Loss mechanics (`PPOGraph`): joint logπ = Σ heads applicability-weighted −CE
 (the BC graph's masked softmaxCE, reduction none); ratio r =
@@ -363,14 +419,15 @@ the per-window lr is scaled by the window's valid-sample fraction so sparse
 tail windows (the longest episodes' remainders) cannot out-vote full ones. Smoke recipe: 3 iters × 4 episodes, epochs 2, vwarm 1
 — `kl` must log 0.0 *exactly* during warmup, no NaN, RSS bounded.
 
-**Verdict (runs ppo1–ppo3, 2026-07-14/15)**: PPO broke the REINFORCE ceiling
-from a weak prior (ppo1 ckpt-90 25.7% vs bc3 21.6%, paired 832 battles, z≈2)
-but added nothing over strong priors twice (ppo2 continuation of ckpt-90 +5W
-n.s.; ppo3 from bc4 +7W n.s.), and parking at the difficulty frontier after
-the descent *erodes* even-matchup strength (ppo3 ckpt-110/150 lost ~25W vs
-ckpt-50) — pick checkpoints from the descent, not the park. BC scale has been
-the reliable lever since; RL is worth revisiting only at even matchups
-(`--curriculum 0`) from a prior strong enough to sample wins there.
+**Verdict**: under terminal-only reward (runs ppo1–ppo3, 2026-07-14/15) PPO
+broke the REINFORCE ceiling from a weak prior but added nothing over strong
+ones, and parking at the difficulty frontier after a curriculum descent
+*eroded* even-matchup strength — pick checkpoints from the descent, not the
+park. That conclusion is **superseded** by the per-step reward slices
+(2026-08-01): ppo-step1/step2 lifted the strong bc8 prior from 17.2% to
+~28–30% fair-arena over 144 iterations (see Status at the top). The old runs'
+one durable lesson stands: checkpoint choice matters more than run length, so
+arena-compare several, not just the final.
 
 ### Reading a run
 

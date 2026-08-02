@@ -27,13 +27,14 @@ import COR
 ///                of that side's starting unit count — the value term pays
 ///                for damage; this pays extra for finishing units off
 ///   prestige     (mine − theirs) / (mine + theirs) at episode end
-///   outcome      ±wOutcome on a decided battle; timeouts score 0 here and
-///                are judged by the dense terms instead
+///   outcome      ±wOutcome on a decided battle; a timeout costs −wDraw so
+///                stalling out the clock cannot dominate playing for the win
 /// Argmax arena checkpoints (`Eval.play`, battle indices 0…) track real
 /// strength on the same configs `Train eval` reports.
 enum RLTrainer {
 
 	static let wOutcome: Float = 0.47
+	static let wDraw: Float = 0.2
 	static let wSettlements: Float = 0.47
 	static let wUnits: Float = 0.1
 	static let wKills: Float = 0.33
@@ -44,6 +45,9 @@ enum RLTrainer {
 		var seat: Int
 		var level = 0
 		var reward: Float = 0
+		/// One slice per policy decision, in stream order: the shaping earned
+		/// between that decision and the next (outcome + prestige on the last).
+		var stepRewards: [Float] = []
 		var outcome = "D"
 		var samples = 0
 		var settleTerm: Float = 0
@@ -129,7 +133,7 @@ enum RLTrainer {
 
 	static func run(_ args: [String]) throws {
 		var weightsPath: String?
-		var out = "tmp/runs/rl"
+		var out = "tmp/ai/runs/rl"
 		var iters = 100
 		var episodes = 16
 		var b = 16
@@ -364,7 +368,8 @@ enum RLTrainer {
 	}
 
 	/// One sampled episode: the policy on `seat`, the heuristic opposite,
-	/// rollout budgets, terminal reward from the final state.
+	/// rollout budgets, episode reward from the final state plus the
+	/// per-decision slices PPO's GAE consumes.
 	static func play(
 		index: Int,
 		seat: Int,
@@ -383,12 +388,17 @@ enum RLTrainer {
 		let mine = replay.seats[seat].country.team
 		let theirs = replay.seats[1 - seat].country.team
 		let start = census(sim, mine: mine, theirs: theirs)
-		var prev = (mine: start.mineValue, theirs: start.theirsValue,
-		            mineUnits: start.mineUnits, theirsUnits: start.theirsUnits)
+		var prev = start
 		var killed: Float = 0
 		var lost: Float = 0
 		var kills: Float = 0
 		var deaths: Float = 0
+		// Per-step slices are deltas of the *clamped cumulative* weighted terms,
+		// so they telescope to exactly the episode's dense reward — `shaped` is
+		// that cumulative value, `pending` the part accrued since the last
+		// policy decision (shaping before the first decision is nobody's).
+		var shaped: Float = 0
+		var pending: Float = 0
 
 		while replay.actions.count < Rollouts.maxActions {
 			if sim.winner != nil { break }
@@ -396,10 +406,15 @@ enum RLTrainer {
 
 			let action: TacticalAction
 			if sim.playerIndex == seat {
+				if !episode.stepRewards.isEmpty {
+					episode.stepRewards[episode.stepRewards.count - 1] += pending
+				}
+				pending = 0
 				action = policy.traced(for: sim) { logits, mask in
 					sample(logits, mask, temp: temp, rng: &rng)
 				}.0
 				episode.samples += 1
+				episode.stepRewards.append(0)
 			} else {
 				action = sim.run(ai: &ai)
 			}
@@ -409,41 +424,52 @@ enum RLTrainer {
 			// Value only *decreases* through kills — purchases and arriving
 			// reinforcements increase it, so accumulating the drops separates
 			// combat results from economy.
-			let cur = unitValues(sim, mine: mine)
-			killed += max(0, prev.theirs - cur.theirs)
-			lost += max(0, prev.mine - cur.mine)
+			let cur = census(sim, mine: mine, theirs: theirs)
+			killed += max(0, prev.theirsValue - cur.theirsValue)
+			lost += max(0, prev.mineValue - cur.mineValue)
 			kills += max(0, prev.theirsUnits - cur.theirsUnits)
 			deaths += max(0, prev.mineUnits - cur.mineUnits)
 			prev = cur
+
+			episode.settleTerm = clamp(
+				Float((cur.ownSettlements - cur.theirsSettlements) - (start.ownSettlements - start.theirsSettlements))
+				/ Float(max(start.settlements, 1))
+			)
+			episode.unitTerm = clamp(
+				killed / max(start.theirsValue, 1) - lost / max(start.mineValue, 1)
+			)
+			episode.killTerm = clamp(
+				kills / max(start.theirsUnits, 1) - deaths / max(start.mineUnits, 1)
+			)
+			let w = wSettlements * episode.settleTerm
+				+ wUnits * episode.unitTerm
+				+ wKills * episode.killTerm
+			pending += w - shaped
+			shaped = w
 		}
 		replay.winner = sim.winner ?? .none
 		replay.days = UInt16(sim.day)
 
-		let end = census(sim, mine: mine, theirs: theirs)
-		episode.settleTerm = clamp(
-			Float((end.ownSettlements - end.theirsSettlements) - (start.ownSettlements - start.theirsSettlements))
-			/ Float(max(start.settlements, 1))
-		)
-		episode.unitTerm = clamp(
-			killed / max(start.theirsValue, 1) - lost / max(start.mineValue, 1)
-		)
-		episode.killTerm = clamp(
-			kills / max(start.theirsUnits, 1) - deaths / max(start.mineUnits, 1)
-		)
 		let pMine = Float(sim.players[seat].prestige)
 		let pTheirs = Float(sim.players[1 - seat].prestige)
 		episode.prestigeTerm = (pMine - pTheirs) / max(pMine + pTheirs, 1)
 
-		episode.reward = wSettlements * episode.settleTerm
-			+ wUnits * episode.unitTerm
-			+ wKills * episode.killTerm
-			+ wPrestige * episode.prestigeTerm
+		episode.reward = shaped + wPrestige * episode.prestigeTerm
+		var terminal = wPrestige * episode.prestigeTerm
 		if replay.winner == mine {
 			episode.reward += wOutcome
+			terminal += wOutcome
 			episode.outcome = "W"
 		} else if replay.winner == theirs {
 			episode.reward -= wOutcome
+			terminal -= wOutcome
 			episode.outcome = "L"
+		} else {
+			episode.reward -= wDraw
+			terminal -= wDraw
+		}
+		if !episode.stepRewards.isEmpty {
+			episode.stepRewards[episode.stepRewards.count - 1] += pending + terminal
 		}
 		episode.replay = replay
 		return episode

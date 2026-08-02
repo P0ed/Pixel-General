@@ -10,8 +10,8 @@ import MetalPerformanceShadersGraph
 enum BCTrainer {
 
 	static func run(_ args: [String]) throws {
-		var data = "tmp/runs/replays"
-		var out = "tmp/runs/bc"
+		var data = "tmp/ai/runs/replays"
+		var out = "tmp/ai/runs/bc"
 		var steps = 600
 		var b = 16
 		var t = 16

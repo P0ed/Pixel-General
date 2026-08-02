@@ -35,7 +35,7 @@ extension DefaultArgs {
 
 	static var `default`: DefaultArgs? {
 		(
-			try? Data(contentsOf: URL(filePath: "tmp/run.json"))
+			try? Data(contentsOf: URL(filePath: "tmp/ai/run.json"))
 		)
 		.flatMap { data in
 			try? JSONDecoder().decode(DefaultArgs.self, from: data)
