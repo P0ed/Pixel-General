@@ -27,13 +27,14 @@ import COR
 ///                of that side's starting unit count — the value term pays
 ///                for damage; this pays extra for finishing units off
 ///   prestige     (mine − theirs) / (mine + theirs) at episode end
-///   outcome      ±wOutcome on a decided battle; timeouts score 0 here and
-///                are judged by the dense terms instead
+///   outcome      ±wOutcome on a decided battle; a timeout costs −wDraw so
+///                stalling out the clock cannot dominate playing for the win
 /// Argmax arena checkpoints (`Eval.play`, battle indices 0…) track real
 /// strength on the same configs `Train eval` reports.
 enum RLTrainer {
 
 	static let wOutcome: Float = 0.47
+	static let wDraw: Float = 0.2
 	static let wSettlements: Float = 0.47
 	static let wUnits: Float = 0.1
 	static let wKills: Float = 0.33
@@ -463,6 +464,9 @@ enum RLTrainer {
 			episode.reward -= wOutcome
 			terminal -= wOutcome
 			episode.outcome = "L"
+		} else {
+			episode.reward -= wDraw
+			terminal -= wDraw
 		}
 		if !episode.stepRewards.isEmpty {
 			episode.stepRewards[episode.stepRewards.count - 1] += pending + terminal

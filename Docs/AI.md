@@ -326,7 +326,7 @@ shaping before the first decision is dropped). `ppo`'s GAE consumes the slices.
 | units | 0.10 | enemy value killed − own value lost, as fractions of each side's start (hp-weighted cost, accumulated per step so purchases don't pollute it) |
 | kills | 0.33 | enemy units destroyed − own units lost, as fractions of each side's starting unit count — the units term pays for damage, this pays extra for finishing units off |
 | prestige | 0.022 | (mine − theirs) / (mine + theirs) at episode end |
-| outcome | 0.47 | ±0.47 on a decided battle; timeouts score 0 and are judged by the dense terms |
+| outcome | 0.47 | ±0.47 on a decided battle; a timeout costs −0.2 (`wDraw`, added 2026-08-02 after curriculum-0 PPO learned to stall for draws) |
 
 `--curriculum <0-3>` starts collection with the policy seat economically boosted;
 fractional values are accepted so a checkpoint can continue from its exact difficulty.
