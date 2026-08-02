@@ -17,7 +17,7 @@ and the AI interface is one `TacticalAction` per call — exactly a policy's
 step function. Battles are therefore stored as *replays* and regenerated
 deterministically instead of storing states.
 
-## Status — handoff (2026-08-01)
+## Status — handoff (2026-08-02)
 
 Credit assignment moved from episode level to per action: collection now
 records one reward slice per policy decision (`Episode.stepRewards` — deltas of
@@ -32,30 +32,33 @@ out in the same value head — train the critic first. (The sim is
 `BitwiseCopyable`, so cheap state snapshots are available if search is ever
 revisited.)
 
-First results — fair-suite argmax arena at checkpoints, 192 battles each
-(±3 pt noise), runs `ppo-step1` (bc8 prior, `--vwarm 4 --lam 0.95`, 48 iters)
-then `ppo-step2` (continuation, `--ref` pinned to bc8, 96 iters):
+Results so far, all continuations of the bc8 prior with `--ref` pinned to it
+(`--lam 0.95`; 832-battle fair arenas, ~±2 pt):
 
-```
-step1: 17.2  15.6  20.8  27.6
-step2: 22.9  24.5  26.6  28.1  (18.8)  26.0  30.2  27.6
-```
+- `ppo-step1`/`ppo-step2` (12 episodes/iter, curriculum 1, 48+96 iters):
+  17.2% → 27.5% (`step2/ckpt-84`), flat in the second half.
+- `ppo-step3` (`--episodes 32 --curriculum 0`, 96 iters): wins tied at 26.7%
+  but losses 499 → 409 — even-matchup collection first bred timeout play
+  (draws doubled, a timeout's outcome 0 beat a loss's −0.47), then converted
+  the long games into defense. The economy curriculum is retired.
+- `ppo-step4` (from step3/ckpt-96, + `wDraw = 0.2` timeout penalty in the
+  outcome term, `--vcoef 1.0`, 512 iters, 9.8 h): flat ~26% through iter 240,
+  then a breakout — ckpt-264/312/408/480/512 scored 32.9 / 34.6 / 31.7 /
+  35.8 / **36.9%**, monotone-ish in training time and still rising at the
+  end. The heuristic is down to 43.8%. `ev` lifted off 0 (~0.3) only late.
 
-The (18.8) was eval noise; the real story is a steady climb that flattens
-around 27–30% in step2's second half. Best weights:
-`tmp/ai/runs/ppo-step2/ckpt-84.pgw` (30.2%). `PG/policy.pgw` (the bundled
-weights) has **not** been updated with any of this.
+Best weights: `tmp/ai/runs/ppo-step4/ckpt-512.pgw` (36.9%), copied to
+`PG/policy.pgw` on 2026-08-02 for playtesting.
 
 Next levers, in order:
 
-1. `--episodes 24` continuing from ckpt-84 — 12-episode batches swing between
-   1W and 9W iteration to iteration; advantage noise, not signal, is now the
-   binding constraint.
-2. Raise `--vcoef` if `ev` stays far below 1 (it hovered around 0–0.07).
-3. Raise checkpoint `--evaln` — the ±3 pt arenas nearly caused a wrong
-   stop-the-run call at step2 ckpt-60.
-4. Re-test `--curriculum 0`: the economy boost exists to manufacture wins the
-   sampler never sees; at ~30% even-matchup strength that rationale is fading.
+1. Continue from step4/ckpt-512 with the same recipe — the curve had not
+   flattened at 512 iterations; nothing else is cheaper.
+2. Mixed-suite arena before judging the shipped opponent: the numbers above
+   are fair-suite; the app plays `mixed` objectives.
+3. The 64-battle checkpoint arenas (`--evaln 32`) swing ±6 pt and repeatedly
+   mislabeled checkpoints overnight — raise `--evaln` or arena-compare
+   shortlists at 832 battles before trusting any single reading.
 
 ## Heuristic teacher
 
