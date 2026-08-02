@@ -50,6 +50,17 @@ Results so far, all continuations of the bc8 prior with `--ref` pinned to it
 Best weights: `tmp/ai/runs/ppo-step4/ckpt-512.pgw` (36.9%), copied to
 `PG/policy.pgw` on 2026-08-02 for playtesting.
 
+Decoder evaluation (2026-08-02, `tmp/ai/ai-action-factorization-verdict.md`):
+complete-action MAP decoding is −8 pt (branching-factor bias floods `end`),
+but keeping the greedy kind and decoding actor+completion jointly within it
+lifts ckpt-512 to **43.8/41.9% fair** (seeds 0–415/416–831) and **44.0%
+mixed**, draws down, decoder-only — the shared actor head under-ranks units
+whose best completion is confident. **Wired into `LSTMPolicy.action(for:)`
+same day**: the app and the RL/PPO checkpoint arenas now play the jointkind
+decoder (arena numbers shift ~+5 pt vs pre-wiring logs; `--decoder greedy`
+replays the old hierarchy for comparison). Collection sampling is untouched —
+stage-wise sampling is the factored policy either way.
+
 Next levers, in order:
 
 1. Continue from step4/ckpt-512 with the same recipe — the curve had not
@@ -85,7 +96,7 @@ then end turn.
 | `COR/Tactical/AI/Encoding.swift` | `SimObservation` tensor (shared by training and inference) |
 | `COR/Tactical/AI/ActionSpace.swift` | Factored action heads + legality masks |
 | `COR/Tactical/AI/LSTMWeights.swift` | `PGW1` weight format: IO, spec catalog, seeded random init |
-| `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
+| `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked decoding (`JointDecoder.swift` holds the diagnostics) |
 | `COR/Tactical/AI/TacticalAI.swift` | `AI.heuristic` / `AI.lstm(_:)` — the app-side hooks |
 | `Train/` | macOS CLI (not shipped): rollouts, BC, REINFORCE/PPO, parity, eval |
 | `COR/Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
@@ -170,9 +181,12 @@ the training init (SplitMix64, ±√(3/fanIn)).
 
 ### Inference — `LSTMPolicy.swift`
 
-Accelerate (`im2col` + `vDSP_mmul`) forward pass; hierarchical **masked argmax**
-(kind → actor → target/slot) — deterministic, never touches the sim's `D20`, so
-multiplayer/replay determinism is preserved. `h`/`c` persist across the battle and
+Accelerate (`im2col` + `vDSP_mmul`) forward pass; **masked argmax kind, then
+joint actor+completion** within it (`logP(actor|kind) + logP(best
+target-or-slot|actor)`; resupply reduces to actor argmax) — deterministic,
+never touches the sim's `D20`, so multiplayer/replay determinism is
+preserved. The legacy pure hierarchy (kind → actor → target/slot) lives on
+as `traced`, which parity and RL sampling use. `h`/`c` persist across the battle and
 reset when `sim.turn` goes backwards (a reused policy meeting a new battle). A
 256-actions-per-turn cap forces `.end` (runaway-turn guard); undecodable indices fall
 back to `.end`. One inference per action in a turn-based game — perf is a non-issue.
@@ -289,12 +303,20 @@ not the final: held-out CE flattens and goes noisy near the end of a long run
 and is a poor proxy for arena strength — arena-eval the best-held-out AND
 final checkpoints.
 
-**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite fair|classic|mixed]`** — the arena: pure-Swift
+**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite fair|classic|mixed]
+[--decoder shipping|greedy|exact|beam<N>|jointkind]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
 (⇒ `2n` battles). Reports separate policy and heuristic wins/draws/losses, average
 days, action counts, and illegal-action counts, and **hard-gates on 0 illegal actions**
 (mutation oracle). Independent battles run concurrently while results remain ordered
 by config. `--wseed` plays random weights instead — the sanity floor.
+`--decoder` (default `shipping` = `action(for:)`, jointkind) selects the
+policy's decode rule: `greedy` = the legacy stage-wise hierarchy (`traced`),
+and the `LSTMPolicy.jointDecision` diagnostics — `exact` = complete-action
+MAP over masked conditional log-softmax, `beam<N>` = same over the top-N
+(kind, actor) prefixes, `jointkind` = the shipping rule with divergence/kind/
+timing diagnostics vs greedy. One LSTM advance per decision regardless of
+mode; small arenas cannot rank decoders any more than checkpoints.
 
 **`rl --weights <pgw> [--out tmp/ai/runs/rl] [--iters 100] [--episodes 16] [--b 16]
 [--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]

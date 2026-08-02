@@ -46,7 +46,7 @@ do {
 			  Behavior-clone the heuristic AI from a replay corpus; writes PGW1
 			  checkpoints and a CSV loss/accuracy log.
 		  eval --weights <pgw> [--n <configs>] [--seed <base>] [--wseed <n>]
-			 [--suite classic|mixed]
+			 [--suite classic|mixed] [--decoder shipping|greedy|exact|beam<N>|jointkind]
 			  Arena: the pure-Swift LSTMPolicy vs the heuristic AI, each config played
 			  from both sides; reports both records and gates on 0 illegal actions.
 		  rl --weights <pgw> [--out <dir>] [--iters <n>] [--episodes <per iter>]

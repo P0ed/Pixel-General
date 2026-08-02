@@ -3,10 +3,12 @@ import Foundation
 
 /// Dependency-free (Accelerate-only) inference for the trained LSTM opponent.
 /// One call per action, mirroring `run(ai:)`: encode the observation, run the
-/// network, and pick the best *legal* action by hierarchical masked argmax —
-/// kind, then actor tile, then target tile or shop slot. Deterministic and
-/// RNG-free, so multiplayer and replay determinism are untouched; the masks
-/// (`ActionSpace`) guarantee the result never no-ops through `reduce`.
+/// network, and pick the best *legal* action — masked argmax kind, then actor
+/// and target/slot decoded jointly within it (`action(for:)`; the pure
+/// hierarchical argmax survives as `traced`, the parity/sampling path).
+/// Deterministic and RNG-free, so multiplayer and replay determinism are
+/// untouched; the masks (`ActionSpace`) guarantee the result never no-ops
+/// through `reduce`.
 ///
 /// The hidden state carries across the whole battle (that is the LSTM's
 /// memory); create a fresh policy — or `reset()` — per battle.
@@ -32,8 +34,63 @@ public struct LSTMPolicy {
 
 	/// The policy's move for the acting player. Always legal; `.end` when the
 	/// network says so, when nothing else is legal, or as a runaway-turn guard.
+	/// Kind by masked argmax, then the actor and its target/slot jointly by
+	/// `logP(actor|kind) + logP(best completion|actor)` — the branching-bias
+	/// pathologies of full complete-action MAP stay out by keeping the kind
+	/// marginal (see `tmp/ai/ai-action-factorization-verdict.md`).
 	public mutating func action(for sim: borrowing TacticalSim) -> TacticalAction {
-		traced(for: sim).0
+		if sim.turn != lastTurn {
+			if sim.turn < lastTurn { reset() }
+			lastTurn = sim.turn
+			actionsThisTurn = 0
+		}
+		actionsThisTurn += 1
+		guard actionsThisTurn <= Self.maxActionsPerTurn else { return .end }
+
+		let trunk = step(sim.observation())
+		let masks = sim.actionMasks()
+		let kindLogits = fc(h, "kind")
+		guard
+			let k = Self.argmax(kindLogits, masks.kinds),
+			let kind = ActionSpace.Kind(rawValue: k), kind != .end
+		else { return .end }
+
+		let proj = fc(h, "actor.proj")
+		let actorLogits = tileHead(trunk, per: proj, prefix: "actor")
+
+		if kind == .resupply {
+			guard let actor = Self.argmax(actorLogits, masks.actors[k]) else { return .end }
+			return sim.action(ActionIndices(kind: .resupply, actor: actor)) ?? .end
+		}
+
+		let actorLP = Self.logSoftmax(actorLogits, masks.actors[k])
+		var best = -Float.infinity
+		var action = TacticalAction.end
+		for a in 0 ..< ActionSpace.tiles where masks.actors[k][a] {
+			switch kind {
+			case .move, .embark, .disembark, .attack:
+				let logits = targetHead(trunk, actor: a)
+				let mask = sim.targetMask(kind, actor: a)
+				guard let t = Self.argmax(logits, mask) else { continue }
+				let lp = actorLP[a] + Self.logSoftmax(logits, mask)[t]
+				if lp > best {
+					best = lp
+					action = sim.action(ActionIndices(kind: kind, actor: a, target: t)) ?? .end
+				}
+			case .purchase:
+				let logits = slotHead(trunk, actor: a)
+				let mask = sim.slotMask(actor: a)
+				guard let s = Self.argmax(logits, mask) else { continue }
+				let lp = actorLP[a] + Self.logSoftmax(logits, mask)[s]
+				if lp > best {
+					best = lp
+					action = sim.action(ActionIndices(kind: .purchase, actor: a, slot: s)) ?? .end
+				}
+			case .resupply, .end:
+				break
+			}
+		}
+		return action
 	}
 
 	/// One forward pass's head outputs, for the parity harness (`Train parity`)
@@ -47,10 +104,12 @@ public struct LSTMPolicy {
 		public var actorTile = -1
 	}
 
-	/// `action(for:)` plus the trace; the trace is `nil` only on the
-	/// runaway-turn guard, where no forward pass runs. `select` picks the
-	/// index at every head — masked argmax for play, masked sampling in the
-	/// RL trainer; whatever it returns must respect the mask.
+	/// Hierarchical stage-wise selection plus the trace; the trace is `nil`
+	/// only on the runaway-turn guard, where no forward pass runs. `select`
+	/// picks the index at every head — masked argmax for parity/legacy greedy,
+	/// masked sampling in the RL trainers (stage-wise sampling *is* the
+	/// factored policy, so collection is unaffected by the joint
+	/// `action(for:)` decoder); whatever it returns must respect the mask.
 	public mutating func traced(
 		for sim: borrowing TacticalSim,
 		select: ([Float], [Bool]) -> Int? = LSTMPolicy.argmax
