@@ -1,21 +1,14 @@
 import Foundation
 import COR
 
-/// `Train rl` — REINFORCE fine-tune of a BC checkpoint against the frozen
-/// heuristic. Each iteration plays a batch of episodes with masked-softmax
-/// *sampling* (own `D20` instance — the sim's is never touched), scores them
-/// with a terminal reward, and replays them through the BC graph as
-/// advantage-weighted cross-entropy — with `Σ|w|` normalization that is
-/// exactly the policy gradient. The baseline is the leave-one-out mean of the
-/// episode's difficulty-level group (within-batch advantages always straddle
-/// zero — an EMA baseline went stale after a policy shift and un-learned the
-/// BC prior, see run 4; a shared mean over a mixed-difficulty batch graded
-/// episodes by their matchup, not their play, see run 8); advantages
-/// are normalized to mean |A| = 1 per batch and clamped to ±3 (the graph
-/// divides by Σ|w| per window, so this keeps every window's scale honest).
+/// Episode collection for the PPO trainer: each batch plays sampled episodes
+/// against the frozen heuristic with masked-softmax *sampling* (own `D20`
+/// instance — the sim's is never touched), scores them with the dense reward,
+/// and records the per-decision slices GAE consumes. Also home of the reward
+/// weights, self-paced curriculum, and checkpoint tail the training loop uses.
 ///
-/// Reward: dense, symmetric progress terms — win/loss alone starves
-/// REINFORCE when the sampled win rate is ~0 (run-2 lesson: the policy
+/// Reward: dense, symmetric progress terms — win/loss alone starves policy
+/// gradients when the sampled win rate is ~0 (run-2 lesson: the policy
 /// drifted to "don't lose" stalling). Each term is ~[−1, 1]:
 ///   settlements  Δ(own − enemy settlement count) / total on map — capture
 ///                is good, being captured is bad; control IS the win
@@ -31,7 +24,7 @@ import COR
 ///                stalling out the clock cannot dominate playing for the win
 /// Argmax arena checkpoints (`Eval.play`, battle indices 0…) track real
 /// strength on the same configs `Train eval` reports.
-enum RLTrainer {
+enum Collector {
 
 	static let wOutcome: Float = 0.47
 	static let wDraw: Float = 0.2
@@ -56,8 +49,8 @@ enum RLTrainer {
 		var prestigeTerm: Float = 0
 	}
 
-	/// Per-iteration aggregates over a collected batch — the numbers both the
-	/// RL and PPO loops print and log.
+	/// Per-iteration aggregates over a collected batch — the numbers the
+	/// training loop prints and logs.
 	struct BatchStats {
 		var wins = 0
 		var losses = 0
@@ -93,8 +86,7 @@ enum RLTrainer {
 	/// zeros, hopelessly short of the descent threshold. On ascent winEMA
 	/// restarts at 0.2: above the floor so the easier mix gets a fair
 	/// evaluation window, below the descent threshold so it must earn the
-	/// way back down. Shared by the RL and PPO loops — one definition of the
-	/// tuned v3.1 semantics.
+	/// way back down.
 	struct Curriculum {
 		var difficulty: Float
 		let ceiling: Float
@@ -131,154 +123,9 @@ enum RLTrainer {
 		}
 	}
 
-	static func run(_ args: [String]) throws {
-		var weightsPath: String?
-		var out = "tmp/ai/runs/rl"
-		var iters = 100
-		var episodes = 16
-		var b = 16
-		var t = 16
-		var lr: Float = 2e-5
-		var temp: Float = 1
-		var seed = 1000
-		var ckpt = 10
-		var evalN = 8
-		var curriculum: Float = 0
-		var anneal: Float = 0.35
-		var suite: RolloutSuite = .mixed
-
-		try Args(args).parse { flag, next in
-			switch flag {
-			case "--weights": weightsPath = try next()
-			case "--out": out = try next()
-			case "--iters": iters = try Int(next()) ?? iters
-			case "--episodes": episodes = try Int(next()) ?? episodes
-			case "--b": b = try Int(next()) ?? b
-			case "--t": t = try Int(next()) ?? t
-			case "--lr": lr = try Float(next()) ?? lr
-			case "--temp": temp = try Float(next()) ?? temp
-			case "--seed": seed = try Int(next()) ?? seed
-			case "--ckpt": ckpt = try Int(next()) ?? ckpt
-			case "--evaln": evalN = try Int(next()) ?? evalN
-			case "--curriculum": curriculum = try Float(next()) ?? curriculum
-			case "--anneal": anneal = try Float(next()) ?? anneal
-			case "--suite": suite = try .parse(next())
-			default: throw TrainError.usage("unknown option \(flag)")
-			}
-		}
-
-		guard let weightsPath else {
-			throw TrainError.usage("rl needs --weights <pgw> (a BC checkpoint)")
-		}
-		guard (0 ... 3).contains(curriculum) else {
-			throw TrainError.usage("--curriculum must be between 0 and 3")
-		}
-		let weights = try LSTMWeights.load(weightsPath)
-
-		let outDir = URL(fileURLWithPath: out, isDirectory: true)
-		try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
-
-		let graph = try BCGraph(weights: weights, b: b, t: t)
-		var battleIndex = seed
-		var globalStep = 0
-		var schedule = Curriculum(level: curriculum, anneal: anneal)
-		var csv = "iter,wins,losses,draws,meanR,madv,settle,units,kills,prestige,days,samples,loss,windows,level,arenaWin\n"
-		let clock = ContinuousClock()
-		let start = clock.now
-
-		for iter in 1 ... iters {
-			// On-policy batch with the graph's current weights.
-			let current = graph.checkpoint()
-			let batch = collect(
-				weights: current, count: episodes, startIndex: battleIndex,
-				temp: temp, difficulty: schedule.difficulty, suite: suite
-			)
-			battleIndex += episodes
-
-			// Leave-one-out baseline, stratified by drawn difficulty level:
-			// within-batch advantages always straddle zero, so a policy shift
-			// can never turn a whole update into a wholesale push-down (run-4
-			// lesson: the EMA baseline went stale after the first big shift,
-			// every advantage went ≈ −1.3 for eight iterations straight, and
-			// the BC prior was unlearned). Stratification because a mixed
-			// batch under one shared mean confounds "which level did you
-			// draw" with "how well did you act" — harder-level episodes sit
-			// systematically below the mean and every update leaks "push down
-			// whatever the policy does at the harder level" (run-8 lesson:
-			// parked at d=2.5 the wins decayed 5→1 of 16 over 20 iterations).
-			// A singleton group has no baseline and contributes no gradient.
-			// The clamp bounds any single episode's pull after normalization.
-			let n = Float(batch.count)
-			var advantages = [Float](repeating: 0, count: batch.count)
-			for level in Set(batch.map(\.level)) {
-				let group = batch.indices.filter { batch[$0].level == level }
-				guard group.count > 1 else { continue }
-				let g = Float(group.count)
-				let mean = group.reduce(0) { $0 + batch[$1].reward } / g
-				for j in group {
-					advantages[j] = (batch[j].reward - mean) * g / (g - 1)
-				}
-			}
-			let meanAbs = max(advantages.reduce(0) { $0 + abs($1) } / n, 0.1)
-			advantages = advantages.map { a in max(-3, min(3, a / meanAbs)) }
-
-			// Length-normalized: an episode's gradient mass is ∝ its sample
-			// count, and losing/drawing episodes run to the day cap with
-			// thousands of actions while wins end early with few — unscaled,
-			// the update is dominated by "push down whatever long episodes
-			// do", which is acting at all (run-4b lesson: one update halved
-			// samples/episode and the policy just ended turns). Scaling by
-			// meanSamples/samples makes each episode vote once.
-			let meanSamples = batch.reduce(0) { $0 + Float($1.samples) } / n
-			let batcher = Batcher(
-				episodes: batch.indices.map { j in
-					(batch[j].replay, batch[j].seat,
-					 advantages[j] * meanSamples / max(Float(batch[j].samples), 1))
-				},
-				b: b, t: t
-			)
-			var loss: Float = 0
-			var windows = 0
-			while true {
-				let window = batcher.window()
-				guard window.samples > 0 else { break }
-				globalStep += 1
-				let m = graph.step(window, lr: Net.correctedLR(lr, step: globalStep), update: true)
-				batcher.carry(h: m.h, c: m.c)
-				loss += m.loss
-				windows += 1
-			}
-			loss /= Float(max(windows, 1))
-
-			let stats = BatchStats(batch)
-			print("iter \(iter)  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  |A| \(f(meanAbs))  settle \(f(stats.settle))  units \(f(stats.units))  kills \(f(stats.kills))  prestige \(f(stats.prestige))  days \(stats.days)  samples \(stats.samples)  loss \(f(loss))\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
-
-			if let move = schedule.update(winRate: Float(stats.wins) / n) {
-				print("  \(move)")
-			}
-
-			var arena = ""
-			if iter % ckpt == 0 || iter == iters {
-				arena = try dumpCheckpoint(
-					graph.checkpoint(), iter: iter, outDir: outDir,
-					evalN: evalN, suite: suite, batch: batch
-				)
-			}
-			csv += "\(iter),\(stats.wins),\(stats.losses),\(stats.draws),\(stats.meanR),\(meanAbs),\(stats.settle),\(stats.units),\(stats.kills),\(stats.prestige),\(stats.days),\(stats.samples),\(loss),\(windows),\(schedule.difficulty),\(arena)\n"
-			try csv.write(to: outDir.appendingPathComponent("rl-log.csv"), atomically: true, encoding: .utf8)
-		}
-
-		try graph.checkpoint().data().write(to: outDir.appendingPathComponent("policy.pgw"))
-		let d = start.duration(to: clock.now).components
-		print("── rl ──")
-		print("  iters:    \(iters) (\(d.seconds)s, \(battleIndex - seed) episodes)")
-		print("  suite:    \(suite.rawValue)")
-		print("  out:      \(outDir.path)/policy.pgw")
-	}
-
-	/// The checkpoint tail shared by the RL and PPO loops: write the weights,
-	/// run the argmax arena on the fixed eval configs, dump the batch's
-	/// episodes as replays. Returns the arena win rate for the CSV column.
+	/// The checkpoint tail: write the weights, run the argmax arena on the
+	/// fixed eval configs, dump the batch's episodes as replays. Returns the
+	/// arena win rate for the CSV column.
 	static func dumpCheckpoint(
 		_ snapshot: LSTMWeights,
 		iter: Int,
@@ -337,7 +184,7 @@ enum RLTrainer {
 
 	/// The standard config with the policy seat's economy boosted by
 	/// `level` (0 = untouched): the curriculum manufactures the captures
-	/// and wins REINFORCE must *experience* before it can reinforce them.
+	/// and wins the policy must *experience* before it can reinforce them.
 	/// While boosted, config tier asymmetry is neutralized — a tier-0
 	/// seat facing tier 3 is unwinnable whatever its prestige, and such
 	/// batches poison the curriculum with hopeless losses (run-6 lesson:

@@ -1,9 +1,9 @@
 import Foundation
 
 /// Diagnostic complete-action decoding (`Train eval --decoder`): the same
-/// forward pass as `traced`, decoded three ways — the shipping greedy
-/// hierarchy, exact MAP over masked conditional log-probabilities, and a beam
-/// over (kind, actor) prefixes. Advances the LSTM exactly once per call; the
+/// forward pass as `traced`, decoded multiple ways — the legacy greedy
+/// hierarchy, exact MAP over masked conditional log-probabilities, and the
+/// shipping kind-local joint. Advances the LSTM exactly once per call; the
 /// target/slot heads are kind-independent, so they run once per unique actor
 /// and only the legality masks differ per kind.
 public extension LSTMPolicy {
@@ -11,14 +11,13 @@ public extension LSTMPolicy {
 	struct JointDecision {
 		public var greedy: TacticalAction = .end
 		public var exact: TacticalAction = .end
-		public var beam: TacticalAction = .end
 		/// Greedy's kind, but actor and target/slot decoded jointly within it.
 		public var kindLocal: TacticalAction = .end
 		public var prefixes = 0
 		public var legalActions = 1
 	}
 
-	mutating func jointDecision(for sim: borrowing TacticalSim, beamWidth: Int = 8) -> JointDecision {
+	mutating func jointDecision(for sim: borrowing TacticalSim) -> JointDecision {
 		if sim.turn != lastTurn {
 			if sim.turn < lastTurn { reset() }
 			lastTurn = sim.turn
@@ -121,15 +120,6 @@ public extension LSTMPolicy {
 				best = p.complete
 				d.kindLocal = p.action
 			}
-		}
-
-		let ranked = prefixes.indices.sorted { a, b in
-			prefixes[a].lp == prefixes[b].lp ? a < b : prefixes[a].lp > prefixes[b].lp
-		}
-		best = -.infinity
-		for i in ranked.prefix(beamWidth) where prefixes[i].complete > best {
-			best = prefixes[i].complete
-			d.beam = prefixes[i].action
 		}
 
 		return d

@@ -81,10 +81,8 @@ final class SampleStream {
 /// with a fresh stream — and zeroed h/c — at the next window boundary.
 ///
 /// Two sources: a replay corpus on disk (BC — endless, epoch-shuffled) or an
-/// in-memory episode list (RL — each consumed exactly once, on-policy; the
-/// episode's advantage scales every label weight, so the graph's weighted CE
-/// becomes the policy gradient). A window with `samples == 0` means the
-/// episode list is exhausted.
+/// in-memory episode list (PPO — each consumed exactly once, on-policy). A
+/// window with `samples == 0` means the episode list is exhausted.
 final class Batcher {
 	let b: Int
 	let t: Int
@@ -96,7 +94,7 @@ final class Batcher {
 	// properties so `drain` can run `buildNext()` on a background thread
 	// while the caller steps the GPU and carries.
 	private let files: [URL]
-	private var episodes: [(replay: Replay, seat: Int, scale: Float)] = []
+	private var episodes: [(replay: Replay, seat: Int)] = []
 	private let onePass: Bool
 	private var rng: D20
 	private var order: [Int] = []
@@ -110,7 +108,6 @@ final class Batcher {
 
 	private struct Lane {
 		var stream: SampleStream?
-		var scale: Float = 1
 		var id: Int32 = -1
 	}
 
@@ -208,7 +205,7 @@ final class Batcher {
 		carryCr = [Float](repeating: 0, count: b * LSTMWeights.hidden)
 	}
 
-	init(episodes: [(replay: Replay, seat: Int, scale: Float)], b: Int, t: Int) {
+	init(episodes: [(replay: Replay, seat: Int)], b: Int, t: Int) {
 		files = []
 		self.episodes = episodes
 		self.b = b
@@ -226,13 +223,13 @@ final class Batcher {
 	}
 
 	/// BC: streams are battle-seat pairs, shuffled anew each epoch.
-	/// RL: the episode list, front to back, once.
-	private func nextStream() -> (SampleStream, Float, Int32)? {
+	/// PPO: the episode list, front to back, once.
+	private func nextStream() -> (SampleStream, Int32)? {
 		if onePass {
 			guard cursor < episodes.count else { return nil }
 			let e = episodes[cursor]
 			cursor += 1
-			return (SampleStream(replay: e.replay, seat: e.seat), e.scale, Int32(cursor - 1))
+			return (SampleStream(replay: e.replay, seat: e.seat), Int32(cursor - 1))
 		}
 		if cursor >= order.count {
 			order = Array(0 ..< files.count * 2)
@@ -245,7 +242,7 @@ final class Batcher {
 		let id = order[cursor]
 		cursor += 1
 		guard let replay = try? Replay.read(files[id / 2]) else { return nil }
-		return (SampleStream(replay: replay, seat: id % 2), 1, Int32(id))
+		return (SampleStream(replay: replay, seat: id % 2), Int32(id))
 	}
 
 	/// The serial API (BC/RL): build + finalize in one call, carry keyed by
@@ -293,8 +290,7 @@ final class Batcher {
 				buf.restarted[lane] = true
 				let next = nextStream()
 				lanes[lane].stream = next?.0
-				lanes[lane].scale = next?.1 ?? 1
-				lanes[lane].id = next?.2 ?? -1
+				lanes[lane].id = next?.1 ?? -1
 			}
 
 			for step in 0 ..< t {
@@ -311,21 +307,20 @@ final class Batcher {
 				buf.actorMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.actorMask)
 				buf.targetMask.replaceSubrange(i * ActionSpace.tiles ..< (i + 1) * ActionSpace.tiles, with: s.targetMask)
 				buf.slotMask.replaceSubrange(i * ActionSpace.slots ..< (i + 1) * ActionSpace.slots, with: s.slotMask)
-				let scale = lanes[lane].scale
 				buf.epi[i] = lanes[lane].id
 				buf.kind[i] = s.kind
-				buf.kindW[i] = scale
+				buf.kindW[i] = 1
 				if s.actor >= 0 {
 					buf.actor[i] = s.actor
-					buf.actorW[i] = scale
+					buf.actorW[i] = 1
 				}
 				if s.target >= 0 {
 					buf.target[i] = s.target
-					buf.targetW[i] = scale
+					buf.targetW[i] = 1
 				}
 				if s.slot >= 0 {
 					buf.slot[i] = s.slot
-					buf.slotW[i] = scale
+					buf.slotW[i] = 1
 				}
 				buf.samples += 1
 			}

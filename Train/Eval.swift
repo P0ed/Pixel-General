@@ -54,15 +54,14 @@ enum Eval {
 		/// `shipping` = `LSTMPolicy.action(for:)` (jointkind since 2026-08-02);
 		/// `greedy` = the legacy stage-wise hierarchy via `traced`; the rest
 		/// are `jointDecision` diagnostics.
-		case shipping, greedy, exact, beam(Int), jointKind
+		case shipping, greedy, exact, jointKind
 
 		static func parse(_ s: String) throws -> Decoder {
 			if s == "shipping" { return .shipping }
 			if s == "greedy" { return .greedy }
 			if s == "exact" { return .exact }
 			if s == "jointkind" { return .jointKind }
-			if s.hasPrefix("beam"), let n = Int(s.dropFirst(4)), n > 0 { return .beam(n) }
-			throw TrainError.usage("--decoder shipping|greedy|exact|beam<N>|jointkind")
+			throw TrainError.usage("--decoder shipping|greedy|exact|jointkind")
 		}
 	}
 
@@ -72,7 +71,6 @@ enum Eval {
 		var disagree = 0
 		var sameKindDiffActor = 0
 		var sameKindDiffTarget = 0
-		var beamMatchesExact = 0
 		var transitions = [Int](repeating: 0, count: ActionSpace.kinds * ActionSpace.kinds)
 		var kindCounts = [Int](repeating: 0, count: ActionSpace.kinds)
 		var greedyKindCounts = [Int](repeating: 0, count: ActionSpace.kinds)
@@ -85,7 +83,6 @@ enum Eval {
 			disagree += o.disagree
 			sameKindDiffActor += o.sameKindDiffActor
 			sameKindDiffTarget += o.sameKindDiffTarget
-			beamMatchesExact += o.beamMatchesExact
 			for i in transitions.indices { transitions[i] += o.transitions[i] }
 			for i in kindCounts.indices { kindCounts[i] += o.kindCounts[i] }
 			for i in greedyKindCounts.indices { greedyKindCounts[i] += o.greedyKindCounts[i] }
@@ -258,17 +255,10 @@ enum Eval {
 					action = policy.action(for: sim)
 				case .greedy:
 					action = policy.traced(for: sim).0
-				case .exact, .beam, .jointKind:
-					var width = 8
-					if case .beam(let w) = decoder { width = w }
-					let d = policy.jointDecision(for: sim, beamWidth: width)
-					switch decoder {
-					case .beam: action = d.beam
-					case .jointKind: action = d.kindLocal
-					default: action = d.exact
-					}
+				case .exact, .jointKind:
+					let d = policy.jointDecision(for: sim)
+					action = decoder == .jointKind ? d.kindLocal : d.exact
 					diag.disagree += action != d.greedy ? 1 : 0
-					diag.beamMatchesExact += d.beam == d.exact ? 1 : 0
 					diag.prefixes += d.prefixes
 					diag.legalActions += d.legalActions
 					if action != d.greedy,
@@ -338,13 +328,10 @@ enum Eval {
 		switch decoder {
 		case .shipping, .greedy:
 			return
-		case .exact, .beam, .jointKind:
+		case .exact, .jointKind:
 			print("  greedy kinds:  \(freq(d.greedyKindCounts))")
 			print("  disagree with greedy: \(d.disagree) (\(pct(d.disagree)))  " +
 				"same-kind actor Δ \(d.sameKindDiffActor)  target/slot Δ \(d.sameKindDiffTarget)")
-			var width = 8
-			if case .beam(let w) = decoder { width = w }
-			print("  beam\(width) == exact: \(pct(d.beamMatchesExact))")
 			print("  avg legal prefixes \(unsafe String(format: "%.1f", Double(d.prefixes) / n))  " +
 				"avg legal actions \(unsafe String(format: "%.1f", Double(d.legalActions) / n))")
 			var pairs: [(Int, Int)] = []
