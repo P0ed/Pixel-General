@@ -1,9 +1,5 @@
 extension TacticalSim {
 
-	/// Mirror of the `.attack` reducer guard — shared by `attack`, the action
-	/// masks, and the AIs. Requires the target to be visible to the acting
-	/// player; the surprise attack out of `move` is the one exempt path (its
-	/// target is hidden by definition, and it fires with `ap` already spent).
 	func canAttack(src: UID, dst: UID) -> Bool {
 		let (su, du) = (units[src], units[dst])
 		return su.country == country
@@ -104,11 +100,6 @@ extension TacticalSim {
 		events.append(.fire(src, dst, dmg, destination.hp))
 	}
 
-	/// The attacker/defender numbers that feed the duel: base `atk`/`def` plus the
-	/// leadership/recon/radar auras, with the caller's `defMod` folded into `def`.
-	/// Shared by `fire` (live) and `estimateDamage` (prediction) so the aura and
-	/// base-stat assembly has a single definition. `visibleOnly` is the acting
-	/// player's perspective: units it cannot see contribute nothing.
 	func combatStats(src: UID, dst: UID, defMod: Int8, visibleOnly: Bool = false) -> (atk: Int8, def: Int8) {
 		let (source, destination) = (units[src], units[dst])
 		let aLR: Int8 = aura(.leadership, country: source.country, at: position[src], visibleOnly: visibleOnly) ? 1 : 0
@@ -121,10 +112,6 @@ extension TacticalSim {
 		return (atk, def)
 	}
 
-	/// The defender's terrain/entrenchment modifier for a shot from `attacker`:
-	/// entrench + terrain def + (close-combat unless ranged) + mountaineer, minus
-	/// the attacker's manhattan/diagonal reach and encirclement. This is the
-	/// deterministic part of `attack`'s `dstDef`.
 	func defenderMod(defender dst: UID, attacker src: UID, ranged: Bool, visibleOnly: Bool = false) -> Int8 {
 		let (su, du) = (units[src], units[dst])
 		let (sp, dp) = (position[src], position[dst])
@@ -162,14 +149,27 @@ extension TacticalSim {
 		}
 	}
 
-	/// The first enemy ground/naval AA unit whose range covers `xy` — the
-	/// overwatch shooter that interrupts an air unit entering that tile.
 	func aaOverwatcher(covering xy: XY, team: Team) -> UID? {
 		units.firstMapAlive { i, u in
-			u.country.team != team && u.isAA && !u.isAir && u.airAtk > 0 && u.ammo > 0
+			u.country.team != team && u.isAA && !u.isAir && u[.overwatch]
+			&& u.airAtk > 0 && u.ammo > 0
 			&& !offMap(unit: i.uid)
 			&& position[i].stepDistance(to: xy) <= Int(u.rng) * 2 + 1
 			? i.uid : nil
+		}
+	}
+
+	func aaCoverage(team: Team) -> SetXY {
+		.make { set in
+			units.forEachAlive { i, u in
+				guard u.country.team != team, u.isAA, !u.isAir, u[.overwatch],
+					  u.airAtk > 0, u.ammo > 0, !offMap(unit: i.uid) else { return }
+				let p = position[i]
+				let s49 = p.s49
+				for k in s49.indices where p.stepDistance(to: s49[k]) <= Int(u.rng) * 2 + 1 {
+					set[s49[k]] = true
+				}
+			}
 		}
 	}
 

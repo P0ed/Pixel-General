@@ -450,9 +450,9 @@ struct TacticalTests {
 	}
 
 	@Test func aaOverwatchInterruptsAirMove() {
-		// An air unit whose route enters enemy AA range stops at the first
-		// covered tile and takes an overwatch shot; a route that stays outside
-		// the range is unaffected.
+		// An air unit entering charged enemy AA range stops at the first
+		// covered tile and takes one overwatch shot; the charge is spent until
+		// the AA owner's end of turn re-arms it.
 		let map = Map<32, Terrain>(zero: .field)
 		let players = [
 			Player(country: .usa, type: .human, prestige: 0xF00),
@@ -468,6 +468,7 @@ struct TacticalTests {
 		let aaUID = sim.units.firstMapAlive { i, u in u.country == .rus ? i.uid : nil }!
 		sim.place(heliUID, at: XY(4, 10))
 		sim.place(aaUID, at: XY(16, 10))
+		#expect(sim.units[aaUID][.overwatch], "reset() must arm AA for day-1 coverage")
 
 		// s300 rng 3 covers stepDistance ≤ 7: x ≥ 13 on the same row.
 		// A move ending at x = 12 never enters the range.
@@ -489,7 +490,55 @@ struct TacticalTests {
 			return false
 		}
 		#expect(overwatch, "Entering AA range must draw overwatch fire")
+		#expect(!sim.units[aaUID][.overwatch], "Firing spends the overwatch charge")
 		#expect(sim.units[aaUID].ammo < sim.units[aaUID].maxAmmo, "Overwatch consumes AA ammo")
+
+		// With the charge spent the heli flies on through covered tiles freely.
+		sim.units[heliUID].mp = 2
+		var e3: [TacticalEvent] = []
+		sim.move(unit: heliUID, to: XY(15, 10), into: &e3)
+		#expect(sim.position[heliUID] == XY(15, 10), "Spent AA must not interrupt")
+		let firedSpent = e3.contains { event in
+			if case .fire = event { return true }
+			return false
+		}
+		#expect(!firedSpent, "Spent AA must not fire again this turn")
+
+		// The owner's end of turn re-arms the charge.
+		sim.units[heliUID].hp = 0xF
+		_ = sim.reduce(.end)
+		_ = sim.reduce(.end)
+		#expect(sim.units[aaUID][.overwatch], "End of owner's turn re-arms overwatch")
+
+		var e4: [TacticalEvent] = []
+		sim.move(unit: heliUID, to: XY(14, 10), into: &e4)
+		let rearmed = e4.contains { event in
+			if case .fire(let src, let dst, _, _) = event { return src == aaUID && dst == heliUID }
+			return false
+		}
+		#expect(rearmed, "Re-armed AA fires on the next intrusion")
+
+		// An AA that spends its move ends the turn disarmed, even mid-charge:
+		// wheeling under aircraft must not pin them.
+		sim.units[heliUID].hp = 0xF
+		_ = sim.reduce(.end)
+		_ = sim.reduce(.end)
+		#expect(sim.units[aaUID][.overwatch], "Unmoved AA re-arms")
+		_ = sim.reduce(.end)
+		var eAA: [TacticalEvent] = []
+		sim.move(unit: aaUID, to: XY(16, 11), into: &eAA)
+		#expect(sim.position[aaUID] == XY(16, 11), "AA repositions on its own turn")
+		_ = sim.reduce(.end)
+		#expect(!sim.units[aaUID][.overwatch], "Moved AA ends its turn disarmed")
+
+		var e5: [TacticalEvent] = []
+		sim.move(unit: heliUID, to: XY(15, 10), into: &e5)
+		#expect(sim.position[heliUID] == XY(15, 10), "Disarmed AA must not interrupt")
+		let firedDisarmed = e5.contains { event in
+			if case .fire = event { return true }
+			return false
+		}
+		#expect(!firedDisarmed, "Disarmed AA must not fire")
 	}
 
 	@Test func movesForOwnUnitNotIncludeStartTile() {

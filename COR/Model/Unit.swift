@@ -23,6 +23,7 @@ public struct Bits: OptionSet, Equatable {
 
 public extension Bits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
+	static var overwatch: Self { .init(rawValue: 1 << 1) }
 }
 
 public struct Skills: OptionSet, Equatable {
@@ -222,6 +223,7 @@ extension Unit {
 		mp = maxMP
 		ammo = maxAmmo
 		ent = 0
+		if isAA, !isAir { self[.overwatch] = true }
 	}
 
 	@discardableResult

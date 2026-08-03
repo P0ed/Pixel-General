@@ -229,7 +229,7 @@ private enum Help {
 	    add supporting fire, and a well-entrenched, experienced defender can
 	    fire first (rugged defence) or even force the attacker to retreat.
 	  • Aircraft flying into enemy anti-air range are interrupted and
-	    fired upon on the spot.
+	    fired upon — one shot per anti-air per turn, none after it moves.
 	  • Damaging and killing enemies earns experience; on a kill a unit may
 	    roll a new skill. Higher-level units hit harder and defend better.
 

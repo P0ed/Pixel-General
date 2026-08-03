@@ -163,6 +163,8 @@ public extension TacticalSim {
 		let route = moves.route(to: target)
 		guard !route.isEmpty else { return }
 
+		let aaCoverage = units[uid].isAir ? aaCoverage(team: units[uid].country.team) : .empty
+
 		var pos = moves.start
 		var interruptor: UID = .none
 		var overwatcher: UID = .none
@@ -177,7 +179,7 @@ public extension TacticalSim {
 			} else {
 				pos = xy
 			}
-			if units[uid].isAir, let aa = aaOverwatcher(covering: xy, team: units[uid].country.team) {
+			if units[uid].isAir, aaCoverage[xy], let aa = aaOverwatcher(covering: xy, team: units[uid].country.team) {
 				overwatcher = aa
 				break
 			}
@@ -210,6 +212,7 @@ public extension TacticalSim {
 			attack(src: uid, dst: interruptor, surprise: true, into: &events)
 		}
 		if overwatcher != .none {
+			units[overwatcher][.overwatch] = false
 			vision[playerIndex][position[overwatcher]] = true
 			fire(src: overwatcher, dst: uid, defMod: 0, into: &events)
 		}
