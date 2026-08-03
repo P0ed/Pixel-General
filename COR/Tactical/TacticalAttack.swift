@@ -162,6 +162,17 @@ extension TacticalSim {
 		}
 	}
 
+	/// The first enemy ground/naval AA unit whose range covers `xy` — the
+	/// overwatch shooter that interrupts an air unit entering that tile.
+	func aaOverwatcher(covering xy: XY, team: Team) -> UID? {
+		units.firstMapAlive { i, u in
+			u.country.team != team && u.isAA && !u.isAir && u.airAtk > 0 && u.ammo > 0
+			&& !offMap(unit: i.uid)
+			&& position[i].stepDistance(to: xy) <= Int(u.rng) * 2 + 1
+			? i.uid : nil
+		}
+	}
+
 	func aaSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {
 		position[defender].n8.firstMap { hx in
 			unitAt(hx).flatMap { u in

@@ -449,6 +449,49 @@ struct TacticalTests {
 		#expect(attacked, "First-step ambush should still trigger the surprise attack")
 	}
 
+	@Test func aaOverwatchInterruptsAirMove() {
+		// An air unit whose route enters enemy AA range stops at the first
+		// covered tile and takes an overwatch shot; a route that stays outside
+		// the range is unaffected.
+		let map = Map<32, Terrain>(zero: .field)
+		let players = [
+			Player(country: .usa, type: .human, prestige: 0xF00),
+			Player(country: .rus, type: .ai, prestige: 0xF00),
+		]
+		var heli = Unit(model: .mh6, country: .usa)
+		heli.reset()
+		var aa = Unit(model: .s300, country: .rus)
+		aa.reset()
+
+		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, aa])
+		let heliUID = sim.units.firstMapAlive { i, u in u.country == .usa ? i.uid : nil }!
+		let aaUID = sim.units.firstMapAlive { i, u in u.country == .rus ? i.uid : nil }!
+		sim.place(heliUID, at: XY(4, 10))
+		sim.place(aaUID, at: XY(16, 10))
+
+		// s300 rng 3 covers stepDistance ≤ 7: x ≥ 13 on the same row.
+		// A move ending at x = 12 never enters the range.
+		var e1: [TacticalEvent] = []
+		sim.move(unit: heliUID, to: XY(12, 10), into: &e1)
+		#expect(sim.position[heliUID] == XY(12, 10), "Move outside AA range must complete")
+		let firedEarly = e1.contains { event in
+			if case .fire = event { return true }
+			return false
+		}
+		#expect(!firedEarly, "No overwatch outside AA range")
+
+		// The next leg tries to fly to x = 15; the first covered tile is x = 13.
+		var e2: [TacticalEvent] = []
+		sim.move(unit: heliUID, to: XY(15, 10), into: &e2)
+		#expect(sim.position[heliUID] == XY(13, 10), "Air move must stop at the first covered tile")
+		let overwatch = e2.contains { event in
+			if case .fire(let src, let dst, _, _) = event { return src == aaUID && dst == heliUID }
+			return false
+		}
+		#expect(overwatch, "Entering AA range must draw overwatch fire")
+		#expect(sim.units[aaUID].ammo < sim.units[aaUID].maxAmmo, "Overwatch consumes AA ammo")
+	}
+
 	@Test func movesForOwnUnitNotIncludeStartTile() {
 		let sim = TacticalSim(
 			players: Self.players(),

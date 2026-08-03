@@ -165,6 +165,7 @@ public extension TacticalSim {
 
 		var pos = moves.start
 		var interruptor: UID = .none
+		var overwatcher: UID = .none
 		for k in route.indices.reversed() {
 			let xy = route[k]
 			if let tid = uidAt(xy) {
@@ -175,6 +176,10 @@ public extension TacticalSim {
 				}
 			} else {
 				pos = xy
+			}
+			if units[uid].isAir, let aa = aaOverwatcher(covering: xy, team: units[uid].country.team) {
+				overwatcher = aa
+				break
 			}
 		}
 		for k in route.indices.reversed() {
@@ -203,6 +208,10 @@ public extension TacticalSim {
 
 		if interruptor != .none, units[interruptor].country.team != units[uid].country.team {
 			attack(src: uid, dst: interruptor, surprise: true, into: &events)
+		}
+		if overwatcher != .none {
+			vision[playerIndex][position[overwatcher]] = true
+			fire(src: overwatcher, dst: uid, defMod: 0, into: &events)
 		}
 	}
 }
