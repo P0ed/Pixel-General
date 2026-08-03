@@ -26,8 +26,6 @@ struct Args {
 }
 
 struct DefaultArgs: Codable {
-	var bc: [String]?
-	var rl: [String]?
 	var ppo: [String]?
 }
 

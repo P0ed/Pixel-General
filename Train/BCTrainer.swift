@@ -226,12 +226,7 @@ final class BCGraph {
 				g.softMaxCrossEntropy(masked, labels: labels, axis: 1, reuctionType: .none, name: nil),
 				shape: [NSNumber(value: n), 1], name: nil
 			)
-			// Normalize by Σ|w| (not Σw): BC weights are 0/1 so nothing
-			// changes, but the RL trainer feeds signed advantages as weights —
-			// the CE numerator must stay signed (that IS the policy gradient)
-			// while the divisor and the accuracy weighting must not cancel.
-			let absW = g.absolute(with: weight, name: nil)
-			let sumW = g.maximum(g.reductionSum(with: absW, axes: nil, name: nil), one, name: nil)
+			let sumW = g.maximum(g.reductionSum(with: weight, axes: nil, name: nil), one, name: nil)
 			let meanCE = g.division(g.reductionSum(with: g.multiplication(ce, weight, name: nil), axes: nil, name: nil), sumW, name: nil)
 
 			let best = g.reductionArgMaximum(with: masked, axis: 1, name: nil)
@@ -239,7 +234,7 @@ final class BCGraph {
 				g.equal(best, g.cast(g.reshape(label, shape: [NSNumber(value: n), 1], name: nil), to: best.dataType, name: nil), name: nil),
 				to: .float32, name: nil
 			)
-			let acc = g.division(g.reductionSum(with: g.multiplication(correct, absW, name: nil), axes: nil, name: nil), sumW, name: nil)
+			let acc = g.division(g.reductionSum(with: g.multiplication(correct, weight, name: nil), axes: nil, name: nil), sumW, name: nil)
 			return (meanCE, acc)
 		}
 

@@ -8,7 +8,7 @@ PPO fine-tuning (clipped surrogate, value-head baseline, KL anchor to the BC
 prior) — entirely with `MetalPerformanceShadersGraph`. BC scale (corpus × steps)
 was long the only reliable strength lever; since per-step reward slices landed
 (2026-08-01, see Status) PPO reliably lifts strong priors too. An earlier
-REINFORCE learner plateaued at the BC level. Inference is dependency-free Swift
+REINFORCE learner plateaued at the BC level and has been removed. Inference is dependency-free Swift
 in COR, so the shipping app never touches MPSGraph.
 
 Training rests on properties of the core: `reduce` is a pure function of
@@ -50,6 +50,17 @@ Results so far, all continuations of the bc8 prior with `--ref` pinned to it
 Best weights: `tmp/ai/runs/ppo-step4/ckpt-512.pgw` (36.9%), copied to
 `PG/policy.pgw` on 2026-08-02 for playtesting.
 
+Decoder evaluation (2026-08-02, `tmp/ai/ai-action-factorization-verdict.md`):
+complete-action MAP decoding is −8 pt (branching-factor bias floods `end`),
+but keeping the greedy kind and decoding actor+completion jointly within it
+lifts ckpt-512 to **43.8/41.9% fair** (seeds 0–415/416–831) and **44.0%
+mixed**, draws down, decoder-only — the shared actor head under-ranks units
+whose best completion is confident. **Wired into `LSTMPolicy.action(for:)`
+same day**: the app and the RL/PPO checkpoint arenas now play the jointkind
+decoder (arena numbers shift ~+5 pt vs pre-wiring logs; `--decoder greedy`
+replays the old hierarchy for comparison). Collection sampling is untouched —
+stage-wise sampling is the factored policy either way.
+
 Next levers, in order:
 
 1. Continue from step4/ckpt-512 with the same recipe — the curve had not
@@ -85,9 +96,9 @@ then end turn.
 | `COR/Tactical/AI/Encoding.swift` | `SimObservation` tensor (shared by training and inference) |
 | `COR/Tactical/AI/ActionSpace.swift` | Factored action heads + legality masks |
 | `COR/Tactical/AI/LSTMWeights.swift` | `PGW1` weight format: IO, spec catalog, seeded random init |
-| `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked argmax |
+| `COR/Tactical/AI/LSTMPolicy.swift` | Pure-Swift forward pass + masked decoding (`JointDecoder.swift` holds the diagnostics) |
 | `COR/Tactical/AI/TacticalAI.swift` | `AI.heuristic` / `AI.lstm(_:)` — the app-side hooks |
-| `Train/` | macOS CLI (not shipped): rollouts, BC, REINFORCE/PPO, parity, eval |
+| `Train/` | macOS CLI (not shipped): rollouts, BC, PPO, parity, eval |
 | `COR/Tests/PolicyTests.swift` | Fog, mask, weight-IO, and legality contracts |
 | `PG/policy.pgw` | Bundled weights (synchronized folder group → app resource) |
 
@@ -170,9 +181,12 @@ the training init (SplitMix64, ±√(3/fanIn)).
 
 ### Inference — `LSTMPolicy.swift`
 
-Accelerate (`im2col` + `vDSP_mmul`) forward pass; hierarchical **masked argmax**
-(kind → actor → target/slot) — deterministic, never touches the sim's `D20`, so
-multiplayer/replay determinism is preserved. `h`/`c` persist across the battle and
+Accelerate (`im2col` + `vDSP_mmul`) forward pass; **masked argmax kind, then
+joint actor+completion** within it (`logP(actor|kind) + logP(best
+target-or-slot|actor)`; resupply reduces to actor argmax) — deterministic,
+never touches the sim's `D20`, so multiplayer/replay determinism is
+preserved. The legacy pure hierarchy (kind → actor → target/slot) lives on
+as `traced`, which parity and RL sampling use. `h`/`c` persist across the battle and
 reset when `sim.turn` goes backwards (a reused policy meeting a new battle). A
 256-actions-per-turn cap forces `.end` (runaway-turn guard); undecodable indices fall
 back to `.end`. One inference per action in a turn-based game — perf is a non-issue.
@@ -289,39 +303,34 @@ not the final: held-out CE flattens and goes noisy near the end of a long run
 and is a poor proxy for arena strength — arena-eval the best-held-out AND
 final checkpoints.
 
-**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite fair|classic|mixed]`** — the arena: pure-Swift
+**`eval --weights <pgw> [--n 32] [--seed 0] [--wseed <n>] [--suite fair|classic|mixed]
+[--decoder shipping|greedy|exact|jointkind]`** — the arena: pure-Swift
 `LSTMPolicy` (the shipping path) vs `run(ai:)`, each config played from both sides
 (⇒ `2n` battles). Reports separate policy and heuristic wins/draws/losses, average
 days, action counts, and illegal-action counts, and **hard-gates on 0 illegal actions**
 (mutation oracle). Independent battles run concurrently while results remain ordered
 by config. `--wseed` plays random weights instead — the sanity floor.
+`--decoder` (default `shipping` = `action(for:)`, jointkind) selects the
+policy's decode rule: `greedy` = the legacy stage-wise hierarchy (`traced`),
+and the `LSTMPolicy.jointDecision` diagnostics — `exact` = complete-action
+MAP over masked conditional log-softmax, `jointkind` = the shipping rule with
+divergence/kind/timing diagnostics vs greedy. One LSTM advance per decision
+regardless of mode; small arenas cannot rank decoders any more than checkpoints.
 
-**`rl --weights <pgw> [--out tmp/ai/runs/rl] [--iters 100] [--episodes 16] [--b 16]
-[--t 16] [--lr 2e-5] [--temp 1] [--seed 1000] [--ckpt 10] [--evaln 8]
-[--curriculum 0] [--anneal 0.35] [--suite fair|classic|mixed]`** — REINFORCE
-vs the frozen heuristic. Per iteration: parallel episode collection with masked-softmax
-sampling at `--temp` (own SplitMix64 seeded by battle index — the sim's `D20` is never
-touched, and each episode is fully determined by its index, so runs are reproducible);
-collection and checkpoint arenas both use the selected suite (default `mixed`);
-leave-one-out baseline within each difficulty-level group (an EMA baseline goes stale
-after a policy shift and un-learns everything — within-batch advantages always straddle
-zero; a *shared* mean over a mixed-difficulty batch grades episodes by their matchup,
-not their play — harder-level episodes sit systematically below it and the update
-leaks "push down whatever the policy does at the harder level"; a singleton group
-contributes no gradient); advantages
-normalized to mean |A| = 1, clamped to ±3, and **length-normalized** (an episode's
-gradient mass is ∝ its action count, and losses/draws run to the day cap while wins
-end early — unscaled, the update is dominated by "stop doing what long episodes do",
-i.e. acting at all); then the episodes replay through the BC graph as
-advantage-weighted CE (Σ|w| normalization ≡ the policy gradient).
+**Episode collection, reward, and curriculum** (`Collector.swift`) — the
+machinery under `ppo`. Parallel episode collection vs the frozen heuristic with
+masked-softmax sampling at `--temp` (own SplitMix64 seeded by battle index —
+the sim's `D20` is never touched, and each episode is fully determined by its
+index, so runs are reproducible).
 
 Reward = dense, symmetric progress terms (weights are the `w…` constants at
-the top of `RLTrainer.swift`), each ~[−1, 1] — win/loss alone starves REINFORCE at
-~0% sampled wins. Collection records the same reward twice: as the episode
-total (`rl` consumes it) and as per-decision slices (`Episode.stepRewards`,
-deltas of the clamped cumulative terms between one policy decision and the
-next — they telescope to the total; outcome + prestige land on the last slice;
-shaping before the first decision is dropped). `ppo`'s GAE consumes the slices.
+the top of `Collector.swift`), each ~[−1, 1] — win/loss alone starves the
+policy gradient at ~0% sampled wins. Collection records the same reward twice:
+as the episode total (the `meanR` log column) and as per-decision slices
+(`Episode.stepRewards`, deltas of the clamped cumulative terms between one
+policy decision and the next — they telescope to the total; outcome + prestige
+land on the last slice; shaping before the first decision is dropped). `ppo`'s
+GAE consumes the slices.
 
 | Term | Weight | Meaning |
 |---|---|---|
@@ -345,7 +354,7 @@ EMA at 0.2 — a fair evaluation window before the floor can re-trigger). Discre
 steps proved to be cliffs (even the purely economic tier-equalized 3→2 step collapsed
 the win rate); without the way back up a cliff means starvation, and a strict zero-win
 ascent trigger left run 8 parked at W1–2/16 — too many wins for six consecutive zeros,
-hopelessly short of the descent threshold. Pure REINFORCE needs to *experience*
+hopelessly short of the descent threshold. The policy needs to *experience*
 captures and wins before it can reinforce them, and at even matchups the sampled win
 rate is ~0 (measured: level 3 gives the BC policy ~50% sampled wins vs ~0% at level 0).
 The boost only changes collection configs; the arena always plays the standard even
@@ -354,21 +363,17 @@ matchups. The `level` CSV column records d (fractional).
 Every `--ckpt` iterations: `ckpt-N.pgw`, an **argmax** arena on eval configs
 `0…evaln−1` (same configs as `Train eval`), and episode dumps (`episodes-N/`, replay
 format — boosted seats are recorded in the header, so dumps stay replay-valid).
-`rl-log.csv`:
-`iter,wins,losses,draws,meanR,madv,settle,units,kills,prestige,days,samples,loss,windows,level,arenaWin`
-(`madv` = raw mean |advantage| before normalization — near the 0.1 floor means the
-batch carries almost no signal).
 Note `--resume` does not exist here: restarting from a checkpoint restarts Adam (pass
 the reached `--curriculum` level explicitly when continuing an annealed run).
 
 **`ppo --weights <pgw> [--ref <pgw>] [--out tmp/ai/runs/ppo] [--iters 12]
 [--episodes 12] [--epochs 3] [--clip 0.2] [--vcoef 0.5] [--kl 0.1] [--ent 0]
 [--vwarm 0] [--lam 1] [--b --t --lr --temp --seed --ckpt --evaln --curriculum
---anneal --suite]`** — the stronger learner (`PPOTrainer.swift`), sharing
-collection, reward, and curriculum machinery with `rl` (default suite
-`classic`, lr 3e-6; checkpoint arenas always run the `fair` suite; with no
-CLI args at all, `tmp/ai/run.json` supplies them via `DefaultArgs`). Three
-upgrades, each matched to a REINFORCE failure class:
+--anneal --suite]`** — the trainer (`PPOTrainer.swift`), over the collection,
+reward, and curriculum machinery above (default suite `classic`, lr 3e-6;
+checkpoint arenas always run the `fair` suite; with no CLI args at all,
+`tmp/ai/run.json` supplies them via `DefaultArgs`). Three pillars, each matched
+to a failure class of the removed REINFORCE learner:
 
 - **PPO-clip** — each batch is reused for `--epochs` optimization passes; the
   per-sample importance ratio is clipped at 1±ε so a sample whose probability
@@ -461,6 +466,6 @@ arena-compare several, not just the final.
   `log(softMax + 1e-10)` instead. Dilated `convolution2D` gradients are
   verified (bc7 trained through them). Keep new graph code inside this
   known-good op set.
-- The value head is trained only by `Train ppo` (BC and `rl` exclude it from their
+- The value head is trained only by `Train ppo` (BC excludes it from its
   gradient requests — autodiff asserts on variables that aren't predecessors of the
   loss); inference never reads it beyond `lastValue` logging.

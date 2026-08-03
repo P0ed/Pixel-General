@@ -3,9 +3,9 @@ import COR
 import Metal
 import MetalPerformanceShadersGraph
 
-/// `Train ppo` — the stronger learner over the same collection, reward, and
-/// curriculum machinery as `Train rl` (all reused from `RLTrainer`). Three
-/// upgrades, each aimed at a failure class the REINFORCE runs exposed:
+/// `Train ppo` — PPO fine-tune over `Collector`'s episode collection, reward,
+/// and curriculum machinery. Three pillars, each aimed at a failure class the
+/// earlier REINFORCE runs exposed:
 ///
 ///   PPO-clip        the per-sample importance ratio is clipped at 1±ε, so a
 ///                   sample whose probability has already moved that far
@@ -111,7 +111,7 @@ enum PPOTrainer {
 		var battleIndex = seed
 		var valueStep = 0
 		var policyStep = 0
-		var schedule = RLTrainer.Curriculum(level: curriculum, anneal: anneal)
+		var schedule = Collector.Curriculum(level: curriculum, anneal: anneal)
 		var csv = "iter,wins,losses,draws,meanR,ev,madv,settle,units,kills,prestige,days,samples,loss,surr,vloss,kl,ent,clipfrac,akl,windows,level,arenaWin\n"
 		let clock = ContinuousClock()
 		let start = clock.now
@@ -119,12 +119,12 @@ enum PPOTrainer {
 		for iter in 1 ... iters {
 			// On-policy batch with the graph's current weights.
 			let current = graph.checkpoint()
-			let batch = RLTrainer.collect(
+			let batch = Collector.collect(
 				weights: current, count: episodes, startIndex: battleIndex,
 				temp: cfg.temp, difficulty: schedule.difficulty, suite: suite
 			)
 			battleIndex += episodes
-			let episodeList = batch.map { ($0.replay, $0.seat, Float(1)) }
+			let episodeList = batch.map { ($0.replay, $0.seat) }
 
 			// Read pass: per-sample old log-prob and value under the collection
 			// weights, cached per window ordinal. `drain` builds window k+1 on
@@ -173,7 +173,7 @@ enum PPOTrainer {
 			}
 			sums.scale(1 / Float(max(windows, 1)))
 
-			let stats = RLTrainer.BatchStats(batch)
+			let stats = Collector.BatchStats(batch)
 			print("iter \(iter)\(warming ? " (vwarm)" : "")  \(stats.wins)W \(stats.losses)L \(stats.draws)D  R \(f(stats.meanR))  ev \(f(ev))  |A| \(f(madv))  surr \(f(sums.surr))  v \(f(sums.vloss))  kl \(f(sums.kl))  clip \(f(sums.clipFrac))  settle \(f(stats.settle))  units \(f(stats.units))  kills \(f(stats.kills))  days \(stats.days)  samples \(stats.samples)\(schedule.difficulty > 0 ? "  d \(f(schedule.difficulty))" : "")")
 
 			if !warming, let move = schedule.update(winRate: Float(stats.wins) / Float(batch.count)) {
@@ -182,7 +182,7 @@ enum PPOTrainer {
 
 			var arena = ""
 			if iter % ckpt == 0 || iter == iters {
-				arena = try RLTrainer.dumpCheckpoint(
+				arena = try Collector.dumpCheckpoint(
 					graph.checkpoint(), iter: iter, outDir: outDir,
 					evalN: evalN, suite: .fair, batch: batch
 				)
@@ -209,7 +209,7 @@ enum PPOTrainer {
 	/// whether the baseline is doing anything yet.
 	static func advantages(
 		cache: [PPOGraph.Cached],
-		batch: [RLTrainer.Episode],
+		batch: [Collector.Episode],
 		b: Int, t: Int,
 		lam: Float
 	) throws -> (adv: [[Float]], ret: [[Float]], madv: Float, ev: Float) {

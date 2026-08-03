@@ -47,6 +47,49 @@ enum Eval {
 	struct Match {
 		var policy: Tally
 		var heuristic: Tally
+		var diag = Diag()
+	}
+
+	enum Decoder {
+		/// `shipping` = `LSTMPolicy.action(for:)` (jointkind since 2026-08-02);
+		/// `greedy` = the legacy stage-wise hierarchy via `traced`; the rest
+		/// are `jointDecision` diagnostics.
+		case shipping, greedy, exact, jointKind
+
+		static func parse(_ s: String) throws -> Decoder {
+			if s == "shipping" { return .shipping }
+			if s == "greedy" { return .greedy }
+			if s == "exact" { return .exact }
+			if s == "jointkind" { return .jointKind }
+			throw TrainError.usage("--decoder shipping|greedy|exact|jointkind")
+		}
+	}
+
+	/// Per-decision decoding diagnostics; all counters fold additively.
+	struct Diag {
+		var decisions = 0
+		var disagree = 0
+		var sameKindDiffActor = 0
+		var sameKindDiffTarget = 0
+		var transitions = [Int](repeating: 0, count: ActionSpace.kinds * ActionSpace.kinds)
+		var kindCounts = [Int](repeating: 0, count: ActionSpace.kinds)
+		var greedyKindCounts = [Int](repeating: 0, count: ActionSpace.kinds)
+		var prefixes = 0
+		var legalActions = 0
+		var decodeSeconds = 0.0
+
+		mutating func add(_ o: Diag) {
+			decisions += o.decisions
+			disagree += o.disagree
+			sameKindDiffActor += o.sameKindDiffActor
+			sameKindDiffTarget += o.sameKindDiffTarget
+			for i in transitions.indices { transitions[i] += o.transitions[i] }
+			for i in kindCounts.indices { kindCounts[i] += o.kindCounts[i] }
+			for i in greedyKindCounts.indices { greedyKindCounts[i] += o.greedyKindCounts[i] }
+			prefixes += o.prefixes
+			legalActions += o.legalActions
+			decodeSeconds += o.decodeSeconds
+		}
 	}
 
 	static func run(_ args: [String]) throws {
@@ -55,6 +98,7 @@ enum Eval {
 		var weightsPath: String?
 		var wseed: Int?
 		var suite: RolloutSuite = .mixed
+		var decoder: Decoder = .shipping
 
 		try Args(args).parse { flag, next in
 			switch flag {
@@ -63,6 +107,7 @@ enum Eval {
 			case "--weights": weightsPath = try next()
 			case "--wseed": wseed = try Int(next())
 			case "--suite": suite = try .parse(next())
+			case "--decoder": decoder = try .parse(next())
 			default: throw TrainError.usage("unknown option \(flag)")
 			}
 		}
@@ -80,10 +125,11 @@ enum Eval {
 		let start = clock.now
 		var bySeat = [Tally(), Tally()]
 		var heuristic = Tally()
+		var diag = Diag()
 		let configs = seedBase ..< seedBase + n
 		let matches = matches(
 			weights: weights, configs: configs, suite: suite,
-			heuristicOracle: true
+			heuristicOracle: true, decoder: decoder
 		)
 
 		for (offset, index) in configs.enumerated() {
@@ -94,6 +140,7 @@ enum Eval {
 				let match = matches[offset * config.seats.count + seat]
 				bySeat[seat].add(match.policy)
 				heuristic.add(match.heuristic)
+				diag.add(match.diag)
 				let outcome = match.policy.wins > 0 ? "W" : match.policy.losses > 0 ? "L" : "D"
 				results.append("seat \(seat): \(outcome) \(match.policy.days)d")
 			}
@@ -116,6 +163,7 @@ enum Eval {
 		print("  policy:   \(total.line)")
 		print("  heuristic: \(heuristic.line)")
 		print("  time:     \(Int(secs))s")
+		printDiag(diag, decoder: decoder)
 
 		guard total.illegal + heuristic.illegal == 0 else {
 			throw TrainError.failed("eval gate: \(total.illegal) illegal policy and \(heuristic.illegal) illegal heuristic actions")
@@ -147,7 +195,8 @@ enum Eval {
 		weights: LSTMWeights,
 		configs: Range<Int>,
 		suite: RolloutSuite,
-		heuristicOracle: Bool
+		heuristicOracle: Bool,
+		decoder: Decoder = .shipping
 	) -> [Match] {
 		let seats = 2
 		let count = configs.count * seats
@@ -162,7 +211,7 @@ enum Eval {
 					var policy = LSTMPolicy(weights: weights)
 					unsafe out.value[task] = play(
 						config, policySeat: seat, policy: &policy,
-						heuristicOracle: heuristicOracle
+						heuristicOracle: heuristicOracle, decoder: decoder
 					)
 				}
 			}
@@ -180,12 +229,15 @@ enum Eval {
 		_ config: Replay,
 		policySeat: Int,
 		policy: inout LSTMPolicy,
-		heuristicOracle: Bool
+		heuristicOracle: Bool,
+		decoder: Decoder = .shipping
 	) -> Match {
 		var sim = config.makeSim()
 		var ai = AI.Plan()
 		policy.reset()
 
+		let clock = ContinuousClock()
+		var diag = Diag()
 		var tallies = [Tally(), Tally()]	// [policy, heuristic]
 		var actions = 0
 		while actions < Rollouts.maxActions {
@@ -193,7 +245,44 @@ enum Eval {
 			if sim.day > Rollouts.maxDays { break }
 
 			let side = sim.playerIndex == policySeat ? 0 : 1
-			let action = side == 0 ? policy.action(for: sim) : sim.run(ai: &ai)
+			let action: TacticalAction
+			if side == 1 {
+				action = sim.run(ai: &ai)
+			} else {
+				let t0 = clock.now
+				switch decoder {
+				case .shipping:
+					action = policy.action(for: sim)
+				case .greedy:
+					action = policy.traced(for: sim).0
+				case .exact, .jointKind:
+					let d = policy.jointDecision(for: sim)
+					action = decoder == .jointKind ? d.kindLocal : d.exact
+					diag.disagree += action != d.greedy ? 1 : 0
+					diag.prefixes += d.prefixes
+					diag.legalActions += d.legalActions
+					if action != d.greedy,
+					   let g = sim.actionIndices(d.greedy), let p = sim.actionIndices(action) {
+						diag.transitions[g.kind.rawValue * ActionSpace.kinds + p.kind.rawValue] += 1
+						if g.kind == p.kind {
+							if g.actor != p.actor {
+								diag.sameKindDiffActor += 1
+							} else {
+								diag.sameKindDiffTarget += 1
+							}
+						}
+					}
+					if let g = sim.actionIndices(d.greedy) {
+						diag.greedyKindCounts[g.kind.rawValue] += 1
+					}
+				}
+				let dt = t0.duration(to: clock.now).components
+				diag.decodeSeconds += Double(dt.seconds) + Double(dt.attoseconds) / 1e18
+				diag.decisions += 1
+				if let p = sim.actionIndices(action) {
+					diag.kindCounts[p.kind.rawValue] += 1
+				}
+			}
 			tallies[side].actions += 1
 			if action != .end, side == 0 || heuristicOracle {
 				let before = encode(sim)
@@ -221,6 +310,38 @@ enum Eval {
 			tallies[side].days = Int(sim.day)
 			tallies[side].battles = 1
 		}
-		return Match(policy: tallies[0], heuristic: tallies[1])
+		return Match(policy: tallies[0], heuristic: tallies[1], diag: diag)
+	}
+
+	private static let kindNames = ["move", "embark", "disembark", "attack", "resupply", "purchase", "end"]
+
+	private static func printDiag(_ d: Diag, decoder: Decoder) {
+		guard d.decisions > 0 else { return }
+		let n = Double(d.decisions)
+		func pct(_ v: Int) -> String { unsafe String(format: "%.2f%%", 100 * Double(v) / n) }
+		func freq(_ counts: [Int]) -> String {
+			zip(kindNames, counts).map { "\($0) \(pct($1))" }.joined(separator: "  ")
+		}
+		print("── decoder ──")
+		print("  decisions: \(d.decisions)  decode \(unsafe String(format: "%.2f", 1000 * d.decodeSeconds / n)) ms/decision (summed across threads)")
+		print("  played kinds:  \(freq(d.kindCounts))")
+		switch decoder {
+		case .shipping, .greedy:
+			return
+		case .exact, .jointKind:
+			print("  greedy kinds:  \(freq(d.greedyKindCounts))")
+			print("  disagree with greedy: \(d.disagree) (\(pct(d.disagree)))  " +
+				"same-kind actor Δ \(d.sameKindDiffActor)  target/slot Δ \(d.sameKindDiffTarget)")
+			print("  avg legal prefixes \(unsafe String(format: "%.1f", Double(d.prefixes) / n))  " +
+				"avg legal actions \(unsafe String(format: "%.1f", Double(d.legalActions) / n))")
+			var pairs: [(Int, Int)] = []
+			for i in d.transitions.indices where d.transitions[i] > 0 { pairs.append((i, d.transitions[i])) }
+			pairs.sort { $0.1 > $1.1 }
+			let top = pairs.prefix(10).map { i, c in
+				"\(kindNames[i / ActionSpace.kinds])→\(kindNames[i % ActionSpace.kinds]) \(c)"
+			}
+			print("  top switches:  \(top.joined(separator: "  "))")
+			return
+		}
 	}
 }
