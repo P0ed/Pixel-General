@@ -6,6 +6,7 @@
 
 ## Scenario
 
+- Anti air units overwatch. Any air unit that passing through enemy AA range gets interrupted and attacked.
 - Do not transfer prestige after scenario to HQ. Pay fixed reward on victory.
 - Allow helicopters to resupply ammo in a field in a presence of supply truck.
 - Unit surrenders if can't retreat.
