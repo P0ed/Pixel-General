@@ -60,9 +60,9 @@ extension Unit {
 		case .lvkv90, .tunguska: .SPAA
 
 		// IFV / recon
-		case .fennek, .boxer, .brdm2: .boxer
+		case .fennek, .boxer, .marder, .brdm2: .boxer
 		case .kf41: .puma
-		case .m2A2, .m113, .strf90, .strf90v, .cv9035, .bmp: .recon
+		case .m2A2, .m113, .strf90, .cv9035, .bmp: .recon
 
 		// Tanks
 		case .m48, .m1A1, .m1A2: .M_1_A_2

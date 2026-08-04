@@ -96,7 +96,7 @@ extension UnitStats {
 		ini: 8,
 		softAtk: 9,
 		hardAtk: 14,
-		navAtk: 6,
+		navAtk: 5,
 		groundDef: 12,
 		airDef: 6
 	)
@@ -204,7 +204,7 @@ extension UnitStats {
 		ini: 5,
 		groundDef: 7,
 		airDef: 5,
-		traits: .optics
+		traits: [.optics, .cheap]
 	)
 	@safe nonisolated(unsafe) static let mig29 = UnitStats(
 		type: .fighter,
