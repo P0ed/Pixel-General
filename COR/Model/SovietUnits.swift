@@ -57,7 +57,7 @@ extension UnitStats {
 		navAtk: 2,
 		groundDef: 7,
 		airDef: 6,
-		traits: .transport
+		traits: [.transport, .cheap]
 	)
 
 	// MARK: Tanks
@@ -96,7 +96,7 @@ extension UnitStats {
 		ini: 8,
 		softAtk: 9,
 		hardAtk: 14,
-		navAtk: 6,
+		navAtk: 5,
 		groundDef: 12,
 		airDef: 6
 	)
@@ -135,7 +135,7 @@ extension UnitStats {
 		mov: 7,
 		rng: 3,
 		ammo: 3,
-		ini: 8,
+		ini: 7,
 		airAtk: 12,
 		groundDef: 4,
 		airDef: 7,
@@ -147,7 +147,7 @@ extension UnitStats {
 		mov: 7,
 		rng: 3,
 		ammo: 3,
-		ini: 9,
+		ini: 8,
 		airAtk: 13,
 		groundDef: 4,
 		airDef: 8,
@@ -204,7 +204,7 @@ extension UnitStats {
 		ini: 5,
 		groundDef: 7,
 		airDef: 5,
-		traits: .optics
+		traits: [.optics, .cheap]
 	)
 	@safe nonisolated(unsafe) static let mig29 = UnitStats(
 		type: .fighter,
@@ -231,7 +231,7 @@ extension UnitStats {
 		softAtk: 8,
 		hardAtk: 10,
 		airAtk: 12,
-		navAtk: 9,
+		navAtk: 8,
 		groundDef: 9,
 		airDef: 9,
 		traits: .radar

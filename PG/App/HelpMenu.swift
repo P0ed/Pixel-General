@@ -228,6 +228,8 @@ private enum Help {
 	  • Attack an enemy within range. Nearby friendly artillery and anti-air
 	    add supporting fire, and a well-entrenched, experienced defender can
 	    fire first (rugged defence) or even force the attacker to retreat.
+	  • Aircraft flying into enemy anti-air range are interrupted and
+	    fired upon — one shot per anti-air per turn, none after it moves.
 	  • Damaging and killing enemies earns experience; on a kill a unit may
 	    roll a new skill. Higher-level units hit harder and defend better.
 

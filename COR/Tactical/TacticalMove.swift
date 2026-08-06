@@ -10,84 +10,32 @@ public extension TacticalSim {
 	}
 
 	func moves(for uid: UID, target: XY? = nil) -> Moves {
+		var stoppable = false
+		return fill(for: uid, target: target, earlyExit: false, stoppable: &stoppable)
+	}
+
+	/// `moves(for: uid).hasMoves` without the fill: `earlyExit` stops at the
+	/// first tile the unit could stop on, so the common case (an open adjacent
+	/// tile) touches a handful of tiles instead of flooding the radius and
+	/// scanning the whole map — ~40x cheaper, and `actionMasks()` pays it per
+	/// unit per step.
+	func hasMoves(for uid: UID) -> Bool {
+		var stoppable = false
+		_ = fill(for: uid, target: nil, earlyExit: true, stoppable: &stoppable)
+		return stoppable
+	}
+
+	/// The BFS behind `moves(for:)` and `hasMoves(for:)`. With `earlyExit` it
+	/// returns an unfinished fill as soon as it reaches a tile the unit could
+	/// actually stop on — never `start` (already assigned, so skipped), and not
+	/// under a visible unit, i.e. exactly the tiles the trailing pass below
+	/// leaves non-zero — and reports it through `stoppable`. Always inlined so
+	/// both callers constant-fold `earlyExit` away.
+	@inline(__always)
+	private func fill(for uid: UID, target: XY?, earlyExit: Bool, stoppable: inout Bool) -> Moves {
 		let unit = units[uid]
 		var mov = Moves(start: position[uid])
 		if !unit.canMove { return mov }
-
-		let team = unit.country.team
-		let air = unit.isAir
-		let visible = vision[playerIndex]
-
-		func enemy(at xy: XY) -> Bool {
-			!visible[xy] ? false : unitAt(xy).map { u in
-				u.country.team != team && u.isAir == air
-			} ?? false
-		}
-
-		let r = unit.mov
-		mov.moves[position[uid]] = r * 2 + 1
-		var front = CArray<1024, XY>(head: position[uid], tail: .zero)
-		var next = CArray<1024, XY>(tail: .zero)
-
-		for _ in 0 ..< r where !front.isEmpty {
-			front.forEach { _, from in
-				let mp = mov.moves[from]
-				let n4 = from.n4
-				let enemies = n4.reduce(into: 0 as UInt8) { r, xy in
-					if enemy(at: xy) { r += 1 }
-				}
-
-				for i in n4.indices {
-					let xy = n4[i]
-					if mov[xy] { continue }
-					if enemy(at: xy) { continue }
-
-					let moveCost = map[xy].moveCost(unit) * 2 + enemies
-					if moveCost + 1 <= mp {
-						mov.moves[xy] = mp - moveCost
-						if mp - moveCost != 1 { next.add(xy) }
-					}
-				}
-				if enemies == 0 {
-					let x4 = from.x4
-					for i in x4.indices {
-						let xy = x4[i]
-						if mov[xy] { continue }
-						if enemy(at: xy) { continue }
-
-						let moveCost = map[xy].moveCost(unit) * 3 + enemies
-						if moveCost + 1 <= mp {
-							mov.moves[xy] = mp - moveCost
-							if mp - moveCost != 1 { next.add(xy) }
-						}
-					}
-				}
-			}
-			front.erase()
-			front.add(next)
-			next.erase()
-		}
-		if target == nil {
-			units.forEachAlive { i, u in
-				if !offMap(unit: i.uid), visible[position[i]] { mov.moves[position[i]] = 0 }
-			}
-		}
-
-		return mov
-	}
-
-	/// `moves(for: uid).hasMoves` with an early exit — the expansion loop is
-	/// a copy of `moves(for:)` (keep the two in lockstep; the
-	/// `hasMovesMatchesFullFill` test pins them) that returns at the first
-	/// reached tile the unit could actually stop on: never `start` (the
-	/// fill skips already-assigned tiles), and not under a visible alive
-	/// unit — exactly the tiles the trailing pass of `moves(for:)` leaves
-	/// non-zero. In the common case (an open adjacent tile) this touches a
-	/// handful of tiles instead of filling and scanning the whole map,
-	/// which is what `actionMasks()` cost per unit per step.
-	func hasMoves(for uid: UID) -> Bool {
-		let unit = units[uid]
-		if !unit.canMove { return false }
 
 		let team = unit.country.team
 		let air = unit.isAir
@@ -103,7 +51,6 @@ public extension TacticalSim {
 		}
 
 		let r = unit.mov
-		var mov = Moves(start: position[uid])
 		mov.moves[position[uid]] = r * 2 + 1
 		var front = CArray<1024, XY>(head: position[uid], tail: .zero)
 		var next = CArray<1024, XY>(tail: .zero)
@@ -124,7 +71,7 @@ public extension TacticalSim {
 
 					let moveCost = map[xy].moveCost(unit) * 2 + enemies
 					if moveCost + 1 <= mp {
-						if canStop(at: xy) { return true }
+						if earlyExit, canStop(at: xy) { stoppable = true; return mov }
 						mov.moves[xy] = mp - moveCost
 						if mp - moveCost != 1 { next.add(xy) }
 					}
@@ -138,7 +85,7 @@ public extension TacticalSim {
 
 						let moveCost = map[xy].moveCost(unit) * 3 + enemies
 						if moveCost + 1 <= mp {
-							if canStop(at: xy) { return true }
+							if earlyExit, canStop(at: xy) { stoppable = true; return mov }
 							mov.moves[xy] = mp - moveCost
 							if mp - moveCost != 1 { next.add(xy) }
 						}
@@ -149,7 +96,13 @@ public extension TacticalSim {
 			front.add(next)
 			next.erase()
 		}
-		return false
+		if !earlyExit, target == nil {
+			units.forEachAlive { i, u in
+				if !offMap(unit: i.uid), visible[position[i]] { mov.moves[position[i]] = 0 }
+			}
+		}
+
+		return mov
 	}
 
 	func canMove(unit uid: UID) -> Bool {
@@ -163,8 +116,11 @@ public extension TacticalSim {
 		let route = moves.route(to: target)
 		guard !route.isEmpty else { return }
 
+		let aaCoverage = units[uid].isAir ? aaCoverage(team: units[uid].country.team) : .empty
+
 		var pos = moves.start
 		var interruptor: UID = .none
+		var overwatcher: UID = .none
 		for k in route.indices.reversed() {
 			let xy = route[k]
 			if let tid = uidAt(xy) {
@@ -175,6 +131,10 @@ public extension TacticalSim {
 				}
 			} else {
 				pos = xy
+			}
+			if units[uid].isAir, aaCoverage[xy], let aa = aaOverwatcher(covering: xy, team: units[uid].country.team) {
+				overwatcher = aa
+				break
 			}
 		}
 		for k in route.indices.reversed() {
@@ -203,6 +163,11 @@ public extension TacticalSim {
 
 		if interruptor != .none, units[interruptor].country.team != units[uid].country.team {
 			attack(src: uid, dst: interruptor, surprise: true, into: &events)
+		}
+		if overwatcher != .none {
+			units[overwatcher][.overwatch] = false
+			vision[playerIndex][position[overwatcher]] = true
+			fire(src: overwatcher, dst: uid, defMod: 0, into: &events)
 		}
 	}
 }
@@ -260,13 +225,6 @@ public extension Moves {
 				set[xy] = true
 			}
 		}
-	}
-
-	var hasMoves: Bool {
-		for xy in moves.indices where moves[xy] > 0 && xy != start {
-			return true
-		}
-		return false
 	}
 }
 

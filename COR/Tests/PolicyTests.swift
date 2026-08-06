@@ -160,10 +160,9 @@ struct PolicyTests {
 	}
 
 	/// The early-exit `hasMoves(for:)` (the `actionMasks()` fast path) must
-	/// agree with the full fill it duplicates, for every alive on-map unit
-	/// at every state a battle actually reaches — including boxed-in units,
-	/// fog edges, and transports. Any drift between the two loops in
-	/// `TacticalMove.swift` fails here.
+	/// agree with the full fill, for every alive on-map unit at every state a
+	/// battle actually reaches — including boxed-in units, fog edges, and
+	/// transports. Any drift in `fill`'s `earlyExit` branches fails here.
 	@Test func hasMovesMatchesFullFill() {
 		for seed in [3, 5, 11] {
 			var sim = Self.makeSim(seed: seed)
