@@ -151,7 +151,7 @@ extension TacticalSim {
 
 	func aaOverwatcher(covering xy: XY, team: Team) -> UID? {
 		units.firstMapAlive { i, u in
-			u.country.team != team && u.isAA && !u.isAir && u[.overwatch]
+			u.country.team != team && u.isAA && u[.overwatch]
 			&& u.airAtk > 0 && u.ammo > 0
 			&& !offMap(unit: i.uid)
 			&& position[i].stepDistance(to: xy) <= Int(u.rng) * 2 + 1
@@ -162,7 +162,7 @@ extension TacticalSim {
 	func aaCoverage(team: Team) -> SetXY {
 		.make { set in
 			units.forEachAlive { i, u in
-				guard u.country.team != team, u.isAA, !u.isAir, u[.overwatch],
+				guard u.country.team != team, u.isAA, u[.overwatch],
 					  u.airAtk > 0, u.ammo > 0, !offMap(unit: i.uid) else { return }
 				let p = position[i]
 				let s49 = p.s49

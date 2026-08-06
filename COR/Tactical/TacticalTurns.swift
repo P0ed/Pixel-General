@@ -21,7 +21,7 @@ extension TacticalSim {
 
 		let sources = supplySources(for: player.country)
 		for i in units.indices where units[i].alive && units[i].country == player.country {
-			if units[i].isAA, !units[i].isAir { units[i][.overwatch] = units[i].mp > 0 }
+			if units[i].isAA { units[i][.overwatch] = units[i].mp > 0 }
 			resupply(unit: i.uid, sources: sources, endOfTurn: true, into: &events)
 		}
 

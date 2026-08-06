@@ -224,7 +224,7 @@ extension Unit {
 		mp = maxMP
 		ammo = maxAmmo
 		ent = 0
-		if isAA, !isAir { self[.overwatch] = true }
+		if isAA { self[.overwatch] = true }
 	}
 
 	@discardableResult
