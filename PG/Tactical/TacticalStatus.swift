@@ -18,13 +18,11 @@ extension TacticalState {
 				),
 				flag: sim.units[ui.selectedUnit].country.flag
 			)
-		} else if sim.map[ui.cursor].isSettlement {
+		} else {
 			Status(
-				text: "\(ui.cursor) \(sim.map[ui.cursor])",
+				text: "day \(sim.day)\n\(sim.map[ui.cursor])",
 				flag: sim.control[ui.cursor].flag
 			)
-		} else {
-			Status(text: "day \(sim.day)\n\(ui.cursor) \(sim.map[ui.cursor])")
 		}
 	}
 }

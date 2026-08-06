@@ -203,7 +203,8 @@ public extension Unit {
 	}
 
 	private var statsValue: UInt16 {
-		UInt16(softAtk) * 4
+		UInt16(tier * 24)
+		+ UInt16(softAtk) * 4
 		+ UInt16(hardAtk) * 5
 		+ UInt16(airAtk) * 6
 		+ UInt16(navAtk) * 6

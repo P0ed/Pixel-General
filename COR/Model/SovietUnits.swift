@@ -57,7 +57,7 @@ extension UnitStats {
 		navAtk: 2,
 		groundDef: 7,
 		airDef: 6,
-		traits: .transport
+		traits: [.transport, .cheap]
 	)
 
 	// MARK: Tanks
@@ -135,7 +135,7 @@ extension UnitStats {
 		mov: 7,
 		rng: 3,
 		ammo: 3,
-		ini: 8,
+		ini: 7,
 		airAtk: 12,
 		groundDef: 4,
 		airDef: 7,
@@ -147,7 +147,7 @@ extension UnitStats {
 		mov: 7,
 		rng: 3,
 		ammo: 3,
-		ini: 9,
+		ini: 8,
 		airAtk: 13,
 		groundDef: 4,
 		airDef: 8,
@@ -231,7 +231,7 @@ extension UnitStats {
 		softAtk: 8,
 		hardAtk: 10,
 		airAtk: 12,
-		navAtk: 9,
+		navAtk: 8,
 		groundDef: 9,
 		airDef: 9,
 		traits: .radar
