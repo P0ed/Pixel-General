@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C2F9F14302B6DE200C2CF62 /* GFX in Frameworks */ = {isa = PBXBuildFile; productRef = 4C2F9F13302B6DE200C2CF62 /* GFX */; };
+		4C2F9F1E302CB57500C2CF62 /* GFX in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 4C2F9F13302B6DE200C2CF62 /* GFX */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		4C2F9F21302CB5A900C2CF62 /* GFX in Frameworks */ = {isa = PBXBuildFile; productRef = 4C2F9F20302CB5A900C2CF62 /* GFX */; };
 		4CBA4EDA30029DF600B7D4BF /* COR in Embed Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C0A000000000000000000001 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000011 /* COR */; };
 		C0A000000000000000000003 /* COR in Frameworks */ = {isa = PBXBuildFile; productRef = C0A000000000000000000013 /* COR */; };
@@ -20,6 +23,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				4C2F9F1E302CB57500C2CF62 /* GFX in Embed Frameworks */,
 				4CBA4EDA30029DF600B7D4BF /* COR in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -78,6 +82,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C2F9F21302CB5A900C2CF62 /* GFX in Frameworks */,
+				4C2F9F14302B6DE200C2CF62 /* GFX in Frameworks */,
 				C0A000000000000000000001 /* COR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -147,7 +153,8 @@
 			buildRules = (
 			);
 			dependencies = (
-				4CBA4EE33002A16F00B7D4BF /* PBXTargetDependency */,
+				4C2F9F23302CB5B500C2CF62 /* PBXTargetDependency */,
+				4C2F9F25302CB5B500C2CF62 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5FD7B3DE2FE7356600CA6557 /* PG */,
@@ -155,6 +162,8 @@
 			name = PG;
 			packageProductDependencies = (
 				C0A000000000000000000011 /* COR */,
+				4C2F9F13302B6DE200C2CF62 /* GFX */,
+				4C2F9F20302CB5A900C2CF62 /* GFX */,
 			);
 			productName = Hex;
 			productReference = 5F919D2C2EA9564A0037A208 /* PG.app */;
@@ -234,6 +243,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */,
+				4C2F9F1F302CB5A900C2CF62 /* XCLocalSwiftPackageReference "GFX" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5FCB86362E77041800C2C69E /* Products */;
@@ -289,9 +299,13 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		4CBA4EE33002A16F00B7D4BF /* PBXTargetDependency */ = {
+		4C2F9F23302CB5B500C2CF62 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 4CBA4EE23002A16F00B7D4BF /* COR */;
+			productRef = 4C2F9F22302CB5B500C2CF62 /* COR */;
+		};
+		4C2F9F25302CB5B500C2CF62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 4C2F9F24302CB5B500C2CF62 /* GFX */;
 		};
 /* End PBXTargetDependency section */
 
@@ -622,6 +636,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		4C2F9F1F302CB5A900C2CF62 /* XCLocalSwiftPackageReference "GFX" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = GFX;
+		};
 		C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = COR;
@@ -629,10 +647,23 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4CBA4EE23002A16F00B7D4BF /* COR */ = {
+		4C2F9F13302B6DE200C2CF62 /* GFX */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GFX;
+		};
+		4C2F9F20302CB5A900C2CF62 /* GFX */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GFX;
+		};
+		4C2F9F22302CB5B500C2CF62 /* COR */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C0A000000000000000000010 /* XCLocalSwiftPackageReference "COR" */;
 			productName = COR;
+		};
+		4C2F9F24302CB5B500C2CF62 /* GFX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C2F9F1F302CB5A900C2CF62 /* XCLocalSwiftPackageReference "GFX" */;
+			productName = GFX;
 		};
 		C0A000000000000000000011 /* COR */ = {
 			isa = XCSwiftPackageProductDependency;
