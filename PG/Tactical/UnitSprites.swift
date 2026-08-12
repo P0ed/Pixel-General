@@ -1,6 +1,7 @@
 import SpriteKit
 import UIKit
 import COR
+import GFX
 
 extension Unit {
 
@@ -9,6 +10,7 @@ extension Unit {
 		let node = SKNode()
 
 		let sprite = SKSpriteNode(texture: image)
+		sprite.anchorPoint = .vehicle
 		sprite.zPosition = 0.2
 		node.addChild(sprite)
 
@@ -21,10 +23,10 @@ extension Unit {
 
 		let sprite = SKSpriteNode(texture: image)
 		sprite.blendMode = .alpha
-		sprite.colorBlendFactor = 0.1
+		sprite.colorBlendFactor = 0.2
 		sprite.color = country.color
 		sprite.zPosition = 0.2
-		sprite.xScale = country.team == .axis ? 1.0 : -1.0
+		sprite.anchorPoint = .vehicle
 		node.addChild(sprite)
 
 		let plate = SKSpriteNode(texture: .hp(hp))
@@ -38,43 +40,47 @@ extension Unit {
 
 	@MainActor
 	var image: SKTexture {
+		guard let vehicle else { return .clear }
+		return .vehicle(vehicle, mirrored: country.team != .axis)
+	}
+
+	/// The GFX silhouette a unit is drawn with. Models sharing a shape share a sprite.
+	var vehicle: Units.Shape? {
 		switch model {
-		case .none: .clear
+		case .none: nil
 		case .truck: .truck
 
 		// Infantry
-		case .regular, .engineer, .ranger, .militia: .reg
-		case .delta, .ksk, .speznas: .SF
-		case .fpv, .p1sun: .FPV
+		case .regular, .engineer, .ranger, .militia: .rifleman
+		case .delta, .ksk, .speznas: .special
+		case .fpv, .p1sun: .quad
 
 		// Artillery
-		case .art155, .m777, .art105: .art
-		case .sp105: .akatsiya
-		case .mars, .m147: .m270
-		case .pzh, .m109: .PZH
+		case .art155, .m777, .art105: .gun
+		case .sp105, .pzh, .m109: .artillery
+		case .mars, .m147: .launcher
 
 		// Anti-air
-		case .patriot, .nasams: .NASAMS
+		case .patriot, .nasams, .neva, .s300: .launcher
 		case .bofors: .flak
-		case .neva, .s300: .neva
-		case .lvkv90, .tunguska: .SPAA
+		case .lvkv90, .tunguska: .spaa
 
 		// IFV / recon
-		case .fennek, .boxer, .brdm2: .boxer
+		case .fennek, .boxer, .brdm2: .carrier
 		case .m2A2, .m113, .marder, .bmp: .recon
-		case .strf90, .cv9035, .kf41: .puma
+		case .strf90, .cv9035, .kf41: .ifv
 
 		// Tanks
-		case .m48, .m1A1, .m1A2: .M_1_A_2
+		case .m48, .m1A1, .m1A2: .heavyTank
 		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
-		case .t55, .t72, .t90m: .T_72
+		case .t55, .t72, .t90m: .lowTank
 
 		// Air
-		case .skeldar, .skeldarm: .skeldar
-		case .mh6, .mq9, .nh90, .mi8, .mi24: .MH_6
-		case .orlan: .fixedWing
-		case .f16, .f35: .F_16
-		case .gripen, .mig29, .su57, .su25, .su27: .F_64
+		case .skeldar, .skeldarm: .scout
+		case .mh6, .nh90, .mi8, .mi24: .helicopter
+		case .mq9, .orlan: .drone
+		case .f16, .f35: .jet
+		case .gripen, .mig29, .su57, .su25, .su27: .heavyJet
 
 		// Naval
 		case .cargo: .cargo

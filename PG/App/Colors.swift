@@ -58,13 +58,6 @@ extension Team {
 
 extension Country {
 
-	/// Per-nation identity color, HoI/EU-style: derived from each flag's most
-	/// distinctive color, with tones spread so campaign-map neighbors never
-	/// blur together.
-	/// Europe's flags are mostly red/white/blue, so where a border pair shares
-	/// a flag color, one side takes a secondary flag color or shifts tone —
-	/// e.g. Norway goes salmon next to crimson Russia, Austria takes its white
-	/// stripe amid red-flagged neighbors.
 	var color: SKColor {
 		switch self {
 			// Nordics
