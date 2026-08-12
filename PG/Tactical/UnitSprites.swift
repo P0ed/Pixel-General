@@ -1,6 +1,7 @@
 import SpriteKit
 import UIKit
 import COR
+import GFX
 
 extension Unit {
 
@@ -24,7 +25,8 @@ extension Unit {
 		sprite.colorBlendFactor = 0.1
 		sprite.color = country.color
 		sprite.zPosition = 0.2
-		sprite.xScale = country.team == .axis ? 1.0 : -1.0
+		sprite.xScale = vehicle == nil && country.team != .axis ? -1.0 : 1.0
+		if vehicle != nil { sprite.anchorPoint = .vehicle }
 		node.addChild(sprite)
 
 		let plate = SKSpriteNode(texture: .hp(hp))
@@ -38,48 +40,60 @@ extension Unit {
 
 	@MainActor
 	var image: SKTexture {
+		if let vehicle {
+			return .vehicle(vehicle, mirrored: country.team != .axis)
+		}
+
 		switch model {
-		case .none: .clear
-		case .truck: .truck
+		case .none: return .clear
 
 		// Infantry
-		case .regular, .engineer, .ranger, .militia: .reg
-		case .delta, .ksk, .speznas: .SF
-		case .fpv, .p1sun: .FPV
-
-		// Artillery
-		case .art155, .m777, .art105: .art
-		case .sp105: .akatsiya
-		case .mars, .m147: .m270
-		case .pzh, .m109: .PZH
-
-		// Anti-air
-		case .patriot, .nasams: .NASAMS
-		case .bofors: .flak
-		case .neva, .s300: .neva
-		case .lvkv90, .tunguska: .SPAA
-
-		// IFV / recon
-		case .fennek, .boxer, .brdm2: .boxer
-		case .m2A2, .m113, .marder, .bmp: .recon
-		case .strf90, .cv9035, .kf41: .puma
-
-		// Tanks
-		case .m48, .m1A1, .m1A2: .M_1_A_2
-		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
-		case .t55, .t72, .t90m: .T_72
+		case .regular, .engineer, .ranger, .militia: return .reg
+		case .delta, .ksk, .speznas: return .SF
+		case .fpv, .p1sun: return .FPV
 
 		// Air
-		case .skeldar, .skeldarm: .skeldar
-		case .mh6, .mq9, .nh90, .mi8, .mi24: .MH_6
-		case .orlan: .fixedWing
-		case .f16, .f35: .F_16
-		case .gripen, .mig29, .su57, .su25, .su27: .F_64
+		case .skeldar, .skeldarm: return .skeldar
+		case .mh6, .mq9, .nh90, .mi8, .mi24: return .MH_6
+		case .orlan: return .fixedWing
+		case .f16, .f35: return .F_16
+		case .gripen, .mig29, .su57, .su25, .su27: return .F_64
 
 		// Naval
-		case .cargo: .cargo
-		case .destroyer: .destroyer
-		case .cruiser: .cruiser
+		case .cargo: return .cargo
+		case .destroyer: return .destroyer
+		case .cruiser: return .cruiser
+
+		default: return .clear
+		}
+	}
+
+	/// Ground vehicles are modelled in GFX; everything else keeps its hand-drawn sprite.
+	var vehicle: Units.Shape? {
+		switch model {
+		case .truck: .truck
+
+		// Artillery
+		case .art155, .m777, .art105: .gun
+		case .sp105, .pzh, .m109: .artillery
+		case .mars, .m147: .launcher
+
+		// Anti-air
+		case .patriot, .nasams, .neva, .s300: .launcher
+		case .bofors: .flak
+		case .lvkv90, .tunguska: .spaa
+
+		// IFV / recon
+		case .fennek, .boxer, .brdm2: .carrier
+		case .m2A2, .m113, .marder, .bmp: .recon
+		case .strf90, .cv9035, .kf41: .ifv
+
+		// Tanks
+		case .m48, .m1A1, .m1A2: .heavyTank
+		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
+		case .t55, .t72, .t90m: .lowTank
+
+		default: nil
 		}
 	}
 }

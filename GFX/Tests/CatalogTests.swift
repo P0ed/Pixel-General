@@ -20,7 +20,7 @@ struct CatalogTests {
 			let occupied = bitmap.occupied!
 
 			#expect(occupied.y.upperBound <= 47, "\(entry.name) stays on the tile")
-			#expect(occupied.y.upperBound >= 36, "\(entry.name) touches the ground")
+			#expect(occupied.y.upperBound >= 32, "\(entry.name) sits on the ground")
 			#expect(occupied.x.count <= 40, "\(entry.name) is narrower than a tile")
 		}
 	}

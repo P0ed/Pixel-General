@@ -142,12 +142,13 @@ public extension Solid {
 	}
 
 	/// Nearest surface along the view ray `p0 + t * (1,1,1)`; larger `t` is nearer the camera.
-	func hit(_ p0: V3) -> (t: Float, normal: V3)? {
+	func hit(_ p0: V3) -> (t: Float, normal: V3, face: Int)? {
 		var near = -Float.greatestFiniteMagnitude
 		var far = Float.greatestFiniteMagnitude
 		var normal = V3.zero
+		var face = 0
 
-		for plane in planes {
+		for (index, plane) in planes.enumerated() {
 			let denom = plane.n.x + plane.n.y + plane.n.z
 			let num = plane.d - plane.n.dot(p0)
 
@@ -160,12 +161,13 @@ public extension Solid {
 				if t < far {
 					far = t
 					normal = plane.n
+					face = index
 				}
 			} else if t > near {
 				near = t
 			}
 		}
 
-		return near <= far ? (far, normal) : nil
+		return near <= far ? (far, normal, face) : nil
 	}
 }

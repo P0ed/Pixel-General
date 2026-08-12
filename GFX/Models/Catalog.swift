@@ -14,13 +14,9 @@ public struct CatalogEntry: Sendable {
 public enum Catalog {
 
 	public static var units: [CatalogEntry] {
-		[
-			CatalogEntry(name: "Tank", model: Units.tank, renderer: .unit),
-			CatalogEntry(name: "Truck", model: Units.truck, renderer: .unit),
-			CatalogEntry(name: "Carrier", model: Units.carrier, renderer: .unit),
-			CatalogEntry(name: "Artillery", model: Units.artillery, renderer: .unit),
-			CatalogEntry(name: "Launcher", model: Units.launcher, renderer: .unit),
-		]
+		Units.Shape.allCases.map {
+			CatalogEntry(name: "\($0)".capitalized, model: $0.model, renderer: .unit)
+		}
 	}
 
 	public static var tiles: [CatalogEntry] {

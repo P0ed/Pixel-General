@@ -1,6 +1,7 @@
 import SpriteKit
 import UIKit
 import COR
+import GFX
 
 /// What the top face of a base tile shows. Mode-dependent: terrain colors,
 /// political ownership, or supply level. Decorations and fog are separate
@@ -27,7 +28,7 @@ enum TileSurface: Hashable {
 	/// Tinted top face at `elevation`; terrain surfaces have stable texture.
 	@MainActor
 	func image(elevation: Int) -> CGImage? {
-		let image = UIImage.surface(elevation).cg?.tinted(color.cgColor)
+		let image = CGImage.surface(elevation).tinted(color.cgColor)
 		switch self {
 		case .field, .forest, .water, .sea:
 			return image?.noised()
@@ -48,25 +49,27 @@ extension Terrain {
 		}
 	}
 
-	var decoration: UIImage? {
+	/// Settlements are modelled in GFX; roads, bridges and the airfield stay hand-drawn.
+	@MainActor
+	var decoration: CGImage? {
 		switch self {
 		case .none, .river, .sea, .field, .forest, .hill, .forestHill, .mountain: nil
-		case .city: .city
-		case .airfield: .airfield
-		case .bridgeWE: .bridgeWE
-		case .bridgeSN: .bridgeSN
-		case .roadNW: .roadNW
-		case .roadNE: .roadNE
-		case .roadWE: .roadWE
-		case .roadSN: .roadSN
-		case .roadSW: .roadSW
-		case .roadSE: .roadSE
-		case .villageE: .villageE
-		case .villageN: .villageN
-		case .villageW: .villageW
-		case .villageS: .villageS
-		case .roadX: .roadX
-		case .fort: .fort
+		case .city: .settlement(.city)
+		case .fort: .settlement(.fort)
+		case .villageE: .settlement(.village(.xPlus))
+		case .villageN: .settlement(.village(.yMinus))
+		case .villageW: .settlement(.village(.xMinus))
+		case .villageS: .settlement(.village(.yPlus))
+		case .airfield: UIImage.airfield.cg
+		case .bridgeWE: UIImage.bridgeWE.cg
+		case .bridgeSN: UIImage.bridgeSN.cg
+		case .roadNW: UIImage.roadNW.cg
+		case .roadNE: UIImage.roadNE.cg
+		case .roadWE: UIImage.roadWE.cg
+		case .roadSN: UIImage.roadSN.cg
+		case .roadSW: UIImage.roadSW.cg
+		case .roadSE: UIImage.roadSE.cg
+		case .roadX: UIImage.roadX.cg
 		}
 	}
 }
@@ -90,8 +93,8 @@ extension SKTileGroup {
 		if let group = baseCache[key] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(UIImage.frame(elevation).cg)
 				ctx.drawTile(surface.image(elevation: elevation))
+				ctx.drawTile(.frame(elevation))
 			}
 		)
 		baseCache[key] = group
@@ -118,7 +121,7 @@ extension SKTileGroup {
 		if let group = decorationCache[key] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(image.cg)
+				ctx.drawTile(image)
 				if fog { ctx.dim(.sourceAtop) }
 			}
 		)
@@ -132,8 +135,7 @@ extension SKTileGroup {
 		if let group = fogCache[elevation] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(UIImage.frame(elevation).cg)
-				ctx.drawTile(UIImage.surface(elevation).cg)
+				ctx.drawTile(.surface(elevation))
 				ctx.dim(.sourceIn)
 			}
 		)
@@ -272,31 +274,12 @@ extension SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let elevation = terrain.elevationLevel
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
-			ctx.drawTile(UIImage.frame(elevation).cg)
 			ctx.drawTile(terrain.tileSurface.image(elevation: elevation))
-			ctx.drawTile(terrain.decoration?.cg)
+			ctx.drawTile(.frame(elevation))
+			ctx.drawTile(terrain.decoration)
 		})
 		texture.filteringMode = .nearest
 		tileCache[terrain] = texture
 		return texture
-	}
-}
-
-extension UIImage {
-
-	static func frame(_ elevation: Int) -> UIImage {
-		switch elevation {
-		case 0: .frame0
-		case 1: .frame1
-		default: .frame2
-		}
-	}
-
-	static func surface(_ elevation: Int) -> UIImage {
-		switch elevation {
-		case 0: .surface0
-		case 1: .surface1
-		default: .surface2
-		}
 	}
 }

@@ -24,28 +24,66 @@ public struct Renderer: Sendable {
 public extension Renderer {
 
 	func render(_ model: Model) -> Bitmap {
-		var bitmap = Bitmap(canvas: canvas)
-		var depths = [Float](repeating: -.greatestFiniteMagnitude, count: canvas.count)
-		var ids = [Int32](repeating: -1, count: canvas.count)
+		var raster = raster(model)
+		outline.apply(to: &raster)
+		return raster.bitmap
+	}
+
+	/// The shaded faces alone, for tinting downstream.
+	func fill(_ model: Model) -> Bitmap {
+		raster(model).bitmap
+	}
+
+	/// The outline alone, for drawing over an independently tinted fill.
+	func edges(_ model: Model) -> Bitmap {
+		var raster = raster(model)
+		outline.apply(to: &raster)
+
+		var edges = Bitmap(canvas: canvas)
+		for i in 0 ..< canvas.count where raster.outlined[i] {
+			edges.gray[i] = raster.bitmap.gray[i]
+			edges.alpha[i] = .max
+		}
+		return edges
+	}
+}
+
+extension Renderer {
+
+	struct Raster {
+		var bitmap: Bitmap
+		var depths: [Float]
+		var ids: [Int32]
+		var faces: [Int32]
+		var outlined: [Bool]
+	}
+
+	func raster(_ model: Model) -> Raster {
+		var raster = Raster(
+			bitmap: Bitmap(canvas: canvas),
+			depths: [Float](repeating: -.greatestFiniteMagnitude, count: canvas.count),
+			ids: [Int32](repeating: -1, count: canvas.count),
+			faces: [Int32](repeating: -1, count: canvas.count),
+			outlined: [Bool](repeating: false, count: canvas.count)
+		)
 
 		for (id, solid) in model.solids.enumerated() {
 			let rect = canvas.rect(of: solid)
 			for y in rect.y {
 				for x in rect.x {
 					guard let hit = solid.hit(canvas.origin(x: x, y: y)) else { continue }
-					let i = bitmap.index(x: x, y: y)
-					guard hit.t > depths[i] else { continue }
+					let i = raster.bitmap.index(x: x, y: y)
+					guard hit.t > raster.depths[i] else { continue }
 
-					depths[i] = hit.t
-					ids[i] = Int32(id)
-					bitmap.gray[i] = Light.quantize(light.gray(hit.normal, tone: solid.tone), levels: levels)
-					bitmap.alpha[i] = .max
+					raster.depths[i] = hit.t
+					raster.ids[i] = Int32(id)
+					raster.faces[i] = Int32(hit.face)
+					raster.bitmap.gray[i] = Light.quantize(light.gray(hit.normal, tone: solid.tone), levels: levels)
+					raster.bitmap.alpha[i] = .max
 				}
 			}
 		}
 
-		outline.apply(to: &bitmap, depths: depths, ids: ids)
-
-		return bitmap
+		return raster
 	}
 }
