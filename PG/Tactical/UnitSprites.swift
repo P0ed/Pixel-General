@@ -23,7 +23,7 @@ extension Unit {
 
 		let sprite = SKSpriteNode(texture: image)
 		sprite.blendMode = .alpha
-		sprite.colorBlendFactor = 0.1
+		sprite.colorBlendFactor = 0.2
 		sprite.color = country.color
 		sprite.zPosition = 0.2
 		sprite.anchorPoint = .vehicle

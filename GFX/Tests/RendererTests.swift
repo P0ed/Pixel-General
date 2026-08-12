@@ -18,6 +18,19 @@ struct RendererTests {
 		#expect(bitmap.occupied?.y == 8 ... 39)
 	}
 
+	@Test func baseDiamondFillsItsCellTheWayTheHandDrawnFrameDid() {
+		let bitmap = Renderer(canvas: .tile, outline: .none).render(Tiles.base(elevation: 0))
+		let rows = (0 ..< bitmap.height).map { y in
+			(0 ..< bitmap.width).filter { bitmap.alpha[bitmap.index(x: $0, y: y)] > 0 }
+		}
+
+		#expect(rows[8] == [30, 31, 32, 33], "the tips are 4 px wide")
+		#expect(rows[39] == [30, 31, 32, 33])
+		#expect(rows[23] == Array(0 ..< 64), "the corner rows span the whole tile")
+		#expect(rows[24] == Array(0 ..< 64))
+		#expect(rows[9].count == 8, "each row towards the corners is 4 px wider")
+	}
+
 	@Test func elevationRaisesTheTopFaceByFourPixelsPerLevel() {
 		let renderer = Renderer(canvas: .tile, outline: .none)
 		for elevation in 0 ... 2 {
