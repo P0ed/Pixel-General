@@ -61,8 +61,8 @@ extension Unit {
 
 		// IFV / recon
 		case .fennek, .boxer, .brdm2: .boxer
-		case .kf41: .puma
-		case .m2A2, .m113, .strf90, .strf90v, .cv9035, .bmp: .recon
+		case .m2A2, .m113, .marder, .bmp: .recon
+		case .strf90, .cv9035, .kf41: .puma
 
 		// Tanks
 		case .m48, .m1A1, .m1A2: .M_1_A_2

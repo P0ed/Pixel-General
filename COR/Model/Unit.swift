@@ -23,6 +23,7 @@ public struct Bits: OptionSet, Equatable {
 
 public extension Bits {
 	static var aux: Self { .init(rawValue: 1 << 0) }
+	static var overwatch: Self { .init(rawValue: 1 << 1) }
 }
 
 public struct Skills: OptionSet, Equatable {
@@ -202,7 +203,8 @@ public extension Unit {
 	}
 
 	private var statsValue: UInt16 {
-		UInt16(softAtk) * 4
+		UInt16(tier * 24)
+		+ UInt16(softAtk) * 4
 		+ UInt16(hardAtk) * 5
 		+ UInt16(airAtk) * 6
 		+ UInt16(navAtk) * 6
@@ -222,6 +224,7 @@ extension Unit {
 		mp = maxMP
 		ammo = maxAmmo
 		ent = 0
+		if isAA { self[.overwatch] = true }
 	}
 
 	@discardableResult
@@ -322,7 +325,7 @@ public extension UnitType {
 		 m777, m109, m147, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, p1sun, fennek, boxer, cv9035, strf90, strf90v, kf41, pzh, mars, leo1, leo2a6, strv103, strv122,
+	case ksk, p1sun, fennek, boxer, marder, cv9035, strf90, kf41, pzh, mars, leo1, leo2a6, strv103, strv122,
 		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet

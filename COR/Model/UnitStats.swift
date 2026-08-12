@@ -179,8 +179,8 @@ public extension UnitStats {
 		case .p1sun: .p1sun
 		case .fennek: .fennek
 		case .boxer: .boxer
+		case .marder: .marder
 		case .strf90: .strf90
-		case .strf90v: .strf90v
 		case .kf41: .kf41
 		case .cv9035: .cv9035
 		case .pzh: .pzh

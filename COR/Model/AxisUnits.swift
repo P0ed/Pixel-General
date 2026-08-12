@@ -47,35 +47,35 @@ extension UnitStats {
 		airDef: 7,
 		traits: .transport
 	)
-	@safe nonisolated(unsafe) static let strf90 = UnitStats(
+	@safe nonisolated(unsafe) static let marder = UnitStats(
 		type: .lightTrack,
 		tier: 1,
 		mov: 7,
 		rng: 1,
 		ammo: 6,
-		ini: 8,
-		softAtk: 10,
-		hardAtk: 10,
-		airAtk: 4,
+		ini: 7,
+		softAtk: 9,
+		hardAtk: 8,
+		airAtk: 3,
 		navAtk: 3,
-		groundDef: 11,
-		airDef: 8,
-		traits: .transport
+		groundDef: 10,
+		airDef: 7,
+		traits: [.transport, .cheap]
 	)
-	@safe nonisolated(unsafe) static let strf90v = UnitStats(
+	@safe nonisolated(unsafe) static let strf90 = UnitStats(
 		type: .lightTrack,
 		tier: 2,
 		mov: 7,
 		rng: 1,
 		ammo: 6,
-		ini: 9,
-		softAtk: 11,
+		ini: 8,
+		softAtk: 10,
 		hardAtk: 11,
 		airAtk: 5,
-		navAtk: 4,
-		groundDef: 12,
+		navAtk: 3,
+		groundDef: 11,
 		airDef: 8,
-		traits: [.transport, .elite]
+		traits: .transport
 	)
 	@safe nonisolated(unsafe) static let kf41 = UnitStats(
 		type: .lightTrack,
@@ -87,7 +87,7 @@ extension UnitStats {
 		softAtk: 11,
 		hardAtk: 10,
 		airAtk: 5,
-		navAtk: 4,
+		navAtk: 3,
 		groundDef: 12,
 		airDef: 8,
 		traits: [.transport, .elite]
@@ -99,9 +99,9 @@ extension UnitStats {
 		rng: 1,
 		ammo: 6,
 		ini: 8,
-		softAtk: 10,
+		softAtk: 11,
 		hardAtk: 10,
-		airAtk: 4,
+		airAtk: 5,
 		navAtk: 3,
 		groundDef: 11,
 		airDef: 8,
@@ -148,7 +148,8 @@ extension UnitStats {
 		hardAtk: 12,
 		navAtk: 4,
 		groundDef: 11,
-		airDef: 7
+		airDef: 7,
+		traits: .cheap
 	)
 	@safe nonisolated(unsafe) static let leo2a6 = UnitStats(
 		type: .heavyTrack,

@@ -94,22 +94,20 @@ extension Shop {
 	}
 
 	var ifv2: Unit? {
-		switch country {
-		case .swe: Unit(model: .strf90, country: country)
-		case .ger: Unit(model: .kf41, country: country)
-		default: switch country.team {
-			case .axis: Unit(model: .cv9035, country: country)
-			case .allies: nil
-			case .soviet: nil
-			case .none: nil
-			}
+		switch country.team {
+		case .axis: Unit(model: .marder, country: country)
+		default: nil
 		}
 	}
 
 	var ifv3: Unit? {
 		switch country {
-		case .swe: Unit(model: .strf90v, country: country)
+		case .swe: Unit(model: .strf90, country: country)
+		case .ger: Unit(model: .kf41, country: country)
+		default: switch country.team {
+		case .axis: Unit(model: .cv9035, country: country)
 		default: nil
+		}
 		}
 	}
 

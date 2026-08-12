@@ -109,11 +109,11 @@ public extension Unit {
 		// IFV / recon
 		case .fennek: "Fennek"
 		case .boxer: "Boxer"
+		case .marder: "Marder"
 		case .brdm2: "BRDM"
 		case .m113: "M113"
 		case .m2A2: "M2A2"
-		case .strf90: "Strf 90 IV"
-		case .strf90v: "Strf 90 V"
+		case .strf90: "Strf 90"
 		case .kf41: "KF41"
 		case .cv9035: "CV9035"
 		case .bmp: "BMP"
