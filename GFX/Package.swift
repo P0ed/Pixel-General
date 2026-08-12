@@ -14,7 +14,18 @@ let package = Package(
 	targets: [
 		.target(
 			name: "GFX",
-			path: "."
-		)
+			path: ".",
+			exclude: ["Preview", "Tests"]
+		),
+		.executableTarget(
+			name: "GFXPreview",
+			dependencies: ["GFX"],
+			path: "Preview"
+		),
+		.testTarget(
+			name: "GFXTests",
+			dependencies: ["GFX"],
+			path: "Tests"
+		),
 	]
 )
