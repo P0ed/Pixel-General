@@ -10,6 +10,7 @@ extension Unit {
 		let node = SKNode()
 
 		let sprite = SKSpriteNode(texture: image)
+		sprite.anchorPoint = .vehicle
 		sprite.zPosition = 0.2
 		node.addChild(sprite)
 
@@ -25,8 +26,7 @@ extension Unit {
 		sprite.colorBlendFactor = 0.1
 		sprite.color = country.color
 		sprite.zPosition = 0.2
-		sprite.xScale = vehicle == nil && country.team != .axis ? -1.0 : 1.0
-		if vehicle != nil { sprite.anchorPoint = .vehicle }
+		sprite.anchorPoint = .vehicle
 		node.addChild(sprite)
 
 		let plate = SKSpriteNode(texture: .hp(hp))
@@ -40,38 +40,20 @@ extension Unit {
 
 	@MainActor
 	var image: SKTexture {
-		if let vehicle {
-			return .vehicle(vehicle, mirrored: country.team != .axis)
-		}
-
-		switch model {
-		case .none: return .clear
-
-		// Infantry
-		case .regular, .engineer, .ranger, .militia: return .reg
-		case .delta, .ksk, .speznas: return .SF
-		case .fpv, .p1sun: return .FPV
-
-		// Air
-		case .skeldar, .skeldarm: return .skeldar
-		case .mh6, .mq9, .nh90, .mi8, .mi24: return .MH_6
-		case .orlan: return .fixedWing
-		case .f16, .f35: return .F_16
-		case .gripen, .mig29, .su57, .su25, .su27: return .F_64
-
-		// Naval
-		case .cargo: return .cargo
-		case .destroyer: return .destroyer
-		case .cruiser: return .cruiser
-
-		default: return .clear
-		}
+		guard let vehicle else { return .clear }
+		return .vehicle(vehicle, mirrored: country.team != .axis)
 	}
 
-	/// Ground vehicles are modelled in GFX; everything else keeps its hand-drawn sprite.
+	/// The GFX silhouette a unit is drawn with. Models sharing a shape share a sprite.
 	var vehicle: Units.Shape? {
 		switch model {
+		case .none: nil
 		case .truck: .truck
+
+		// Infantry
+		case .regular, .engineer, .ranger, .militia: .rifleman
+		case .delta, .ksk, .speznas: .special
+		case .fpv, .p1sun: .quad
 
 		// Artillery
 		case .art155, .m777, .art105: .gun
@@ -93,7 +75,17 @@ extension Unit {
 		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
 		case .t55, .t72, .t90m: .lowTank
 
-		default: nil
+		// Air
+		case .skeldar, .skeldarm: .scout
+		case .mh6, .nh90, .mi8, .mi24: .helicopter
+		case .mq9, .orlan: .drone
+		case .f16, .f35: .jet
+		case .gripen, .mig29, .su57, .su25, .su27: .heavyJet
+
+		// Naval
+		case .cargo: .cargo
+		case .destroyer: .destroyer
+		case .cruiser: .cruiser
 		}
 	}
 }

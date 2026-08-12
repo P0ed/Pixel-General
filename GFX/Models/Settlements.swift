@@ -44,6 +44,23 @@ public enum Settlements {
 		}
 	}
 
+	/// Runway with dashed centreline, a control tower and two hangars set back from it.
+	public static var airfield: Model {
+		let strip = Solid.box(from: V3(1, 19, 0), to: V3(31, 26, 0), tone: Roads.Tone.bed)
+		let apron = Solid.box(from: V3(13, 13, 0), to: V3(19, 19, 0), tone: Roads.Tone.bed)
+
+		var solids = [strip, apron]
+		solids += [
+			.box(from: V3(14, 6, 0), to: V3(18, 10, 6), tone: Tone.wall),
+			.box(from: V3(13, 5, 6), to: V3(19, 11, 8.5), tone: Settlements.Tone.roof),
+		]
+		solids += hangar(x: 5, y: 9) + hangar(x: 24, y: 8)
+
+		return Model(solids, lines: [
+			Line(from: V3(3, 22.5, 0), to: V3(29, 22.5, 0), tone: Roads.Tone.mark, dash: 3),
+		])
+	}
+
 	public static var fort: Model {
 		let inset: Float = 5
 		let side = Volume.footprint
@@ -64,6 +81,14 @@ public enum Settlements {
 }
 
 private extension Settlements {
+
+	/// A wide, low shed: half the height of a house so it reads as a hangar next to one.
+	static func hangar(x: Float, y: Float) -> [Solid] {
+		[
+			.box(from: V3(x - 4, y - 3, 0), to: V3(x + 4, y + 3, 2), tone: Tone.wall),
+			.gable(from: V3(x - 4.5, y - 3.5, 2), to: V3(x + 4.5, y + 3.5, 5), ridge: .x, tone: Tone.roof),
+		]
+	}
 
 	static func house(
 		x: Float,

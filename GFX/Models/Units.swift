@@ -1,12 +1,16 @@
 /// Box-shaped ground units, authored nose-first along `+x` (screen right-and-down).
 public enum Units {
 
+	/// Every silhouette a unit can be drawn with, whatever it moves on.
 	public enum Shape: UInt8, Sendable, CaseIterable {
 		case tank, heavyTank, lowTank
 		case recon, carrier, ifv
 		case truck, launcher
 		case artillery, gun
 		case spaa, flak
+		case rifleman, special, quad
+		case helicopter, scout, drone, jet, heavyJet
+		case cargo, destroyer, cruiser
 
 		public var model: Model {
 			switch self {
@@ -22,6 +26,25 @@ public enum Units {
 			case .gun: Units.gun
 			case .spaa: Units.spaa
 			case .flak: Units.flak
+			case .rifleman: Infantry.rifleman
+			case .special: Infantry.special
+			case .quad: Infantry.quad
+			case .helicopter: Aircraft.helicopter
+			case .scout: Aircraft.scout
+			case .drone: Aircraft.drone
+			case .jet: Aircraft.jet
+			case .heavyJet: Aircraft.heavyJet
+			case .cargo: Ships.cargo
+			case .destroyer: Ships.destroyer
+			case .cruiser: Ships.cruiser
+			}
+		}
+
+		/// Airborne shapes hover clear of the tile; the rest stand on it.
+		public var flies: Bool {
+			switch self {
+			case .quad, .helicopter, .scout, .drone, .jet, .heavyJet: true
+			default: false
 			}
 		}
 	}
@@ -169,11 +192,7 @@ private extension Units {
 		y: Float = 0,
 		tone: UInt8 = Tone.body
 	) -> Solid {
-		.box(
-			from: corner(length, width, z, x, y, low: true),
-			to: corner(length, width, z, x, y, low: false),
-			tone: tone
-		)
+		GFX.box(length: length, width: width, z: z, x: x, y: y, tone: tone)
 	}
 
 	static func wedge(
@@ -185,12 +204,7 @@ private extension Units {
 		rising: Direction,
 		tone: UInt8 = Tone.body
 	) -> Solid {
-		.wedge(
-			from: corner(length, width, z, x, y, low: true),
-			to: corner(length, width, z, x, y, low: false),
-			rising: rising,
-			tone: tone
-		)
+		GFX.wedge(length: length, width: width, z: z, x: x, y: y, rising: rising, tone: tone)
 	}
 
 	static func tracks(length: Float, width: Float) -> Solid {
@@ -199,22 +213,5 @@ private extension Units {
 
 	static func wheels(at positions: [Float]) -> [Solid] {
 		positions.map { box(length: 4, width: 12, z: 0 ... 3, x: $0, tone: Tone.wheel) }
-	}
-
-	static func corner(
-		_ length: Float,
-		_ width: Float,
-		_ z: ClosedRange<Float>,
-		_ x: Float,
-		_ y: Float,
-		low: Bool
-	) -> V3 {
-		let c = Volume.center
-		let sign: Float = low ? -1 : 1
-		return V3(
-			c.x + x + sign * length / 2,
-			c.y + y + sign * width / 2,
-			low ? z.lowerBound : z.upperBound
-		)
 	}
 }

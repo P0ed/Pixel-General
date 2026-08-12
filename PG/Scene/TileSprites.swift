@@ -49,27 +49,28 @@ extension Terrain {
 		}
 	}
 
-	/// Settlements are modelled in GFX; roads, bridges and the airfield stay hand-drawn.
+	/// Compass names map onto GFX axes the way `XY.pt` puts them on screen:
+	/// E is `xPlus`, N `yMinus`, W `xMinus`, S `yPlus`.
 	@MainActor
 	var decoration: CGImage? {
 		switch self {
 		case .none, .river, .sea, .field, .forest, .hill, .forestHill, .mountain: nil
-		case .city: .settlement(.city)
-		case .fort: .settlement(.fort)
-		case .villageE: .settlement(.village(.xPlus))
-		case .villageN: .settlement(.village(.yMinus))
-		case .villageW: .settlement(.village(.xMinus))
-		case .villageS: .settlement(.village(.yPlus))
-		case .airfield: UIImage.airfield.cg
-		case .bridgeWE: UIImage.bridgeWE.cg
-		case .bridgeSN: UIImage.bridgeSN.cg
-		case .roadNW: UIImage.roadNW.cg
-		case .roadNE: UIImage.roadNE.cg
-		case .roadWE: UIImage.roadWE.cg
-		case .roadSN: UIImage.roadSN.cg
-		case .roadSW: UIImage.roadSW.cg
-		case .roadSE: UIImage.roadSE.cg
-		case .roadX: UIImage.roadX.cg
+		case .city: .decoration(.city)
+		case .fort: .decoration(.fort)
+		case .airfield: .decoration(.airfield)
+		case .villageE: .decoration(.village(.xPlus))
+		case .villageN: .decoration(.village(.yMinus))
+		case .villageW: .decoration(.village(.xMinus))
+		case .villageS: .decoration(.village(.yPlus))
+		case .bridgeWE: .decoration(.bridge(.x))
+		case .bridgeSN: .decoration(.bridge(.y))
+		case .roadNW: .decoration(.road([.yMinus, .xMinus]))
+		case .roadNE: .decoration(.road([.yMinus, .xPlus]))
+		case .roadWE: .decoration(.road([.xMinus, .xPlus]))
+		case .roadSN: .decoration(.road([.yPlus, .yMinus]))
+		case .roadSW: .decoration(.road([.yPlus, .xMinus]))
+		case .roadSE: .decoration(.road([.yPlus, .xPlus]))
+		case .roadX: .decoration(.road([.xPlus, .xMinus, .yPlus, .yMinus]))
 		}
 	}
 }

@@ -23,6 +23,9 @@ public struct Outline: Hashable, Sendable {
 
 	/// Settlements: a dark rim plus seams, so neighbouring buildings stay apart.
 	public static var building: Outline { Outline(silhouette: 56, creases: 56) }
+
+	/// Flat tile art: a rim only a little darker than the paint it edges.
+	public static var decal: Outline { Outline(silhouette: 132) }
 }
 
 extension Outline {

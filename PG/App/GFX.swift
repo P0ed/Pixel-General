@@ -29,25 +29,39 @@ extension CGImage {
 		return slab
 	}
 
-	private static var buildings: [Settlement: CGImage] = [:]
+	private static var decorations: [Decoration: CGImage] = [:]
 
-	enum Settlement: Hashable {
-		case city, fort
+	/// Everything a tile carries on top of its surface, all of it modelled in GFX.
+	enum Decoration: Hashable {
+		case city, fort, airfield
 		case village(GFX.Direction)
+		case road([GFX.Direction])
+		case bridge(GFX.Axis)
 
 		var model: Model {
 			switch self {
 			case .city: Settlements.city
 			case .fort: Settlements.fort
+			case .airfield: Settlements.airfield
 			case .village(let facing): Settlements.village(facing: facing)
+			case .road(let directions): Roads.road(directions)
+			case .bridge(let axis): Roads.bridge(along: axis)
+			}
+		}
+
+		/// Roads are paint on the ground, so they take a rim barely darker than the paint.
+		var renderer: Renderer {
+			switch self {
+			case .road: .decal
+			default: .building
 			}
 		}
 	}
 
-	static func settlement(_ settlement: Settlement) -> CGImage {
-		if let image = buildings[settlement] { return image }
-		let image = Renderer.building.image(settlement.model)!
-		buildings[settlement] = image
+	static func decoration(_ decoration: Decoration) -> CGImage {
+		if let image = decorations[decoration] { return image }
+		let image = decoration.renderer.image(decoration.model)!
+		decorations[decoration] = image
 		return image
 	}
 }

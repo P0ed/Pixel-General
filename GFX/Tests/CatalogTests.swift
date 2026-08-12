@@ -14,14 +14,24 @@ struct CatalogTests {
 		#expect(occupied!.y.lowerBound >= 0 && occupied!.y.upperBound < bitmap.height)
 	}
 
-	@Test func unitsStandOnTheBaseDiamond() {
-		for entry in Catalog.units {
-			let bitmap = entry.renderer.render(entry.model)
-			let occupied = bitmap.occupied!
+	@Test(arguments: Units.Shape.allCases)
+	func unitsStayWithinReachOfTheirTile(shape: Units.Shape) {
+		let occupied = Renderer.unit.render(shape.model).occupied!
 
-			#expect(occupied.y.upperBound <= 47, "\(entry.name) stays on the tile")
-			#expect(occupied.y.upperBound >= 32, "\(entry.name) sits on the ground")
-			#expect(occupied.x.count <= 40, "\(entry.name) is narrower than a tile")
+		#expect(occupied.y.upperBound <= 47, "\(shape) stays on the tile")
+		// Wings and hulls run longer than a ground vehicle, as the hand-drawn ones did.
+		#expect(occupied.x.count <= (shape.flies ? 48 : 44), "\(shape) is no wider than a tile")
+	}
+
+	@Test func groundUnitsStandOnTheBaseDiamondAndAircraftHoverOverIt() {
+		for shape in Units.Shape.allCases {
+			let occupied = Renderer.unit.render(shape.model).occupied!
+
+			if shape.flies {
+				#expect(occupied.y.upperBound < 32, "\(shape) is clear of the ground")
+			} else {
+				#expect(occupied.y.upperBound >= 32, "\(shape) sits on the ground")
+			}
 		}
 	}
 

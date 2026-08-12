@@ -119,6 +119,53 @@ struct RendererTests {
 		#expect(outlined.gray.contains(24), "the rim is drawn")
 	}
 
+	@Test func linesDrawTheirToneFlat() {
+		let bitmap = flat.render(Model(lines: [
+			Line(from: V3(4, 16, 4), to: V3(28, 16, 4), tone: 64)
+		]))
+		let grays = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
+
+		#expect(grays == [64], "no shading is applied to a stroke")
+		#expect(bitmap.occupied?.x == 20 ... 44, "it spans the projected segment")
+	}
+
+	@Test func linesAreHiddenByWhateverStandsInFrontOfThem() {
+		let wall = Solid.box(from: V3(12, 12, 0), to: V3(20, 20, 16), tone: .max)
+		let inside = Line(from: V3(13, 19, 3), to: V3(19, 13, 3), tone: 64)
+		// (1,1,1) is the view direction, so this stroke keeps its pixels but comes forward.
+		let ahead = inside.translated(by: V3(8, 8, 8))
+
+		#expect(flat.render(Model([wall], lines: [inside])).gray.contains(64) == false)
+		#expect(flat.render(Model([wall], lines: [ahead])).gray.contains(64))
+	}
+
+	@Test func aLineLyingOnAFaceStillDraws() {
+		let slab = Solid.box(from: V3(4, 4, 0), to: V3(28, 28, 6), tone: .max)
+		let painted = Line(from: V3(6, 16, 6), to: V3(26, 16, 6), tone: 64)
+		let bitmap = flat.render(Model([slab], lines: [painted]))
+
+		#expect(bitmap.gray.filter { $0 == 64 }.count >= 20, "the stroke wins the tie on the top face")
+	}
+
+	@Test func dashesLeaveGapsWithoutShorteningTheStroke() {
+		let solid = flat.render(Model(lines: [Line(from: V3(4, 16, 4), to: V3(28, 16, 4), tone: 64)]))
+		let dashed = flat.render(Model(lines: [Line(from: V3(4, 16, 4), to: V3(28, 16, 4), tone: 64, dash: 3)]))
+
+		#expect(dashed.occupied?.x == solid.occupied?.x)
+		#expect(dashed.alpha.count(where: { $0 > 0 }) < solid.alpha.count(where: { $0 > 0 }))
+	}
+
+	@Test func strokesFollowTheModelTheyBelongTo() {
+		let line = Line(from: V3(4, 10, 4), to: V3(28, 12, 4), tone: 64)
+		let model = Model([.box(from: .zero, to: V3(4, 4, 1))], lines: [line])
+
+		#expect(model.mirrored().lines.first?.from == V3(10, 4, 4))
+		#expect(model.mirrored().lines.first?.to == V3(12, 28, 4))
+		#expect(model.rotated(.half).lines.first?.from == V3(28, 22, 4))
+		#expect(model.translated(by: V3(1, 2, 3)).lines.first?.to == V3(29, 14, 7))
+		#expect(model.toned(90).lines.first?.tone == 64, "a stroke keeps the gray it was authored with")
+	}
+
 	@Test func quantizationSnapsToTheRequestedLevels() {
 		#expect(Light.quantize(255, levels: 16) == 255)
 		#expect(Light.quantize(209, levels: 16) == 204)
