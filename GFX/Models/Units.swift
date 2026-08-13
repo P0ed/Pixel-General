@@ -4,7 +4,7 @@ public enum Units {
 	/// Every silhouette a unit can be drawn with, whatever it moves on.
 	public enum Shape: UInt8, Sendable, CaseIterable {
 		case tank, heavyTank, lowTank
-		case recon, carrier, ifv
+		case recon, fennek, brdm2, carrier, ifv
 		case truck, launcher
 		case artillery, gun
 		case spaa, flak
@@ -18,6 +18,8 @@ public enum Units {
 			case .heavyTank: Units.heavyTank
 			case .lowTank: Units.lowTank
 			case .recon: Units.recon
+			case .fennek: Units.fennek
+			case .brdm2: Units.brdm2
 			case .carrier: Units.carrier
 			case .ifv: Units.ifv
 			case .truck: Units.truck
@@ -57,6 +59,7 @@ public enum Units {
 		public static let glass: UInt8 = 145
 		public static let running: UInt8 = 120
 		public static let wheel: UInt8 = 95
+		public static let antenna: UInt8 = 72
 	}
 
 	public static var tank: Model {
@@ -97,6 +100,34 @@ public enum Units {
 			box(length: 16, width: 10, z: 3 ... 8.5, x: -1.5),
 			wedge(length: 6, width: 10, z: 4.5 ... 8.5, x: 7.5, rising: .xMinus),
 			box(length: 4, width: 4, z: 8.5 ... 10, x: -2, tone: Tone.turret),
+		])
+	}
+
+	/// Light 4x4 scout: raked screen over a long bonnet, a remote gun on the cabin roof and
+	/// the observation mast its optics ride on — whip aerials off the rear quarter.
+	public static var fennek: Model {
+		Model(wheels(at: [-7, 7]) + [
+			box(length: 13, width: 10, z: 3 ... 9, x: -4.5),
+			wedge(length: 3.5, width: 10, z: 6.5 ... 9, x: 3.75, rising: .xMinus, tone: Tone.glass),
+			box(length: 4, width: 10, z: 3 ... 6.5, x: 4),
+			wedge(length: 4.5, width: 10, z: 3 ... 6.5, x: 8.25, rising: .xMinus),
+			box(length: 4, width: 4, z: 9 ... 10.8, x: -2, tone: Tone.turret),
+			box(length: 2.5, width: 2.5, z: 9 ... 13.5, x: -7.5, tone: Tone.barrel),
+			box(length: 3, width: 4.5, z: 13.5 ... 15.5, x: -7, tone: Tone.turret),
+		], lines: [
+			Line(from: at(-6, 4, 9), to: at(-8.5, 5.5, 15), tone: Tone.antenna),
+			Line(from: at(-10, 4, 9), to: at(-12, 5.5, 14), tone: Tone.antenna),
+		])
+	}
+
+	/// Amphibious 4x4 scout car: a long boat prow off a low hull, a small gun turret amidships
+	/// and the belly wheels slung between the axles — the BRDM-2 read.
+	public static var brdm2: Model {
+		Model(wheels(at: [-7.5, 6.5]) + belly(at: [-2, 2]) + [
+			box(length: 17, width: 10, z: 3 ... 8, x: -2.5),
+			wedge(length: 6.5, width: 10, z: 3 ... 8, x: 9.25, rising: .xMinus),
+			box(length: 5, width: 5, z: 8 ... 10.5, x: -2, tone: Tone.turret),
+			box(length: 9, width: 1.5, z: 9 ... 10, x: 4.5, tone: Tone.barrel),
 		])
 	}
 
@@ -213,5 +244,10 @@ private extension Units {
 
 	static func wheels(at positions: [Float]) -> [Solid] {
 		positions.map { box(length: 4, width: 12, z: 0 ... 3, x: $0, tone: Tone.wheel) }
+	}
+
+	/// Small chain-driven wheels hung inboard, under the hull rather than beside it.
+	static func belly(at positions: [Float]) -> [Solid] {
+		positions.map { box(length: 3, width: 9.5, z: 1 ... 3, x: $0, tone: Tone.wheel) }
 	}
 }
