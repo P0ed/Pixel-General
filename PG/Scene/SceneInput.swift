@@ -157,9 +157,10 @@ extension Input {
 		case "s": self = .action(.b, modifiers: mods)
 		case "q": self = .action(.c, modifiers: mods)
 		case "w": self = .action(.d, modifiers: mods)
-		case "z": self = .scale(1)
-		case "x": self = .scale(2)
-		case "c": self = .scale(4)
+		case "z": self = .scale(0)
+		case "x": self = .scale(1)
+		case "c": self = .scale(2)
+		case "v": self = .scale(3)
 		default: return nil
 		}
 		}

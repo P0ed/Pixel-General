@@ -48,7 +48,7 @@ extension EditorNodes {
 		}
 		map.update(map: state.map, cursor: state.cursor, selected: nil)
 
-		let cameraScale = CGFloat(state.scale)
+		let cameraScale = CGFloat(1 << state.scale) / 2.0
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}

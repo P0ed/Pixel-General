@@ -70,7 +70,7 @@ extension StrategicNodes {
 				withKey: SKAction.cameraPositionKey
 			)
 		}
-		let cameraScale = CGFloat(state.ui.scale)
+		let cameraScale = CGFloat(1 << state.ui.scale) / 2.0
 		if camera.xScale != cameraScale {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}
