@@ -3,7 +3,7 @@ public enum Units {
 
 	/// Every silhouette a unit can be drawn with, whatever it moves on.
 	public enum Shape: UInt8, Sendable, CaseIterable {
-		case tank, heavyTank, lowTank
+		case tank, heavyTank, lowTank, leo2
 		case recon, fennek, brdm2, carrier, ifv
 		case truck, launcher
 		case artillery, gun
@@ -17,6 +17,7 @@ public enum Units {
 			case .tank: Units.tank
 			case .heavyTank: Units.heavyTank
 			case .lowTank: Units.lowTank
+			case .leo2: Units.leo2
 			case .recon: Units.recon
 			case .fennek: Units.fennek
 			case .brdm2: Units.brdm2
@@ -52,51 +53,69 @@ public enum Units {
 	}
 
 	public enum Tone {
-		public static let body: UInt8 = 215
-		public static let turret: UInt8 = 195
-		public static let barrel: UInt8 = 165
-		public static let cargo: UInt8 = 205
-		public static let glass: UInt8 = 145
-		public static let running: UInt8 = 120
-		public static let wheel: UInt8 = 95
-		public static let antenna: UInt8 = 72
+		public static let body: UInt8 = 200
+		public static let turret: UInt8 = 180
+		public static let barrel: UInt8 = 160
+		public static let cargo: UInt8 = 190
+		public static let glass: UInt8 = 140
+		public static let running: UInt8 = 60
+		public static let wheel: UInt8 = 90
+		public static let antenna: UInt8 = 70
 	}
 
+	/// Cold-war main battle tank: a long glacis, and a turret raked down onto the gun.
 	public static var tank: Model {
-		Model([
-			tracks(length: 24, width: 13),
-			box(length: 21, width: 10, z: 3 ... 7, x: -1),
-			wedge(length: 6, width: 10, z: 3.5 ... 7, x: 8.5, rising: .xMinus),
-			box(length: 11, width: 9, z: 7 ... 11, x: -3, tone: Tone.turret),
-			box(length: 15, width: 2, z: 8.5 ... 10.5, x: 8, tone: Tone.barrel),
+		Model(tracks(length: 24, width: 13) + [
+			box(length: 17, width: 10, z: 3 ... 7, x: -3),
+			wedge(length: 6.5, width: 10, z: 3 ... 7, x: 8.75, rising: .xMinus),
+			box(length: 9, width: 9, z: 7 ... 10.5, x: -4, tone: Tone.turret),
+			wedge(length: 4, width: 9, z: 7 ... 10.5, x: 2.5, rising: .xMinus, tone: Tone.turret),
+			gun(from: 3, length: 14, z: 10, caliber: 1.2),
+			cupola(x: -6, z: 10.5),
 		])
 	}
 
+	/// Heavy main battle tank: a taller hull and turret carrying a longer gun.
 	public static var heavyTank: Model {
-		Model([
-			tracks(length: 25, width: 14),
-			box(length: 22, width: 11, z: 3 ... 7.5, x: -1),
-			wedge(length: 7, width: 11, z: 3.5 ... 7.5, x: 8.5, rising: .xMinus),
-			box(length: 12, width: 10, z: 7.5 ... 12, x: -3, tone: Tone.turret),
-			box(length: 17, width: 2.5, z: 9.5 ... 11.5, x: 8.5, tone: Tone.barrel),
+		Model(tracks(length: 25, width: 14) + [
+			box(length: 18, width: 11, z: 3 ... 7.5, x: -3),
+			wedge(length: 6.5, width: 11, z: 3 ... 7.5, x: 9.25, rising: .xMinus),
+			box(length: 11, width: 10, z: 7.5 ... 11.5, x: -4.5, tone: Tone.turret),
+			wedge(length: 4.5, width: 10, z: 7.5 ... 11.5, x: 3.25, rising: .xMinus, tone: Tone.turret),
+			gun(from: 5.5, length: 13, z: 9.9, caliber: 1.2),
+			cupola(x: -7, z: 11.5),
 		])
 	}
 
-	/// Low-slung hull, small turret: the Strv / T-72 read.
+	/// Low-slung hull, squat dome turret: the T-72 read.
 	public static var lowTank: Model {
-		Model([
-			tracks(length: 23, width: 13),
-			box(length: 20, width: 11, z: 3 ... 5.5, x: -1),
+		Model(tracks(length: 23, width: 13) + [
+			box(length: 15, width: 11, z: 3 ... 5.5, x: -4),
 			wedge(length: 8, width: 11, z: 3 ... 5.5, x: 7.5, rising: .xMinus),
-			box(length: 9, width: 8, z: 5.5 ... 8.5, x: -3, tone: Tone.turret),
-			box(length: 16, width: 2, z: 6.5 ... 8, x: 8, tone: Tone.barrel),
+			box(length: 8, width: 8.5, z: 5.5 ... 8.5, x: -3, tone: Tone.turret),
+			wedge(length: 3.5, width: 8.5, z: 5.5 ... 8.5, x: 2.75, rising: .xMinus, tone: Tone.turret),
+			gun(from: 4, length: 14, z: 7.2, caliber: 1.2),
+			cupola(x: -4.5, z: 8.5),
+		])
+	}
+
+	/// Leopard 2A5 and its kin: skirts over the running gear, and spaced armour that steps
+	/// the turret front into an arrow.
+	public static var leo2: Model {
+		Model(tracks(length: 24, width: 14) + [
+			box(length: 23, width: 14, z: 3 ... 5, x: -1, tone: Tone.running),
+			box(length: 18, width: 14, z: 4.5 ... 8, x: -3),
+			wedge(length: 6, width: 14, z: 4.5 ... 8, x: 9, rising: .xMinus),
+			box(length: 10, width: 10, z: 8 ... 11, x: -2, tone: Tone.turret),
+			box(length: 2, width: 8, z: 8 ... 11, x: 4, tone: Tone.turret),
+			gun(from: 4, length: 15, z: 10, caliber: 1.2),
+			cupola(x: -2, z: 11),
 		])
 	}
 
 	/// Tracked personnel carrier: a plain sloped box with a cupola.
 	public static var recon: Model {
-		Model([
-			tracks(length: 19, width: 12),
+		Model(tracks(length: 19, width: 12) + [
 			box(length: 16, width: 10, z: 3 ... 8.5, x: -1.5),
 			wedge(length: 6, width: 10, z: 4.5 ... 8.5, x: 7.5, rising: .xMinus),
 			box(length: 4, width: 4, z: 8.5 ... 10, x: -2, tone: Tone.turret),
@@ -143,8 +162,7 @@ public enum Units {
 
 	/// Tracked IFV: taller hull, autocannon turret set back.
 	public static var ifv: Model {
-		Model([
-			tracks(length: 21, width: 12),
+		Model(tracks(length: 21, width: 12) + [
 			box(length: 18, width: 10, z: 3 ... 7.5, x: -1.5),
 			wedge(length: 7, width: 10, z: 4 ... 7.5, x: 8, rising: .xMinus),
 			box(length: 8, width: 7, z: 7.5 ... 11, x: -3, tone: Tone.turret),
@@ -172,8 +190,7 @@ public enum Units {
 
 	/// Tracked gun: long barrel over a boxy superstructure.
 	public static var artillery: Model {
-		Model([
-			tracks(length: 22, width: 13),
+		Model(tracks(length: 22, width: 13) + [
 			box(length: 19, width: 10, z: 3 ... 6, x: -1),
 			box(length: 13, width: 9, z: 6 ... 10.5, x: -4, tone: Tone.turret),
 			box(length: 19, width: 2, z: 9 ... 11, x: 7, tone: Tone.barrel),
@@ -192,8 +209,7 @@ public enum Units {
 
 	/// Tracked anti-air: radar plate behind a turret with raised barrels.
 	public static var spaa: Model {
-		Model([
-			tracks(length: 21, width: 13),
+		Model(tracks(length: 21, width: 13) + [
 			box(length: 18, width: 10, z: 3 ... 6, x: -1),
 			box(length: 9, width: 9, z: 6 ... 9.5, x: -2, tone: Tone.turret),
 			box(length: 2, width: 7, z: 9.5 ... 13, x: -6, tone: Tone.cargo),
@@ -238,8 +254,25 @@ private extension Units {
 		GFX.wedge(length: length, width: width, z: z, x: x, y: y, rising: rising, tone: tone)
 	}
 
-	static func tracks(length: Float, width: Float) -> Solid {
-		box(length: length, width: width, z: 0 ... 3, tone: Tone.running)
+	/// A run either side of the hull, which fills the gap between them.
+	static func tracks(length: Float, width: Float) -> [Solid] {
+		sides((width - 3.5) / 2) { box(length: length, width: 3.5, z: 0 ... 3, y: $0, tone: Tone.running) }
+	}
+
+	/// Main gun: the tube runs forward from `x` at the height the mantlet would sit.
+	static func gun(from x: Float, length: Float, z: Float, caliber: Float = 1.0) -> Solid {
+		box(
+			length: length,
+			width: caliber,
+			z: z - caliber / 2 ... z + caliber / 2,
+			x: x + length / 2,
+			tone: Tone.barrel
+		)
+	}
+
+	/// Commander's hatch, set off the turret centreline so the roof never reads flat.
+	static func cupola(x: Float, z: Float) -> Solid {
+		box(length: 2.5, width: 2.5, z: z ... z + 1.2, x: x, y: -1.0, tone: Tone.turret)
 	}
 
 	static func wheels(at positions: [Float]) -> [Solid] {

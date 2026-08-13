@@ -74,7 +74,8 @@ extension Unit {
 
 		// Tanks
 		case .m48, .m1A1, .m1A2: .heavyTank
-		case .leo1, .strv103, .strv122, .kf51, .leo2a6: .tank
+		case .strv122, .kf51, .leo2a6: .leo2
+		case .leo1, .strv103: .tank
 		case .t55, .t72, .t90m: .lowTank
 
 		// Air
