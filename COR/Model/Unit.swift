@@ -224,7 +224,11 @@ extension Unit {
 		mp = maxMP
 		ammo = maxAmmo
 		ent = 0
-		if isAA { self[.overwatch] = true }
+		armOverwatch()
+	}
+
+	mutating func armOverwatch() {
+		self[.overwatch] = isAA && canMove
 	}
 
 	@discardableResult

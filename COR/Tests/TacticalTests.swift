@@ -470,26 +470,24 @@ struct TacticalTests {
 		sim.place(aaUID, at: XY(16, 10))
 		#expect(sim.units[aaUID][.overwatch], "reset() must arm AA for day-1 coverage")
 
+		func fired(_ events: [TacticalEvent]) -> Bool {
+			events.contains { event in
+				if case .fire(let src, let dst, _, _) = event { src == aaUID && dst == heliUID } else { false }
+			}
+		}
+
 		// s300 rng 3 covers stepDistance ≤ 7: x ≥ 13 on the same row.
 		// A move ending at x = 12 never enters the range.
 		var e1: [TacticalEvent] = []
 		sim.move(unit: heliUID, to: XY(12, 10), into: &e1)
 		#expect(sim.position[heliUID] == XY(12, 10), "Move outside AA range must complete")
-		let firedEarly = e1.contains { event in
-			if case .fire = event { return true }
-			return false
-		}
-		#expect(!firedEarly, "No overwatch outside AA range")
+		#expect(!fired(e1), "No overwatch outside AA range")
 
 		// The next leg tries to fly to x = 15; the first covered tile is x = 13.
 		var e2: [TacticalEvent] = []
 		sim.move(unit: heliUID, to: XY(15, 10), into: &e2)
 		#expect(sim.position[heliUID] == XY(13, 10), "Air move must stop at the first covered tile")
-		let overwatch = e2.contains { event in
-			if case .fire(let src, let dst, _, _) = event { return src == aaUID && dst == heliUID }
-			return false
-		}
-		#expect(overwatch, "Entering AA range must draw overwatch fire")
+		#expect(fired(e2), "Entering AA range must draw overwatch fire")
 		#expect(!sim.units[aaUID][.overwatch], "Firing spends the overwatch charge")
 		#expect(sim.units[aaUID].ammo < sim.units[aaUID].maxAmmo, "Overwatch consumes AA ammo")
 
@@ -498,11 +496,7 @@ struct TacticalTests {
 		var e3: [TacticalEvent] = []
 		sim.move(unit: heliUID, to: XY(15, 10), into: &e3)
 		#expect(sim.position[heliUID] == XY(15, 10), "Spent AA must not interrupt")
-		let firedSpent = e3.contains { event in
-			if case .fire = event { return true }
-			return false
-		}
-		#expect(!firedSpent, "Spent AA must not fire again this turn")
+		#expect(!fired(e3), "Spent AA must not fire again this turn")
 
 		// The owner's end of turn re-arms the charge.
 		sim.units[heliUID].hp = 0xF
@@ -512,11 +506,7 @@ struct TacticalTests {
 
 		var e4: [TacticalEvent] = []
 		sim.move(unit: heliUID, to: XY(14, 10), into: &e4)
-		let rearmed = e4.contains { event in
-			if case .fire(let src, let dst, _, _) = event { return src == aaUID && dst == heliUID }
-			return false
-		}
-		#expect(rearmed, "Re-armed AA fires on the next intrusion")
+		#expect(fired(e4), "Re-armed AA fires on the next intrusion")
 
 		// An AA that spends its move ends the turn disarmed, even mid-charge:
 		// wheeling under aircraft must not pin them.
@@ -534,11 +524,7 @@ struct TacticalTests {
 		var e5: [TacticalEvent] = []
 		sim.move(unit: heliUID, to: XY(15, 10), into: &e5)
 		#expect(sim.position[heliUID] == XY(15, 10), "Disarmed AA must not interrupt")
-		let firedDisarmed = e5.contains { event in
-			if case .fire = event { return true }
-			return false
-		}
-		#expect(!firedDisarmed, "Disarmed AA must not fire")
+		#expect(!fired(e5), "Disarmed AA must not fire")
 	}
 
 	@Test func movesForOwnUnitNotIncludeStartTile() {

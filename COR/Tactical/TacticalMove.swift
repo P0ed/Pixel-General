@@ -10,32 +10,23 @@ public extension TacticalSim {
 	}
 
 	func moves(for uid: UID, target: XY? = nil) -> Moves {
-		var stoppable = false
-		return fill(for: uid, target: target, earlyExit: false, stoppable: &stoppable)
-	}
-
-	/// `moves(for: uid).hasMoves` without the fill: `earlyExit` stops at the
-	/// first tile the unit could stop on, so the common case (an open adjacent
-	/// tile) touches a handful of tiles instead of flooding the radius and
-	/// scanning the whole map — ~40x cheaper, and `actionMasks()` pays it per
-	/// unit per step.
-	func hasMoves(for uid: UID) -> Bool {
-		var stoppable = false
-		_ = fill(for: uid, target: nil, earlyExit: true, stoppable: &stoppable)
-		return stoppable
-	}
-
-	/// The BFS behind `moves(for:)` and `hasMoves(for:)`. With `earlyExit` it
-	/// returns an unfinished fill as soon as it reaches a tile the unit could
-	/// actually stop on — never `start` (already assigned, so skipped), and not
-	/// under a visible unit, i.e. exactly the tiles the trailing pass below
-	/// leaves non-zero — and reports it through `stoppable`. Always inlined so
-	/// both callers constant-fold `earlyExit` away.
-	@inline(__always)
-	private func fill(for uid: UID, target: XY?, earlyExit: Bool, stoppable: inout Bool) -> Moves {
-		let unit = units[uid]
 		var mov = Moves(start: position[uid])
-		if !unit.canMove { return mov }
+		fill(for: uid, target: target, earlyExit: false, into: &mov)
+		return mov
+	}
+
+	/// `moves(for:)` with an early exit at the first tile the unit could stop on.
+	func hasMoves(for uid: UID) -> Bool {
+		var mov = Moves(start: position[uid])
+		return fill(for: uid, target: nil, earlyExit: true, into: &mov)
+	}
+
+	/// The BFS behind `moves(for:)` and `hasMoves(for:)`; `earlyExit` returns
+	/// `true` at the first tile the unit could stop on, leaving the fill unfinished.
+	@inline(__always) @discardableResult
+	private func fill(for uid: UID, target: XY?, earlyExit: Bool, into mov: inout Moves) -> Bool {
+		let unit = units[uid]
+		if !unit.canMove { return false }
 
 		let team = unit.country.team
 		let air = unit.isAir
@@ -71,7 +62,7 @@ public extension TacticalSim {
 
 					let moveCost = map[xy].moveCost(unit) * 2 + enemies
 					if moveCost + 1 <= mp {
-						if earlyExit, canStop(at: xy) { stoppable = true; return mov }
+						if earlyExit, canStop(at: xy) { return true }
 						mov.moves[xy] = mp - moveCost
 						if mp - moveCost != 1 { next.add(xy) }
 					}
@@ -85,7 +76,7 @@ public extension TacticalSim {
 
 						let moveCost = map[xy].moveCost(unit) * 3 + enemies
 						if moveCost + 1 <= mp {
-							if earlyExit, canStop(at: xy) { stoppable = true; return mov }
+							if earlyExit, canStop(at: xy) { return true }
 							mov.moves[xy] = mp - moveCost
 							if mp - moveCost != 1 { next.add(xy) }
 						}
@@ -102,7 +93,7 @@ public extension TacticalSim {
 			}
 		}
 
-		return mov
+		return false
 	}
 
 	func canMove(unit uid: UID) -> Bool {
@@ -116,7 +107,8 @@ public extension TacticalSim {
 		let route = moves.route(to: target)
 		guard !route.isEmpty else { return }
 
-		let aaCoverage = units[uid].isAir ? aaCoverage(team: units[uid].country.team) : .empty
+		let team = units[uid].country.team
+		let overwatch = units[uid].isAir ? aaOverwatch(along: route, team: team) : nil
 
 		var pos = moves.start
 		var interruptor: UID = .none
@@ -125,15 +117,15 @@ public extension TacticalSim {
 			let xy = route[k]
 			if let tid = uidAt(xy) {
 				let u = units[tid]
-				if u.country.team != units[uid].country.team, !vision[playerIndex][position[tid.index]] {
+				if u.country.team != team, !vision[playerIndex][position[tid.index]] {
 					interruptor = unitsMap[xy]
 					break
 				}
 			} else {
 				pos = xy
 			}
-			if units[uid].isAir, aaCoverage[xy], let aa = aaOverwatcher(covering: xy, team: units[uid].country.team) {
-				overwatcher = aa
+			if let overwatch, overwatch.k == k {
+				overwatcher = overwatch.uid
 				break
 			}
 		}
@@ -161,7 +153,7 @@ public extension TacticalSim {
 			}
 		}
 
-		if interruptor != .none, units[interruptor].country.team != units[uid].country.team {
+		if interruptor != .none, units[interruptor].country.team != team {
 			attack(src: uid, dst: interruptor, surprise: true, into: &events)
 		}
 		if overwatcher != .none {

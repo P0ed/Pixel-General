@@ -149,28 +149,24 @@ extension TacticalSim {
 		}
 	}
 
-	func aaOverwatcher(covering xy: XY, team: Team) -> UID? {
-		units.firstMapAlive { i, u in
-			u.country.team != team && u.isAA && u[.overwatch]
-			&& u.airAtk > 0 && u.ammo > 0
-			&& !offMap(unit: i.uid)
-			&& position[i].stepDistance(to: xy) <= Int(u.rng) * 2 + 1
-			? i.uid : nil
-		}
-	}
-
-	func aaCoverage(team: Team) -> SetXY {
-		.make { set in
-			units.forEachAlive { i, u in
-				guard u.country.team != team, u.isAA, u[.overwatch],
-					  u.airAtk > 0, u.ammo > 0, !offMap(unit: i.uid) else { return }
-				let p = position[i]
-				let s49 = p.s49
-				for k in s49.indices where p.stepDistance(to: s49[k]) <= Int(u.rng) * 2 + 1 {
-					set[s49[k]] = true
+	/// The armed enemy AA covering the earliest tile of `route`, and that index.
+	func aaOverwatch(along route: borrowing CArray<16, XY>, team: Team) -> (k: Int, uid: UID)? {
+		var k = -1
+		var uid = UID.none
+		for i in units.indices where units[i].alive {
+			let u = units[i]
+			guard u.country.team != team, u.isAA, u[.overwatch],
+				  u.airAtk > 0, u.ammo > 0, !offMap(unit: i.uid) else { continue }
+			let p = position[i]
+			let reach = Int(u.rng) * 2 + 1
+			for j in route.indices.reversed() where j > k {
+				if p.stepDistance(to: route[j]) <= reach {
+					(k, uid) = (j, i.uid)
+					break
 				}
 			}
 		}
+		return uid == .none ? nil : (k, uid)
 	}
 
 	func aaSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {

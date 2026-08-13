@@ -127,7 +127,7 @@ extension TacticalSim {
 				ai.roster.add(i.uid)
 				let identity = UInt128(i + 1)
 					| UInt128(u.model.rawValue) << 8
-					| UInt128(u.bits.rawValue) << 16
+					| UInt128(u.bits.intersection(.aux).rawValue) << 16
 				signature = (signature ^ identity) &* 0x100000001b3
 			} else if !offMap(unit: i.uid), isVisible(i.uid), u.country.team != acting.team {
 				ai.enemies.add(i.uid)
