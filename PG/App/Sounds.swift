@@ -38,7 +38,7 @@ final class Sounds {
 			varispeed.rate = rate
 			player.stop()
 			player.scheduleBuffer(buffer, completionHandler: nil)
-			player.play()
+			try? player.playAudio()
 		}
 	}
 
@@ -59,8 +59,8 @@ final class Sounds {
 			let bank = Bank(buffer: buffer)
 			engine.attach(bank.player)
 			engine.attach(bank.varispeed)
-			engine.connect(bank.player, to: bank.varispeed, format: buffer.format)
-			engine.connect(bank.varispeed, to: engine.mainMixerNode, format: buffer.format)
+			try? engine.connectNode(bank.player, to: bank.varispeed, format: buffer.format)
+			try? engine.connectNode(bank.varispeed, to: engine.mainMixerNode, format: buffer.format)
 			return bank
 		}
 		self.engine = engine
@@ -69,8 +69,7 @@ final class Sounds {
 	}
 
 	func preheat() {
-		guard settings.outputVolume > 0.0, !engine.isRunning else { return }
-		try? AVAudioSession.sharedInstance().setActive(true)
+		guard settings.soundLevel != 0, !engine.isRunning else { return }
 		try? engine.start()
 	}
 
@@ -78,11 +77,10 @@ final class Sounds {
 		guard settings.soundLevel != 0, banks[sound.rawValue] != nil else { return }
 
 		if !engine.isRunning {
-			try? AVAudioSession.sharedInstance().setActive(true)
-			guard (try? engine.start()) != nil else { return }
+			try? engine.start()
 		}
 		engine.mainMixerNode.outputVolume = settings.outputVolume
 
-		banks[sound.rawValue]?.play(rate: sound.variesPitch ? .random(in: 0.94 ... 1.06) : 1.0)
+		banks[sound.rawValue]?.play(rate: sound.variesPitch ? .random(in: 0.9 ... 1.1) : 1.0)
 	}
 }

@@ -145,7 +145,7 @@ public struct LSTMWeights: Sendable {
 
 		func put<T: FixedWidthInteger>(_ v: T) {
 			var le = v.littleEndian
-			unsafe withUnsafeBytes(of: &le) { raw in unsafe out.append(contentsOf: raw) }
+			withUnsafeBytes(of: &le) { raw in unsafe out.append(contentsOf: raw) }
 		}
 
 		put(Self.magic)
