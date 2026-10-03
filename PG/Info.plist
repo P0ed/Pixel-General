@@ -25,6 +25,8 @@
 	<true/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.strategy-games</string>
+	<key>LSSupportsGameMode</key>
+	<false/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>
@@ -40,8 +42,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>LSSupportsGameMode</key>
-	<false/>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

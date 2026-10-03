@@ -40,14 +40,14 @@ enum UnitSheetCommand {
 				}
 			}
 
-			let url = URL(fileURLWithPath: output ?? "units.png").standardizedFileURL
+			let url = URL(fileURLWithPath: output ?? "/tmp/units.png").standardizedFileURL
 			guard url.pathExtension.lowercased() == "png" else {
 				throw UnitSheetError.arguments("The output filename must end in .png.")
 			}
 			let png = try UnitSheet.png(scale: scale, columns: columns)
 			try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 			try png.write(to: url, options: .atomic)
-			print("Rendered \(Units.Shape.allCases.count) unit shapes in both facings to \(url.path)")
+			print("Rendered \(Units.Shape.allCases.count) unit shapes to \(url.path)")
 		} catch {
 			let message = "GFXUnitSheet: \(error.localizedDescription)\n"
 			FileHandle.standardError.write(Data(message.utf8))

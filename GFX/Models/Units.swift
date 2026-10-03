@@ -1,7 +1,6 @@
-/// Box-shaped ground units, authored nose-first along `+x` (screen right-and-down).
+/// Box-shaped units, authored nose-first along `+x` (screen right-and-down).
 public enum Units {
 
-	/// Every silhouette a unit can be drawn with, whatever it moves on.
 	public enum Shape: UInt8, Sendable, CaseIterable {
 		case tank, heavyTank, lowTank, leo2
 		case recon, fennek, brdm2, carrier, ifv
