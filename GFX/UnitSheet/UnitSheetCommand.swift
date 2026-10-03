@@ -6,13 +6,14 @@ import GFX
 enum UnitSheetCommand {
 
 	static let usage = """
-	Usage: GFXUnitSheet [output.png] [--scale N] [--columns N]
+	Usage: GFXUnitSheet [output.png] [--scale N] [--columns N] [--family NAME]
 
 	Render every unit shape in both facings to a labeled PNG sheet.
 
 	  output.png     Output file (default: units.png); parent directories are created.
 	  --scale N      Integer pixel scale, 1–8 (default: 4).
 	  --columns N    Unit pairs per row, 1–8 (default: 4).
+	  --family NAME Render one family, e.g. tank, ifv, fighter, missileAA.
 	  -h, --help     Show this help.
 	"""
 
@@ -22,6 +23,7 @@ enum UnitSheetCommand {
 			var output: String?
 			var scale = 4
 			var columns = 4
+			var family: Units.Kind?
 			while let argument = arguments.next() {
 				switch argument {
 				case "-h", "--help":
@@ -32,6 +34,11 @@ enum UnitSheetCommand {
 						throw UnitSheetError.arguments("\(argument) requires an integer from 1 to 8.")
 					}
 					if argument == "--scale" { scale = number } else { columns = number }
+				case "--family":
+					guard let value = arguments.next(), let kind = Units.Kind(rawValue: value) else {
+						throw UnitSheetError.arguments("Available families: \(Units.Kind.allCases.map(\.rawValue).joined(separator: ", ")).")
+					}
+					family = kind
 				default:
 					guard !argument.hasPrefix("-"), output == nil else {
 						throw UnitSheetError.arguments("Unexpected argument: \(argument).")
@@ -44,10 +51,11 @@ enum UnitSheetCommand {
 			guard url.pathExtension.lowercased() == "png" else {
 				throw UnitSheetError.arguments("The output filename must end in .png.")
 			}
-			let png = try UnitSheet.png(scale: scale, columns: columns)
+			let shapes = family?.variants ?? Units.Shape.allCases
+			let png = try UnitSheet.png(scale: scale, columns: columns, shapes: shapes, title: family?.name ?? "Unit sprites")
 			try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 			try png.write(to: url, options: .atomic)
-			print("Rendered \(Units.Shape.allCases.count) unit shapes to \(url.path)")
+			print("Rendered \(shapes.count) unit shapes to \(url.path)")
 		} catch {
 			let message = "GFXUnitSheet: \(error.localizedDescription)\n"
 			FileHandle.standardError.write(Data(message.utf8))

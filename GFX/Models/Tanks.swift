@@ -1,7 +1,7 @@
 public extension Units {
 
 	/// Leopard 1: cast turret, exposed suspension and a narrow gun mantlet.
-	static var tank: Model {
+	static var leo1: Model {
 		tankChassis(length: 25, width: 14, wheels: 7, deck: 6.2)
 		+ Model([
 			tankPlate(length: 24, width: 12.5, z: 4.1 ... 6.2,
@@ -16,7 +16,7 @@ public extension Units {
 	}
 
 	/// Abrams: long angular bustle, broad armour cheeks and seven road wheels behind skirts.
-	static var heavyTank: Model {
+	static var m1A1: Model {
 		tankChassis(length: 26, width: 15, wheels: 7, deck: 6.5)
 		+ Model([
 			tankPlate(length: 25, width: 13.5, z: 4.1 ... 6.5,
@@ -32,7 +32,7 @@ public extension Units {
 	}
 
 	/// T-72: six large road wheels, low glacis and a squat, faceted cast turret.
-	static var lowTank: Model {
+	static var t72: Model {
 		tankChassis(length: 24, width: 14, wheels: 6, deck: 5.6)
 		+ Model([
 			tankPlate(length: 23, width: 12.5, z: 3.8 ... 5.6,
@@ -47,7 +47,7 @@ public extension Units {
 	}
 
 	/// Leopard 2: long hull, a wide turret bustle and pointed, sloping frontal armour.
-	static var leo2: Model {
+	static var leo2a6: Model {
 		tankChassis(length: 26, width: 15, wheels: 7, deck: 6.6)
 		+ Model([
 			tankPlate(length: 25, width: 14, z: 4.1 ... 6.6,
@@ -67,7 +67,7 @@ public extension Units {
 
 	/// The T-72 chassis with reactive armour cheeks, a rear bustle and a raised sight.
 	static var t90m: Model {
-		lowTank + Model([
+		t72 + Model([
 			tankPlate(length: 4.5, width: 9, z: 6 ... 8.4, x: -6.2,
 				front: 0, rear: 0.6, side: 0.4, corner: 0.8, tone: Tone.turret),
 			GFX.box(length: 2.2, width: 2, z: 8.7 ... 10.3, x: 0, y: -2.6, tone: Tone.glass),
@@ -79,7 +79,7 @@ public extension Units {
 
 	/// Abrams with a visible bustle rack and an independent commander's thermal sight.
 	static var m1A2: Model {
-		heavyTank + Model([
+		m1A1 + Model([
 			tankPlate(length: 3.5, width: 10.5, z: 7.5 ... 9.7, x: -9.3,
 				front: 0, rear: 0, side: 0, corner: 0.7, tone: Tone.running),
 			GFX.box(length: 2.4, width: 2.4, z: 10.6 ... 12.2, x: 0.6, y: -2.6, tone: Tone.glass),
@@ -90,7 +90,7 @@ public extension Units {
 
 	/// Swedish Leopard with an armoured roof and reinforced frontal cheek modules.
 	static var strv122: Model {
-		leo2 + Model([
+		leo2a6 + Model([
 			tankPlate(length: 7, width: 7, z: 10.3 ... 11, x: -1,
 				front: 0.3, rear: 0.3, side: 0.3, corner: 0.8, tone: Tone.cargo),
 		] + sides(3.8) {
@@ -100,7 +100,7 @@ public extension Units {
 	}
 }
 
-private extension Units {
+extension Units {
 
 	static func tankTurret(
 		length: Float, width: Float, z: ClosedRange<Float>, x: Float,
@@ -134,7 +134,7 @@ private extension Units {
 	static func tankChassis(length: Float, width: Float, wheels: Int, deck: Float) -> Model {
 		let trackWidth: Float = 2.8
 		let trackY = (width - trackWidth) / 2
-		let radius: Float = wheels == 6 ? 1.85 : 1.65
+		let radius: Float = wheels == 4 ? 2.2 : (wheels <= 6 ? 1.85 : 1.65)
 		let span = length - 5
 		var solids = sides(trackY) { y in
 			var track = GFX.box(length: length, width: trackWidth, z: 0 ... 5, y: y, tone: 36)
@@ -148,7 +148,7 @@ private extension Units {
 		}
 		for sign: Float in [-1, 1] {
 			for index in 0 ..< wheels {
-				let x = -span / 2 + span * Float(index) / Float(wheels - 1)
+				let x: Float = wheels == 5 ? [-9, -4, 0, 4, 8][index] : -span / 2 + span * Float(index) / Float(wheels - 1)
 				let y = sign * (width / 2 - 0.1)
 				// A dark rubber rim separates each wheel from its neighbours and the metal hub.
 				solids.append(tankCylinder(at: at(x, y, 2.5), radius: radius, length: 0.8,

@@ -71,10 +71,18 @@ public extension String {
 
 public extension Unit {
 
+	private func equipmentName(european: String, american: String, soviet: String) -> String {
+		switch country.team {
+		case .allies: american
+		case .soviet: soviet
+		case .axis, .none: european
+		}
+	}
+
 	var typeDescription: String {
 		switch model {
 		case .none: ""
-		case .truck: "Truck"
+		case .truck: equipmentName(european: "MAN KAT1", american: "M35", soviet: "Ural-4320")
 
 		// Infantry
 		case .militia: "Militia"
@@ -88,17 +96,17 @@ public extension Unit {
 		case .p1sun: "P1SUN"
 
 		// Artillery
-		case .art105: "105mm"
-		case .art155: "155mm"
+		case .art105: "D-30"
+		case .art155: equipmentName(european: "FH70", american: "M198", soviet: "D-20")
 		case .sp105: "Akatsiya"
 		case .m777: "M777"
 		case .m109: "M109A7"
-		case .m147: "M147"
+		case .m147: "M142 HIMARS"
 		case .mars: "MARS"
 		case .pzh: "PzH 2000"
 
 		// Anti-air
-		case .bofors: "40mm L/70"
+		case .bofors: equipmentName(european: "40mm L/70", american: "M167 VADS", soviet: "ZU-23-2")
 		case .nasams: "NASAMS"
 		case .patriot: "Patriot"
 		case .neva: "Neva"
@@ -127,7 +135,7 @@ public extension Unit {
 		case .strv122: "Strv 122"
 		case .kf51: "KF51"
 		case .leo2a6: "Leopard 2A6"
-		case .t55: "T-55BVM"
+		case .t55: "T-55"
 		case .t72: "T-72B"
 		case .t90m: "T-90M"
 
@@ -149,9 +157,9 @@ public extension Unit {
 		case .su27: "Su-27"
 
 		// Naval
-		case .cargo: "Transport"
-		case .destroyer: "Destroyer"
-		case .cruiser: "Cruiser"
+		case .cargo: equipmentName(european: "Karel Doorman", american: "Bob Hope", soviet: "Ropucha")
+		case .destroyer: equipmentName(european: "Type 45", american: "Arleigh Burke", soviet: "Sovremenny")
+		case .cruiser: equipmentName(european: "De Zeven Provinciën", american: "Ticonderoga", soviet: "Slava")
 		}
 	}
 }

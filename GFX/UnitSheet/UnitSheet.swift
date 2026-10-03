@@ -7,8 +7,7 @@ import UniformTypeIdentifiers
 
 enum UnitSheet {
 
-	static func png(scale: Int, columns: Int) throws -> Data {
-		let shapes = Units.Shape.allCases
+	static func png(scale: Int, columns: Int, shapes: [Units.Shape] = Units.Shape.allCases, title: String = "Unit sprites") throws -> Data {
 		let rows = (shapes.count + columns - 1) / columns
 		let faceWidth = max(128, Canvas.unit.width * scale)
 		let cardWidth = faceWidth * 2
@@ -24,7 +23,7 @@ enum UnitSheet {
 		context.setFillColor(CGColor(gray: 0.86, alpha: 1))
 		context.fill(CGRect(x: 0, y: 0, width: width, height: height))
 		context.interpolationQuality = .none
-		text("Unit sprites", at: CGPoint(x: 16, y: height - 30), size: 22, in: context)
+		text(title, at: CGPoint(x: 16, y: height - 30), size: 22, in: context)
 		text("\(shapes.count) shapes · both facings · \(scale)×", at: CGPoint(x: 16, y: height - 50), size: 12, in: context)
 
 		for (index, shape) in shapes.enumerated() {
@@ -38,7 +37,7 @@ enum UnitSheet {
 			let model = shape.model
 			for facing in 0 ..< 2 {
 				let faceX = x + facing * faceWidth
-				let label = "\(name(shape)) \(facing == 0 ? "→" : "←")"
+				let label = "\(shape.name) \(facing == 0 ? "→" : "←")"
 				text(label, at: CGPoint(x: faceX + 12, y: y + cardHeight - 23), size: 14, in: context)
 				guard let image = Renderer.unit.image(facing == 0 ? model : model.mirrored()) else {
 					throw UnitSheetError.rendering
@@ -70,21 +69,4 @@ enum UnitSheet {
 		CTLineDraw(line, context)
 	}
 
-	private static func name(_ shape: Units.Shape) -> String {
-		switch shape {
-		case .leo2: "Leopard 2"
-		case .t90m: "T-90M"
-		case .m1A2: "M1A2"
-		case .strv122: "Strv 122"
-		case .brdm2: "BRDM-2"
-		case .ifv: "IFV"
-		case .spaa: "SPAA"
-		case .flak: "Bofors AA"
-		case .drone: "UAV"
-		default:
-			String(describing: shape)
-				.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression)
-				.capitalized
-		}
-	}
 }

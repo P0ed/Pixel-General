@@ -15,7 +15,7 @@ public enum Catalog {
 
 	public static var units: [CatalogEntry] {
 		Units.Shape.allCases.map {
-			CatalogEntry(name: "\($0)".capitalized, model: $0.model, renderer: .unit)
+			CatalogEntry(name: $0.name, model: $0.model, renderer: .unit)
 		}
 	}
 

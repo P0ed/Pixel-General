@@ -12,8 +12,8 @@ public enum Aircraft {
 
 	public static let altitude: Float = 7
 
-	/// Utility helicopter with a faceted cabin, glazed cockpit, engine housings and skid gear.
-	public static var helicopter: Model {
+	/// NH90 with a faceted cabin, glazed cockpit, twin engines and wheeled landing gear.
+	public static var nh90: Model {
 		let deck = altitude
 		var solids = [
 			fuselage(length: 15, width: 7, z: deck ... deck + 5.5, x: 1,
@@ -34,15 +34,14 @@ public enum Aircraft {
 		solids += sides(3.45) {
 			box(length: 3.5, width: 0.2, z: deck + 2 ... deck + 4.3, x: -1.5, y: $0, tone: Tone.glass)
 		}
-		solids += sides(3.6) {
-			barrel(from: at(-5, $0, deck - 1.8), to: at(4, $0, deck - 1.8), caliber: 0.7, tone: Tone.gear)
+		solids += sides(4) {
+			cylinder(at: at(-3.5, $0, deck - 1.1), radius: 0.8, length: 0.8, axis: .y, tone: Tone.gear)
 		}
+		solids.append(cylinder(at: at(5, 0, deck - 1.1), radius: 0.7, length: 0.8, axis: .y, tone: Tone.gear))
 		var lines = Line.rotor(at: at(-1, 0, deck + 8.3), radius: 15, tone: Tone.blade)
 		lines += tailRotor(x: -15.3, z: deck + 5.5, radius: 2.2)
-		lines += [-3, 2].flatMap { x in
-			sides(3.6) { Line(from: at(x, $0, deck + 0.7), to: at(x, $0, deck - 1.8), tone: Tone.gear) }
-		}
-		lines += sides(3.6) { Line(from: at(4, $0, deck - 1.8), to: at(5, $0, deck - 1), tone: Tone.gear) }
+		lines += sides(4) { Line(from: at(-3.5, $0, deck - 1.1), to: at(-3.5, $0, deck + 1), tone: Tone.gear) }
+		lines.append(Line(from: at(5, 0, deck - 1.1), to: at(5, 0, deck + 1), tone: Tone.gear))
 		lines += [
 			Line(from: at(2.3, 0, deck + 5.5), to: at(6.8, 0, deck + 3), tone: Tone.boom),
 			Line(from: at(-3.3, 3.6, deck + 1), to: at(-3.3, 3.45, deck + 4.4), tone: 120),
@@ -51,7 +50,7 @@ public enum Aircraft {
 	}
 
 	/// Rotary-wing UAV with a compact engine, tapered tail boom and an underslung sensor ball.
-	public static var scout: Model {
+	public static var skeldar: Model {
 		let deck = altitude + 1
 		let solids = [
 			fuselage(length: 11, width: 4.8, z: deck ... deck + 3.8, x: 1,
@@ -76,12 +75,12 @@ public enum Aircraft {
 	}
 
 	/// Long-wing UAV with a shaped nose, sensor turret, pusher propeller and twin tail fins.
-	public static var drone: Model {
+	public static var mq9: Model {
 		let deck = altitude + 1
 		var solids = [
 			fuselage(length: 12, width: 3, z: deck ... deck + 4, x: 4.5,
 				nose: 3, tail: 0.3, tone: Tone.body),
-			fuselage(length: 11, width: 1.5, z: deck + 1.5 ... deck + 2.7, x: -8,
+			fuselage(length: 15, width: 1.5, z: deck + 1.5 ... deck + 2.7, x: -6,
 				nose: 0, tail: 1.5, tone: Tone.boom),
 			prism([(-15, -5), (-12, -5), (-10.5, -1.5), (-10.5, 1.5), (-12, 5), (-15, 5)],
 				z: deck + 2 ... deck + 2.8, tone: Tone.wing),
@@ -100,7 +99,7 @@ public enum Aircraft {
 	}
 
 	/// Single-engine fighter: pointed radome, bubble canopy, chin intake and swept tailplanes.
-	public static var jet: Model {
+	public static var f16: Model {
 		let deck = altitude
 		var solids = [
 			fuselage(length: 27, width: 4.4, z: deck + 1 ... deck + 4.3, x: 0.5,
@@ -123,7 +122,7 @@ public enum Aircraft {
 	}
 
 	/// Twin-engine fighter with separate nacelles, side intakes, swept stabilizers and two raked fins.
-	public static var heavyJet: Model {
+	public static var mig29: Model {
 		let deck = altitude
 		var solids = [
 			fuselage(length: 29, width: 6, z: deck + 1 ... deck + 4.5, x: 0.5,
@@ -148,7 +147,7 @@ public enum Aircraft {
 	}
 }
 
-private extension Aircraft {
+extension Aircraft {
 
 	/// Faceted cross-section with a nose and tail that taper in both plan and elevation.
 	static func fuselage(

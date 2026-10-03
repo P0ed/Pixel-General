@@ -44,56 +44,6 @@ extension Unit {
 		return .vehicle(vehicle, mirrored: country.team != .axis)
 	}
 
-	/// The GFX silhouette a unit is drawn with. Models sharing a shape share a sprite.
-	var vehicle: Units.Shape? {
-		switch model {
-		case .none: nil
-		case .truck: .truck
-
-		// Infantry
-		case .regular, .engineer, .ranger, .militia: .rifleman
-		case .delta, .ksk, .speznas: .special
-		case .fpv, .p1sun: .quad
-
-		// Artillery
-		case .art155, .m777, .art105: .gun
-		case .sp105, .pzh, .m109: .artillery
-		case .mars, .m147: .launcher
-
-		// Anti-air
-		case .patriot, .nasams, .neva, .s300: .launcher
-		case .bofors: .flak
-		case .lvkv90, .tunguska: .spaa
-
-		// IFV / recon
-		case .fennek: .fennek
-		case .brdm2: .brdm2
-		case .boxer: .carrier
-		case .m2A2, .m113, .marder, .bmp: .recon
-		case .strf90, .cv9035, .kf41: .ifv
-
-		// Tanks
-		case .m48, .m1A1: .heavyTank
-		case .m1A2: .m1A2
-		case .kf51, .leo2a6: .leo2
-		case .strv122: .strv122
-		case .leo1, .strv103: .tank
-		case .t55, .t72: .lowTank
-		case .t90m: .t90m
-
-		// Air
-		case .skeldar, .skeldarm: .scout
-		case .mh6, .nh90, .mi8, .mi24: .helicopter
-		case .mq9, .orlan: .drone
-		case .f16, .f35: .jet
-		case .gripen, .mig29, .su57, .su25, .su27: .heavyJet
-
-		// Naval
-		case .cargo: .cargo
-		case .destroyer: .destroyer
-		case .cruiser: .cruiser
-		}
-	}
 }
 
 extension Country {

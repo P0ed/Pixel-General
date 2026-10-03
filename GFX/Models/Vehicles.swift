@@ -1,7 +1,7 @@
 public extension Units {
 
-	/// M113-style carrier: five road wheels, a raked bow and roof hatches over the troop bay.
-	static var recon: Model {
+	/// M113 carrier: five road wheels, a raked bow and roof hatches over the troop bay.
+	static var m113: Model {
 		tracked(length: 20, width: 12, count: 5)
 		+ Model([
 			armour(length: 19, width: 10.5, z: 3.8 ... 8.2, x: -0.5,
@@ -55,7 +55,7 @@ public extension Units {
 	}
 
 	/// Boxer: four axles below the high troop compartment, with a compact remote turret.
-	static var carrier: Model {
+	static var boxer: Model {
 		wheeled(at: [-8.5, -3, 3, 8.5], width: 11.5, radius: 2.15)
 		+ Model([
 			armour(length: 25, width: 11.5, z: 4 ... 8.6,
@@ -69,8 +69,8 @@ public extension Units {
 		+ cannon(from: at(1, 0, 10), to: at(11.5, 0, 10.5), caliber: 1.2)
 	}
 
-	/// CV90-style IFV: exposed six-wheel suspension, sloped glacis and an autocannon turret.
-	static var ifv: Model {
+	/// Strf 9040: exposed six-wheel suspension, sloped glacis and an autocannon turret.
+	static var strf90: Model {
 		tracked(length: 22, width: 12.5, count: 6)
 		+ Model([
 			armour(length: 21, width: 11, z: 3.8 ... 7.5,
@@ -88,7 +88,7 @@ public extension Units {
 	}
 
 	/// Six-wheel cargo truck: glazed cab, bumper and a canvas cover with visible support bows.
-	static var truck: Model {
+	static var manKat1: Model {
 		truckChassis + truckCab + Model([
 			armour(length: 14.5, width: 10.5, z: 4.8 ... 11.5, x: -5,
 				side: 1.2, corner: 0.5, tone: Tone.cargo),
@@ -102,34 +102,17 @@ public extension Units {
 		})
 	}
 
-	/// Raised rocket pods on a truck bed: individual cell mouths, seams and a hydraulic cradle.
-	static var launcher: Model {
-		let start = at(-10, 0, 6.5), end = at(1.5, 0, 14.5)
-		let pod = barrel(from: start, to: end, caliber: 7.5, tone: Tone.cargo)
-		let axis = (end - start).normalized
-		let across = V3(-axis.z, 0, axis.x)
-		let lines = [-2, 0, 2].map { y in
-			Line(from: start + V3(0, y, 0) + across * 3.75,
-				to: end + V3(0, y, 0) + across * 3.75, tone: 115)
-		}
-		// The forward-facing elevated end displays six launcher cell openings.
-		var mouths: [Solid] = []
-		for y: Float in [-2.3, 0, 2.3] {
-			for offset: Float in [-1.5, 1.5] {
-				let center = end + V3(0, y, 0) + across * offset + axis * 0.1
-				mouths.append(barrel(from: center - axis * 0.2, to: center + axis * 0.3, caliber: 1.1, tone: 50))
-			}
-		}
-		return truckChassis + truckCab + Model([
+	/// M142 HIMARS: a single six-cell launcher above the cab-over FMTV chassis.
+	static var m142: Model {
+		truckChassis + truckCab + Model([
 			box(length: 15, width: 10, z: 4.3 ... 5.2, x: -5, tone: Tone.turret),
 			cylinder(at: at(-4, 0, 6), radius: 2, length: 7, axis: .y, tone: Tone.running),
 			barrel(from: at(-2, 0, 5), to: at(-7, 0, 10), caliber: 1.5, tone: Tone.barrel),
-			pod,
-		] + mouths, lines: lines)
+		]) + rocketPod(from: at(-10, 0, 6.5), to: at(1.5, 0, 14.5), rows: 2, columns: 3, spacing: 2.4)
 	}
 
 	/// Self-propelled howitzer: seven wheels, angular fighting compartment and a raised gun tube.
-	static var artillery: Model {
+	static var pzh2000: Model {
 		tracked(length: 25, width: 13, count: 7)
 		+ Model([
 			armour(length: 24, width: 11.5, z: 3.8 ... 6.5,
@@ -146,7 +129,7 @@ public extension Units {
 	}
 
 	/// Towed howitzer: two round wheels, split trails, breech and an elevated barrel with muzzle brake.
-	static var gun: Model {
+	static var fh70: Model {
 		let trails = sides(1) { sign in
 			prism([(-13, sign * 4.8 - 0.6), (-2, sign * 1.8 - 0.6),
 				(-2, sign * 1.8 + 0.6), (-13, sign * 4.8 + 0.6)], z: 0.8 ... 2, tone: Tone.running)
@@ -164,8 +147,8 @@ public extension Units {
 	}
 
 	/// Tracked anti-air: faceted radar head, two raised autocannons and exposed road wheels.
-	static var spaa: Model {
-		tracked(length: 23, width: 13, count: 6)
+	static var gepard: Model {
+		tracked(length: 23, width: 13, count: 7)
 		+ Model([
 			armour(length: 22, width: 11.5, z: 3.8 ... 6.2,
 				front: 4, rear: 0.5, side: 0.5, corner: 0.8, tone: Tone.body),
@@ -182,7 +165,7 @@ public extension Units {
 	}
 
 	/// Bofors: circular turntable, split shields, raised breech, sight and folding wheels.
-	static var flak: Model {
+	static var boforsL70: Model {
 		Model([
 			box(length: 21, width: 2, z: 0.8 ... 2, x: -1.5, tone: Tone.running),
 			box(length: 2.5, width: 19, z: 0.8 ... 2, tone: Tone.running),
@@ -211,7 +194,7 @@ public extension Units {
 	}
 }
 
-private extension Units {
+extension Units {
 
 	static func wheeled(at positions: [Float], width: Float, radius: Float) -> Model {
 		var solids: [Solid] = []

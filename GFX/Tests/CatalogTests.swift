@@ -38,7 +38,7 @@ struct CatalogTests {
 	}
 
 	@Test func uavWingsExposeEqualTopAreasInBothFacings() {
-		for model in [Aircraft.drone, Aircraft.drone.mirrored()] {
+		for model in [Aircraft.mq9, Aircraft.mq9.mirrored()] {
 			// The main wings sit flush with the top of the fuselage.
 			let wings = model.solids.indices.filter {
 				model.solids[$0].tone == Aircraft.Tone.wing && model.solids[$0].to.z == Aircraft.altitude + 5
@@ -109,7 +109,7 @@ struct CatalogTests {
 	}
 
 	@Test func imagesCarryTheRenderedPixels() {
-		let bitmap = Renderer.unit.render(Units.truck)
+		let bitmap = Renderer.unit.render(Units.manKat1)
 		let image = bitmap.cgImage
 
 		#expect(image?.width == 64)

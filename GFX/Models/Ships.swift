@@ -11,37 +11,8 @@ public enum Ships {
 		public static let cargo: UInt8 = 205
 	}
 
-	/// Cargo ship with an aft bridge, funnel and corrugated containers on an open foredeck.
-	public static var cargo: Model {
-		let deck: Float = 3.6
-		var model = hull(length: 33, width: 9.5, deck: deck)
-		model = model + Model([
-			armour(length: 6.5, width: 7.2, z: deck ... 7.7, x: -10.5,
-				front: 0.4, side: 0.4, corner: 0.6, tone: Tone.house),
-			armour(length: 5.5, width: 6.5, z: 7.7 ... 9.1, x: -10,
-				front: 0.4, side: 0.2, corner: 0.5, tone: Tone.house),
-			cylinder(at: at(-13, 0, 9.5), radius: 1, length: 3, axis: .z, tone: 145),
-			cylinder(at: at(-13, 0, 11.1), radius: 0.85, length: 0.3, axis: .z, tone: Tone.mast),
-		], lines: windows(x: -10, length: 5.5, width: 6.5, z: 8.1))
-		let containerX: [Float] = [-3.5, 3, 9]
-		for (index, x) in containerX.enumerated() {
-			model = model + Model([
-				armour(length: 5.5, width: 6.7, z: deck ... 6.8, x: x,
-					corner: 0.2, tone: index.isMultiple(of: 2) ? Tone.cargo : Tone.turret),
-			], lines: [-1.7, 0, 1.7].flatMap { offset in
-				[
-					Line(from: at(x + offset, -3.4, deck + 0.4), to: at(x + offset, -3.4, 6.6), tone: 140),
-					Line(from: at(x + offset, 3.4, deck + 0.4), to: at(x + offset, 3.4, 6.6), tone: 140),
-					Line(from: at(x + offset, -3.1, 6.85), to: at(x + offset, 3.1, 6.85), tone: 170),
-				]
-			})
-		}
-		model = model + mast(x: -9.5, from: 9.1, to: 14, span: 3.5)
-		return model
-	}
-
 	/// Destroyer with a raked bow, glazed bridge, radar mast, missile cells and a forward gun.
-	public static var destroyer: Model {
+	public static var arleighBurke: Model {
 		let deck: Float = 3.3
 		return hull(length: 32, width: 8.5, deck: deck)
 		+ Model([
@@ -61,7 +32,7 @@ public enum Ships {
 	}
 
 	/// Cruiser with a broader hull, two gun houses, a large missile deck and a second radar mast.
-	public static var cruiser: Model {
+	public static var ticonderoga: Model {
 		let deck: Float = 3.8
 		return hull(length: 34, width: 9.5, deck: deck)
 		+ Model([
@@ -81,7 +52,7 @@ public enum Ships {
 	}
 }
 
-private extension Ships {
+extension Ships {
 
 	static func outline(length: Float, width: Float) -> [(Float, Float)] {
 		let l = length / 2, w = width / 2
