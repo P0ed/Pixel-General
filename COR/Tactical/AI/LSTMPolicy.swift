@@ -284,10 +284,10 @@ public struct LSTMPolicy {
 
 	func mmul(_ a: [Float], _ b: [Float], m: Int, p: Int, n: Int) -> [Float] {
 		var c = [Float](repeating: 0, count: m * n)
-		unsafe a.withUnsafeBufferPointer { pa in
-			unsafe b.withUnsafeBufferPointer { pb in
-				unsafe c.withUnsafeMutableBufferPointer { pc in
-					unsafe vDSP_mmul(
+		a.withUnsafeBufferPointer { pa in
+			b.withUnsafeBufferPointer { pb in
+				c.withUnsafeMutableBufferPointer { pc in
+					vDSP_mmul(
 						pa.baseAddress!, 1, pb.baseAddress!, 1, pc.baseAddress!, 1,
 						vDSP_Length(m), vDSP_Length(n), vDSP_Length(p)
 					)

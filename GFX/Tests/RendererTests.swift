@@ -69,6 +69,30 @@ struct RendererTests {
 		#expect(grays == [128, 105, 86])
 	}
 
+	@Test func slopedArmourStaysBetweenTheRoofAndSideTones() {
+		let light = Light.topLeft
+		let roof = light.gray(V3(0, 0, 1), tone: 200)
+		for rise: Float in [0.25, 0.5, 1, 2, 4] {
+			for side in [V3(1, 0, 0), V3(0, 1, 0)] {
+				let normal = side * rise + V3(0, 0, 1)
+				let slope = light.gray(normal, tone: 200)
+				#expect(slope < roof, "slopes stay visibly darker than the roof in both facings")
+				#expect(slope > light.gray(side, tone: 200), "slopes stay lighter than a vertical side")
+				#expect(slope == light.gray(normal * 7, tone: 200), "plane magnitude does not affect shading")
+			}
+		}
+	}
+
+	@Test func renderedGlacisKeepsItsIntermediateToneWhenMirrored() {
+		let ramp = Model(.wedge(from: V3(8, 8, 0), to: V3(24, 24, 8), rising: .xMinus, tone: 200))
+		for model in [ramp, ramp.mirrored()] {
+			let bitmap = flat.render(model)
+			let tones = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
+			#expect(!tones.contains(200), "the sloped face must not saturate to the top-face tone")
+			#expect(tones.contains { $0 > 164 && $0 < 200 }, "the renderer preserves an intermediate slope tone")
+		}
+	}
+
 	@Test func nearerSolidHidesTheOneItSitsInFrontOf() {
 		let far = Solid.box(from: V3(4, 4, 0), to: V3(12, 12, 8), tone: 128)
 		// (1,1,1) is the view direction, so this box projects onto exactly the same pixels.

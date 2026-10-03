@@ -49,10 +49,10 @@ extension CGImage {
 			}
 		}
 
-		/// Roads are paint on the ground, so they take a rim barely darker than the paint.
+		/// Road and bridge approaches share the same pavement edge tone.
 		var renderer: Renderer {
 			switch self {
-			case .road: .decal
+			case .road, .bridge: .decal
 			default: .building
 			}
 		}

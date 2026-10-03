@@ -42,8 +42,8 @@ public enum Catalog {
 			CatalogEntry(name: "Road-WE", model: Roads.road([.xMinus, .xPlus]), renderer: .decal),
 			CatalogEntry(name: "Road-NE", model: Roads.road([.yMinus, .xPlus]), renderer: .decal),
 			CatalogEntry(name: "Road-X", model: Roads.road(Direction.allCases), renderer: .decal),
-			CatalogEntry(name: "Bridge-WE", model: Roads.bridge(along: .x), renderer: .building),
-			CatalogEntry(name: "Bridge-SN", model: Roads.bridge(along: .y), renderer: .building),
+			CatalogEntry(name: "Bridge-WE", model: Roads.bridge(along: .x), renderer: .decal),
+			CatalogEntry(name: "Bridge-SN", model: Roads.bridge(along: .y), renderer: .decal),
 		]
 	}
 

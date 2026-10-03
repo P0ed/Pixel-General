@@ -16,11 +16,11 @@ public func modifying<A>(_ value: A, _ transform: (inout A) -> Void) -> A {
 /// `BitwiseCopyable` as a compile-time guard (see `TacticalAction`);
 /// `~Copyable` state structs cannot, so the constraint is on their fields.
 public func clone<A: ~Copyable>(_ value: borrowing A) -> A {
-	unsafe withUnsafeTemporaryAllocation(
+	withUnsafeTemporaryAllocation(
 		byteCount: MemoryLayout<A>.size,
 		alignment: MemoryLayout<A>.alignment
 	) { raw in
-		unsafe withUnsafePointer(to: value) { src in
+		withUnsafePointer(to: value) { src in
 			unsafe raw.baseAddress!.copyMemory(
 				from: src,
 				byteCount: MemoryLayout<A>.size
@@ -33,14 +33,14 @@ public func clone<A: ~Copyable>(_ value: borrowing A) -> A {
 }
 
 public func encode<A: ~Copyable>(_ value: borrowing A) -> Data {
-	unsafe withUnsafePointer(to: value) { ptr in
+	withUnsafePointer(to: value) { ptr in
 		unsafe Data(bytes: ptr, count: MemoryLayout<A>.size)
 	}
 }
 
 public func decode<A: ~Copyable>(_ data: Data) -> A? {
 	guard data.count == MemoryLayout<A>.size else { return nil }
-	return unsafe withUnsafeTemporaryAllocation(
+	return withUnsafeTemporaryAllocation(
 		byteCount: MemoryLayout<A>.size,
 		alignment: MemoryLayout<A>.alignment
 	) { ap in

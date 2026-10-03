@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     name: Test COR package
-    runs-on: macos-26
+    runs-on: macos-27
 
     steps:
       - name: Checkout

@@ -165,7 +165,7 @@ private extension CGImage {
 		var d20 = D20()
 		for y in 0 ..< Int(CGSize.tile3D.height) {
 			for x in 0 ..< Int(CGSize.tile3D.width) {
-				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.068).cgColor)
+				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.033).cgColor)
 				ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
 			}
 		}

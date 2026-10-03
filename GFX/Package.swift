@@ -1,26 +1,27 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.4
 
 import PackageDescription
 
 let package = Package(
 	name: "GFX",
 	platforms: [
-		.iOS(.v26),
-		.macOS(.v26),
+		.iOS(.v27),
+		.macOS(.v27),
 	],
 	products: [
-		.library(name: "GFX", type: .dynamic, targets: ["GFX"])
+		.library(name: "GFX", type: .dynamic, targets: ["GFX"]),
+		.executable(name: "GFXUnitSheet", targets: ["GFXUnitSheet"]),
 	],
 	targets: [
 		.target(
 			name: "GFX",
 			path: ".",
-			exclude: ["Preview", "Tests"]
+			exclude: ["UnitSheet", "Tests"]
 		),
 		.executableTarget(
-			name: "GFXPreview",
+			name: "GFXUnitSheet",
 			dependencies: ["GFX"],
-			path: "Preview"
+			path: "UnitSheet"
 		),
 		.testTarget(
 			name: "GFXTests",

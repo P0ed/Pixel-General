@@ -8,39 +8,41 @@ public enum Settlements {
 	}
 
 	public static var city: Model {
-		let centres: [Float] = [6, 16, 26]
+		// Two houses per corner block leave the central crossroad open. The inner
+		// houses are lower so their roofs cannot hide the road in the isometric view.
 		var solids: [Solid] = []
-
-		for (row, x) in centres.enumerated() {
-			for (column, y) in centres.enumerated() where !(row == 1 && column == 1) {
-				let tall = row == 1 || column == 1
+		for (column, x) in ([4, 9, 23, 28] as [Float]).enumerated() {
+			for y: Float in [6, 26] {
+				let outer = column == 0 || column == 3
 				solids += house(
 					x: x,
 					y: y,
-					length: 8,
-					width: 7,
-					walls: tall ? 6 : 4,
-					roof: 4,
-					ridge: (row + column).isMultiple(of: 2) ? .x : .y
+					length: outer ? 4 : 3,
+					width: 6,
+					walls: outer ? 3 : 2.5,
+					roof: outer ? 3 : 2,
+					ridge: outer ? .y : .x
 				)
 			}
 		}
 
-		return Model(solids)
+		return Roads.road(Direction.allCases) + Model(solids)
 	}
 
+	/// A T junction with houses clear of its carriageway. `facing` names the missing
+	/// road arm, matching villageE/N/W/S in the map generator.
 	public static func village(facing: Direction) -> Model {
-		let base = Model(
-			house(x: 9, y: 11, length: 9, width: 7, walls: 4, roof: 4, ridge: .x)
-				+ house(x: 8, y: 22, length: 7, width: 6, walls: 3.5, roof: 3.5, ridge: .y)
-				+ house(x: 19, y: 17, length: 7, width: 7, walls: 3.5, roof: 4, ridge: .x)
+		let base = Roads.road([.yMinus, .yPlus, .xPlus]) + Model(
+			house(x: 6, y: 7.5, length: 7, width: 6, walls: 3, roof: 2.5, ridge: .x)
+				+ house(x: 6, y: 24.5, length: 6, width: 6, walls: 3, roof: 2.5, ridge: .y)
+				+ house(x: 26, y: 26, length: 6, width: 6, walls: 3, roof: 2.5, ridge: .x)
 		)
 
 		switch facing {
 		case .xMinus: return base
-		case .yMinus: return base.rotated(.right)
+		case .yMinus: return base.rotated(.left)
 		case .xPlus: return base.rotated(.half)
-		case .yPlus: return base.rotated(.left)
+		case .yPlus: return base.rotated(.right)
 		}
 	}
 

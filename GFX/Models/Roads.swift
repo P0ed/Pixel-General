@@ -1,5 +1,5 @@
 /// Flat art laid on a tile: a road is a slab out to each connected edge with a dashed
-/// centreline, a bridge a plank deck on piles. Drawn on the tile canvas, over the base.
+/// centreline, a bridge a paved deck on piles. Drawn on the tile canvas, over the base.
 public enum Roads {
 
 	public enum Tone {
@@ -36,22 +36,24 @@ public enum Roads {
 		})
 	}
 
-	/// Deck spanning the tile along `axis`, railed on both sides and carried on four piles.
+	/// The same carriageway and markings as a road, with a wider deck beneath it.
+	/// Paving stays at z = 0 so both approaches meet neighbouring road tiles exactly.
 	public static func bridge(along axis: Axis) -> Model {
 		let side = Volume.footprint
 		let near = side / 2 - 4.5
 		let far = side / 2 + 4.5
-		let deck = Solid.box(from: V3(0, near, 1), to: V3(side, far, 2), tone: Tone.deck)
+		let deck = Solid.box(from: V3(0, near, -1), to: V3(side, far, 0), tone: Tone.deck)
 
 		var lines: [Line] = [
-			Line(from: V3(0, near + 0.5, 2), to: V3(side, near + 0.5, 2), tone: Tone.rail),
-			Line(from: V3(0, far - 0.5, 2), to: V3(side, far - 0.5, 2), tone: Tone.rail),
+			Line(from: V3(0, near + 0.5, 0.5), to: V3(side, near + 0.5, 0.5), tone: Tone.rail),
+			Line(from: V3(0, far - 0.5, 0.5), to: V3(side, far - 0.5, 0.5), tone: Tone.rail),
 		]
 		for x in stride(from: Float(5), through: side - 5, by: (side - 10) / 3) {
-			lines.append(Line(from: V3(x, far, 1), to: V3(x, far, -2), tone: Tone.pile))
+			lines.append(Line(from: V3(x, far, -1), to: V3(x, far, -4), tone: Tone.pile))
 		}
 
-		let model = Model([deck], lines: lines)
+		// The road comes first so its asphalt wins the coplanar tie with the deck.
+		let model = road([.xMinus, .xPlus]) + Model([deck], lines: lines)
 		return axis == .x ? model : model.rotated(.right)
 	}
 }

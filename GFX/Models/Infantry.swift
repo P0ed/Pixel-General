@@ -1,5 +1,5 @@
 /// Foot units, authored facing `+x`. A figure this small is mostly silhouette, so the
-/// weapon, antenna and rotor arms are strokes rather than blocks that would fatten it.
+/// antenna and rotor arms are strokes rather than blocks that would fatten it.
 public enum Infantry {
 
 	public enum Tone {
@@ -14,17 +14,14 @@ public enum Infantry {
 	public static var rifleman: Model {
 		Model(figure(helmet: Tone.helmet) + [
 			box(length: 2.5, width: 5, z: 8 ... 12.5, x: -2.5, tone: Tone.pack),
-		], lines: [
-			Line(from: at(-1.5, -1.5, 11), to: at(6, -3, 8.5), tone: Tone.weapon),
 		])
 	}
 
-	/// Special forces: no pack, a stubbier weapon held high, antenna off the shoulder.
+	/// Special forces: no pack, dark headgear and an antenna off the shoulder.
 	public static var special: Model {
 		Model(figure(helmet: Tone.visor) + [
 			box(length: 2.5, width: 6, z: 8.5 ... 12, x: -1, tone: Tone.webbing),
 		], lines: [
-			Line(from: at(-0.5, -1.5, 11.5), to: at(5.5, -2.5, 10.5), tone: Tone.weapon),
 			Line(from: at(-2, 2, 12.5), to: at(-3.5, 3, 17), tone: Tone.weapon),
 		])
 	}

@@ -49,7 +49,7 @@ private final class HelpViewController: UIViewController {
 	}
 
 	@available(*, unavailable)
-	required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+	required init?(coder: NSCoder) { fatalError() }
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
