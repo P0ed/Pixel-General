@@ -3,7 +3,7 @@ public enum Units {
 
 	public enum Faction: CaseIterable, Sendable { case european, american, soviet }
 
-	/// Art families. Infantry and FPV retain their existing sprites.
+	/// Vehicle families, with a different representative for each faction.
 	public enum Kind: String, CaseIterable, Sendable {
 		case tank
 		case scoutCar
@@ -107,7 +107,7 @@ public enum Units {
 		case karelDoorman, bobHope, ropucha
 		case type45, arleighBurke, sovremenny
 		case deZevenProvincien, ticonderoga, slava
-		case rifleman, special, quad
+		case rifleman, special, fpv, engineer
 
 		public var name: String {
 			switch self {
@@ -193,7 +193,8 @@ public enum Units {
 			case .slava: "Slava"
 			case .rifleman: "Rifleman"
 			case .special: "Special forces"
-			case .quad: "FPV"
+			case .fpv: "FPV operator"
+			case .engineer: "Engineer"
 			}
 		}
 
@@ -281,13 +282,14 @@ public enum Units {
 			case .slava: Ships.slava
 			case .rifleman: Infantry.rifleman
 			case .special: Infantry.special
-			case .quad: Infantry.quad
+			case .fpv: Infantry.fpv
+			case .engineer: Infantry.engineer
 			}
 		}
 
 		public var flies: Bool {
 			switch self {
-			case .nh90, .mh6, .mi8, .mi24, .skeldar, .mq8, .ka137, .skeldarm, .bayraktar, .mq9, .orlan, .gripen, .f16, .mig29, .f35, .su57, .tornado, .a10, .su25, .su27, .quad: true
+			case .nh90, .mh6, .mi8, .mi24, .skeldar, .mq8, .ka137, .skeldarm, .bayraktar, .mq9, .orlan, .gripen, .f16, .mig29, .f35, .su57, .tornado, .a10, .su25, .su27: true
 			default: false
 			}
 		}

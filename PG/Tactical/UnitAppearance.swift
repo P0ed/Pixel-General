@@ -9,10 +9,10 @@ extension Unit {
 		case .none: nil
 		case .truck: Units.Kind.supply.variant(for: artFaction)
 
-		// Infantry and FPV keep their existing sprites.
-		case .regular, .engineer, .ranger, .militia: .rifleman
+		case .regular, .ranger, .militia: .rifleman
+		case .engineer: .engineer
 		case .delta, .ksk, .speznas: .special
-		case .fpv, .p1sun: .quad
+		case .fpv, .p1sun: .fpv
 
 		case .art155:
 			switch country.team {

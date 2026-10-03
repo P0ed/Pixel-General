@@ -24,7 +24,7 @@ struct UnitVariantTests {
 	@Test func familiesCoverEveryVehicleExactlyOnce() {
 		let shapes = Units.Kind.allCases.flatMap(\.variants)
 		#expect(shapes.count == Set(shapes).count)
-		#expect(Set(shapes) == Set(Units.Shape.allCases).subtracting([.rifleman, .special, .quad]))
+		#expect(Set(shapes) == Set(Units.Shape.allCases).subtracting([.rifleman, .special, .engineer, .fpv]))
 		#expect(Set(Units.Shape.allCases.map(\.name)).count == Units.Shape.allCases.count)
 	}
 
