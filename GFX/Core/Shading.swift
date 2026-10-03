@@ -11,7 +11,11 @@ public struct Light: Hashable, Sendable {
 	public static var topLeft: Light { Light() }
 
 	public func shade(_ normal: V3) -> Float {
-		max(0, min(1, ambient + normal.normalized.dot(direction)))
+		// Blend the axis-face tones. Euclidean normalization makes a slope facing the
+		// light brighter than the roof, clipping both to the same flat white.
+		let weight = abs(normal.x) + abs(normal.y) + abs(normal.z)
+		let diffuse = weight > 0 ? normal.dot(direction) / weight : 0
+		return max(0, min(1, ambient + diffuse))
 	}
 
 	public func gray(_ normal: V3, tone: UInt8) -> UInt8 {

@@ -16,11 +16,13 @@ struct CatalogTests {
 
 	@Test(arguments: Units.Shape.allCases)
 	func unitsStayWithinReachOfTheirTile(shape: Units.Shape) {
-		let occupied = Renderer.unit.render(shape.model).occupied!
+		for model in [shape.model, shape.model.mirrored()] {
+			let occupied = Renderer.unit.render(model).occupied!
 
-		#expect(occupied.y.upperBound <= 47, "\(shape) stays on the tile")
-		// Wings and hulls run longer than a ground vehicle, as the hand-drawn ones did.
-		#expect(occupied.x.count <= (shape.flies ? 48 : 44), "\(shape) is no wider than a tile")
+			#expect(occupied.y.upperBound <= 47, "\(shape) stays on the tile")
+			// Wings and hulls run longer than a ground vehicle, as the hand-drawn ones did.
+			#expect(occupied.x.count <= (shape.flies ? 48 : 44), "\(shape) is no wider than a tile in either facing")
+		}
 	}
 
 	@Test func groundUnitsStandOnTheBaseDiamondAndAircraftHoverOverIt() {
@@ -32,6 +34,22 @@ struct CatalogTests {
 			} else {
 				#expect(occupied.y.upperBound >= 32, "\(shape) sits on the ground")
 			}
+		}
+	}
+
+	@Test func uavWingsExposeEqualTopAreasInBothFacings() {
+		for model in [Aircraft.drone, Aircraft.drone.mirrored()] {
+			// The main wings sit flush with the top of the fuselage.
+			let wings = model.solids.indices.filter {
+				model.solids[$0].tone == Aircraft.Tone.wing && model.solids[$0].to.z == Aircraft.altitude + 5
+			}
+			let raster = Renderer.unit.raster(model)
+			let areas = wings.map { wing in
+				raster.ids.indices.count { raster.ids[$0] == Int32(wing) && raster.faces[$0] == 0 }
+			}
+			#expect(areas.count == 2)
+			#expect(areas.allSatisfy { $0 > 0 })
+			#expect(Set(areas).count == 1, "both wings expose the same number of top-face pixels")
 		}
 	}
 

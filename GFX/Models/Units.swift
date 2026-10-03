@@ -11,6 +11,7 @@ public enum Units {
 		case rifleman, special, quad
 		case helicopter, scout, drone, jet, heavyJet
 		case cargo, destroyer, cruiser
+		case t90m, m1A2, strv122
 
 		public var model: Model {
 			switch self {
@@ -18,6 +19,9 @@ public enum Units {
 			case .heavyTank: Units.heavyTank
 			case .lowTank: Units.lowTank
 			case .leo2: Units.leo2
+			case .t90m: Units.t90m
+			case .m1A2: Units.m1A2
+			case .strv122: Units.strv122
 			case .recon: Units.recon
 			case .fennek: Units.fennek
 			case .brdm2: Units.brdm2
@@ -63,54 +67,86 @@ public enum Units {
 		public static let antenna: UInt8 = 70
 	}
 
-	/// Cold-war main battle tank: a long glacis, and a turret raked down onto the gun.
+	/// Cold-war main battle tank: a low glacis and a broad, flat turret roof.
 	public static var tank: Model {
-		Model(tracks(length: 24, width: 13) + [
-			box(length: 17, width: 10, z: 3 ... 7, x: -3),
-			wedge(length: 6.5, width: 10, z: 3 ... 7, x: 8.75, rising: .xMinus),
-			box(length: 9, width: 9, z: 7 ... 10.5, x: -4, tone: Tone.turret),
-			wedge(length: 4, width: 9, z: 7 ... 10.5, x: 2.5, rising: .xMinus, tone: Tone.turret),
-			gun(from: 3, length: 14, z: 10, caliber: 1.2),
-			cupola(x: -6, z: 10.5),
-		])
-	}
-
-	/// Heavy main battle tank: a taller hull and turret carrying a longer gun.
-	public static var heavyTank: Model {
 		Model(tracks(length: 25, width: 14) + [
-			box(length: 18, width: 11, z: 3 ... 7.5, x: -3),
-			wedge(length: 6.5, width: 11, z: 3 ... 7.5, x: 9.25, rising: .xMinus),
-			box(length: 11, width: 10, z: 7.5 ... 11.5, x: -4.5, tone: Tone.turret),
-			wedge(length: 4.5, width: 10, z: 7.5 ... 11.5, x: 3.25, rising: .xMinus, tone: Tone.turret),
-			gun(from: 5.5, length: 13, z: 9.9, caliber: 1.2),
-			cupola(x: -7, z: 11.5),
+			armour(length: 24, width: 12, z: 3 ... 6.5, front: 5, rear: 1, side: 0.8),
+			box(length: 9, width: 10, z: 6.5 ... 10.5, x: -4, tone: Tone.turret),
+			wedge(length: 4, width: 10, z: 6.5 ... 10.5, x: 2.5, rising: .xMinus, tone: Tone.turret),
+			box(length: 3, width: 3.5, z: 8 ... 10, x: 3, tone: Tone.turret),
+			gun(from: 4, length: 17, z: 9, caliber: 1.6),
+			cupola(x: -5, z: 10.5),
 		])
 	}
 
-	/// Low-slung hull, squat dome turret: the T-72 read.
+	/// Heavy main battle tank / M1A1 base: a tall hull and a long, flat-roofed turret.
+	public static var heavyTank: Model {
+		Model(tracks(length: 26, width: 15) + [
+			armour(length: 25, width: 13, z: 3 ... 7, front: 5.5, rear: 1, side: 0.7),
+			box(length: 11, width: 11, z: 7 ... 11.5, x: -4.5, tone: Tone.turret),
+			wedge(length: 4.5, width: 11, z: 7 ... 11.5, x: 3.25, rising: .xMinus, tone: Tone.turret),
+			box(length: 3, width: 4, z: 8.5 ... 11, x: 4.5, tone: Tone.turret),
+			gun(from: 5, length: 16, z: 10, caliber: 1.8),
+			cupola(x: -5, z: 11.5),
+		])
+	}
+
+	/// T-72 base: a low hull and a squat turret, narrower than the hull deck.
 	public static var lowTank: Model {
-		Model(tracks(length: 23, width: 13) + [
-			box(length: 15, width: 11, z: 3 ... 5.5, x: -4),
-			wedge(length: 8, width: 11, z: 3 ... 5.5, x: 7.5, rising: .xMinus),
-			box(length: 8, width: 8.5, z: 5.5 ... 8.5, x: -3, tone: Tone.turret),
-			wedge(length: 3.5, width: 8.5, z: 5.5 ... 8.5, x: 2.75, rising: .xMinus, tone: Tone.turret),
-			gun(from: 4, length: 14, z: 7.2, caliber: 1.2),
+		Model(tracks(length: 24, width: 14) + [
+			armour(length: 23, width: 12, z: 3 ... 5.5, front: 5, rear: 1, side: 0.7),
+			box(length: 8, width: 10, z: 5.5 ... 8.5, x: -3, tone: Tone.turret),
+			wedge(length: 3.5, width: 10, z: 5.5 ... 8.5, x: 2.75, rising: .xMinus, tone: Tone.turret),
+			box(length: 2.5, width: 3, z: 6.5 ... 8.5, x: 3, tone: Tone.turret),
+			gun(from: 3.5, length: 18, z: 7.5, caliber: 1.6),
 			cupola(x: -4.5, z: 8.5),
 		])
 	}
 
-	/// Leopard 2A5 and its kin: skirts over the running gear, and spaced armour that steps
-	/// the turret front into an arrow.
+	/// Leopard base: side skirts and a broad box turret with a narrower gun mount.
 	public static var leo2: Model {
-		Model(tracks(length: 24, width: 14) + [
-			box(length: 23, width: 14, z: 3 ... 5, x: -1, tone: Tone.running),
-			box(length: 18, width: 14, z: 4.5 ... 8, x: -3),
-			wedge(length: 6, width: 14, z: 4.5 ... 8, x: 9, rising: .xMinus),
-			box(length: 10, width: 10, z: 8 ... 11, x: -2, tone: Tone.turret),
-			box(length: 2, width: 8, z: 8 ... 11, x: 4, tone: Tone.turret),
-			gun(from: 4, length: 15, z: 10, caliber: 1.2),
-			cupola(x: -2, z: 11),
-		])
+		Model(tracks(length: 26, width: 15) + [
+			armour(length: 25, width: 14, z: 3 ... 7, front: 5, rear: 1, side: 0.5),
+			box(length: 10, width: 11.5, z: 7 ... 11, x: -2, tone: Tone.turret),
+			box(length: 2, width: 9, z: 7 ... 11, x: 4, tone: Tone.turret),
+			box(length: 3, width: 3, z: 8 ... 10.5, x: 5, tone: Tone.turret),
+			gun(from: 5.5, length: 16, z: 9.5, caliber: 1.8),
+			cupola(x: -3.5, z: 11),
+		] + sides(6.8) {
+			box(length: 21, width: 1, z: 2 ... 4.5, x: -1, y: $0, tone: Tone.turret)
+		})
+	}
+
+	/// The T-72 silhouette with cheek armour, a rear bustle, skirts and raised optics.
+	/// Variants add parts to the complete base, so its hull, turret and gun stay in sync.
+	public static var t90m: Model {
+		lowTank + Model([
+			box(length: 4, width: 8.5, z: 6.5 ... 8.5, x: -7.5, tone: Tone.turret),
+			box(length: 2.5, width: 2.5, z: 8.5 ... 10, x: -2.5, y: 2.5, tone: Tone.glass),
+		] + sides(3.5) {
+			wedge(length: 4, width: 2.5, z: 6.5 ... 9.5, x: 3, y: $0, rising: .xMinus, tone: Tone.cargo)
+		} + sides(6) {
+			box(length: 19, width: 1, z: 2 ... 4.5, x: -1, y: $0, tone: Tone.turret)
+		})
+	}
+
+	/// The M1A1 base with a bustle rack, side skirts and a separate commander's sight.
+	public static var m1A2: Model {
+		heavyTank + Model([
+			box(length: 3, width: 10, z: 8 ... 10, x: -10, tone: Tone.turret),
+			box(length: 2.5, width: 2.5, z: 11.5 ... 13, x: -1.5, y: 3, tone: Tone.glass),
+		] + sides(7) {
+			box(length: 21, width: 1, z: 2 ... 4.5, x: -1, y: $0, tone: Tone.turret)
+		})
+	}
+
+	/// The Leopard base with a roof armour panel and a pair of forward armour cheeks.
+	public static var strv122: Model {
+		leo2 + Model([
+			box(length: 6, width: 8, z: 11 ... 12, x: -2.5, tone: Tone.cargo),
+		] + sides(4) {
+			wedge(length: 4.5, width: 3, z: 7.5 ... 11, x: 4.75, y: $0, rising: .xMinus, tone: Tone.turret)
+		})
 	}
 
 	/// Tracked personnel carrier: a plain sloped box with a cupola.
@@ -218,18 +254,62 @@ public enum Units {
 		])
 	}
 
-	/// Towed anti-air gun: a short mount with the barrel pointing up.
+	/// Bofors: a single elevated barrel, split shield and open cruciform carriage.
 	public static var flak: Model {
 		Model([
-			box(length: 12, width: 12, z: 0 ... 2, tone: Tone.running),
-			box(length: 8, width: 8, z: 2 ... 5.5, tone: Tone.turret),
-			box(length: 3, width: 2, z: 5.5 ... 12, x: 1, y: -2.5, tone: Tone.barrel),
-			box(length: 3, width: 2, z: 5.5 ... 12, x: 1, y: 2.5, tone: Tone.barrel),
-		])
+			box(length: 21, width: 2.5, z: 1 ... 2.5, x: -1.5, tone: Tone.running),
+			box(length: 3, width: 19, z: 1 ... 2.5, tone: Tone.running),
+			box(length: 5, width: 5, z: 2 ... 6, tone: Tone.turret),
+			box(length: 6, width: 4, z: 5.5 ... 8.5, x: -1, tone: Tone.turret),
+			raisedBarrel(from: at(-2, 0, 7), to: at(9, 0, 23), caliber: 1.8),
+			raisedBarrel(from: at(-2, 0, 7), to: at(1.5, 0, 12.1), caliber: 2.8),
+			box(length: 3, width: 3, z: 4.5 ... 5.5, x: -5, y: 3.5, tone: Tone.turret),
+		] + sides(3.5) {
+			armour(length: 2.5, width: 4, z: 5 ... 10.5, x: 1, y: $0,
+				front: 0.8, rear: 0, side: 0.5, tone: Tone.body)
+		} + sides(6) {
+			box(length: 4, width: 2, z: 0 ... 4, x: -5.5, y: $0, tone: Tone.wheel)
+		} + sides(9) {
+			box(length: 4, width: 3, z: 0 ... 1.5, y: $0, tone: Tone.turret)
+		} + [-12, 9].map {
+			box(length: 3, width: 4, z: 0 ... 1.5, x: $0, tone: Tone.turret)
+		})
 	}
 }
 
 private extension Units {
+
+	/// A flat roof inset from the lower footprint, with continuous sloping armour on all four sides.
+	static func armour(
+		length: Float, width: Float, z: ClosedRange<Float>, x: Float = 0, y: Float = 0,
+		front: Float, rear: Float, side: Float, tone: UInt8 = Tone.body
+	) -> Solid {
+		var solid = box(length: length, width: width, z: z, x: x, y: y, tone: tone)
+		let height = z.upperBound - z.lowerBound
+		solid.planes += [
+			Plane(normal: V3(height, 0, front), through: at(x + length / 2, y, z.lowerBound)),
+			Plane(normal: V3(-height, 0, rear), through: at(x - length / 2, y, z.lowerBound)),
+			Plane(normal: V3(0, height, side), through: at(x, y + width / 2, z.lowerBound)),
+			Plane(normal: V3(0, -height, side), through: at(x, y - width / 2, z.lowerBound)),
+		]
+		return solid
+	}
+
+	/// A square tube pitched in the x/z plane, with end caps perpendicular to its axis.
+	static func raisedBarrel(from start: V3, to end: V3, caliber: Float) -> Solid {
+		let axis = (end - start).normalized
+		let across = V3(-axis.z, 0, axis.x)
+		let radius = caliber / 2
+		let margin = V3(abs(across.x) * radius, radius, abs(across.z) * radius)
+		return Solid(planes: [
+			Plane(normal: -axis, through: start),
+			Plane(normal: axis, through: end),
+			Plane(normal: across, through: start + across * radius),
+			Plane(normal: -across, through: start - across * radius),
+			Plane(normal: V3(0, 1, 0), offset: start.y + radius),
+			Plane(normal: V3(0, -1, 0), offset: -start.y + radius),
+		], from: start.min(end) - margin, to: start.max(end) + margin, tone: Tone.barrel)
+	}
 
 	static func box(
 		length: Float,

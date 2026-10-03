@@ -73,10 +73,13 @@ extension Unit {
 		case .strf90, .cv9035, .kf41: .ifv
 
 		// Tanks
-		case .m48, .m1A1, .m1A2: .heavyTank
-		case .strv122, .kf51, .leo2a6: .leo2
+		case .m48, .m1A1: .heavyTank
+		case .m1A2: .m1A2
+		case .kf51, .leo2a6: .leo2
+		case .strv122: .strv122
 		case .leo1, .strv103: .tank
-		case .t55, .t72, .t90m: .lowTank
+		case .t55, .t72: .lowTank
+		case .t90m: .t90m
 
 		// Air
 		case .skeldar, .skeldarm: .scout

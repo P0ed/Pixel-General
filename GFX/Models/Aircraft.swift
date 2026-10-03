@@ -57,29 +57,31 @@ public enum Aircraft {
 	public static var drone: Model {
 		let deck = altitude + 1
 		var solids = [
-			box(length: 9, width: 3, z: deck ... deck + 3, x: 3, tone: Tone.body),
-			wedge(length: 3, width: 3, z: deck + 0.5 ... deck + 3, x: 9, rising: .xMinus, tone: Tone.body),
+			box(length: 9, width: 3, z: deck ... deck + 4, x: 3, tone: Tone.body),
+			wedge(length: 3, width: 3, z: deck + 0.5 ... deck + 4, x: 9, rising: .xMinus, tone: Tone.body),
 			box(length: 11, width: 1.5, z: deck + 1.5 ... deck + 2.5, x: -8, tone: Tone.boom),
-			box(length: 3, width: 15, z: deck + 3 ... deck + 3.7, x: 2, tone: Tone.wing),
-			box(length: 2, width: 7, z: deck + 2 ... deck + 2.6, x: -13, tone: Tone.wing),
+			box(length: 3, width: 10, z: deck + 2 ... deck + 2.8, x: -13, tone: Tone.wing),
 		]
-		solids += sides(3.5) { box(length: 2, width: 1.2, z: deck + 2.5 ... deck + 5, x: -13, y: $0, tone: Tone.wing) }
+		// Equal exposed spans meet a fuselage flush with their top faces. Integer
+		// chord and height keep both tips on the same pixel phase in the isometric view.
+		solids += sides(7.75) { box(length: 4, width: 12.5, z: deck + 3 ... deck + 4, x: 2, y: $0, tone: Tone.wing) }
+		solids += sides(4.5) { box(length: 3, width: 1.2, z: deck + 2.5 ... deck + 5, x: -13, y: $0, tone: Tone.wing) }
 
 		let lines = [Line(from: at(11, 0, deck + 1.5), to: at(15, 0, deck + 1.5), tone: Tone.blade)]
 		return Model(solids, lines: lines)
 	}
 
-	/// Single-seat jet: swept wing stepped back in three panels, slab tail.
+	/// Single-seat jet: broad swept wings with a continuous leading edge, slab tail.
 	public static var jet: Model {
 		let deck = altitude
 		var solids = [
 			box(length: 19, width: 4, z: deck + 1 ... deck + 4, x: -1, tone: Tone.body),
 			wedge(length: 5, width: 4, z: deck + 1.5 ... deck + 4, x: 10.5, rising: .xMinus, tone: Tone.body),
 			box(length: 5, width: 3.5, z: deck + 4 ... deck + 5.3, x: 4, tone: Tone.glass),
-			box(length: 3, width: 9, z: deck + 1.5 ... deck + 2.2, x: -10, tone: Tone.wing),
+			box(length: 4, width: 12, z: deck + 1.5 ... deck + 2.3, x: -10, tone: Tone.wing),
 			box(length: 4, width: 2, z: deck + 4 ... deck + 8, x: -9, tone: Tone.wing),
 		]
-		solids += swept(span: 9, root: 2.5, x: -1, z: deck + 1.8, tone: Tone.wing)
+		solids += swept(span: 14, root: 11, tip: 3, sweep: 5, x: 0, z: deck + 1.8, tone: Tone.wing)
 
 		let lines = [
 			Line(from: at(12.5, 0, deck + 2.7), to: at(16, 0, deck + 2.7), tone: Tone.blade),
@@ -95,9 +97,9 @@ public enum Aircraft {
 			box(length: 21, width: 6, z: deck + 1 ... deck + 4.5, x: -1, tone: Tone.body),
 			wedge(length: 6, width: 5, z: deck + 1.5 ... deck + 4.5, x: 11, rising: .xMinus, tone: Tone.body),
 			box(length: 5, width: 4, z: deck + 4.5 ... deck + 6, x: 5, tone: Tone.glass),
-			box(length: 4, width: 12, z: deck + 1.5 ... deck + 2.2, x: -10.5, tone: Tone.wing),
+			box(length: 4.5, width: 15, z: deck + 1.5 ... deck + 2.3, x: -10.5, tone: Tone.wing),
 		]
-		solids += swept(span: 11, root: 3, x: -1.5, z: deck + 1.8, tone: Tone.wing)
+		solids += swept(span: 16, root: 14, tip: 3.5, sweep: 6, x: -0.5, z: deck + 1.8, tone: Tone.wing)
 		solids += sides(2.6) { box(length: 4.5, width: 1.6, z: deck + 4.5 ... deck + 8.5, x: -9, y: $0, tone: Tone.wing) }
 
 		let lines = [
@@ -110,21 +112,18 @@ public enum Aircraft {
 
 private extension Aircraft {
 
-	/// Three panels per side, each shorter and further aft: a delta read without a taper plane.
-	static func swept(span: Float, root: Float, x: Float, z: Float, tone: UInt8) -> [Solid] {
-		(0 ..< 3).flatMap { panel -> [Solid] in
-			let step = span / 3
-			let inset = Float(panel)
-			return sides(step * (inset + 0.5)) {
-				box(
-					length: root - inset * root / 4,
-					width: step,
-					z: z ... z + 0.7,
-					x: x - inset * root / 3,
-					y: $0,
-					tone: tone
-				)
-			}
+	/// One trapezoidal prism per wing: broad roots taper to swept-back tips.
+	static func swept(span: Float, root: Float, tip: Float, sweep: Float, x: Float, z: Float, tone: UInt8) -> [Solid] {
+		let rear = min(x - root / 2, x - sweep - tip / 2)
+		let front = x + root / 2
+		return sides(1) { sign in
+			var wing = box(length: front - rear, width: span, z: z ... z + 0.9,
+				x: (front + rear) / 2, y: sign * span / 2, tone: tone)
+			wing.planes += [
+				Plane(normal: V3(1, sign * (root / 2 + sweep - tip / 2) / span, 0), through: at(front, 0, z)),
+				Plane(normal: V3(-1, sign * (root / 2 - sweep - tip / 2) / span, 0), through: at(x - root / 2, 0, z)),
+			]
+			return wing
 		}
 	}
 }
