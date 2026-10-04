@@ -124,8 +124,6 @@ extension TacticalNodes {
 		}
 	}
 
-	/// The unit type the supply and defense map modes shade for: the human
-	/// selection, falling back to infantry.
 	private static func selectedType(_ state: borrowing TacticalState) -> UnitType {
 		guard state.ui.selectedUnit != .none else { return .inf }
 		let unit = state.sim.units[state.ui.selectedUnit]
@@ -146,9 +144,6 @@ extension TacticalNodes {
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		case .supply(let supply, let air):
-			// Air service is airfield-gated: `resupply` feeds an air unit only
-			// inside the airfields mask, so unserviced tiles show the worst
-			// grade rather than `airLevel`'s literal 0.
 			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
 				: supply.level(at: xy, terrain: state.sim.map[xy])
@@ -172,10 +167,6 @@ extension TacticalNodes {
 				elevation: state.sim.map[xy].elevationLevel
 			)
 		case .defense(let defense):
-			// def(type) + entrenchment floor: the defenderMod a just-arrived
-			// unit has after one end of turn. −5 (heavy armor in a river) …
-			// +6 (infantry in a city) onto the 8-step gradient; air ignores
-			// terrain and never entrenches, so it shades uniformly.
 			let terrain = state.sim.map[xy]
 			let value = defense.isAir
 				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)

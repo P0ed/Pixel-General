@@ -23,7 +23,6 @@ enum TileZ {
 
 extension MapNodes {
 
-	/// `point` is in scene coordinates.
 	func tile(at point: CGPoint) -> Input? {
 		guard let map = layers.first, let scene = map.scene else { return .none }
 
