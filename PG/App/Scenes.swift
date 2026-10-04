@@ -4,10 +4,7 @@ import COR
 extension SKScene {
 
 	static var auto: SKScene {
-		switch core.location {
-		case .hq: .hq
-		case .tactical: .tactical
-		}
+		core.tactical == nil ? .hq : .tactical
 	}
 
 	static var hq: SKScene {

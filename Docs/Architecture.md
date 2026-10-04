@@ -67,14 +67,15 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 ### State
 
-The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, an optional
-tactical sim, and a `.location` enum that selects the active scene. The single
-live instance is the global `core: Core` in `PG/App.swift`.
+The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim and an optional
+tactical sim. The active scene is Tactical when that sim exists, otherwise HQ.
+The single live instance is the global `core: Core` in `PG/App.swift`.
 
 `Core.hq` owns the roster and treasury between scenarios. `startScenario` stores
 the running battle in `Core.tactical` and switches to Tactical; `complete`
 returns surviving non-auxiliary units and remaining prestige to HQ, clears the
-battle, and switches back. `store` persists edits to either sim.
+battle, and switches back. `store` persists edits to either sim; storing HQ
+clears the active battle.
 
 Save slots contain the native `Core` layout. When that layout changes,
 incompatible data falls back to a fresh HQ in `UserDefaults.load(slot:)`.

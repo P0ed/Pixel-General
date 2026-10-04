@@ -3,21 +3,14 @@
 public struct Core: ~Copyable {
 	public internal(set) var hq: HQSim
 	public internal(set) var tactical: TacticalSim?
-	public internal(set) var location: Location = .hq
 
 	public init(
 		hq: consuming HQSim,
-		tactical: consuming TacticalSim? = nil,
-		location: Location = .hq
+		tactical: consuming TacticalSim? = nil
 	) {
 		self.hq = hq
 		self.tactical = tactical
-		self.location = location
 	}
-}
-
-@frozen public enum Location: UInt8 {
-	case hq, tactical
 }
 
 public extension Core {
@@ -38,12 +31,11 @@ public extension Core {
 
 	mutating func store(_ sim: borrowing HQSim) {
 		hq = clone(sim)
-		location = .hq
+		tactical = nil
 	}
 
 	mutating func store(_ sim: borrowing TacticalSim) {
 		tactical = clone(sim)
-		location = .tactical
 	}
 
 	mutating func startScenario(_ sim: borrowing TacticalSim) {
@@ -55,6 +47,5 @@ public extension Core {
 		hq.player.prestige = sim[country].prestige
 		hq.units = sim.survivingRoster(for: country)
 		tactical = nil
-		location = .hq
 	}
 }

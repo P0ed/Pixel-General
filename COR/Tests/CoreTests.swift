@@ -25,12 +25,12 @@ struct CoreTests {
 		let battle = Self.battle(units: [hq.units[0]])
 		core.startScenario(battle)
 		let stored = clone(core.tactical!)
-		let location = core.location
+		let hasBattle = core.tactical != nil
 		let prestige = core.hq.player.prestige
 		let roster = core.hq.units[0].model
 		let deployed = stored.units[0].model
 
-		#expect(location == .tactical)
+		#expect(hasBattle)
 		#expect(prestige == 900)
 		#expect(roster == .leo1)
 		#expect(deployed == .leo1)
@@ -55,12 +55,10 @@ struct CoreTests {
 		var core = Core.new(country: .ger)
 		core.startScenario(battle)
 		core.complete(battle)
-		let location = core.location
 		let hasBattle = core.tactical != nil
 		let prestige = core.hq.player.prestige
 		let survivors = core.hq.units.compactMap { $0.alive ? $0 : nil }
 
-		#expect(location == .hq)
 		#expect(!hasBattle)
 		#expect(prestige == 777)
 		#expect(survivors.count == 1)
@@ -81,13 +79,26 @@ struct CoreTests {
 		#expect(survivors.isEmpty)
 	}
 
-	@Test(arguments: [Location.hq, .tactical])
-	func persistenceRestoresHQAndScenarioState(location: Location) {
+	@Test func storingHQClearsTheActiveScenario() {
+		var core = Core.new(country: .ger)
+		var hq = clone(core.hq)
+		hq.player.prestige = 900
+		let battle = Self.battle()
+		core.startScenario(battle)
+		core.store(hq)
+		let hasBattle = core.tactical != nil
+		let prestige = core.hq.player.prestige
+		#expect(!hasBattle)
+		#expect(prestige == 900)
+	}
+
+	@Test(arguments: [false, true])
+	func persistenceRestoresHQAndScenarioState(hasBattle: Bool) {
 		var core = Core.new(country: .ger)
 		var hq = clone(core.hq)
 		hq.player.prestige = 900
 		core.store(hq)
-		if location == .tactical {
+		if hasBattle {
 			var battle = Self.battle(units: [Unit(model: .leo1, country: .ger)])
 			battle.turn = 6
 			core.startScenario(battle)
@@ -96,21 +107,18 @@ struct CoreTests {
 			Issue.record("Could not decode saved core")
 			return
 		}
-		let restoredLocation = restored.location
+		let restoredHasBattle = restored.tactical != nil
 		let country = restored.hq.player.country
 		let prestige = restored.hq.player.prestige
-		#expect(restoredLocation == location)
+		#expect(restoredHasBattle == hasBattle)
 		#expect(country == .ger)
 		#expect(prestige == 900)
-		if location == .tactical {
+		if hasBattle {
 			let battle = clone(restored.tactical!)
 			let turn = battle.turn
 			let model = battle.units[0].model
 			#expect(turn == 6)
 			#expect(model == .leo1)
-		} else {
-			let hasBattle = restored.tactical != nil
-			#expect(!hasBattle)
 		}
 	}
 }
