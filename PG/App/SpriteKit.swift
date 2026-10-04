@@ -1,5 +1,6 @@
 import SpriteKit
 import COR
+import GFX
 
 extension SKLabelNode {
 
@@ -33,8 +34,12 @@ extension XY {
 }
 
 extension CGSize {
-	static var tile: CGSize { .init(width: 64.0, height: 32.0) }
-	static var tile3D: CGSize { .init(width: 64.0, height: 40.0) }
+	static var tile: CGSize {
+		.init(width: CGFloat(Canvas.tile.width), height: CGFloat(Canvas.tile.baseHeight))
+	}
+	static var tile3D: CGSize {
+		.init(width: CGFloat(Canvas.tile.width), height: CGFloat(Canvas.tile.height))
+	}
 
 	/// Initial size only — `PixelView` resizes the scene to track its bounds.
 	static var scene: CGSize { .init(width: 640.0, height: 400.0) }

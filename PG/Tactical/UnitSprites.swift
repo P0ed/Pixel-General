@@ -30,7 +30,7 @@ extension Unit {
 		node.addChild(sprite)
 
 		let plate = SKSpriteNode(texture: .hp(hp))
-		plate.position = CGPoint(x: 0, y: -12.0)
+		plate.position = CGPoint(x: 0, y: -CGSize.tile.height * 3 / 8)
 		plate.zPosition = 2.3
 		plate.name = "hp"
 		node.addChild(plate)

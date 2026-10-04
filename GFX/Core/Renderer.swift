@@ -20,6 +20,7 @@ public struct Renderer: Sendable {
 	public static var tile: Renderer { Renderer(canvas: .tile, outline: .tile) }
 	public static var building: Renderer { Renderer(canvas: .tile, outline: .building) }
 	public static var decal: Renderer { Renderer(canvas: .tile, outline: .decal) }
+	public static var cursor: Renderer { Renderer(canvas: .base, outline: .none) }
 }
 
 public extension Renderer {
@@ -99,9 +100,9 @@ extension Renderer {
 			let id = Int32(-2 - index)
 			for pixel in line.trace(on: canvas) {
 				let i = raster.bitmap.index(x: pixel.x, y: pixel.y)
-				// A stroke lying on a face lands up to a third of a unit behind the depth
-				// sampled at the pixel centre, so ties have to go to the stroke.
-				guard pixel.t >= raster.depths[i] - 0.5 else { continue }
+				// Let a stroke on a face win the tie with the depth sampled at the pixel
+				// centre, converting the half-pixel tolerance back to world units.
+				guard pixel.t >= raster.depths[i] - 0.5 / Canvas.pixelsPerUnit else { continue }
 
 				raster.depths[i] = pixel.t
 				raster.ids[i] = id

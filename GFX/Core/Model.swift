@@ -1,4 +1,5 @@
-/// The world volume a sprite is authored in: a 32 x 32 tile footprint, 16 units of headroom.
+/// The authoring volume: a 32 x 32 footprint, 16 units of headroom.
+/// `Canvas.pixelsPerUnit` projects it to a 96 x 48 diamond with 24 px of unit headroom.
 public enum Volume {
 	public static let footprint: Float = 32
 	public static let height: Float = 16

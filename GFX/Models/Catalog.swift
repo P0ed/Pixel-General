@@ -23,7 +23,10 @@ public enum Catalog {
 		(0 ... 2).map {
 			CatalogEntry(name: "Base\($0)", model: Tiles.base(elevation: $0), renderer: .tile)
 		}
-		+ [CatalogEntry(name: "Slope", model: Tiles.slope(elevation: 0, rising: .xPlus), renderer: .tile)]
+		+ [
+			CatalogEntry(name: "Slope", model: Tiles.slope(elevation: 0, rising: .xPlus), renderer: .tile),
+			CatalogEntry(name: "Cursor", model: Tiles.cursor, renderer: .cursor),
+		]
 	}
 
 	public static var settlements: [CatalogEntry] {

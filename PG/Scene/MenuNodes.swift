@@ -166,7 +166,11 @@ extension MenuNodes {
 			frame.texture = menuState.cursor == index ? .highlighted : .clear
 			let texture = index < menuState.items.count ? menuState.items[index].icon : nil
 			frame.icon?.texture = texture
-			frame.icon?.size = texture?.size() ?? .zero
+			let size = texture?.size() ?? .zero
+			let scale = size.width > 0 && size.height > 0
+				? min(1, min(Self.itemSize.width / size.width, Self.itemSize.height / size.height))
+				: 1
+			frame.icon?.size = CGSize(width: size.width * scale, height: size.height * scale)
 		}
 		for index in 0 ..< 4 {
 			left[index].icon?.texture = menuState.leftButtons[index].icon

@@ -31,11 +31,11 @@ struct UnitVariantTests {
 	@Test(arguments: Units.Shape.allCases)
 	func everyFacingFitsWithoutClipping(shape: Units.Shape) {
 		// Render on a larger canvas so parts outside the normal sprite cannot be silently cropped.
-		let renderer = Renderer(canvas: Canvas(width: 96, height: 80))
+		let renderer = Renderer(canvas: Canvas(width: 144, height: 120))
 		for model in [shape.model, shape.model.mirrored()] {
 			let bounds = renderer.render(model).occupied!
-			#expect(bounds.x.lowerBound >= 16 && bounds.x.upperBound < 80, "\(shape.name) fits horizontally")
-			#expect(bounds.y.lowerBound >= 32 && bounds.y.upperBound < 80, "\(shape.name) fits vertically")
+			#expect(bounds.x.lowerBound >= 24 && bounds.x.upperBound < 120, "\(shape.name) fits horizontally")
+			#expect(bounds.y.lowerBound >= 48 && bounds.y.upperBound < 120, "\(shape.name) fits vertically")
 		}
 	}
 }

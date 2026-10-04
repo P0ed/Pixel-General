@@ -2,10 +2,25 @@ public enum Tiles {
 
 	public static let step: Float = 4
 
-	/// Pixel centres sample half a unit inside the slab, which would shave the diamond's four
-	/// tips; bleeding the footprint half a unit each way keeps the full 64 x 32 cell covered.
-	private static let near: Float = -0.5
-	private static let far = Volume.footprint + 0.5
+	/// Bleed the footprint half a pixel each way so sampling at pixel centres
+	/// keeps the full 96 x 48 cell covered, including its four tips.
+	private static let near: Float = -0.5 / Canvas.pixelsPerUnit
+	private static let far = Volume.footprint - near
+
+	/// Dashed, pixel-width perimeter of the base diamond. Tinting happens downstream.
+	public static var cursor: Model {
+		let side = Volume.footprint
+		let corners = [V3.zero, V3(side, 0, 0), V3(side, side, 0), V3(0, side, 0)]
+		let lines = corners.indices.map {
+			Line(from: corners[$0], to: corners[($0 + 1) % corners.count], tone: .max, dash: 4)
+		}
+		let shadows = lines.map {
+			var line = $0.translated(by: V3(0, 0, -1 / Canvas.pixelsPerUnit))
+			line.tone = 0
+			return line
+		}
+		return Model(lines: shadows + lines)
+	}
 
 	public static func base(elevation: Int) -> Model {
 		Model(.box(

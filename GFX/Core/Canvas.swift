@@ -1,26 +1,34 @@
-/// Sprite canvas: the 64 x 32 base diamond sits at the bottom, the rest is headroom.
+/// Sprite canvas: the 96 x 48 base diamond sits at the bottom, the rest is headroom.
 public struct Canvas: Hashable, Sendable {
 	public let width: Int
 	public let height: Int
+
+	/// Render the authored geometry at higher resolution, keeping strokes and outlines pixel-sized.
+	public static let pixelsPerUnit: Float = 1.5
 
 	public init(width: Int, height: Int) {
 		self.width = width
 		self.height = height
 	}
 
-	/// Unit sprite: 64 x 48, 16 px of headroom.
-	public static var unit: Canvas { Canvas(width: 64, height: 48) }
+	/// Flat tile diamond, without headroom.
+	public static var base: Canvas { Canvas(width: tile.width, height: tile.baseHeight) }
 
-	/// Map tile: 64 x 40, 8 px of headroom — matches `CGSize.tile3D` in PG.
-	public static var tile: Canvas { Canvas(width: 64, height: 40) }
+	/// Unit sprite: 96 x 72, 24 px of headroom.
+	public static var unit: Canvas { Canvas(width: 96, height: 72) }
+
+	/// Map tile: 96 x 60, 12 px of headroom — matches `CGSize.tile3D` in PG.
+	public static var tile: Canvas { Canvas(width: 96, height: 60) }
 
 	public var count: Int { width * height }
 
+	public var baseHeight: Int { Int(Volume.footprint * Self.pixelsPerUnit) }
+
 	/// Row the base diamond's top corner falls on.
-	public var baseTop: Int { height - Int(Volume.footprint) }
+	public var baseTop: Int { height - baseHeight }
 
 	/// Sprite anchor (y up) that drops the model's footprint centre onto a tile's origin.
-	public var anchor: (x: Float, y: Float) { (0.5, Volume.footprint / 2 / Float(height)) }
+	public var anchor: (x: Float, y: Float) { (0.5, Float(baseHeight) / 2 / Float(height)) }
 }
 
 public extension Canvas {
@@ -28,15 +36,15 @@ public extension Canvas {
 	/// Isometric projection: `x` runs right-and-down, `y` left-and-down, `z` straight up.
 	func project(_ p: V3) -> (x: Float, y: Float) {
 		(
-			Float(width) / 2 + p.x - p.y,
-			Float(baseTop) + (p.x + p.y) / 2 - p.z
+			Float(width) / 2 + (p.x - p.y) * Self.pixelsPerUnit,
+			Float(baseTop) + ((p.x + p.y) / 2 - p.z) * Self.pixelsPerUnit
 		)
 	}
 
 	/// A world point projecting onto the centre of pixel `(x, y)`; its view ray runs along `(1, 1, 1)`.
 	func origin(x: Int, y: Int) -> V3 {
-		let sx = Float(x) + 0.5 - Float(width) / 2
-		let sy = Float(y) + 0.5 - Float(baseTop)
+		let sx = (Float(x) + 0.5 - Float(width) / 2) / Self.pixelsPerUnit
+		let sy = (Float(y) + 0.5 - Float(baseTop)) / Self.pixelsPerUnit
 		return V3(sx / 2, -sx / 2, -sy)
 	}
 

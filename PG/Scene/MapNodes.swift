@@ -1,5 +1,6 @@
 import SpriteKit
 import COR
+import GFX
 
 @MainActor
 struct MapNodes {
@@ -135,6 +136,6 @@ extension Map where Element == Terrain {
 extension Terrain {
 
 	var elevation: CGFloat {
-		CGFloat(elevationLevel * 4)
+		CGFloat(elevationLevel) * CGFloat(Tiles.step * Canvas.pixelsPerUnit)
 	}
 }

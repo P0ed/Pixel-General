@@ -79,6 +79,13 @@ extension CGPoint {
 @MainActor
 extension SKTexture {
 
+	static let cursor: SKTexture = {
+		let image = Renderer.cursor.image(Tiles.cursor)!.tinted(SKColor.hex(0xF7EF73).cgColor)!
+		let texture = SKTexture(cgImage: image)
+		texture.filteringMode = .nearest
+		return texture
+	}()
+
 	private struct VehicleKey: Hashable {
 		let shape: Units.Shape
 		let mirrored: Bool

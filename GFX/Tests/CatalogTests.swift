@@ -19,9 +19,9 @@ struct CatalogTests {
 		for model in [shape.model, shape.model.mirrored()] {
 			let occupied = Renderer.unit.render(model).occupied!
 
-			#expect(occupied.y.upperBound <= 47, "\(shape) stays on the tile")
+			#expect(occupied.y.upperBound <= 71, "\(shape) stays on the tile")
 			// Wings and hulls run longer than a ground vehicle, as the hand-drawn ones did.
-			#expect(occupied.x.count <= (shape.flies ? 48 : 44), "\(shape) is no wider than a tile in either facing")
+			#expect(occupied.x.count <= (shape.flies ? 72 : 66), "\(shape) is no wider than a tile in either facing")
 		}
 	}
 
@@ -30,9 +30,9 @@ struct CatalogTests {
 			let occupied = Renderer.unit.render(shape.model).occupied!
 
 			if shape.flies {
-				#expect(occupied.y.upperBound < 32, "\(shape) is clear of the ground")
+				#expect(occupied.y.upperBound < 48, "\(shape) is clear of the ground")
 			} else {
-				#expect(occupied.y.upperBound >= 32, "\(shape) sits on the ground")
+				#expect(occupied.y.upperBound >= 48, "\(shape) sits on the ground")
 			}
 		}
 	}
@@ -58,7 +58,7 @@ struct CatalogTests {
 			let bitmap = entry.renderer.render(entry.model)
 			let occupied = bitmap.occupied!
 
-			#expect(occupied.y.upperBound <= 39)
+			#expect(occupied.y.upperBound <= 59)
 			#expect(occupied.y.lowerBound >= 0)
 		}
 	}
@@ -112,8 +112,8 @@ struct CatalogTests {
 		let bitmap = Renderer.unit.render(Units.manKat1)
 		let image = bitmap.cgImage
 
-		#expect(image?.width == 64)
-		#expect(image?.height == 48)
+		#expect(image?.width == 96)
+		#expect(image?.height == 72)
 		#expect(bitmap.png != nil)
 	}
 }

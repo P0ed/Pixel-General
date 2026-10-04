@@ -9,13 +9,13 @@ struct RendererTests {
 		let bitmap = flat.render(Tiles.base(elevation: 0))
 		let occupied = bitmap.occupied
 
-		#expect(occupied?.y == 16 ... 47, "the 64x32 base sits below 16 px of headroom")
-		#expect(bitmap.width == 64 && bitmap.height == 48)
+		#expect(occupied?.y == 24 ... 71, "the 96x48 base sits below 24 px of headroom")
+		#expect(bitmap.width == 96 && bitmap.height == 72)
 	}
 
-	@Test func tileCanvasKeepsEightPixelsOfHeadroom() {
+	@Test func tileCanvasKeepsTwelvePixelsOfHeadroom() {
 		let bitmap = Renderer(canvas: .tile, outline: .none).render(Tiles.base(elevation: 0))
-		#expect(bitmap.occupied?.y == 8 ... 39)
+		#expect(bitmap.occupied?.y == 12 ... 59)
 	}
 
 	@Test func baseDiamondFillsItsCellTheWayTheHandDrawnFrameDid() {
@@ -24,30 +24,64 @@ struct RendererTests {
 			(0 ..< bitmap.width).filter { bitmap.alpha[bitmap.index(x: $0, y: y)] > 0 }
 		}
 
-		#expect(rows[8] == [30, 31, 32, 33], "the tips are 4 px wide")
-		#expect(rows[39] == [30, 31, 32, 33])
-		#expect(rows[23] == Array(0 ..< 64), "the corner rows span the whole tile")
-		#expect(rows[24] == Array(0 ..< 64))
-		#expect(rows[9].count == 8, "each row towards the corners is 4 px wider")
+		#expect(rows[12] == [46, 47, 48, 49], "the tips are 4 px wide")
+		#expect(rows[59] == [46, 47, 48, 49])
+		#expect(rows[35] == Array(0 ..< 96), "the corner rows span the whole tile")
+		#expect(rows[36] == Array(0 ..< 96))
+		#expect(rows[13].count == 8, "each row towards the corners is 4 px wider")
 	}
 
-	@Test func elevationRaisesTheTopFaceByFourPixelsPerLevel() {
+	@Test func elevationRaisesTheTopFaceBySixPixelsPerLevel() {
 		let renderer = Renderer(canvas: .tile, outline: .none)
 		for elevation in 0 ... 2 {
 			let bitmap = renderer.render(Tiles.base(elevation: elevation))
-			#expect(bitmap.occupied?.y.lowerBound == 8 - elevation * 4)
-			#expect(bitmap.occupied?.y.upperBound == 39, "the footprint stays put")
+			#expect(bitmap.occupied?.y.lowerBound == 12 - elevation * 6)
+			#expect(bitmap.occupied?.y.upperBound == 59, "the footprint stays put")
 		}
 	}
 
 	@Test func anchorSitsOnTheCentreOfTheBaseDiamond() {
-		#expect(Canvas.unit.anchor.y == 16 as Float / 48)
-		#expect(Canvas.tile.anchor.y == 16 as Float / 40)
+		#expect(Canvas.unit.anchor.y == 24 as Float / 72)
+		#expect(Canvas.tile.anchor.y == 24 as Float / 60)
 
 		// The centre of the footprint projects onto that anchor row.
 		let centre = Canvas.unit.project(Volume.center)
-		#expect(centre.x == 32)
-		#expect(Float(Canvas.unit.height) - centre.y == 16)
+		#expect(centre.x == 48)
+		#expect(Float(Canvas.unit.height) - centre.y == 24)
+	}
+
+	@Test func pixelRaysProjectBackToTheirCentres() {
+		for canvas in [Canvas.base, .tile, .unit] {
+			for y in 0 ..< canvas.height {
+				for x in 0 ..< canvas.width {
+					let point = canvas.origin(x: x, y: y) + V3(7, 7, 7)
+					let pixel = canvas.project(point)
+					#expect(abs(pixel.x - (Float(x) + 0.5)) < 0.00001)
+					#expect(abs(pixel.y - (Float(y) + 0.5)) < 0.00001)
+				}
+			}
+		}
+	}
+
+	@Test func cursorDrawsADashedDiamondWithoutFillingTheTile() {
+		let bitmap = Renderer.cursor.render(Tiles.cursor)
+		#expect(bitmap.width == 96 && bitmap.height == 48)
+		#expect(bitmap.occupied?.x == 0 ... 95)
+		#expect(bitmap.occupied?.y == 0 ... 47)
+		#expect(bitmap[48, 24].alpha == 0, "the tile centre stays transparent")
+		let tones = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
+		#expect(tones == [0, 255], "the cursor has an unlit stroke and a black pixel shadow")
+		let solid = Renderer.cursor.render(Model(lines: Tiles.cursor.lines.map {
+			var line = $0
+			line.dash = nil
+			return line
+		}))
+		#expect(bitmap.alpha.count(where: { $0 > 0 }) < solid.alpha.count(where: { $0 > 0 }))
+		for y in 0 ..< bitmap.height {
+			for x in 0 ..< bitmap.width where bitmap[x, y].alpha > 0 {
+				#expect(abs(abs(Float(x) - 48) / 2 + abs(Float(y) - 24) - 24) <= 2)
+			}
+		}
 	}
 
 	@Test func cardinalFacesMatchTheHandDrawnRamp() {
@@ -163,7 +197,7 @@ struct RendererTests {
 		let grays = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
 
 		#expect(grays == [64], "no shading is applied to a stroke")
-		#expect(bitmap.occupied?.x == 20 ... 44, "it spans the projected segment")
+		#expect(bitmap.occupied?.x == 30 ... 66, "it spans the projected segment")
 	}
 
 	@Test func linesAreHiddenByWhateverStandsInFrontOfThem() {

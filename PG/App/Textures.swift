@@ -10,7 +10,6 @@ extension SKTexture {
 	// Decorations.spriteatlas
 	static let BTN_0 = pixels(.BTN_0)
 	static let BTN_1 = pixels(.BTN_1)
-	static let cursor = pixels(.cursor)
 	static let highlighted = pixels(.highlighted)
 	static let HP_0 = pixels(.HP_0)
 	static let HP_1 = pixels(.HP_1)
