@@ -2,9 +2,9 @@ import GameplayKit
 
 public extension Map<32, Terrain> {
 
-	/// `terrain` is the dominant terrain of the generated map: hills and
-	/// mountains lift the height field, while forests raise humidity. Campaign
-	/// battles pass the contested province's strategic terrain here.
+	/// `terrain` is the dominant terrain of the generated map: forests raise
+	/// humidity. Campaign battles pass the contested province's strategic
+	/// terrain here.
 	init(seed: Int, players: Int = 4, terrain: Terrain = .field, density: Int = 1) {
 		self.init(
 			seed: seed,
@@ -73,13 +73,12 @@ public extension Map<32, Terrain> {
 		terrain: [9 of Terrain]
 	) -> Terrain {
 		let dominant = strategicTerrain(at: xy, terrain: terrain)
-		let elevationBias = 0.22 * Float(dominant.elevationLevel)
 		let humidityBias: Float = switch dominant {
 		case .forest: 0.33
 		default: 0.0
 		}
 		return Terrain(
-			height: height.value(at: xy.simd) + elevationBias,
+			height: height.value(at: xy.simd),
 			humidity: humidity.value(at: xy.simd) + humidityBias
 		)
 	}

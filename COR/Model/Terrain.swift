@@ -12,14 +12,6 @@
 
 public extension Terrain {
 
-	var elevationLevel: Int {
-		switch self {
-		case .rough: 0
-		case .mountain: 0
-		default: 0
-		}
-	}
-
 	var isBridgable: Bool {
 		switch self {
 		case .field, .forest, .city, .airfield: true

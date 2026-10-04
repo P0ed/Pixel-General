@@ -7,7 +7,6 @@ struct StrategicNodes {
 	var camera: SKCameraNode
 	var map: MapNodes
 	var armies: [SKSpriteNode?]
-	@IO var lit: SetXY = .empty
 }
 
 extension StrategicNodes {
@@ -50,8 +49,7 @@ extension StrategicNodes {
 		MapNodes.make(
 			root: root,
 			size: state.sim.owner.size,
-			tiles: .terrain,
-			fog: true
+			tiles: .terrain
 		)
 	}
 
@@ -97,46 +95,35 @@ extension StrategicNodes {
 		}
 
 		state.sim.owner.indices.forEach { xy in
-			map.setBase(Self.baseGroup(for: state, at: xy), at: xy)
-		}
-		updateFog(state)
-	}
-
-	private func updateFog(_ state: borrowing StrategicState) {
-		var next = SetXY.empty
-		if let selectable = state.ui.selectable {
-			next = selectable
-		} else {
-			state.sim.owner.indices.forEach { next[$0] = true }
-		}
-		guard next != lit else { return }
-		defer { lit = next }
-		state.sim.owner.indices.forEach { xy in
-			map.setFog(!next[xy], terrain: state.sim.terrain[xy], at: xy)
+			let fog = state.ui.selectable.map { !$0[xy] } ?? false
+			map.setBase(Self.baseGroup(for: state, at: xy, fog: fog), at: xy)
 		}
 	}
 
-	private static func baseGroup(for state: borrowing StrategicState, at xy: XY) -> SKTileGroup {
+	private static func baseGroup(
+		for state: borrowing StrategicState,
+		at xy: XY,
+		fog: Bool
+	) -> SKTileGroup {
 		let terrain = state.sim.terrain[xy]
 		// Sea remains sea in political, industry, and fortification modes too;
 		// older saves may still identify it only through `.none` ownership.
 		if terrain.isSea || state.sim.owner[xy] == .none {
-			return .base(terrain: .sea)
+			return .base(terrain: .sea, fog: fog)
 		}
-		let elevation = terrain.elevationLevel
 		switch state.ui.mapMode {
 		case .terrain:
-			return .base(terrain: terrain)
+			return .base(terrain: terrain, fog: fog)
 		case .team:
-			return .team(state.sim.owner[xy].team, elevation: elevation)
+			return .base(surface: .team(state.sim.owner[xy].team), fog: fog)
 		case .country:
-			return .base(surface: .country(state.sim.owner[xy]), elevation: elevation)
+			return .base(surface: .country(state.sim.owner[xy]), fog: fog)
 		case .industry:
 			let level = UInt8(min(7, state.sim.provinces[xy].industry))
-			return .base(surface: .supply(level), elevation: elevation)
+			return .base(surface: .supply(level), fog: fog)
 		case .forts:
 			let level = state.sim.provinces[xy][.fort] * 7 / 3
-			return .base(surface: .supply(level), elevation: elevation)
+			return .base(surface: .supply(level), fog: fog)
 		}
 	}
 }

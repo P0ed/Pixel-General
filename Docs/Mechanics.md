@@ -345,7 +345,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 - Army input mirrors Tactical unit selection: `A` selects/deselects the army
   under the cursor, then moves or attacks with that exact army. Previous/next
   target input cycles the human armies. While an army with movement remaining
-  is selected, the fog layer reveals only its legal movement range.
+  is selected, fog shading reveals only its legal movement range.
 - Army 0 has no upkeep. Active armies 1–3 cost `50 * slot` prestige at the end
   of every campaign turn. `StrategicSim.reduce(.endTurn)` charges the campaign
   player directly (clamped at zero), restores movement, and disbands empty side
@@ -467,9 +467,10 @@ forts, clamped at 7 — and **forts** shades by the province's `fort` building
 level, 0–3 spread over gradient steps 0/2/4/7. Ownerless sea tiles stay water
 in both, as in the terrain view.
 
-Only the base tile changes with the mode: buildings/roads/bridges
-(decorations) and fog of war render on separate tile-map layers in every
-mode (`PG/Scene/MapNodes.swift`, `TileZ`).
+Only the base tile changes with the mode. Fog of war is baked into each
+surface variant on one tile map; buildings/roads/bridges (decorations) retain
+separate tile-map layers with their own fogged variants
+(`PG/Scene/MapNodes.swift`, `TileZ`).
 
 ### Skills:
 

@@ -6,27 +6,22 @@ import SpriteKit
 @MainActor
 extension CGImage {
 
-	private static var slabs: [Int: (surface: CGImage, frame: CGImage)] = [:]
-
-	/// The tinted part of a base tile: top face and walls, no outline.
-	static func surface(_ elevation: Int) -> CGImage {
-		slab(elevation).surface
-	}
-
-	/// The neutral grid lines drawn over the tinted surface.
-	static func frame(_ elevation: Int) -> CGImage {
-		slab(elevation).frame
-	}
-
-	private static func slab(_ elevation: Int) -> (surface: CGImage, frame: CGImage) {
-		if let slab = slabs[elevation] { return slab }
-		let model = Tiles.base(elevation: elevation)
-		let slab = (
+	private static let slab: (surface: CGImage, frame: CGImage) = {
+		let model = Tiles.base(elevation: 0)
+		return (
 			surface: Renderer.tile.fill(model).cgImage!,
 			frame: Renderer.tile.edges(model).cgImage!
 		)
-		slabs[elevation] = slab
-		return slab
+	}()
+
+	/// The tinted part of a base tile: top face and walls, no outline.
+	static var surface: CGImage {
+		slab.surface
+	}
+
+	/// The neutral grid lines drawn over the tinted surface.
+	static var frame: CGImage {
+		slab.frame
 	}
 
 	private static var decorations: [Decoration: CGImage] = [:]

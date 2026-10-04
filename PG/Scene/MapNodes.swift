@@ -1,22 +1,18 @@
 import SpriteKit
 import COR
-import GFX
 
 @MainActor
 struct MapNodes {
-	var layers: [SKTileMapNode]
-	var fogLayers: [SKTileMapNode]
+	var tiles: SKTileMapNode
 	var decorationLayers: [SKTileMapNode]
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
 }
 
-/// Z offsets within one anti-diagonal: base tile at the diagonal index,
-/// fog overlay above it (darkens the base only), decorations above the fog
-/// (they carry their own fogged variant), units on top.
+/// Z offsets within one anti-diagonal above the flat terrain map:
+/// decorations carry their own fogged variant, with units on top.
 enum TileZ {
-	static let fog: CGFloat = 0.2
 	static let decoration: CGFloat = 0.4
 	static let unit: CGFloat = 0.6
 }
@@ -24,13 +20,13 @@ enum TileZ {
 extension MapNodes {
 
 	func tile(at point: CGPoint) -> Input? {
-		guard let map = layers.first, let scene = map.scene else { return .none }
+		guard let scene = tiles.scene else { return .none }
 
-		let location = map.convert(point, from: scene)
+		let location = tiles.convert(point, from: scene)
 		return .tile(
 			XY(
-				map.tileColumnIndex(fromPosition: location),
-				map.tileRowIndex(fromPosition: location)
+				tiles.tileColumnIndex(fromPosition: location),
+				tiles.tileRowIndex(fromPosition: location)
 			)
 		)
 	}
@@ -40,24 +36,17 @@ extension MapNodes {
 	}
 
 	func setBase(_ tileGroup: SKTileGroup?, at xy: XY) {
-		layers[layer(at: xy)].setTileGroup(tileGroup, at: xy)
+		tiles.setTileGroup(tileGroup, at: xy)
 	}
 
-	func setTile(_ terrain: Terrain, at xy: XY) {
-		setBase(.base(terrain: terrain), at: xy)
+	func setTile(_ terrain: Terrain, fog: Bool = false, at xy: XY) {
+		setBase(.base(terrain: terrain, fog: fog), at: xy)
+		setDecoration(terrain, fog: fog, at: xy)
+	}
+
+	func setDecoration(_ terrain: Terrain, fog: Bool, at xy: XY) {
 		guard !decorationLayers.isEmpty else { return }
-		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: false), at: xy)
-	}
-
-	func setFog(_ fog: Bool, terrain: Terrain, at xy: XY) {
-		guard !fogLayers.isEmpty else { return }
-		fogLayers[layer(at: xy)].setTileGroup(
-			fog ? .fog(elevation: terrain.elevationLevel) : nil,
-			at: xy
-		)
-		if !decorationLayers.isEmpty, terrain.decoration != nil {
-			decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog), at: xy)
-		}
+		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
@@ -68,23 +57,21 @@ extension MapNodes {
 		root: SKNode,
 		size: Int,
 		tiles: SKTileSet,
-		decorations: Bool = false,
-		fog: Bool = false
+		decorations: Bool = false
 	) -> MapNodes {
-		func addLayers(_ tiles: SKTileSet, z: CGFloat) -> [SKTileMapNode] {
-			(0 ..< size * 2 - 1).map { idx in
-				let layer = SKTileMapNode(tiles: tiles, size: size)
-				layer.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-				layer.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
-				layer.zPosition = CGFloat(idx) + z
-				root.addChild(layer)
-				return layer
-			}
+		func addTiles(_ tiles: SKTileSet, z: CGFloat) -> SKTileMapNode {
+			let map = SKTileMapNode(tiles: tiles, size: size)
+			map.anchorPoint = CGPoint(x: 0.0, y: 0.5)
+			map.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
+			map.zPosition = z
+			root.addChild(map)
+			return map
 		}
 		return MapNodes(
-			layers: addLayers(tiles, z: 0.0),
-			fogLayers: fog ? addLayers(.fog, z: TileZ.fog) : [],
-			decorationLayers: decorations ? addLayers(.decorations, z: TileZ.decoration) : [],
+			tiles: addTiles(tiles, z: 0.0),
+			decorationLayers: decorations ? (0 ..< size * 2 - 1).map {
+				addTiles(.decorations, z: CGFloat($0) + TileZ.decoration)
+			} : [],
 			size: size,
 			cursor: addCursor(root: root),
 			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)
@@ -128,13 +115,6 @@ extension MapNodes {
 extension Map where Element == Terrain {
 
 	func point(at xy: XY) -> CGPoint {
-		xy.point + CGPoint(x: 0, y: self[xy].elevation)
-	}
-}
-
-extension Terrain {
-
-	var elevation: CGFloat {
-		CGFloat(elevationLevel) * CGFloat(Tiles.step)
+		xy.point
 	}
 }

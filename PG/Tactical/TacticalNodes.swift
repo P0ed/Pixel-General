@@ -48,11 +48,10 @@ extension TacticalNodes {
 			root: root,
 			size: state.sim.map.size,
 			tiles: .terrain,
-			decorations: true,
-			fog: true
+			decorations: true
 		)
 		state.sim.map.indices.forEach { xy in
-			map.setTile(state.sim.map[xy], at: xy)
+			map.setTile(state.sim.map[xy], fog: true, at: xy)
 		}
 		return map
 	}
@@ -109,15 +108,14 @@ extension TacticalNodes {
 		guard baseChanged || litChanged else { return }
 		defer { self.lit = lit; baseKey = key }
 
-		if baseChanged {
-			state.sim.map.indices.forEach { xy in
-				map.setBase(baseGroup(for: state, at: xy, key: key), at: xy)
+		state.sim.map.indices.forEach { xy in
+			let fog = !lit[xy]
+			map.setBase(baseGroup(for: state, at: xy, key: key, fog: fog), at: xy)
+			if litChanged {
+				map.setDecoration(state.sim.map[xy], fog: fog, at: xy)
 			}
 		}
 		if litChanged {
-			state.sim.map.indices.forEach { xy in
-				map.setFog(!lit[xy], terrain: state.sim.map[xy], at: xy)
-			}
 			state.sim.units.forEachAlive { i, u in
 				units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
 			}
@@ -133,16 +131,14 @@ extension TacticalNodes {
 	private func baseGroup(
 		for state: borrowing TacticalState,
 		at xy: XY,
-		key: BaseKey
+		key: BaseKey,
+		fog: Bool
 	) -> SKTileGroup {
 		switch key {
 		case .terrain:
-			return .base(terrain: state.sim.map[xy])
+			return .base(terrain: state.sim.map[xy], fog: fog)
 		case .team:
-			return .team(
-				state.sim.control[xy].team,
-				elevation: state.sim.map[xy].elevationLevel
-			)
+			return .base(surface: .team(state.sim.control[xy].team), fog: fog)
 		case .supply(let supply, let air):
 			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
@@ -157,22 +153,16 @@ extension TacticalNodes {
 			case 3: 6
 			default: 7
 			}
-			return .base(
-				surface: .supply(level),
-				elevation: state.sim.map[xy].elevationLevel
-			)
+			return .base(surface: .supply(level), fog: fog)
 		case .country:
-			return .base(
-				surface: .country(state.sim.control[xy]),
-				elevation: state.sim.map[xy].elevationLevel
-			)
+			return .base(surface: .country(state.sim.control[xy]), fog: fog)
 		case .defense(let defense):
 			let terrain = state.sim.map[xy]
 			let value = defense.isAir
 				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)
 			return .base(
 				surface: .supply(UInt8(clamping: (value + 5) * 7 / 11)),
-				elevation: terrain.elevationLevel
+				fog: fog
 			)
 		}
 	}
