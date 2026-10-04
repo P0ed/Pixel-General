@@ -16,7 +16,7 @@ public struct Renderer: Sendable {
 		self.levels = levels
 	}
 
-	public static var unit: Renderer { Renderer() }
+	public static var unit: Renderer { Renderer(light: .unit) }
 	public static var tile: Renderer { Renderer(canvas: .tile, outline: .tile) }
 	public static var building: Renderer { Renderer(canvas: .tile, outline: .building) }
 	public static var decal: Renderer { Renderer(canvas: .tile, outline: .decal) }

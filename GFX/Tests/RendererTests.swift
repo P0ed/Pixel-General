@@ -127,6 +127,26 @@ struct RendererTests {
 		}
 	}
 
+	@Test func m113FrontSlopeStaysDistinctFromItsSideInBothFacings() throws {
+		let renderer = Renderer.unit
+		let model = Units.m113
+		let hullID = try #require(model.solids.lastIndex { $0.tone == Units.Tone.body })
+		let hull = model.solids[hullID]
+		let frontFace = try #require(hull.planes.firstIndex { $0.n.x > 0 && $0.n.y == 0 && $0.n.z > 0 })
+		let sideFace = try #require(hull.planes.firstIndex { $0.n.x == 0 && $0.n.y > 0 && $0.n.z > 0 })
+
+		for facing in [model, model.mirrored()] {
+			let raster = renderer.raster(facing)
+			let frontPixels = raster.bitmap.gray.indices.filter { raster.ids[$0] == hullID && raster.faces[$0] == frontFace }
+			let sidePixels = raster.bitmap.gray.indices.filter { raster.ids[$0] == hullID && raster.faces[$0] == sideFace }
+			let front = try #require(frontPixels.map { raster.bitmap.gray[$0] }.min())
+			let side = try #require(sidePixels.map { raster.bitmap.gray[$0] }.max())
+
+			#expect(Int(front) >= Int(side) + 10, "the front slope must remain visibly lighter than the side")
+			#expect(front < renderer.light.gray(V3(0, 0, 1), tone: Units.Tone.body), "the slope must remain darker than the roof")
+		}
+	}
+
 	@Test func nearerSolidHidesTheOneItSitsInFrontOf() {
 		let far = Solid.box(from: V3(4, 4, 0), to: V3(12, 12, 8), tone: 128)
 		// (1,1,1) is the view direction, so this box projects onto exactly the same pixels.

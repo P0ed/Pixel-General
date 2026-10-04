@@ -9,12 +9,16 @@ public struct Light: Hashable, Sendable {
 	}
 
 	public static var topLeft: Light { Light() }
+	public static var unit: Light { Light(ambient: 0.25) }
 
 	public func shade(_ normal: V3) -> Float {
-		// Blend the axis-face tones. Euclidean normalization makes a slope facing the
-		// light brighter than the roof, clipping both to the same flat white.
-		let weight = abs(normal.x) + abs(normal.y) + abs(normal.z)
-		let diffuse = weight > 0 ? normal.dot(direction) / weight : 0
+		// Keep the horizontal face ramp, then blend towards the roof by the actual tilt.
+		// Weighting all three axes by their sum can make a front slope match its side;
+		// a raw Lambertian dot product can instead make the slope brighter than the roof.
+		let horizontal = abs(normal.x) + abs(normal.y)
+		let side = horizontal > 0 ? (normal.x * direction.x + normal.y * direction.y) / horizontal : 0
+		let tilt = normal.normalized.z
+		let diffuse = side * (1 - abs(tilt)) + direction.z * tilt
 		return max(0, min(1, ambient + diffuse))
 	}
 
