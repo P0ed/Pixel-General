@@ -2,15 +2,11 @@ public struct Shop {
 	var country: Country
 	var tier: UInt8
 	var air: Bool?
-	/// Factory-type bitmask (bit = `BuildingType.rawValue`): a unit is offered
-	/// only when its factory's bit is set. `0xFF` opens every class.
-	var factories: UInt8
 
-	public init(country: Country, tier: UInt8, air: Bool? = nil, factories: UInt8 = 0xFF) {
+	public init(country: Country, tier: UInt8, air: Bool? = nil) {
 		self.country = country
 		self.air = air
 		self.tier = tier
-		self.factories = factories
 	}
 }
 
@@ -21,25 +17,8 @@ extension Shop {
 			false
 		} else if unit.tier > tier {
 			false
-		} else if let factory = unit.factory, factories & 1 << factory.rawValue == 0 {
-			false
 		} else {
 			true
-		}
-	}
-}
-
-extension Unit {
-
-	var factory: BuildingType? {
-		switch type {
-		case .supply: nil
-		case .inf, .art: .army
-		case .wheelArt, .trackArt, .wheelAA, .trackAA,
-			 .lightWheel, .lightTrack, .heavyTrack: .armor
-		case .aa: .aa
-		case .heli, .fighter, .cas: .air
-		case .cargo, .destroyer, .cruiser: .navy
 		}
 	}
 }

@@ -2,19 +2,15 @@ public struct HQSim: ~Copyable {
 	public var map: Map<4, Terrain>
 	public var player: Player
 	public var units: [16 of Unit]
-	/// Campaign army being edited. Meaningful only while Core has a campaign.
-	public var army: Int
 
 	public init(
 		map: consuming Map<4, Terrain> = Map<4, Terrain>(zero: .field),
 		player: Player,
-		units: [16 of Unit],
-		army: Int = 0
+		units: [16 of Unit]
 	) {
 		self.map = map
 		self.player = player
 		self.units = units
-		self.army = army
 	}
 }
 

@@ -64,21 +64,6 @@ extension HQNodes {
 	}
 
 	private func processMenu() {
-		guard core.strategic == nil else {
-			return _ = scene?.showMenu(MenuState(
-				items: [
-					.close(icon: .HQ, status: "Back") {
-						guard let scene else { return }
-						core.store(scene.state.sim)
-						core.closeArmy()
-						core.save()
-						view.present(.auto)
-					},
-				],
-				leftButtons: [.back, .space, .space, .space]
-			))
-		}
-
 		scene?.showMenu(MenuState(
 			items: [
 				.push(icon: .arrowRight, status: "Scenario", menu: {
@@ -91,10 +76,6 @@ extension HQNodes {
 				}),
 				.push(icon: .remote, status: "Join LAN", menu: {
 					joinMenu()
-				}),
-				.push(icon: .arrowRight, status: "Campaign", menu: {
-					guard let scene else { return nil }
-					return campaignMenu(scene.state)
 				}),
 			],
 			leftButtons: [.back, .space, .space, .space],

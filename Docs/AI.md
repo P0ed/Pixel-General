@@ -212,8 +212,8 @@ teachers or battle recipes cannot be mixed. v3 (same layout as v2) marks the fac
 contract change (`a25d286`): the factory places exactly the units it is given, so
 `makeSim()` composes every seat's `.base` roster itself.
 v4 removes the runtime map-size byte because every tactical map is 32×32.
-v5 gives the attacking side of a survival battle `.base + .aux` (2× army,
-mirroring campaign assaults) — a 1:1 attacker rarely cracks the fort ring, so
+v5 gives the attacking side of a survival battle `.base + .aux` (2× army)
+— a 1:1 attacker rarely cracks the fort ring, so
 older corpora under-sampled successful assaults; arena numbers straddling v5
 (and the 49-plane property encoding, landed together) are not comparable.
 Map generation is part of the recipe too: the density knob (`bd363de`) rebuilds

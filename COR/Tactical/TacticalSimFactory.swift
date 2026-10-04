@@ -29,7 +29,6 @@ public extension TacticalSim {
 			players: scenario.players,
 			cities: cities,
 			units: units,
-			buildingsMask: scenario.buildingsMask,
 			navalCenters: Self.navalCenters(
 				players: scenario.players,
 				terrain: scenario.terrain,
@@ -39,7 +38,7 @@ public extension TacticalSim {
 		self.objective = scenario.objective
 	}
 
-	/// Assign each participating team a distinct strategic sea cell near the
+	/// Assign each participating team a distinct terrain sea cell near the
 	/// center of mass of its cities, which are also the anchors for its land
 	/// deployment. The small exhaustive matching avoids player-order bias when
 	/// multiple teams prefer the same sea cell. Returned points are tactical-map
@@ -57,7 +56,7 @@ public extension TacticalSim {
 		let sea = terrain.indices.filter { terrain[$0].isSea }
 		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
 
-		func strategicCenter(_ index: Int) -> XY {
+		func cellCenter(_ index: Int) -> XY {
 			XY(index % 3, 2 - index / 3).cellCenter(size: 32)
 		}
 
@@ -85,7 +84,7 @@ public extension TacticalSim {
 			}
 			for index in sea where !selected.contains(index) {
 				let nextCost = cost
-					+ strategicCenter(index).manhattanDistance(to: teamCenters[teamIndex])
+					+ cellCenter(index).manhattanDistance(to: teamCenters[teamIndex])
 				guard nextCost < bestCost else { continue }
 				match(teamIndex + 1, selected + [index], nextCost)
 			}
@@ -93,7 +92,7 @@ public extension TacticalSim {
 		match(0, [], 0)
 
 		return Dictionary(uniqueKeysWithValues: zip(teams, best).map { team, index in
-			(team, strategicCenter(index))
+			(team, cellCenter(index))
 		})
 	}
 
@@ -104,8 +103,7 @@ public extension TacticalSim {
 		seed: Int,
 		terrain: Terrain = .field,
 		objective: Objective = .none,
-		forts: Int = 0,
-		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
+		forts: Int = 0
 	) {
 		self.init(new: Scenario(
 			players: players,
@@ -113,8 +111,7 @@ public extension TacticalSim {
 			terrain: [9 of Terrain](repeating: terrain),
 			fortLevel: forts,
 			seed: seed,
-			objective: objective,
-			buildingsMask: buildingsMask
+			objective: objective
 		))
 	}
 

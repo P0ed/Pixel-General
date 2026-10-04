@@ -159,9 +159,8 @@ private enum Help {
 	behavior and counters. In battle they gain experience, earn skills on \
 	kills, and can be resupplied, repaired and re-equipped.
 
-	Battles feed a strategic campaign across Europe: a persistent roster of \
-	veterans carries forward from fight to fight, growing in strength — and \
-	that you can later stake against other commanders in multiplayer.
+	Build a roster of veterans in HQ, take them into custom scenarios, and \
+	face other commanders in LAN multiplayer.
 
 	Made by Konstantin Sukharev
 	poed@me.com
@@ -180,7 +179,7 @@ private enum Help {
 	  Esc                 Open the menu
 	  Z / X / C           Zoom  1× / 2× / 4×
 	  1 / 2               Terrain / Country-Team map
-	  3 / 4               Supply / Defense map (campaign: Industry-Forts)
+	  3 / 4               Supply / Defense map
 
 	GAMEPAD
 
@@ -191,7 +190,7 @@ private enum Help {
 	  Hold L + D-pad      Pan the map
 	  Hold R + D-pad ↑/↓  Zoom in / out
 	  Hold R + A / B      Terrain / Country-Team map
-	  Hold R + X / Y      Supply / Defense map (campaign: Industry-Forts)
+	  Hold R + X / Y      Supply / Defense map
 	  Menu                Open the menu
 
 	POINTER

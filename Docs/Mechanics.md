@@ -102,7 +102,7 @@ that class at all (returns 0). `def(src:)` is `groundDef` vs ground attackers or
   8-neighbour) adds +2 attack.
 
 **Bits** (`Bits`, per-instance): only `aux` today — marks an auxiliary unit
-(cheaper, drawn from a fixed pool, filtered out of campaign writeback).
+(cheaper, drawn from a fixed pool, excluded from the HQ roster after a battle).
 
 **Experience & promotion.** `lvl = 8 - leadingZeroBitCount(exp)`, capping at 8;
 `subLvl` (0–9) is the progress toward the next level. Damaging/killing enemies
@@ -320,54 +320,6 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   - `lvl + 7` makes veterans (and the skills they earn) linearly pricier; `aux`
     divides by 11 instead of 7.
 
-## Campaign
-
-`COR/Strategic/StrategicState.swift`, `COR/Strategic/Army.swift`,
-`COR/Strategic/StrategicReaction.swift`, `COR/Model/Core.swift`
-
-- The 32×32 European map stores country ownership, terrain, province building
-  levels, the campaign player, turn, and pending battle in `StrategicSim`.
-  Every country has four inline army slots in
-  `CArray<64, CArray<4, Army>>`, keyed first by `Country.rawValue` and then by
-  army slot.
-- Starting a campaign assigns the standalone HQ roster to army slot 0. From
-  then on `StrategicSim.player` is the human campaign treasury and every
-  roster lives in `StrategicSim.armies`; `Core.hq` is only a temporary editor
-  for the selected human army while the HQ scene is open. Each other country
-  begins with an active main army using its stock roster.
-- An active army can march up to its movement allowance in orthogonal steps
-  through provinces controlled by any country on its team.
-  It can attack an orthogonally adjacent enemy province only while it has
-  movement points and at least one living core unit. Winning advances the army
-  and annexes same-team enemy provinces in a Chebyshev radius of 2 around the
-  target; engulfed enemy armies retreat to their nearest remaining unoccupied
-  province or disband if none remains.
-- Army input mirrors Tactical unit selection: `A` selects/deselects the army
-  under the cursor, then moves or attacks with that exact army. Previous/next
-  target input cycles the human armies. While an army with movement remaining
-  is selected, fog shading reveals only its legal movement range.
-- Army 0 has no upkeep. Active armies 1–3 cost `50 * slot` prestige at the end
-  of every campaign turn. `StrategicSim.reduce(.endTurn)` charges the campaign
-  player directly (clamped at zero), restores movement, and disbands empty side
-  armies before calculating the charge. The Strategic menu's **Next turn**
-  action runs this reducer.
-- After the human ends a turn, each non-human country deterministically musters
-  at most one free army, moves its armies toward the nearest hostile province,
-  and attacks an adjacent province only when its local strength within range 2
-  is at least three times the defender's. AI campaign battles autoresolve.
-- Select an army and open HQ to purchase, sell, upgrade, or rearrange that
-  army's roster. Leaving HQ synchronizes both its roster and treasury back to
-  `StrategicSim`; there is no campaign HQ without a selected army.
-- A campaign battle fields the attacking army's living roster. The defender's
-  nearest manned army within range 2 supplies its core roster; factory totals
-  are the sole source of auxiliary units. Civil factories add 40 prestige per
-  level to each side's battle treasury. On completion, non-auxiliary survivors
-  return to their respective armies and remaining prestige returns to the
-  campaign player. The persistent
-  **Battle autoresolve** menu option instead resolves a human attack on the
-  campaign map by comparing both sides' local strength, without creating a
-  Tactical battle.
-
 ## Players & Victory
 
 `COR/Model/Player.swift`, `COR/Tactical/TacticalTurns.swift`
@@ -376,7 +328,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   three `Team`s via `Country.team`: **axis** (swe/den/ned/ukr/ger/pol/cze/aut/nor),
   **allies** (isr/pak/usa/fin/ltu/svk/hun), **soviet** (ind/irn/rus/est/lva/bel/rom/mol).
   `.none` maps to `Team.none`. Friendly fire is impossible within a team; combat
-  requires cross-team. The European nations back the [campaign map](#campaign).
+  requires cross-team.
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
 - A ground unit standing on a settlement controlled by a different team
   reflags it to the unit's country. A player whose team controls no
@@ -389,7 +341,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Tactical/Scenario.swift`, `COR/Tactical/TacticalSimFactory.swift`,
 `COR/Tactical/MapGeneration.swift`
 
-- `Scenario.spawns` holds one cell of the strategic 3×3 neighborhood per
+- `Scenario.spawns` holds one cell of the 3×3 terrain grid per
   player as (column, row-from-south), each 0…2. When present, all settlements
   are assigned from these locations: cities go greedily to the nearest spawn
   center under defender-weighted quotas (so counts stay balanced and each
@@ -398,8 +350,6 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   each spawn center an adjacent airfield, clearing forest or hill for the
   strip if it must. An empty `spawns` keeps the legacy index-proportional
   split — trainers and tests are byte-identical to before.
-- Campaign battles spawn the attacker at `XY(0, 1)` (terrain index 3) and
-  the defender at `XY(1, 1)` — the defended center province.
 - Custom scenarios offer five spawn options
   `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
   west, center); each seat picks **I, II, III, IV, V, Random** with a menu
@@ -419,21 +369,16 @@ Every battle carries an `Objective` on `TacticalSim`:
   team wins immediately; otherwise, once `day` exceeds the deadline, the surviving
   team is the winner. (`day` is `Int(turn) / players.count + 1`.)
 
-Campaign battles are 1v1, so a single objective covers both sides: `survive` is
-the defender's goal and, from the attacker's view, the deadline it must beat by
-annihilating the defender (capturing the defending team's every settlement
-eliminates it). The
-result is the computed property `TacticalSim.winner` (`TacticalTurns.swift`),
-returning `Team?`; it stays `nil` while the battle is undecided. `Core.complete`
-reads `won = sim.winner == humanTeam`, so a repulse is `winner` being the
-surviving defender or `nil` (a player-driven abandon/draw).
+The computed property `TacticalSim.winner` (`TacticalTurns.swift`) returns
+`Team?` and stays `nil` while the battle is undecided. Completing or abandoning
+a battle returns the HQ country's surviving core units and remaining prestige
+to HQ.
 
 ### Map mode
 
 `TacticalUI.mapMode` (`PG/Tactical/TacticalState.swift`, presentation-only)
 — team recolors tiles by the controlling country's team; country recolors by the
-controlling `Country` itself (`Country.color` — flag-derived per nation,
-HoI/EU-style, with campaign-map neighbors guaranteed distinct); supply
+controlling `Country` itself (`Country.color` — flag-derived per nation); supply
 shades tiles on a red-to-green gradient by the human player's resupply grade
 (`TacticalSim.supplySources(for:)` +
 `SupplySources.level(at:terrain:)`, `UnitResupply.swift`): +2 on or next to a
@@ -456,16 +401,6 @@ end of turn (`TacticalAttack.swift`), −5 (heavy armor in a river) to +6
 shade uniformly: they ignore terrain and never entrench.
 Map modes use the right modifier: Right+A selects terrain, Right+B toggles
 country/team, Right+C selects supply, and Right+D selects defense.
-
-The strategic layer uses the same controls for terrain and country/team; it has
-no supply view. Its terrain view shows the campaign's field, forest, hill, and
-mountain overlay while retaining water for ownerless sea tiles. In its place,
-Right+C toggles two campaign views on the same red-to-green gradient
-(`StrategicMapMode`, `PG/Strategic/StrategicState.swift`): **industry** shades
-each province by `Province.industry` — its total factory levels excluding
-forts, clamped at 7 — and **forts** shades by the province's `fort` building
-level, 0–3 spread over gradient steps 0/2/4/7. Ownerless sea tiles stay water
-in both, as in the terrain view.
 
 Only the base tile changes with the mode. Fog of war is baked into each
 surface variant on one tile map; buildings/roads/bridges (decorations) retain

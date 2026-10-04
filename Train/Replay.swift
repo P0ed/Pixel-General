@@ -38,11 +38,9 @@ struct Replay {
 extension Replay {
 
 	/// Rebuilds the battle's initial state, identical to what the generator saw.
-	/// The factory places exactly the units it is given (app callers compose
-	/// campaign rosters + aux themselves), so every seat's roster is composed
-	/// here: `.base` per seat, plus `.aux` for the attacking side of a survival
-	/// battle (2× army — mirrors campaign assaults, where the attacker brings
-	/// an army roster and aux against the defender's core).
+	/// The factory places exactly the units it is given, so every seat's roster
+	/// is composed here: `.base` per seat, plus `.aux` for the attacking side of
+	/// a survival battle (2× army to help it break through the fort ring).
 	func makeSim() -> TacticalSim {
 		TacticalSim(
 			players: seats.map { s in

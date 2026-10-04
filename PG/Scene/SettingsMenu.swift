@@ -16,9 +16,6 @@ extension MenuItem {
 					.toggle(icon: .toggle(settings.ai), status: "Neural opponent") {
 						settings.ai.toggle()
 					},
-					.toggle(icon: .toggle(settings.campaignAutoresolve), status: "Battle autoresolve") {
-						settings.campaignAutoresolve.toggle()
-					},
 				],
 				leftButtons: [.back, .space, .space, .space]
 			)

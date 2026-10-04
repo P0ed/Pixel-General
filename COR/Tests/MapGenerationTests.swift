@@ -125,7 +125,7 @@ struct MapGenerationTests {
 
 	@Test func terrainNeighborhoodShapesSeaWithHeightMap() {
 		var terrain = [9 of Terrain](repeating: .field)
-		terrain[0] = .sea // north-west strategic tile
+		terrain[0] = .sea // north-west terrain cell
 		let a = Map<32, Terrain>(seed: 7, players: 2, terrain: terrain)
 		let b = Map<32, Terrain>(seed: 19, players: 2, terrain: terrain)
 
@@ -155,11 +155,11 @@ struct MapGenerationTests {
 				if a[xy].isSea { peripheralSea += 1 }
 			}
 		}
-		#expect(landInsideNominalShore >= 4, "High ground did not break up the strategic square")
-		#expect(aSea.count <= a.count / 12, "Sea occupied too much of its strategic square")
+		#expect(landInsideNominalShore >= 4, "High ground did not break up the terrain square")
+		#expect(aSea.count <= a.count / 12, "Sea occupied too much of its terrain square")
 		#expect(
 			centerSea * peripheralTiles > peripheralSea * centerTiles,
-			"Sea did not become less likely away from its strategic center"
+			"Sea did not become less likely away from its terrain center"
 		)
 	}
 

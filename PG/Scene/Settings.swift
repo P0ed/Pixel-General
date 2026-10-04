@@ -5,7 +5,6 @@ struct Settings {
 	var soundLevel: UInt8 = 1
 	var animationSpeed: UInt8 = 1
 	var ai: Bool = false
-	var campaignAutoresolve: Bool = false
 }
 
 extension Settings {

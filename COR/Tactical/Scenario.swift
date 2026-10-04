@@ -1,6 +1,5 @@
-/// Complete, reusable recipe for a tactical battle. Campaign code builds a
-/// scenario from strategic state; trainers and auto-resolution can consume the
-/// same value without constructing a full simulation first.
+/// Complete, reusable recipe for a tactical battle, shared by the app and
+/// AI training tools.
 public struct Scenario {
 	public var players: [Player]
 	public var units: [Unit]
@@ -10,7 +9,6 @@ public struct Scenario {
 	public var fortLevel: Int
 	public var seed: Int
 	public var objective: Objective
-	public var buildingsMask: [4 of UInt8]
 
 	public init(
 		players: [Player],
@@ -20,8 +18,7 @@ public struct Scenario {
 		cityLevel: Int = 0,
 		fortLevel: Int = 0,
 		seed: Int = 0,
-		objective: Objective = .none,
-		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
+		objective: Objective = .none
 	) {
 		self.players = players
 		self.units = Self.addingNavalAux(to: units, for: players, terrain: terrain)
@@ -31,23 +28,9 @@ public struct Scenario {
 		self.fortLevel = fortLevel
 		self.seed = seed
 		self.objective = objective
-		self.buildingsMask = buildingsMask
 	}
 
 	public func makeSim() -> TacticalSim { TacticalSim(new: self) }
-
-	public func autoResolve() -> TacticalSim {
-		var sim = makeSim()
-		var plan = AI.Plan()
-		var actions = 0
-		while sim.winner == nil, actions < 20_000 {
-			var action = sim.run(ai: &plan)
-			if case .purchase = action { action = .end }
-			_ = sim.reduce(action)
-			actions += 1
-		}
-		return sim
-	}
 
 	private static func addingNavalAux(
 		to units: [Unit],
@@ -134,7 +117,7 @@ public struct Scenario {
 
 public extension XY {
 
-	/// Tactical-map center of a 3×3 strategic cell; `self` is the cell as
+	/// Tactical-map center of a 3×3 terrain cell; `self` is the cell as
 	/// (column, row-from-south), each 0…2.
 	func cellCenter(size: Int) -> XY {
 		XY((x * 2 + 1) * size / 6, (y * 2 + 1) * size / 6)
@@ -143,36 +126,7 @@ public extension XY {
 
 public extension TacticalSim {
 
-	/// Autoresolve verdict for a campaign offensive. Heuristic-vs-heuristic
-	/// play rarely reaches the formal `.survive` elimination inside the
-	/// deadline — mop-up marches to every rear settlement dominate — so the
-	/// offensive also succeeds when the defending team has no unit left on
-	/// the field, or holds the minority of the defended center province
-	/// (the center cell of the composed 3×3 map, tiles 11...21) when the
-	/// deadline expires.
-	func offensiveSucceeded(by attacker: Team, against defender: Team) -> Bool {
-		guard teamAlive(attacker) else { return false }
-		if !teamAlive(defender) { return true }
-
-		let defendersLeft = units.reduceAlive(into: 0) { n, _, u in
-			n += u.country.team == defender ? 1 : 0
-		}
-		if defendersLeft == 0 { return true }
-
-		var attackerGround = 0
-		var defenderGround = 0
-		for x in 11 ... 21 {
-			for y in 11 ... 21 {
-				let team = control[XY(x, y)].team
-				if team == attacker { attackerGround += 1 }
-				if team == defender { defenderGround += 1 }
-			}
-		}
-		return attackerGround > defenderGround
-	}
-
-	/// Non-auxiliary survivors of `country`, reset for the campaign map. The
-	/// campaign writes these back to the army that fought the battle.
+	/// Non-auxiliary survivors of `country`, reset for the HQ roster.
 	func survivingRoster(for country: Country) -> [16 of Unit] {
 		let survivors: [Unit] = units.compactMapAlive { _, unit in
 			unit.country != country || unit[.aux] ? nil : modifying(unit) { unit in

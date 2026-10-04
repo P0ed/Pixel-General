@@ -17,8 +17,7 @@ extension TacticalSim {
 		return Shop(
 			country: country,
 			tier: player.tier,
-			air: map[xy] == .airfield,
-			factories: buildingsMask[playerIndex]
+			air: map[xy] == .airfield
 		).units
 	}
 

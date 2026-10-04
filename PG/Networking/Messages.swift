@@ -4,7 +4,7 @@ import COR
 /// Protocol version for the `hello` handshake. Bump whenever the message set
 /// or the wire layout of `TacticalSim`/`TacticalAction` changes — payloads
 /// are raw native bytes (see `Connection.swift`).
-let netVersion: UInt16 = 2
+let netVersion: UInt16 = 3
 
 enum Message {
 	case hello(UInt16)

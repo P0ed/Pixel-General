@@ -9,9 +9,8 @@ A third target, **Train**, is a macOS-only command-line tool for the LSTM oppone
 training pipeline. PG, Train, and the tests all build the same local-package `COR`
 product; see [AI](./AI.md).
 
-Three game modes:
+Two game modes:
 - **HQ** (unit management),
-- **Strategic** (campaign),
 - **Tactical** (32×32 grid combat).
 
 ### Mode Pattern
@@ -20,10 +19,10 @@ Each game screen is wired up as a `SceneMode<State, Action, Event, PresentationI
 
 1. **Input** → `State.apply(input)` → `InputReaction<Action, PresentationIntent>`; this may mutate PG-owned cursor/camera/selection state.
 2. **Reduce** → `State.reduce(action)` → `[Event]`; this delegates deterministic mutation to `Sim.reduce`, then reconciles presentation state.
-3. **Process** → async `Nodes.process(event, state)` for domain results such as paths, damage, spawns, and campaign changes.
-4. **Present** → async `Nodes.present(intent, state)` for PG-only effects such as opening a menu, shop, or army roster.
+3. **Process** → async `Nodes.process(event, state)` for domain results such as paths, damage, and spawns.
+4. **Present** → async `Nodes.present(intent, state)` for PG-only effects such as opening a menu or shop.
 
-The four instantiations are declared as typealiases alongside their nodes: `HQMode`, `TacticalMode`, `StrategicMode`, and `EditorMode`.
+The three instantiations are declared as typealiases alongside their nodes: `HQMode`, `TacticalMode`, and `EditorMode`.
 
 #### Input reaction
 
@@ -68,21 +67,19 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 
 ### State
 
-The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, optional strategic/tactical sims, and a `.location` enum that drives which scene is active. The single live instance is the global `core: Core` in `PG/App.swift`; `Core.complete`/`startCampaignBattle`/`openArmy`/`store` are the load-bearing transitions between modes.
+The root `Core` struct (`COR/Model/Core.swift`) holds the HQ sim, an optional
+tactical sim, and a `.location` enum that selects the active scene. The single
+live instance is the global `core: Core` in `PG/App.swift`.
 
-`Core.hq` does not permanently own the main campaign army. State ownership depends on both campaign presence and the active location:
+`Core.hq` owns the roster and treasury between scenarios. `startScenario` stores
+the running battle in `Core.tactical` and switches to Tactical; `complete`
+returns surviving non-auxiliary units and remaining prestige to HQ, clears the
+battle, and switches back. `store` persists edits to either sim.
 
-| `strategic` | `location` | Source of truth |
-|---|---|---|
-| `nil` | `.hq` | `Core.hq` owns the standalone roster and player treasury. |
-| `nil` | `.tactical` | `Core.tactical` owns the running scenario; `complete` writes survivors and prestige back to `Core.hq`. |
-| non-`nil` | `.strategic` | `Core.strategic` owns the campaign player and the four army slots for every country, including the human slot 0. |
-| non-`nil` | `.hq` | `Core.hq` is the selected army's editor snapshot (`HQSim.army` identifies the slot); `store` synchronizes its player and roster back into `Core.strategic`. |
-| non-`nil` | `.tactical` | `Core.tactical` owns the running battle; `complete` writes prestige and survivors back to the fighting army in `Core.strategic`. |
-
-Starting a campaign moves the standalone HQ roster into the human country's strategic army 0. Army storage is a fully inline `CArray<64, CArray<4, Army>>`, indexed first by `Country.rawValue` and then by slot. An HQ screen inside a campaign is therefore opened only through a human army (`openArmy`); there is no context-free Strategic → HQ transition. Saving or leaving that screen stores the edited roster before returning to the map. Campaign upkeep and the deterministic non-human campaign AI are likewise run by `StrategicSim.reduce(.endTurn)`.
-
-App-level `Settings` (e.g. sound level and the campaign battle-autoresolve toggle) live separately in `PG/Scene/Settings.swift`.
+Save slots contain the native `Core` layout. When that layout changes,
+incompatible data falls back to a fresh HQ in `UserDefaults.load(slot:)`.
+App-level `Settings` (sound, animation speed, and neural opponent selection)
+live separately in `PG/Scene/Settings.swift`.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.
 

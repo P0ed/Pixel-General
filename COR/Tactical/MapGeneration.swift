@@ -3,8 +3,7 @@ import GameplayKit
 public extension Map<32, Terrain> {
 
 	/// `terrain` is the dominant terrain of the generated map: forests raise
-	/// humidity. Campaign battles pass the contested province's strategic
-	/// terrain here.
+	/// humidity.
 	init(seed: Int, players: Int = 4, terrain: Terrain = .field, density: Int = 1) {
 		self.init(
 			seed: seed,
@@ -14,15 +13,14 @@ public extension Map<32, Terrain> {
 		)
 	}
 
-	/// Generates one tactical map from a 3×3 strategic neighborhood. The
+	/// Generates one tactical map from a 3×3 terrain grid. The
 	/// array is row-major from north-west to south-east:
 	///
 	///     0 1 2
 	///     3 4 5
 	///     6 7 8
 	///
-	/// Campaign battles rotate their sample so the attacker is at 3 and the
-	/// defender at 4. Land entries bias the local noise; sea entries seed an
+	/// Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
 	/// `spawns` are the players' spawn cells of the neighborhood — the city
 	/// nearest each spawn center is guaranteed an adjacent airfield.
@@ -72,7 +70,7 @@ public extension Map<32, Terrain> {
 		humidity: GKNoiseMap,
 		terrain: [9 of Terrain]
 	) -> Terrain {
-		let dominant = strategicTerrain(at: xy, terrain: terrain)
+		let dominant = regionalTerrain(at: xy, terrain: terrain)
 		let humidityBias: Float = switch dominant {
 		case .forest: 0.33
 		default: 0.0
@@ -84,7 +82,7 @@ public extension Map<32, Terrain> {
 	}
 
 	/// Height can create low pockets beyond the nominal coast. Only pockets
-	/// connected to the strategic sea region are ocean; disconnected ones are
+	/// connected to a terrain sea region are ocean; disconnected ones are
 	/// restored to their generated land terrain instead of becoming tiny
 	/// inland sea tiles.
 	private mutating func removeDisconnectedSea(
@@ -94,7 +92,7 @@ public extension Map<32, Terrain> {
 	) {
 		var connected = SetXY.empty
 		let seeds = indices.filter { xy in
-			self[xy].isSea && strategicTerrain(at: xy, terrain: terrain).isSea
+			self[xy].isSea && regionalTerrain(at: xy, terrain: terrain).isSea
 		}
 		_ = flood(from: seeds, visited: &connected) { self[$0].isSea }
 		for xy in indices where self[xy].isSea && !connected[xy] {
@@ -146,12 +144,12 @@ public extension Map<32, Terrain> {
 		return SetXY(landmasses[mainlandIndex])
 	}
 
-	/// Treats the 3×3 strategic sea mask as the broad coastline, then moves
+	/// Treats the 3×3 terrain sea mask as the broad coastline, then moves
 	/// that coastline inland at low elevations and out to sea at high ones.
 	/// Distance from the nearest sea-cell center adds a growing landward bias,
 	/// so peripheral water needs distinctly lower elevation than the sea core.
 	/// Capping nominal sea depth keeps that bias relevant even in an outer map
-	/// corner far from every strategic land cell.
+	/// corner far from every terrain land cell.
 	private func isSea(at xy: XY, height: GKNoiseMap, terrain: [9 of Terrain]) -> Bool {
 		let hasSea = terrain.contains { $0.isSea }
 		guard hasSea else { return false }
@@ -197,7 +195,7 @@ public extension Map<32, Terrain> {
 		return (dx * dx + dy * dy).squareRoot()
 	}
 
-	private func strategicTerrain(at xy: XY, terrain: [9 of Terrain]) -> Terrain {
+	private func regionalTerrain(at xy: XY, terrain: [9 of Terrain]) -> Terrain {
 		let column = min(2, xy.x * 3 / size)
 		let rowFromSouth = min(2, xy.y * 3 / size)
 		let rowFromNorth = 2 - rowFromSouth

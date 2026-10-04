@@ -9,7 +9,6 @@ public struct TacticalSim: ~Copyable {
 
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
-	public var buildingsMask: [4 of UInt8] = .init(repeating: 0xFF)
 
 	public var units: Speicher<128, Unit>
 	public var position: [128 of XY]
@@ -37,13 +36,11 @@ public extension TacticalSim {
 		players: [Player],
 		cities: [(XY, Country)],
 		units: [Unit],
-		buildingsMask: [4 of UInt8] = .init(repeating: 0xFF),
 		navalCenters: [Team: XY] = [:]
 	) {
 		self.map = map
 		self.players = .init(head: players, tail: .none)
 		self.units = .init(head: units, tail: .empty)
-		self.buildingsMask = buildingsMask
 		position = .init(repeating: .zero)
 		vision = .init(repeating: .empty)
 		cargo = .init(repeating: .none)
