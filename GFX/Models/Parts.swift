@@ -120,12 +120,12 @@ func prism(_ points: [(Float, Float)], z: ClosedRange<Float>, tone: UInt8) -> So
 	return solid
 }
 
-func hatch(x: Float, y: Float = 0, z: Float, radius: Float = 1.2, tone: UInt8 = Units.Tone.turret) -> Solid {
-	cylinder(at: at(x, y, z + 0.25), radius: radius, length: 0.5, axis: .z, tone: tone)
+func hatch(x: Float, y: Float = 0, z: Float, radius: Float = 1.8, tone: UInt8 = Units.Tone.turret) -> Solid {
+	cylinder(at: at(x, y, z + 0.375), radius: radius, length: 0.75, axis: .z, tone: tone)
 }
 
 func grille(x: Float, y: Float = 0, z: Float, length: Float, width: Float, tone: UInt8 = 90) -> [Line] {
-	stride(from: x - length / 2, through: x + length / 2, by: 1.5).map {
+	stride(from: x - length / 2, through: x + length / 2, by: 2.25).map {
 		Line(from: at($0, y - width / 2, z), to: at($0, y + width / 2, z), tone: tone)
 	}
 }
@@ -133,7 +133,7 @@ func grille(x: Float, y: Float = 0, z: Float, length: Float, width: Float, tone:
 /// The lower lip casts a narrow shadow onto the deck beneath a turret.
 func turret(
 	length: Float, width: Float, z: ClosedRange<Float>, x: Float = 0, y: Float = 0,
-	front: Float = 0.8, rear: Float = 0.5, side: Float = 0.5, corner: Float = 1,
+	front: Float = 1.2, rear: Float = 0.75, side: Float = 0.75, corner: Float = 1.5,
 	tone: UInt8 = Units.Tone.turret
 ) -> Model {
 	let l = length / 2, w = width / 2

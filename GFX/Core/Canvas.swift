@@ -3,9 +3,6 @@ public struct Canvas: Hashable, Sendable {
 	public let width: Int
 	public let height: Int
 
-	/// Render the authored geometry at higher resolution, keeping strokes and outlines pixel-sized.
-	public static let pixelsPerUnit: Float = 1.5
-
 	public init(width: Int, height: Int) {
 		self.width = width
 		self.height = height
@@ -22,7 +19,7 @@ public struct Canvas: Hashable, Sendable {
 
 	public var count: Int { width * height }
 
-	public var baseHeight: Int { Int(Volume.footprint * Self.pixelsPerUnit) }
+	public var baseHeight: Int { Int(Volume.footprint) }
 
 	/// Row the base diamond's top corner falls on.
 	public var baseTop: Int { height - baseHeight }
@@ -36,15 +33,15 @@ public extension Canvas {
 	/// Isometric projection: `x` runs right-and-down, `y` left-and-down, `z` straight up.
 	func project(_ p: V3) -> (x: Float, y: Float) {
 		(
-			Float(width) / 2 + (p.x - p.y) * Self.pixelsPerUnit,
-			Float(baseTop) + ((p.x + p.y) / 2 - p.z) * Self.pixelsPerUnit
+			Float(width) / 2 + p.x - p.y,
+			Float(baseTop) + (p.x + p.y) / 2 - p.z
 		)
 	}
 
 	/// A world point projecting onto the centre of pixel `(x, y)`; its view ray runs along `(1, 1, 1)`.
 	func origin(x: Int, y: Int) -> V3 {
-		let sx = (Float(x) + 0.5 - Float(width) / 2) / Self.pixelsPerUnit
-		let sy = (Float(y) + 0.5 - Float(baseTop)) / Self.pixelsPerUnit
+		let sx = Float(x) + 0.5 - Float(width) / 2
+		let sy = Float(y) + 0.5 - Float(baseTop)
 		return V3(sx / 2, -sx / 2, -sy)
 	}
 

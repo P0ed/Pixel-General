@@ -1,302 +1,302 @@
 public extension Units {
 
 	static var m1117: Model {
-		wheeled(at: [-6.5, 6.5], width: 10.5, radius: 2.4)
+		wheeled(at: [-9.75, 9.75], width: 15.75, radius: 3.6)
 		+ Model([
-			armour(length: 21, width: 10.5, z: 3.5 ... 8, front: 4.5, rear: 2.5,
-				side: 1, corner: 1.3, tone: Tone.body),
-			box(length: 0.7, width: 6, z: 6.5 ... 7.8, x: 6, tone: Tone.glass),
-			hatch(x: -6.5, y: -2.5, z: 8),
-		], lines: sides(5) { Line(from: at(-1, $0, 4.3), to: at(-1, $0, 7.5), tone: 100) })
-		+ turret(length: 6, width: 6, z: 8.2 ... 11, x: -1, corner: 1.3)
-		+ cannon(from: at(1, 0, 9.7), to: at(7.5, 0, 10), caliber: 1.3)
+			armour(length: 31.5, width: 15.75, z: 5.25 ... 12, front: 6.75, rear: 3.75,
+				side: 1.5, corner: 1.95, tone: Tone.body),
+			box(length: 1.05, width: 9, z: 9.75 ... 11.7, x: 9, tone: Tone.glass),
+			hatch(x: -9.75, y: -3.75, z: 12),
+		], lines: sides(7.5) { Line(from: at(-1.5, $0, 6.45), to: at(-1.5, $0, 11.25), tone: 100) })
+		+ turret(length: 9, width: 9, z: 12.3 ... 16.5, x: -1.5, corner: 1.95)
+		+ cannon(from: at(1.5, 0, 14.55), to: at(11.25, 0, 15), caliber: 1.95)
 	}
 
 	static var stryker: Model {
-		wheeled(at: [-9, -3.3, 3.3, 9], width: 11.5, radius: 2.1)
+		wheeled(at: [-13.5, -4.95, 4.95, 13.5], width: 17.25, radius: 3.15)
 		+ Model([
-			armour(length: 25, width: 11.5, z: 3.8 ... 8, front: 5, rear: 0.6,
-				side: 1, corner: 1.4, tone: Tone.body),
-			hatch(x: -7, y: 2.5, z: 8, radius: 1.4),
-			hatch(x: 4, y: -2.5, z: 8),
-			box(length: 4, width: 2, z: 8 ... 8.6, x: -4.5, y: -3, tone: Tone.cargo),
-		], lines: grille(x: -7, y: -2.5, z: 8.1, length: 3.5, width: 3))
-		+ turret(length: 3.5, width: 3.5, z: 8.3 ... 11, x: 1, corner: 0.7)
-		+ cannon(from: at(2, 0, 10), to: at(7, 0, 10.3), caliber: 0.9)
+			armour(length: 37.5, width: 17.25, z: 5.7 ... 12, front: 7.5, rear: 0.9,
+				side: 1.5, corner: 2.1, tone: Tone.body),
+			hatch(x: -10.5, y: 3.75, z: 12, radius: 2.1),
+			hatch(x: 6, y: -3.75, z: 12),
+			box(length: 6, width: 3, z: 12 ... 12.9, x: -6.75, y: -4.5, tone: Tone.cargo),
+		], lines: grille(x: -10.5, y: -3.75, z: 12.15, length: 5.25, width: 4.5))
+		+ turret(length: 5.25, width: 5.25, z: 12.45 ... 16.5, x: 1.5, corner: 1.05)
+		+ cannon(from: at(3, 0, 15), to: at(10.5, 0, 15.45), caliber: 1.35)
 	}
 
 	static var btr80: Model {
-		wheeled(at: [-9, -3.2, 3.2, 9], width: 11, radius: 2.3)
+		wheeled(at: [-13.5, -4.8, 4.8, 13.5], width: 16.5, radius: 3.45)
 		+ Model([
-			armour(length: 26, width: 11, z: 3.5 ... 7.2, front: 6, rear: 2,
-				side: 1.3, corner: 1.6, tone: Tone.body),
-			hatch(x: -6, y: -2.5, z: 7.2), hatch(x: -6, y: 2.5, z: 7.2),
-			box(length: 1, width: 6, z: 6.3 ... 7.2, x: 6.7, tone: Tone.glass),
-		], lines: grille(x: -9, z: 7.3, length: 3, width: 5))
-		+ turret(length: 4.5, width: 4.5, z: 7.4 ... 10, x: 1.3, side: 1.2, corner: 1)
-		+ cannon(from: at(3, 0, 8.7), to: at(10, 0, 9), caliber: 1)
+			armour(length: 39, width: 16.5, z: 5.25 ... 10.8, front: 9, rear: 3,
+				side: 1.95, corner: 2.4, tone: Tone.body),
+			hatch(x: -9, y: -3.75, z: 10.8), hatch(x: -9, y: 3.75, z: 10.8),
+			box(length: 1.5, width: 9, z: 9.45 ... 10.8, x: 10.05, tone: Tone.glass),
+		], lines: grille(x: -13.5, z: 10.95, length: 4.5, width: 7.5))
+		+ turret(length: 6.75, width: 6.75, z: 11.1 ... 15, x: 1.95, side: 1.8, corner: 1.5)
+		+ cannon(from: at(4.5, 0, 13.05), to: at(15, 0, 13.5), caliber: 1.5)
 	}
 
 	static var fv432: Model {
-		tracked(length: 21, width: 12, count: 5)
+		tracked(length: 31.5, width: 18, count: 5)
 		+ Model([
-			armour(length: 20, width: 10.5, z: 3.8 ... 9.2, front: 2.5, rear: 0.3,
-				side: 0.2, corner: 0.5, tone: Tone.body),
-			hatch(x: -4, z: 9.2, radius: 2.2), hatch(x: 3, y: -2, z: 9.2),
-			cylinder(at: at(-2, 2.8, 9.9), radius: 1.3, length: 1, axis: .z, tone: Tone.turret),
-			barrel(from: at(-1, 2.8, 10.2), to: at(5, 2.8, 10.3), caliber: 0.7, tone: Tone.barrel),
-			box(length: 8, width: 0.7, z: 6 ... 7, x: -1, y: -5.5, tone: Tone.cargo),
-		], lines: grille(x: 3, y: 2, z: 9.3, length: 4, width: 3))
+			armour(length: 30, width: 15.75, z: 5.7 ... 13.8, front: 3.75, rear: 0.45,
+				side: 0.3, corner: 0.75, tone: Tone.body),
+			hatch(x: -6, z: 13.8, radius: 3.3), hatch(x: 4.5, y: -3, z: 13.8),
+			cylinder(at: at(-3, 4.2, 14.85), radius: 1.95, length: 1.5, axis: .z, tone: Tone.turret),
+			barrel(from: at(-1.5, 4.2, 15.3), to: at(7.5, 4.2, 15.45), caliber: 1.05, tone: Tone.barrel),
+			box(length: 12, width: 1.05, z: 9 ... 10.5, x: -1.5, y: -8.25, tone: Tone.cargo),
+		], lines: grille(x: 4.5, y: 3, z: 13.95, length: 6, width: 4.5))
 	}
 
 	static var mtLb: Model {
-		tracked(length: 23, width: 11.5, count: 6)
+		tracked(length: 34.5, width: 17.25, count: 6)
 		+ Model([
-			armour(length: 22, width: 10, z: 3.8 ... 6.7, front: 5, rear: 0.8,
-				side: 0.4, corner: 0.8, tone: Tone.body),
-			hatch(x: -7, y: -2, z: 6.7), hatch(x: -3.5, y: -2, z: 6.7),
-			cylinder(at: at(4, 2.1, 7.4), radius: 1.5, length: 1.2, axis: .z, tone: Tone.turret),
-			barrel(from: at(5, 2.1, 7.8), to: at(9, 2.1, 8), caliber: 0.7, tone: Tone.barrel),
-		], lines: grille(x: -4, y: 2.1, z: 6.8, length: 5, width: 3))
+			armour(length: 33, width: 15, z: 5.7 ... 10.05, front: 7.5, rear: 1.2,
+				side: 0.6, corner: 1.2, tone: Tone.body),
+			hatch(x: -10.5, y: -3, z: 10.05), hatch(x: -5.25, y: -3, z: 10.05),
+			cylinder(at: at(6, 3.15, 11.1), radius: 2.25, length: 1.8, axis: .z, tone: Tone.turret),
+			barrel(from: at(7.5, 3.15, 11.7), to: at(13.5, 3.15, 12), caliber: 1.05, tone: Tone.barrel),
+		], lines: grille(x: -6, y: 3.15, z: 10.2, length: 7.5, width: 4.5))
 	}
 
 	static var m2A2: Model {
-		ifvHull(length: 23, width: 13, deck: 8.3, front: 4.2)
-		+ turret(length: 8.5, width: 7.5, z: 8.5 ... 12, x: -1, y: -0.8, front: 1.8, corner: 1.4)
+		ifvHull(length: 34.5, width: 19.5, deck: 12.45, front: 6.3)
+		+ turret(length: 12.75, width: 11.25, z: 12.75 ... 18, x: -1.5, y: -1.2, front: 2.7, corner: 2.1)
 		+ Model([
-			hatch(x: -2, y: 0.8, z: 12),
-			box(length: 5, width: 2.2, z: 9.5 ... 12, x: -1, y: 4.3, tone: Tone.cargo),
-			box(length: 1.2, width: 2, z: 11 ... 12.8, x: 1.3, y: -2, tone: Tone.glass),
-		]) + cannon(from: at(2.4, -0.8, 10.4), to: at(13.5, -0.8, 10.8), caliber: 1.2)
+			hatch(x: -3, y: 1.2, z: 18),
+			box(length: 7.5, width: 3.3, z: 14.25 ... 18, x: -1.5, y: 6.45, tone: Tone.cargo),
+			box(length: 1.8, width: 3, z: 16.5 ... 19.2, x: 1.95, y: -3, tone: Tone.glass),
+		]) + cannon(from: at(3.6, -1.2, 15.6), to: at(20.25, -1.2, 16.2), caliber: 1.8)
 	}
 
 	static var marder: Model {
-		ifvHull(length: 24, width: 12.5, deck: 8.6, front: 5.5)
-		+ turret(length: 6.5, width: 5.5, z: 8.8 ... 11, x: 0.5, front: 1.5, corner: 1)
+		ifvHull(length: 36, width: 18.75, deck: 12.9, front: 8.25)
+		+ turret(length: 9.75, width: 8.25, z: 13.2 ... 16.5, x: 0.75, front: 2.25, corner: 1.5)
 		+ Model([
-			hatch(x: -6, y: 1.5, z: 8.6, radius: 1.4),
-			barrel(from: at(-1, 2.4, 11.7), to: at(4, 2.4, 12.1), caliber: 1.4, tone: Tone.cargo),
-			armour(length: 3.5, width: 3.2, z: 8.7 ... 10.5, x: -7, corner: 0.6, tone: Tone.turret),
-		]) + cannon(from: at(3, 0, 10), to: at(13, 0, 10.5), caliber: 1)
+			hatch(x: -9, y: 2.25, z: 12.9, radius: 2.1),
+			barrel(from: at(-1.5, 3.6, 17.55), to: at(6, 3.6, 18.15), caliber: 2.1, tone: Tone.cargo),
+			armour(length: 5.25, width: 4.8, z: 13.05 ... 15.75, x: -10.5, corner: 0.9, tone: Tone.turret),
+		]) + cannon(from: at(4.5, 0, 15), to: at(19.5, 0, 15.75), caliber: 1.5)
 	}
 
 	static var bmp2: Model {
-		ifvHull(length: 24, width: 12, deck: 6.5, front: 6)
-		+ turret(length: 6.5, width: 6.5, z: 6.7 ... 9.4, x: -2, side: 1.1, corner: 1.5)
+		ifvHull(length: 36, width: 18, deck: 9.75, front: 9)
+		+ turret(length: 9.75, width: 9.75, z: 10.05 ... 14.1, x: -3, side: 1.65, corner: 2.25)
 		+ Model([
-			hatch(x: -3, y: 1.3, z: 9.4),
-			barrel(from: at(-2, 0, 10), to: at(3, 0, 10.3), caliber: 1.1, tone: Tone.running),
-			box(length: 10, width: 0.6, z: 5.8 ... 6.7, x: -4.5, y: 5.7, tone: Tone.cargo),
-		]) + cannon(from: at(0.5, 0, 8.2), to: at(14, 0, 8.8), caliber: 1)
+			hatch(x: -4.5, y: 1.95, z: 14.1),
+			barrel(from: at(-3, 0, 15), to: at(4.5, 0, 15.45), caliber: 1.65, tone: Tone.running),
+			box(length: 15, width: 0.9, z: 8.7 ... 10.05, x: -6.75, y: 8.55, tone: Tone.cargo),
+		]) + cannon(from: at(0.75, 0, 12.3), to: at(21, 0, 13.2), caliber: 1.5)
 	}
 
 	static var cv9035: Model {
-		ifvHull(length: 22, width: 12.5, deck: 7.5, front: 4.5)
-		+ turret(length: 8.5, width: 7.8, z: 7.7 ... 11.2, x: -2, front: 2, corner: 1.7)
+		ifvHull(length: 33, width: 18.75, deck: 11.25, front: 6.75)
+		+ turret(length: 12.75, width: 11.7, z: 11.55 ... 16.8, x: -3, front: 3, corner: 2.55)
 		+ Model([
-			hatch(x: -3, y: 1.4, z: 11.2),
-			box(length: 2, width: 2, z: 11.2 ... 12.6, x: -0.5, y: -2, tone: Tone.glass),
-		]) + cannon(from: at(1.2, 0, 9.5), to: at(13, 0, 10), caliber: 1.4)
+			hatch(x: -4.5, y: 2.1, z: 16.8),
+			box(length: 3, width: 3, z: 16.8 ... 18.9, x: -0.75, y: -3, tone: Tone.glass),
+		]) + cannon(from: at(1.8, 0, 14.25), to: at(19.5, 0, 15), caliber: 2.1)
 	}
 
 	static var kf41: Model {
-		ifvHull(length: 25, width: 13.5, deck: 9, front: 5)
-		+ turret(length: 9.5, width: 8, z: 9.2 ... 12.2, x: -2, front: 2.5, side: 0.8, corner: 1.5)
+		ifvHull(length: 37.5, width: 20.25, deck: 13.5, front: 7.5)
+		+ turret(length: 14.25, width: 12, z: 13.8 ... 18.3, x: -3, front: 3.75, side: 1.2, corner: 2.25)
 		+ Model([
-			box(length: 4, width: 1.8, z: 10 ... 12, x: -2, y: -4.3, tone: Tone.cargo),
-			cylinder(at: at(-3, 1.8, 13), radius: 0.9, length: 1.5, axis: .z, tone: Tone.glass),
-		] + sides(6.5) { armour(length: 22, width: 0.8, z: 3.5 ... 7.5, y: $0,
-			front: 2, corner: 0.2, tone: Tone.turret) })
-		+ cannon(from: at(1.5, 0, 10.5), to: at(15, 0, 11), caliber: 1.4)
+			box(length: 6, width: 2.7, z: 15 ... 18, x: -3, y: -6.45, tone: Tone.cargo),
+			cylinder(at: at(-4.5, 2.7, 19.5), radius: 1.35, length: 2.25, axis: .z, tone: Tone.glass),
+		] + sides(9.75) { armour(length: 33, width: 1.2, z: 5.25 ... 11.25, y: $0,
+			front: 3, corner: 0.3, tone: Tone.turret) })
+		+ cannon(from: at(2.25, 0, 15.75), to: at(22.5, 0, 16.5), caliber: 2.1)
 	}
 
 	static var m35: Model {
 		bonnetTruck(ural: false) + Model([
-			box(length: 14, width: 9.5, z: 4 ... 4.8, x: -5.5, tone: Tone.turret),
-			box(length: 0.7, width: 9.5, z: 4.8 ... 7.2, x: -12.2, tone: Tone.cargo),
-		] + sides(4.4) { box(length: 14, width: 0.7, z: 4.8 ... 7.2, x: -5.5, y: $0, tone: Tone.cargo) }
-		+ [-9, -4].flatMap { x in
-			sides(2) { box(length: 3.7, width: 3, z: 4.8 ... 7.8, x: x, y: $0, tone: Tone.body) }
-		}, lines: sides(4.8) {
-			Line(from: at(-12, $0, 6), to: at(1, $0, 6), tone: 115)
+			box(length: 21, width: 14.25, z: 6 ... 7.2, x: -8.25, tone: Tone.turret),
+			box(length: 1.05, width: 14.25, z: 7.2 ... 10.8, x: -18.3, tone: Tone.cargo),
+		] + sides(6.6) { box(length: 21, width: 1.05, z: 7.2 ... 10.8, x: -8.25, y: $0, tone: Tone.cargo) }
+		+ [-13.5, -6].flatMap { x in
+			sides(3) { box(length: 5.55, width: 4.5, z: 7.2 ... 11.7, x: x, y: $0, tone: Tone.body) }
+		}, lines: sides(7.2) {
+			Line(from: at(-18, $0, 9), to: at(1.5, $0, 9), tone: 115)
 		})
 	}
 
 	static var ural4320: Model {
-		bonnetTruck(ural: true) + canvasBed(length: 14.5, width: 10, x: -5, roof: 11.2)
+		bonnetTruck(ural: true) + canvasBed(length: 21.75, width: 15, x: -7.5, roof: 16.8)
 		+ Model([
-			cylinder(at: at(1.5, -5.3, 7.2), radius: 2, length: 1.2, axis: .y, tone: 44),
-			cylinder(at: at(1.5, -6, 7.2), radius: 1, length: 0.2, axis: .y, tone: 110),
+			cylinder(at: at(2.25, -7.95, 10.8), radius: 3, length: 1.8, axis: .y, tone: 44),
+			cylinder(at: at(2.25, -9, 10.8), radius: 1.5, length: 0.3, axis: .y, tone: 110),
 		])
 	}
 
 	static var m777: Model {
-		wheeled(at: [-2], width: 8.5, radius: 2)
+		wheeled(at: [-3], width: 12.75, radius: 3)
 		+ Model([
-			cylinder(at: at(0, 0, 2.5), radius: 2.5, length: 1, axis: .z, tone: Tone.turret),
-			barrel(from: at(-4, 0, 3.5), to: at(3, 0, 7.5), caliber: 2.5, tone: Tone.turret),
+			cylinder(at: at(0, 0, 3.75), radius: 3.75, length: 1.5, axis: .z, tone: Tone.turret),
+			barrel(from: at(-6, 0, 5.25), to: at(4.5, 0, 11.25), caliber: 3.75, tone: Tone.turret),
 		] + sides(1) { sign in
-			prism([(-10, sign * 6 - 0.7), (0, sign * 2 - 0.7), (0, sign * 2 + 0.7),
-				(-10, sign * 6 + 0.7)], z: 0 ... 1.2, tone: Tone.running)
-		} + sides(5.3) { box(length: 4, width: 2, z: 0 ... 1.2, x: 3, y: $0, tone: Tone.turret) })
-		+ cannon(from: at(2, 0, 7), to: at(17, 0, 18), caliber: 1.4, muzzle: true)
+			prism([(-15, sign * 9 - 1.05), (0, sign * 3 - 1.05), (0, sign * 3 + 1.05),
+				(-15, sign * 9 + 1.05)], z: 0 ... 1.8, tone: Tone.running)
+		} + sides(7.95) { box(length: 6, width: 3, z: 0 ... 1.8, x: 4.5, y: $0, tone: Tone.turret) })
+		+ cannon(from: at(3, 0, 10.5), to: at(25.5, 0, 27), caliber: 2.1, muzzle: true)
 	}
 
 	static var d30: Model {
-		wheeled(at: [-1], width: 8, radius: 2)
+		wheeled(at: [-1.5], width: 12, radius: 3)
 		+ Model([
-			cylinder(at: at(0, 0, 2.8), radius: 2.8, length: 2, axis: .z, tone: Tone.turret),
-			box(length: 14, width: 1.5, z: 0 ... 1.2, x: 6, tone: Tone.running),
-			armour(length: 1.4, width: 9.5, z: 3.5 ... 7.5, x: 1.5, side: 0.8,
-				corner: 0.6, tone: Tone.body),
+			cylinder(at: at(0, 0, 4.2), radius: 4.2, length: 3, axis: .z, tone: Tone.turret),
+			box(length: 21, width: 2.25, z: 0 ... 1.8, x: 9, tone: Tone.running),
+			armour(length: 2.1, width: 14.25, z: 5.25 ... 11.25, x: 2.25, side: 1.2,
+				corner: 0.9, tone: Tone.body),
 		] + sides(1) { sign in
-			prism([(-10, sign * 6 - 0.6), (0, -0.6), (0, 0.6), (-10, sign * 6 + 0.6)],
-				z: 0 ... 1.4, tone: Tone.running)
-		}) + cannon(from: at(1, 0, 5.5), to: at(14, 0, 15), caliber: 1.3, muzzle: true)
+			prism([(-15, sign * 9 - 0.9), (0, -0.9), (0, 0.9), (-15, sign * 9 + 0.9)],
+				z: 0 ... 2.1, tone: Tone.running)
+		}) + cannon(from: at(1.5, 0, 8.25), to: at(21, 0, 22.5), caliber: 1.95, muzzle: true)
 	}
 
 	static var m198: Model {
 		fh70 + Model([
-			box(length: 3, width: 2.5, z: 5 ... 7.2, x: -4, y: -2, tone: Tone.turret),
-			barrel(from: at(3, 1.5, 7.5), to: at(13, 1.5, 14.4), caliber: 0.8, tone: Tone.cargo),
+			box(length: 4.5, width: 3.75, z: 7.5 ... 10.8, x: -6, y: -3, tone: Tone.turret),
+			barrel(from: at(4.5, 2.25, 11.25), to: at(19.5, 2.25, 21.6), caliber: 1.2, tone: Tone.cargo),
 		])
 	}
 
 	static var d20: Model {
 		fh70 + Model([
-			armour(length: 1.5, width: 10, z: 3.5 ... 9.5, x: 0.5,
-				side: 0.7, corner: 0.5, tone: Tone.body),
-			box(length: 3.5, width: 3.5, z: 0 ... 1.5, x: -12, tone: Tone.turret),
+			armour(length: 2.25, width: 15, z: 5.25 ... 14.25, x: 0.75,
+				side: 1.05, corner: 0.75, tone: Tone.body),
+			box(length: 5.25, width: 5.25, z: 0 ... 2.25, x: -18, tone: Tone.turret),
 		])
 	}
 
 	static var m109: Model {
-		tracked(length: 24, width: 13, count: 7)
-		+ Model([armour(length: 23, width: 11.5, z: 3.8 ... 6.8,
-			front: 3.5, rear: 0.5, corner: 0.8, tone: Tone.body)])
-		+ turret(length: 12, width: 10.5, z: 7 ... 12.6, x: -3, front: 0.5, side: 0.4, corner: 0.8)
+		tracked(length: 36, width: 19.5, count: 7)
+		+ Model([armour(length: 34.5, width: 17.25, z: 5.7 ... 10.2,
+			front: 5.25, rear: 0.75, corner: 1.2, tone: Tone.body)])
+		+ turret(length: 18, width: 15.75, z: 10.5 ... 18.9, x: -4.5, front: 0.75, side: 0.6, corner: 1.2)
 		+ Model([
-			hatch(x: -4, y: 2.4, z: 12.6, radius: 1.5),
-			box(length: 1.2, width: 7, z: 1 ... 5, x: -11.5, tone: Tone.running),
-		], lines: grille(x: 6, z: 6.9, length: 4, width: 6))
-		+ cannon(from: at(2.5, 0, 10), to: at(17, 0, 17.5), caliber: 1.7, muzzle: true)
+			hatch(x: -6, y: 3.6, z: 18.9, radius: 2.25),
+			box(length: 1.8, width: 10.5, z: 1.5 ... 7.5, x: -17.25, tone: Tone.running),
+		], lines: grille(x: 9, z: 10.35, length: 6, width: 9))
+		+ cannon(from: at(3.75, 0, 15), to: at(25.5, 0, 26.25), caliber: 2.55, muzzle: true)
 	}
 
 	static var akatsiya: Model {
-		tracked(length: 23, width: 13, count: 6)
-		+ Model([armour(length: 22, width: 11.5, z: 3.8 ... 6.2,
-			front: 4, rear: 0.6, corner: 0.8, tone: Tone.body)])
-		+ turret(length: 10, width: 10, z: 6.4 ... 10.6, x: -3.5, front: 1.3, side: 1, corner: 2)
+		tracked(length: 34.5, width: 19.5, count: 6)
+		+ Model([armour(length: 33, width: 17.25, z: 5.7 ... 9.3,
+			front: 6, rear: 0.9, corner: 1.2, tone: Tone.body)])
+		+ turret(length: 15, width: 15, z: 9.6 ... 15.9, x: -5.25, front: 1.95, side: 1.5, corner: 3)
 		+ Model([
-			hatch(x: -4.5, y: 2, z: 10.6, radius: 1.4),
-			box(length: 3, width: 3, z: 7.5 ... 9.5, x: 1, tone: Tone.turret),
-		], lines: grille(x: 5, y: -1.5, z: 6.3, length: 4, width: 5))
-		+ cannon(from: at(1, 0, 8.5), to: at(15, 0, 16), caliber: 1.7, muzzle: true)
+			hatch(x: -6.75, y: 3, z: 15.9, radius: 2.1),
+			box(length: 4.5, width: 4.5, z: 11.25 ... 14.25, x: 1.5, tone: Tone.turret),
+		], lines: grille(x: 7.5, y: -2.25, z: 9.45, length: 6, width: 7.5))
+		+ cannon(from: at(1.5, 0, 12.75), to: at(22.5, 0, 24), caliber: 2.55, muzzle: true)
 	}
 
 	static var m270: Model {
-		tracked(length: 25, width: 13, count: 6)
+		tracked(length: 37.5, width: 19.5, count: 6)
 		+ Model([
-			box(length: 24, width: 11, z: 3.8 ... 5, tone: Tone.running),
-			armour(length: 7, width: 11, z: 5 ... 10.5, x: 8.5, front: 1.4,
-				corner: 0.7, tone: Tone.body),
-			box(length: 0.4, width: 8.8, z: 7.8 ... 9.7, x: 11.9, tone: Tone.glass),
-			cylinder(at: at(-5, 0, 6.2), radius: 3, length: 2, axis: .z, tone: Tone.running),
-		]) + rocketPod(from: at(-11, 0, 7), to: at(1, 0, 14), rows: 2, columns: 6, spacing: 1.7)
+			box(length: 36, width: 16.5, z: 5.7 ... 7.5, tone: Tone.running),
+			armour(length: 10.5, width: 16.5, z: 7.5 ... 15.75, x: 12.75, front: 2.1,
+				corner: 1.05, tone: Tone.body),
+			box(length: 0.6, width: 13.2, z: 11.7 ... 14.55, x: 17.85, tone: Tone.glass),
+			cylinder(at: at(-7.5, 0, 9.3), radius: 4.5, length: 3, axis: .z, tone: Tone.running),
+		]) + rocketPod(from: at(-16.5, 0, 10.5), to: at(1.5, 0, 21), rows: 2, columns: 6, spacing: 2.55)
 	}
 
 	static var bm21: Model {
 		bonnetTruck(ural: true)
-		+ Model([cylinder(at: at(-5, 0, 5.2), radius: 2.5, length: 1.5, axis: .z, tone: Tone.running)])
-		+ rocketPod(from: at(-11, 0, 7), to: at(0, 0, 13), rows: 4, columns: 10, spacing: 0.85, open: true)
+		+ Model([cylinder(at: at(-7.5, 0, 7.8), radius: 3.75, length: 2.25, axis: .z, tone: Tone.running)])
+		+ rocketPod(from: at(-16.5, 0, 10.5), to: at(0, 0, 19.5), rows: 4, columns: 10, spacing: 1.275, open: true)
 	}
 
 	static var nasams: Model {
-		wheeled(at: [-5], width: 9, radius: 2)
+		wheeled(at: [-7.5], width: 13.5, radius: 3)
 		+ Model([
-			box(length: 18, width: 9, z: 2.3 ... 3.3, x: -1, tone: Tone.running),
-			box(length: 7, width: 1.5, z: 1.3 ... 2.3, x: 10, tone: Tone.running),
-			cylinder(at: at(-2, 0, 4), radius: 2, length: 2, axis: .z, tone: Tone.turret),
-		] + sides(6) { box(length: 3, width: 2, z: 0 ... 1, x: 1, y: $0, tone: Tone.running) })
-		+ rocketPod(from: at(-9, 0, 5.5), to: at(4, 0, 14.5), rows: 2, columns: 3, spacing: 2.5)
+			box(length: 27, width: 13.5, z: 3.45 ... 4.95, x: -1.5, tone: Tone.running),
+			box(length: 10.5, width: 2.25, z: 1.95 ... 3.45, x: 15, tone: Tone.running),
+			cylinder(at: at(-3, 0, 6), radius: 3, length: 3, axis: .z, tone: Tone.turret),
+		] + sides(9) { box(length: 4.5, width: 3, z: 0 ... 1.5, x: 1.5, y: $0, tone: Tone.running) })
+		+ rocketPod(from: at(-13.5, 0, 8.25), to: at(6, 0, 21.75), rows: 2, columns: 3, spacing: 3.75)
 	}
 
 	static var patriot: Model {
-		wheeled(at: [-9, -4, 5, 10], width: 11, radius: 2.1)
+		wheeled(at: [-13.5, -6, 7.5, 15], width: 16.5, radius: 3.15)
 		+ Model([
-			box(length: 26, width: 10, z: 2.5 ... 4, tone: Tone.running),
-			armour(length: 6, width: 9.8, z: 4 ... 9.5, x: 10, front: 0.5, corner: 0.5, tone: Tone.body),
-			box(length: 0.3, width: 7, z: 6.8 ... 8.7, x: 12.8, tone: Tone.glass),
-		]) + rocketPod(from: at(-11, 0, 6), to: at(1, 0, 15), rows: 2, columns: 2, spacing: 4.2)
+			box(length: 39, width: 15, z: 3.75 ... 6, tone: Tone.running),
+			armour(length: 9, width: 14.7, z: 6 ... 14.25, x: 15, front: 0.75, corner: 0.75, tone: Tone.body),
+			box(length: 0.45, width: 10.5, z: 10.2 ... 13.05, x: 19.2, tone: Tone.glass),
+		]) + rocketPod(from: at(-16.5, 0, 9), to: at(1.5, 0, 22.5), rows: 2, columns: 2, spacing: 6.3)
 	}
 
 	static var neva: Model {
-		wheeled(at: [-6, 5], width: 9, radius: 2)
+		wheeled(at: [-9, 7.5], width: 13.5, radius: 3)
 		+ Model([
-			box(length: 21, width: 8, z: 2.5 ... 3.5, tone: Tone.running),
-			cylinder(at: at(-2, 0, 5), radius: 2.3, length: 3, axis: .z, tone: Tone.turret),
-		] + sides(3) { barrel(from: at(-9, $0, 6), to: at(6, $0, 16), caliber: 1.6, tone: Tone.cargo) }
-		+ sides(3) { box(length: 3.2, width: 3.6, z: 8.5 ... 9.2, x: -5, y: $0, tone: Tone.turret) },
-		lines: sides(3) { Line(from: at(-10, $0, 5), to: at(5, $0, 15), tone: Tone.running, width: 2) })
+			box(length: 31.5, width: 12, z: 3.75 ... 5.25, tone: Tone.running),
+			cylinder(at: at(-3, 0, 7.5), radius: 3.45, length: 4.5, axis: .z, tone: Tone.turret),
+		] + sides(4.5) { barrel(from: at(-13.5, $0, 9), to: at(9, $0, 24), caliber: 2.4, tone: Tone.cargo) }
+		+ sides(4.5) { box(length: 4.8, width: 5.4, z: 12.75 ... 13.8, x: -7.5, y: $0, tone: Tone.turret) },
+		lines: sides(4.5) { Line(from: at(-15, $0, 7.5), to: at(7.5, $0, 22.5), tone: Tone.running, width: 2) })
 	}
 
 	static var s300: Model {
-		wheeled(at: [-10, -4, 4, 10], width: 12, radius: 2.2)
+		wheeled(at: [-15, -6, 6, 15], width: 18, radius: 3.3)
 		+ Model([
-			box(length: 27, width: 10, z: 2.5 ... 4.5, tone: Tone.running),
-			armour(length: 6.5, width: 11, z: 4.5 ... 10, x: 10.5,
-				front: 0.4, corner: 0.5, tone: Tone.body),
-			box(length: 0.4, width: 8, z: 7.5 ... 9.2, x: 13.6, tone: Tone.glass),
-		] + [-8, -3].flatMap { x in
-			sides(2.5) { cylinder(at: at(x, $0, 12), radius: 2.1, length: 15, axis: .z, tone: Tone.cargo) }
+			box(length: 40.5, width: 15, z: 3.75 ... 6.75, tone: Tone.running),
+			armour(length: 9.75, width: 16.5, z: 6.75 ... 15, x: 15.75,
+				front: 0.6, corner: 0.75, tone: Tone.body),
+			box(length: 0.6, width: 12, z: 11.25 ... 13.8, x: 20.4, tone: Tone.glass),
+		] + [-12, -4.5].flatMap { x in
+			sides(3.75) { cylinder(at: at(x, $0, 18), radius: 3.15, length: 22.5, axis: .z, tone: Tone.cargo) }
 		})
 	}
 
 	static var lvkv90: Model {
 		strf90 + Model([
-			cylinder(at: at(-4.8, 0, 12.4), radius: 0.65, length: 4, axis: .z, tone: Tone.barrel),
-			cylinder(at: at(-4.8, 0, 14.2), radius: 2, length: 2, axis: .z, tone: Tone.glass),
+			cylinder(at: at(-7.2, 0, 18.6), radius: 0.975, length: 6, axis: .z, tone: Tone.barrel),
+			cylinder(at: at(-7.2, 0, 21.3), radius: 3, length: 3, axis: .z, tone: Tone.glass),
 		])
 	}
 
 	static var m163: Model {
-		tracked(length: 20, width: 12, count: 5)
-		+ Model([armour(length: 19, width: 10.5, z: 3.8 ... 8.2,
-			front: 4, corner: 0.7, tone: Tone.body)])
-		+ turret(length: 6, width: 6, z: 8.4 ... 11.5, x: -1, corner: 1)
-		+ gatling(from: at(1, 0, 10), to: at(9, 0, 15.2))
-		+ Model([cylinder(at: at(-2, -3.5, 12.7), radius: 1.5, length: 0.8, axis: .x, tone: Tone.glass)])
+		tracked(length: 30, width: 18, count: 5)
+		+ Model([armour(length: 28.5, width: 15.75, z: 5.7 ... 12.3,
+			front: 6, corner: 1.05, tone: Tone.body)])
+		+ turret(length: 9, width: 9, z: 12.6 ... 17.25, x: -1.5, corner: 1.5)
+		+ gatling(from: at(1.5, 0, 15), to: at(13.5, 0, 22.8))
+		+ Model([cylinder(at: at(-3, -5.25, 19.05), radius: 2.25, length: 1.2, axis: .x, tone: Tone.glass)])
 	}
 
 	static var tunguska: Model {
-		tracked(length: 25, width: 14, count: 6)
+		tracked(length: 37.5, width: 21, count: 6)
 		+ Model([
-			armour(length: 24, width: 12.5, z: 3.8 ... 6.2, front: 4, corner: 1, tone: Tone.body),
-			cylinder(at: at(-5.5, 0, 13), radius: 2.3, length: 1.2, axis: .x, tone: Tone.glass),
-			box(length: 1, width: 1, z: 9 ... 13, x: -5.5, tone: Tone.barrel),
-		]) + turret(length: 10, width: 8, z: 6.4 ... 10.5, x: -1.5, corner: 1.5)
-		+ Model(sides(4.2) { barrel(from: at(0, $0, 9), to: at(14, $0, 12.5), caliber: 1, tone: Tone.barrel) }
-		+ sides(6) { barrel(from: at(-6, $0, 10.5), to: at(5, $0, 13), caliber: 2.4, tone: Tone.cargo) })
+			armour(length: 36, width: 18.75, z: 5.7 ... 9.3, front: 6, corner: 1.5, tone: Tone.body),
+			cylinder(at: at(-8.25, 0, 19.5), radius: 3.45, length: 1.8, axis: .x, tone: Tone.glass),
+			box(length: 1.5, width: 1.5, z: 13.5 ... 19.5, x: -8.25, tone: Tone.barrel),
+		]) + turret(length: 15, width: 12, z: 9.6 ... 15.75, x: -2.25, corner: 2.25)
+		+ Model(sides(6.3) { barrel(from: at(0, $0, 13.5), to: at(21, $0, 18.75), caliber: 1.5, tone: Tone.barrel) }
+		+ sides(9) { barrel(from: at(-9, $0, 15.75), to: at(7.5, $0, 19.5), caliber: 3.6, tone: Tone.cargo) })
 	}
 
 	static var m167: Model {
-		wheeled(at: [-3], width: 9, radius: 2)
+		wheeled(at: [-4.5], width: 13.5, radius: 3)
 		+ Model([
-			box(length: 13, width: 7.5, z: 1.6 ... 2.7, x: -1, tone: Tone.running),
-			cylinder(at: at(0, 0, 3.5), radius: 3.1, length: 2, axis: .z, tone: Tone.turret),
-			box(length: 3.5, width: 2.5, z: 3 ... 6.5, x: -3, y: 2.5, tone: Tone.body),
-		] + sides(5.5) { box(length: 2, width: 2, z: 0 ... 1.2, x: 4, y: $0, tone: Tone.running) })
-		+ gatling(from: at(0, 0, 5), to: at(8, 0, 15))
+			box(length: 19.5, width: 11.25, z: 2.4 ... 4.05, x: -1.5, tone: Tone.running),
+			cylinder(at: at(0, 0, 5.25), radius: 4.65, length: 3, axis: .z, tone: Tone.turret),
+			box(length: 5.25, width: 3.75, z: 4.5 ... 9.75, x: -4.5, y: 3.75, tone: Tone.body),
+		] + sides(8.25) { box(length: 3, width: 3, z: 0 ... 1.8, x: 6, y: $0, tone: Tone.running) })
+		+ gatling(from: at(0, 0, 7.5), to: at(12, 0, 22.5))
 	}
 
 	static var zu23: Model {
-		wheeled(at: [-2], width: 9, radius: 1.8)
+		wheeled(at: [-3], width: 13.5, radius: 2.7)
 		+ Model([
-			box(length: 10, width: 8, z: 1.5 ... 2.5, tone: Tone.running),
-			cylinder(at: at(0, 0, 3.3), radius: 2.5, length: 1.8, axis: .z, tone: Tone.turret),
-		] + sides(2.5) { box(length: 3.5, width: 2, z: 4 ... 6.3, x: -1, y: $0, tone: Tone.cargo) }
-		+ sides(1.3) { barrel(from: at(0, $0, 5.5), to: at(11, $0, 14), caliber: 0.9, tone: Tone.barrel) },
-		lines: sides(3.2) { Line(from: at(-4, $0, 3), to: at(-4, $0, 6), tone: Tone.antenna) })
+			box(length: 15, width: 12, z: 2.25 ... 3.75, tone: Tone.running),
+			cylinder(at: at(0, 0, 4.95), radius: 3.75, length: 2.7, axis: .z, tone: Tone.turret),
+		] + sides(3.75) { box(length: 5.25, width: 3, z: 6 ... 9.45, x: -1.5, y: $0, tone: Tone.cargo) }
+		+ sides(1.95) { barrel(from: at(0, $0, 8.25), to: at(16.5, $0, 21), caliber: 1.35, tone: Tone.barrel) },
+		lines: sides(4.8) { Line(from: at(-6, $0, 4.5), to: at(-6, $0, 9), tone: Tone.antenna) })
 	}
 }
 
@@ -305,38 +305,38 @@ extension Units {
 	static func ifvHull(length: Float, width: Float, deck: Float, front: Float) -> Model {
 		tracked(length: length, width: width, count: 6)
 		+ Model([
-			armour(length: length - 1, width: width - 1.5, z: 3.8 ... deck,
-				front: front, rear: 0.5, side: 0.6, corner: 1, tone: Tone.body),
-			hatch(x: -length / 2 + 4, y: 2.2, z: deck, radius: 1.3),
-			hatch(x: 5, y: -2.5, z: deck),
-		], lines: grille(x: 5, y: 2.2, z: deck + 0.1, length: 4, width: 3))
+			armour(length: length - 1.5, width: width - 2.25, z: 5.7 ... deck,
+				front: front, rear: 0.75, side: 0.9, corner: 1.5, tone: Tone.body),
+			hatch(x: -length / 2 + 6, y: 3.3, z: deck, radius: 1.95),
+			hatch(x: 7.5, y: -3.75, z: deck),
+		], lines: grille(x: 7.5, y: 3.3, z: deck + 0.15, length: 6, width: 4.5))
 	}
 
 	static func bonnetTruck(ural: Bool) -> Model {
-		let roof: Float = ural ? 10 : 9
-		return wheeled(at: [-9, -3.5, 9], width: 10, radius: ural ? 2.3 : 2.1)
+		let roof: Float = ural ? 15 : 13.5
+		return wheeled(at: [-13.5, -5.25, 13.5], width: 15, radius: ural ? 3.45 : 3.15)
 		+ Model([
-			box(length: 26, width: 8, z: 2.5 ... 4, tone: Tone.running),
-			armour(length: 6, width: 9, z: 4 ... roof, x: 4.5,
-				front: 0.6, side: 0.3, corner: 0.5, tone: Tone.body),
-			armour(length: 6, width: 7.5, z: 4 ... 6.8, x: 10,
-				front: 0.5, side: 0.5, corner: 0.6, tone: Tone.body),
-			box(length: 0.3, width: 7.3, z: roof - 2.2 ... roof - 0.5, x: 7.15, tone: Tone.glass),
-			box(length: 0.3, width: 6, z: 4.5 ... 6.2, x: 12.8, tone: Tone.running),
-			box(length: 1, width: 10.5, z: 3 ... 3.8, x: 13, tone: Tone.turret),
-		] + sides(4.4) { box(length: 3.5, width: 0.25, z: roof - 2.3 ... roof - 0.5,
-			x: 4.8, y: $0, tone: Tone.glass) }, lines: [
-			Line(from: at(7.4, 0, roof - 2.2), to: at(7.15, 0, roof - 0.4), tone: Tone.body),
-		] + sides(4.6) { Line(from: at(3, $0, 4.2), to: at(3, $0, roof - 1), tone: 105) })
+			box(length: 39, width: 12, z: 3.75 ... 6, tone: Tone.running),
+			armour(length: 9, width: 13.5, z: 6 ... roof, x: 6.75,
+				front: 0.9, side: 0.45, corner: 0.75, tone: Tone.body),
+			armour(length: 9, width: 11.25, z: 6 ... 10.2, x: 15,
+				front: 0.75, side: 0.75, corner: 0.9, tone: Tone.body),
+			box(length: 0.45, width: 10.95, z: roof - 3.3 ... roof - 0.75, x: 10.725, tone: Tone.glass),
+			box(length: 0.45, width: 9, z: 6.75 ... 9.3, x: 19.2, tone: Tone.running),
+			box(length: 1.5, width: 15.75, z: 4.5 ... 5.7, x: 19.5, tone: Tone.turret),
+		] + sides(6.6) { box(length: 5.25, width: 0.375, z: roof - 3.45 ... roof - 0.75,
+			x: 7.2, y: $0, tone: Tone.glass) }, lines: [
+			Line(from: at(11.1, 0, roof - 3.3), to: at(10.725, 0, roof - 0.6), tone: Tone.body),
+		] + sides(6.9) { Line(from: at(4.5, $0, 6.3), to: at(4.5, $0, roof - 1.5), tone: 105) })
 	}
 
 	static func canvasBed(length: Float, width: Float, x: Float, roof: Float) -> Model {
 		Model([
-			box(length: length, width: width + 0.4, z: 4 ... 4.8, x: x, tone: Tone.turret),
-			armour(length: length, width: width, z: 4.8 ... roof, x: x,
-				side: 1, corner: 0.5, tone: Tone.cargo),
-		], lines: stride(from: x - length / 2 + 2, to: x + length / 2, by: 3.5).map {
-			Line(from: at($0, -width / 2 + 1, roof + 0.1), to: at($0, width / 2 - 1, roof + 0.1), tone: 145)
+			box(length: length, width: width + 0.6, z: 6 ... 7.2, x: x, tone: Tone.turret),
+			armour(length: length, width: width, z: 7.2 ... roof, x: x,
+				side: 1.5, corner: 0.75, tone: Tone.cargo),
+		], lines: stride(from: x - length / 2 + 3, to: x + length / 2, by: 5.25).map {
+			Line(from: at($0, -width / 2 + 1.5, roof + 0.15), to: at($0, width / 2 - 1.5, roof + 0.15), tone: 145)
 		})
 	}
 
@@ -350,7 +350,7 @@ extension Units {
 					+ V3(0, (Float(column) - Float(columns - 1) / 2) * spacing, 0)
 				let tip = end + offset
 				solids += [
-					barrel(from: tip + axis * 0.05, to: tip + axis * 0.25,
+					barrel(from: tip + axis * 0.075, to: tip + axis * 0.375,
 						caliber: spacing * 0.58, tone: 45),
 					barrel(from: start + offset, to: tip, caliber: spacing * 0.9,
 						tone: open ? Tone.turret : Tone.cargo),
@@ -363,8 +363,8 @@ extension Units {
 	static func gatling(from start: V3, to end: V3) -> Model {
 		let axis = (end - start).normalized
 		return Model([
-			barrel(from: start, to: end, caliber: 2.1, tone: Tone.barrel),
-			barrel(from: start, to: start + axis * 3, caliber: 3.3, tone: Tone.turret),
-		], lines: sides(0.8) { Line(from: start + V3(0, $0, 0.6), to: end + V3(0, $0, 0.6), tone: 70) })
+			barrel(from: start, to: end, caliber: 3.15, tone: Tone.barrel),
+			barrel(from: start, to: start + axis * 4.5, caliber: 4.95, tone: Tone.turret),
+		], lines: sides(1.2) { Line(from: start + V3(0, $0, 0.9), to: end + V3(0, $0, 0.9), tone: 70) })
 	}
 }

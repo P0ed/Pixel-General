@@ -2,101 +2,101 @@ public extension Units {
 
 	/// Leopard 1: cast turret, exposed suspension and a narrow gun mantlet.
 	static var leo1: Model {
-		tankChassis(length: 25, width: 14, wheels: 7, deck: 6.2)
+		tankChassis(length: 37.5, width: 21, wheels: 7, deck: 9.3)
 		+ Model([
-			tankPlate(length: 24, width: 12.5, z: 4.1 ... 6.2,
-				front: 4.5, rear: 1, side: 0.6, corner: 1),
-			tankPlate(length: 3, width: 3.5, z: 7.2 ... 9.2, x: 4,
-				front: 0.7, rear: 0, side: 0.4, corner: 0.5, tone: Tone.turret),
+			tankPlate(length: 36, width: 18.75, z: 6.15 ... 9.3,
+				front: 6.75, rear: 1.5, side: 0.9, corner: 1.5),
+			tankPlate(length: 4.5, width: 5.25, z: 10.8 ... 13.8, x: 6,
+				front: 1.05, rear: 0, side: 0.6, corner: 0.75, tone: Tone.turret),
 		])
-		+ tankTurret(length: 10.5, width: 10.5, z: 6.4 ... 9.6, x: -0.8,
-			front: 2, rear: 1.5, side: 1.2, corner: 2.2)
-		+ tankGun(from: 4.5, length: 15.5, z: 8.3, caliber: 1.4)
-		+ tankRoof(x: -1.5, z: 9.6)
+		+ tankTurret(length: 15.75, width: 15.75, z: 9.6 ... 14.4, x: -1.2,
+			front: 3, rear: 2.25, side: 1.8, corner: 3.3)
+		+ tankGun(from: 6.75, length: 23.25, z: 12.45, caliber: 2.1)
+		+ tankRoof(x: -2.25, z: 14.4)
 	}
 
 	/// Abrams: long angular bustle, broad armour cheeks and seven road wheels behind skirts.
 	static var m1A1: Model {
-		tankChassis(length: 26, width: 15, wheels: 7, deck: 6.5)
+		tankChassis(length: 39, width: 22.5, wheels: 7, deck: 9.75)
 		+ Model([
-			tankPlate(length: 25, width: 13.5, z: 4.1 ... 6.5,
-				front: 5, rear: 1, side: 0.5, corner: 1),
-			tankPlate(length: 3, width: 3.5, z: 7.5 ... 9.9, x: 4.5,
-				front: 0.5, rear: 0, side: 0.3, corner: 0.5, tone: Tone.turret),
+			tankPlate(length: 37.5, width: 20.25, z: 6.15 ... 9.75,
+				front: 7.5, rear: 1.5, side: 0.75, corner: 1.5),
+			tankPlate(length: 4.5, width: 5.25, z: 11.25 ... 14.85, x: 6.75,
+				front: 0.75, rear: 0, side: 0.45, corner: 0.75, tone: Tone.turret),
 		])
-		+ tankTurret(length: 14, width: 11.5, z: 6.7 ... 10.6, x: -1.2,
-			front: 2.4, rear: 0.8, side: 0.8, corner: 2.4)
-		+ tankSkirts(length: 23, width: 15, z: 3.2 ... 5.8)
-		+ tankGun(from: 5, length: 15, z: 8.9, caliber: 1.6)
-		+ tankRoof(x: -1.5, z: 10.6)
+		+ tankTurret(length: 21, width: 17.25, z: 10.05 ... 15.9, x: -1.8,
+			front: 3.6, rear: 1.2, side: 1.2, corner: 3.6)
+		+ tankSkirts(length: 34.5, width: 22.5, z: 4.8 ... 8.7)
+		+ tankGun(from: 7.5, length: 22.5, z: 13.35, caliber: 2.4)
+		+ tankRoof(x: -2.25, z: 15.9)
 	}
 
 	/// T-72: six large road wheels, low glacis and a squat, faceted cast turret.
 	static var t72: Model {
-		tankChassis(length: 24, width: 14, wheels: 6, deck: 5.6)
+		tankChassis(length: 36, width: 21, wheels: 6, deck: 8.4)
 		+ Model([
-			tankPlate(length: 23, width: 12.5, z: 3.8 ... 5.6,
-				front: 4.5, rear: 0.8, side: 0.7, corner: 1.2),
-			tankPlate(length: 2.5, width: 3, z: 6.2 ... 8.4, x: 3.6,
-				front: 0.5, rear: 0, side: 0.3, corner: 0.5, tone: Tone.turret),
+			tankPlate(length: 34.5, width: 18.75, z: 5.7 ... 8.4,
+				front: 6.75, rear: 1.2, side: 1.05, corner: 1.8),
+			tankPlate(length: 3.75, width: 4.5, z: 9.3 ... 12.6, x: 5.4,
+				front: 0.75, rear: 0, side: 0.45, corner: 0.75, tone: Tone.turret),
 		])
-		+ tankTurret(length: 10, width: 11, z: 5.8 ... 8.7, x: -0.4,
-			front: 2.2, rear: 1.6, side: 1.6, corner: 2.5)
-		+ tankGun(from: 4, length: 16.5, z: 7.4, caliber: 1.4)
-		+ tankRoof(x: -1.8, z: 8.7)
+		+ tankTurret(length: 15, width: 16.5, z: 8.7 ... 13.05, x: -0.6,
+			front: 3.3, rear: 2.4, side: 2.4, corner: 3.75)
+		+ tankGun(from: 6, length: 24.75, z: 11.1, caliber: 2.1)
+		+ tankRoof(x: -2.7, z: 13.05)
 	}
 
 	/// Leopard 2: long hull, a wide turret bustle and pointed, sloping frontal armour.
 	static var leo2a6: Model {
-		tankChassis(length: 26, width: 15, wheels: 7, deck: 6.6)
+		tankChassis(length: 39, width: 22.5, wheels: 7, deck: 9.9)
 		+ Model([
-			tankPlate(length: 25, width: 14, z: 4.1 ... 6.6,
-				front: 5, rear: 1, side: 0.5, corner: 1),
-			tankPlate(length: 3, width: 3.2, z: 7.5 ... 9.8, x: 5,
-				front: 0.5, rear: 0, side: 0.3, corner: 0.5, tone: Tone.turret),
-		] + sides(3.6) {
-			tankPlate(length: 5, width: 4, z: 7 ... 10.3, x: 5.2, y: $0,
-				front: 3.2, rear: 0, side: 0.3, corner: 0.7, tone: Tone.turret)
+			tankPlate(length: 37.5, width: 21, z: 6.15 ... 9.9,
+				front: 7.5, rear: 1.5, side: 0.75, corner: 1.5),
+			tankPlate(length: 4.5, width: 4.8, z: 11.25 ... 14.7, x: 7.5,
+				front: 0.75, rear: 0, side: 0.45, corner: 0.75, tone: Tone.turret),
+		] + sides(5.4) {
+			tankPlate(length: 7.5, width: 6, z: 10.5 ... 15.45, x: 7.8, y: $0,
+				front: 4.8, rear: 0, side: 0.45, corner: 1.05, tone: Tone.turret)
 		})
-		+ tankTurret(length: 12.5, width: 11.5, z: 6.8 ... 10.3, x: -0.8,
-			front: 0.8, rear: 0.8, side: 0.5, corner: 1.8)
-		+ tankSkirts(length: 23, width: 15, z: 3 ... 5.9)
-		+ tankGun(from: 5.5, length: 16, z: 8.9, caliber: 1.6)
-		+ tankRoof(x: -1.8, z: 10.3)
+		+ tankTurret(length: 18.75, width: 17.25, z: 10.2 ... 15.45, x: -1.2,
+			front: 1.2, rear: 1.2, side: 0.75, corner: 2.7)
+		+ tankSkirts(length: 34.5, width: 22.5, z: 4.5 ... 8.85)
+		+ tankGun(from: 8.25, length: 24, z: 13.35, caliber: 2.4)
+		+ tankRoof(x: -2.7, z: 15.45)
 	}
 
 	/// The T-72 chassis with reactive armour cheeks, a rear bustle and a raised sight.
 	static var t90m: Model {
 		t72 + Model([
-			tankPlate(length: 4.5, width: 9, z: 6 ... 8.4, x: -6.2,
-				front: 0, rear: 0.6, side: 0.4, corner: 0.8, tone: Tone.turret),
-			GFX.box(length: 2.2, width: 2, z: 8.7 ... 10.3, x: 0, y: -2.6, tone: Tone.glass),
-		] + sides(3.7) {
-			tankPlate(length: 4.5, width: 3.2, z: 6.1 ... 8.8, x: 2.5, y: $0,
-				front: 1.7, rear: 0.2, side: 0.4, corner: 0.8, tone: Tone.cargo)
-		}) + tankSkirts(length: 21, width: 14, z: 2.8 ... 4.9)
+			tankPlate(length: 6.75, width: 13.5, z: 9 ... 12.6, x: -9.3,
+				front: 0, rear: 0.9, side: 0.6, corner: 1.2, tone: Tone.turret),
+			GFX.box(length: 3.3, width: 3, z: 13.05 ... 15.45, x: 0, y: -3.9, tone: Tone.glass),
+		] + sides(5.55) {
+			tankPlate(length: 6.75, width: 4.8, z: 9.15 ... 13.2, x: 3.75, y: $0,
+				front: 2.55, rear: 0.3, side: 0.6, corner: 1.2, tone: Tone.cargo)
+		}) + tankSkirts(length: 31.5, width: 21, z: 4.2 ... 7.35)
 	}
 
 	/// Abrams with a visible bustle rack and an independent commander's thermal sight.
 	static var m1A2: Model {
 		m1A1 + Model([
-			tankPlate(length: 3.5, width: 10.5, z: 7.5 ... 9.7, x: -9.3,
-				front: 0, rear: 0, side: 0, corner: 0.7, tone: Tone.running),
-			GFX.box(length: 2.4, width: 2.4, z: 10.6 ... 12.2, x: 0.6, y: -2.6, tone: Tone.glass),
-		], lines: [-4, -2, 0, 2, 4].map {
-			Line(from: at(-10.8, $0, 9.8), to: at(-8.3, $0, 9.8), tone: Tone.turret)
+			tankPlate(length: 5.25, width: 15.75, z: 11.25 ... 14.55, x: -13.95,
+				front: 0, rear: 0, side: 0, corner: 1.05, tone: Tone.running),
+			GFX.box(length: 3.6, width: 3.6, z: 15.9 ... 18.3, x: 0.9, y: -3.9, tone: Tone.glass),
+		], lines: [-6, -3, 0, 3, 6].map {
+			Line(from: at(-16.2, $0, 14.7), to: at(-12.45, $0, 14.7), tone: Tone.turret)
 		})
 	}
 
 	/// Swedish Leopard with an armoured roof and reinforced frontal cheek modules.
 	static var strv122: Model {
 		leo2a6 + Model([
-			tankPlate(length: 7, width: 7, z: 10.3 ... 11, x: -1,
-				front: 0.3, rear: 0.3, side: 0.3, corner: 0.8, tone: Tone.cargo),
-		] + sides(3.8) {
-			tankPlate(length: 5.5, width: 4.2, z: 7 ... 10.6, x: 5.2, y: $0,
-				front: 3.5, rear: 0, side: 0.3, corner: 0.8, tone: Tone.turret)
-		}) + tankRoof(x: -1.8, z: 11)
+			tankPlate(length: 10.5, width: 10.5, z: 15.45 ... 16.5, x: -1.5,
+				front: 0.45, rear: 0.45, side: 0.45, corner: 1.2, tone: Tone.cargo),
+		] + sides(5.7) {
+			tankPlate(length: 8.25, width: 6.3, z: 10.5 ... 15.9, x: 7.8, y: $0,
+				front: 5.25, rear: 0, side: 0.45, corner: 1.2, tone: Tone.turret)
+		}) + tankRoof(x: -2.7, z: 16.5)
 	}
 }
 
@@ -132,46 +132,46 @@ extension Units {
 	}
 
 	static func tankChassis(length: Float, width: Float, wheels: Int, deck: Float) -> Model {
-		let trackWidth: Float = 2.8
+		let trackWidth: Float = 4.2
 		let trackY = (width - trackWidth) / 2
-		let radius: Float = wheels == 4 ? 2.2 : (wheels <= 6 ? 1.85 : 1.65)
-		let span = length - 5
+		let radius: Float = wheels == 4 ? 3.3 : (wheels <= 6 ? 2.775 : 2.475)
+		let span = length - 7.5
 		var solids = sides(trackY) { y in
-			var track = GFX.box(length: length, width: trackWidth, z: 0 ... 5, y: y, tone: 36)
+			var track = GFX.box(length: length, width: trackWidth, z: 0 ... 7.5, y: y, tone: 36)
 			for sign: Float in [-1, 1] {
 				track.planes += [
-					Plane(normal: V3(sign, 0, -1), through: at(sign * length / 2, y, 1.2)),
-					Plane(normal: V3(sign, 0, 1), through: at(sign * length / 2, y, 3.8)),
+					Plane(normal: V3(sign, 0, -1), through: at(sign * length / 2, y, 1.8)),
+					Plane(normal: V3(sign, 0, 1), through: at(sign * length / 2, y, 5.7)),
 				]
 			}
 			return track
 		}
 		for sign: Float in [-1, 1] {
 			for index in 0 ..< wheels {
-				let x: Float = wheels == 5 ? [-9, -4, 0, 4, 8][index] : -span / 2 + span * Float(index) / Float(wheels - 1)
-				let y = sign * (width / 2 - 0.1)
+				let x: Float = wheels == 5 ? [-13.5, -6, 0, 6, 12][index] : -span / 2 + span * Float(index) / Float(wheels - 1)
+				let y = sign * (width / 2 - 0.15)
 				// A dark rubber rim separates each wheel from its neighbours and the metal hub.
-				solids.append(tankCylinder(at: at(x, y, 2.5), radius: radius, length: 0.8,
+				solids.append(tankCylinder(at: at(x, y, 3.75), radius: radius, length: 1.2,
 					axis: .y, tone: 44))
-				solids.append(tankCylinder(at: at(x, y + sign * 0.4, 2.5), radius: radius - 0.45, length: 0.2,
+				solids.append(tankCylinder(at: at(x, y + sign * 0.6, 3.75), radius: radius - 0.675, length: 0.3,
 					axis: .y, tone: 110))
-				solids.append(tankCylinder(at: at(x, y + sign * 0.55, 2.5), radius: 0.5, length: 0.2,
+				solids.append(tankCylinder(at: at(x, y + sign * 0.825, 3.75), radius: 0.75, length: 0.3,
 					axis: .y, tone: Tone.barrel))
 			}
 			// The fender catches the light above the dark track, leaving the wheel faces exposed.
-			solids.append(tankPlate(length: length - 1, width: trackWidth + 0.3,
-				z: 5 ... 5.6, y: sign * trackY,
-				front: 0.6, rear: 0.6, side: 0, corner: 0.5, tone: Tone.body))
-			solids.append(GFX.box(length: 6, width: 1.2, z: 5.6 ... deck + 0.2,
-				x: -7, y: sign * (width / 2 - 1.3), tone: Tone.turret))
+			solids.append(tankPlate(length: length - 1.5, width: trackWidth + 0.45,
+				z: 7.5 ... 8.4, y: sign * trackY,
+				front: 0.9, rear: 0.9, side: 0, corner: 0.75, tone: Tone.body))
+			solids.append(GFX.box(length: 9, width: 1.8, z: 8.4 ... deck + 0.3,
+				x: -10.5, y: sign * (width / 2 - 1.95), tone: Tone.turret))
 		}
 		solids += [
-			GFX.box(length: 4.5, width: 7, z: deck ... deck + 0.2, x: -8.3, tone: Tone.glass),
-			tankPlate(length: 2.8, width: 2.4, z: deck ... deck + 0.4, x: 6, y: -2,
-				front: 0.2, rear: 0.2, side: 0.2, corner: 0.4, tone: Tone.turret),
+			GFX.box(length: 6.75, width: 10.5, z: deck ... deck + 0.3, x: -12.45, tone: Tone.glass),
+			tankPlate(length: 4.2, width: 3.6, z: deck ... deck + 0.6, x: 9, y: -3,
+				front: 0.3, rear: 0.3, side: 0.3, corner: 0.6, tone: Tone.turret),
 		]
-		return Model(solids, lines: [-9.5, -8, -6.5].map {
-			Line(from: at($0, -3, deck + 0.25), to: at($0, 3, deck + 0.25), tone: 90)
+		return Model(solids, lines: [-14.25, -12, -9.75].map {
+			Line(from: at($0, -4.5, deck + 0.375), to: at($0, 4.5, deck + 0.375), tone: 90)
 		})
 	}
 
@@ -183,31 +183,31 @@ extension Units {
 		Model([
 			tankCylinder(at: at(x + length / 2, 0, z), radius: caliber / 2,
 				length: length, axis: .x, tone: Tone.barrel),
-			tankCylinder(at: at(x + 2, 0, z), radius: caliber * 0.7,
-				length: 4, axis: .x, tone: Tone.turret),
+			tankCylinder(at: at(x + 3, 0, z), radius: caliber * 0.7,
+				length: 6, axis: .x, tone: Tone.turret),
 		], lines: [
 			// A one-pixel highlight keeps the tube legible after the silhouette pass.
-			Line(from: at(x + 4, 0, z + caliber / 2), to: at(x + length - 0.8, 0, z + caliber / 2), tone: Tone.barrel),
+			Line(from: at(x + 6, 0, z + caliber / 2), to: at(x + length - 1.2, 0, z + caliber / 2), tone: Tone.barrel),
 		])
 	}
 
 	static func tankRoof(x: Float, z: Float) -> Model {
 		Model([
-			tankCylinder(at: at(x, 2.2, z + 0.5), radius: 1.3, length: 1, axis: .z, tone: Tone.turret),
-			tankCylinder(at: at(x + 1.5, -2, z + 0.2), radius: 1.1, length: 0.4, axis: .z, tone: Tone.cargo),
-			GFX.box(length: 1.2, width: 1.5, z: z + 0.7 ... z + 1.2, x: x + 0.3, y: 2.2, tone: Tone.glass),
+			tankCylinder(at: at(x, 3.3, z + 0.75), radius: 1.95, length: 1.5, axis: .z, tone: Tone.turret),
+			tankCylinder(at: at(x + 2.25, -3, z + 0.3), radius: 1.65, length: 0.6, axis: .z, tone: Tone.cargo),
+			GFX.box(length: 1.8, width: 2.25, z: z + 1.05 ... z + 1.8, x: x + 0.45, y: 3.3, tone: Tone.glass),
 		], lines: [
-			Line(from: at(x - 2, 3, z - 0.5), to: at(x - 2.5, 3, z + 2.6), tone: Tone.antenna),
+			Line(from: at(x - 3, 4.5, z - 0.75), to: at(x - 3.75, 4.5, z + 3.9), tone: Tone.antenna),
 		])
 	}
 
 	static func tankSkirts(length: Float, width: Float, z: ClosedRange<Float>) -> Model {
 		Model(sides(width / 2) {
-			tankPlate(length: length, width: 0.6, z: z, x: -0.5, y: $0,
-				front: 1, rear: 0.5, side: 0, corner: 0.2, tone: Tone.turret)
-		}, lines: sides(width / 2 + 0.35) { y in
-			stride(from: -length / 2 + 3, to: length / 2 - 1, by: 3.5).map { x in
-				Line(from: at(x, y, z.lowerBound + 0.3), to: at(x, y, z.upperBound - 0.2), tone: 105)
+			tankPlate(length: length, width: 0.9, z: z, x: -0.75, y: $0,
+				front: 1.5, rear: 0.75, side: 0, corner: 0.3, tone: Tone.turret)
+		}, lines: sides(width / 2 + 0.525) { y in
+			stride(from: -length / 2 + 4.5, to: length / 2 - 1.5, by: 5.25).map { x in
+				Line(from: at(x, y, z.lowerBound + 0.45), to: at(x, y, z.upperBound - 0.3), tone: 105)
 			}
 		}.flatMap { $0 })
 	}

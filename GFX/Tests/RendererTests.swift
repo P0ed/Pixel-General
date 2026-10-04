@@ -197,7 +197,7 @@ struct RendererTests {
 		let grays = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
 
 		#expect(grays == [64], "no shading is applied to a stroke")
-		#expect(bitmap.occupied?.x == 30 ... 66, "it spans the projected segment")
+		#expect(bitmap.occupied?.x == 36 ... 60, "it spans the projected segment at one pixel per world unit")
 	}
 
 	@Test func linesAreHiddenByWhateverStandsInFrontOfThem() {
@@ -232,7 +232,7 @@ struct RendererTests {
 
 		#expect(model.mirrored().lines.first?.from == V3(10, 4, 4))
 		#expect(model.mirrored().lines.first?.to == V3(12, 28, 4))
-		#expect(model.rotated(.half).lines.first?.from == V3(28, 22, 4))
+		#expect(model.rotated(.half).lines.first?.from == V3(44, 38, 4))
 		#expect(model.translated(by: V3(1, 2, 3)).lines.first?.to == V3(29, 14, 7))
 		#expect(model.toned(90).lines.first?.tone == 64, "a stroke keeps the gray it was authored with")
 	}

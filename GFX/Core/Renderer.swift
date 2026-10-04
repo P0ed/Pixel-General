@@ -101,8 +101,8 @@ extension Renderer {
 			for pixel in line.trace(on: canvas) {
 				let i = raster.bitmap.index(x: pixel.x, y: pixel.y)
 				// Let a stroke on a face win the tie with the depth sampled at the pixel
-				// centre, converting the half-pixel tolerance back to world units.
-				guard pixel.t >= raster.depths[i] - 0.5 / Canvas.pixelsPerUnit else { continue }
+				// centre, allowing half a pixel of depth tolerance.
+				guard pixel.t >= raster.depths[i] - 0.5 else { continue }
 
 				raster.depths[i] = pixel.t
 				raster.ids[i] = id

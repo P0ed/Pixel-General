@@ -136,6 +136,6 @@ extension Map where Element == Terrain {
 extension Terrain {
 
 	var elevation: CGFloat {
-		CGFloat(elevationLevel) * CGFloat(Tiles.step * Canvas.pixelsPerUnit)
+		CGFloat(elevationLevel) * CGFloat(Tiles.step)
 	}
 }

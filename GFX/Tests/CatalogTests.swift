@@ -41,7 +41,7 @@ struct CatalogTests {
 		for model in [Aircraft.mq9, Aircraft.mq9.mirrored()] {
 			// The main wings sit flush with the top of the fuselage.
 			let wings = model.solids.indices.filter {
-				model.solids[$0].tone == Aircraft.Tone.wing && model.solids[$0].to.z == Aircraft.altitude + 5
+				model.solids[$0].tone == Aircraft.Tone.wing && model.solids[$0].to.z == Aircraft.altitude + 7.5
 			}
 			let raster = Renderer.unit.raster(model)
 			let areas = wings.map { wing in
@@ -68,9 +68,11 @@ struct CatalogTests {
 		let village = Settlements.village(facing: facing)
 		let road = village.solids.filter { $0.tone == Roads.Tone.bed && $0.to.z == 0 }
 		let buildings = village.solids.filter { $0.to.z > 0 }
+		let side = Volume.footprint
+		let half = side / 2
 		let exits: [(Direction, V3)] = [
-			(.xPlus, V3(32, 16, 0)), (.xMinus, V3(0, 16, 0)),
-			(.yPlus, V3(16, 32, 0)), (.yMinus, V3(16, 0, 0)),
+			(.xPlus, V3(side, half, 0)), (.xMinus, V3(0, half, 0)),
+			(.yPlus, V3(half, side, 0)), (.yMinus, V3(half, 0, 0)),
 		]
 		for (direction, edge) in exits {
 			#expect(road.contains { $0.contains(edge) } == (direction != facing))
@@ -81,8 +83,8 @@ struct CatalogTests {
 			}
 		}
 
-		for x in 0 ..< 32 {
-			for y in 0 ..< 32 {
+		for x in 0 ..< Int(side) {
+			for y in 0 ..< Int(side) {
 				let point = V3(Float(x) + 0.5, Float(y) + 0.5, 0)
 				guard road.contains(where: { $0.contains(point) }) else { continue }
 				#expect(!buildings.contains { $0.contains(point + V3(0, 0, 0.1)) }, "houses leave the carriageway clear")
@@ -100,8 +102,11 @@ struct CatalogTests {
 	private func expectVisibleRoad(_ model: Model, along axis: Axis) {
 		let raster = Renderer.building.raster(model)
 		let roadIDs = model.solids.indices.filter { model.solids[$0].to.z == 0 }.map { Int32($0) }
-		for step in 1 ..< 32 {
-			let point = axis == .x ? V3(Float(step), 16, 0) : V3(16, Float(step), 0)
+		let half = Volume.footprint / 2
+		let samples = 32
+		for step in 1 ..< samples {
+			let offset = Volume.footprint * Float(step) / Float(samples)
+			let point = axis == .x ? V3(offset, half, 0) : V3(half, offset, 0)
 			let pixel = Canvas.tile.project(point)
 			let id = raster.ids[raster.bitmap.index(x: Int(pixel.x), y: Int(pixel.y))]
 			#expect(roadIDs.contains(id), "the road stays visible beneath the projected roofs")

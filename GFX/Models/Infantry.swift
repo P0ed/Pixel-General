@@ -20,42 +20,42 @@ public enum Infantry {
 	/// Compact suppressed carbine, dark helmet, eye protection and shoulder radio.
 	public static var special: Model {
 		figure(helmet: Tone.visor) + rifle(compact: true) + Model([
-			box(length: 1.2, width: 1.5, z: 12 ... 14, x: -1, y: 3, tone: Tone.pack),
-			box(length: 0.8, width: 3.6, z: 16.7 ... 17.7, x: 2, tone: Tone.visor),
+			box(length: 1.8, width: 2.25, z: 18 ... 21, x: -1.5, y: 4.5, tone: Tone.pack),
+			box(length: 1.2, width: 5.4, z: 25.05 ... 26.55, x: 3, tone: Tone.visor),
 		], lines: [
-			Line(from: at(-1, 3, 14), to: at(-1.7, 3, 19.5), tone: Tone.weapon),
+			Line(from: at(-1.5, 4.5, 21), to: at(-2.55, 4.5, 29.25), tone: Tone.weapon),
 		])
 	}
 
 	/// Combat engineer: rifle, bulky tool pack and a shovel strapped to its side.
 	public static var engineer: Model {
-		figure() + backpack(length: 3.6, width: 5.8) + rifle(compact: true) + Model([
-			box(length: 1.8, width: 2.2, z: 7.5 ... 10, x: -2, y: 3.6, tone: Tone.pack),
-			armour(length: 1.4, width: 4.8, z: 17 ... 20.2, x: -3, y: 3.8,
-				front: 0.2, rear: 0.2, side: 0.5, corner: 0.7, tone: 145),
+		figure() + backpack(length: 5.4, width: 8.7) + rifle(compact: true) + Model([
+			box(length: 2.7, width: 3.3, z: 11.25 ... 15, x: -3, y: 5.4, tone: Tone.pack),
+			armour(length: 2.1, width: 7.2, z: 25.5 ... 30.3, x: -4.5, y: 5.7,
+				front: 0.3, rear: 0.3, side: 0.75, corner: 1.05, tone: 145),
 		], lines: [
-			Line(from: at(-3, 3.8, 7.5), to: at(-3, 3.8, 18), tone: Tone.weapon),
-			Line(from: at(-3, 2.7, 8), to: at(-3, 4.9, 8), tone: Tone.weapon),
+			Line(from: at(-4.5, 5.7, 11.25), to: at(-4.5, 5.7, 27), tone: Tone.weapon),
+			Line(from: at(-4.5, 4.05, 12), to: at(-4.5, 7.35, 12), tone: Tone.weapon),
 		])
 	}
 
 	/// A grounded drone pilot with opaque FPV goggles and a two-grip controller.
 	public static var fpv: Model {
-		figure() + backpack(length: 2.2, width: 4.4) + arms(
-			left: at(4.5, -2.5, 11.5), right: at(4.5, 2.5, 11.5)
+		figure() + backpack(length: 3.3, width: 6.6) + arms(
+			left: at(6.75, -3.75, 17.25), right: at(6.75, 3.75, 17.25)
 		) + Model([
 			// The visor projects ahead of the face; the strap wraps around the head.
-			box(length: 2.3, width: 5.2, z: 16.4 ... 18.6, x: 2.8, tone: Tone.visor),
-			box(length: 4.3, width: 4.5, z: 17 ... 17.6, tone: Tone.weapon),
-			armour(length: 2.8, width: 6, z: 10.5 ... 12.3, x: 5.3,
-				front: 0.3, rear: 0.2, side: 0.3, corner: 0.7, tone: Tone.weapon),
-			box(length: 2, width: 1.3, z: 9.5 ... 11.5, x: 4.6, y: -2.5, tone: Tone.weapon),
-			box(length: 2, width: 1.3, z: 9.5 ... 11.5, x: 4.6, y: 2.5, tone: Tone.weapon),
+			box(length: 3.45, width: 7.8, z: 24.6 ... 27.9, x: 4.2, tone: Tone.visor),
+			box(length: 6.45, width: 6.75, z: 25.5 ... 26.4, tone: Tone.weapon),
+			armour(length: 4.2, width: 9, z: 15.75 ... 18.45, x: 7.95,
+				front: 0.45, rear: 0.3, side: 0.45, corner: 1.05, tone: Tone.weapon),
+			box(length: 3, width: 1.95, z: 14.25 ... 17.25, x: 6.9, y: -3.75, tone: Tone.weapon),
+			box(length: 3, width: 1.95, z: 14.25 ... 17.25, x: 6.9, y: 3.75, tone: Tone.weapon),
 		], lines: [
 			// Twin thumb sticks and the goggles' short antenna.
-			Line(from: at(5.2, -1.5, 12.3), to: at(5.2, -1.5, 13), tone: 180),
-			Line(from: at(5.2, 1.5, 12.3), to: at(5.2, 1.5, 13), tone: 180),
-			Line(from: at(2.8, 2.5, 18.5), to: at(3.3, 2.5, 20.7), tone: Tone.weapon),
+			Line(from: at(7.8, -2.25, 18.45), to: at(7.8, -2.25, 19.5), tone: 180),
+			Line(from: at(7.8, 2.25, 18.45), to: at(7.8, 2.25, 19.5), tone: 180),
+			Line(from: at(4.2, 3.75, 27.75), to: at(4.95, 3.75, 31.05), tone: Tone.weapon),
 		])
 	}
 }
@@ -64,64 +64,64 @@ private extension Infantry {
 
 	static func figure(helmet: UInt8 = Tone.helmet) -> Model {
 		var solids: [Solid] = []
-		for (x, y): (Float, Float) in [(0.8, -1.7), (-0.8, 1.7)] {
+		for (x, y): (Float, Float) in [(1.2, -2.55), (-1.2, 2.55)] {
 			solids += [
-				armour(length: 4, width: 2.4, z: 0 ... 1.7, x: x + 0.8, y: y,
-					front: 0.4, side: 0.3, corner: 0.4, tone: Tone.boots),
-				limb(from: at(x, y, 1.5), to: at(x + 0.3, y, 5), radius: 1.1, tone: Tone.fatigues),
-				limb(from: at(x + 0.3, y, 5), to: at(0, y, 9.5), radius: 1.25, tone: Tone.fatigues),
-				box(length: 0.7, width: 1.7, z: 4.4 ... 6, x: x + 1.3, y: y, tone: Tone.webbing),
+				armour(length: 6, width: 3.6, z: 0 ... 2.55, x: x + 1.2, y: y,
+					front: 0.6, side: 0.45, corner: 0.6, tone: Tone.boots),
+				limb(from: at(x, y, 2.25), to: at(x + 0.45, y, 7.5), radius: 1.65, tone: Tone.fatigues),
+				limb(from: at(x + 0.45, y, 7.5), to: at(0, y, 14.25), radius: 1.875, tone: Tone.fatigues),
+				box(length: 1.05, width: 2.55, z: 6.6 ... 9, x: x + 1.95, y: y, tone: Tone.webbing),
 			]
 		}
 		solids += [
-			box(length: 3.5, width: 5, z: 8.5 ... 10, tone: Tone.webbing),
-			armour(length: 4.2, width: 5.5, z: 9.5 ... 15.2,
-				front: 0.4, rear: 0.2, side: 0.5, corner: 0.6, tone: Tone.fatigues),
-			box(length: 0.9, width: 4.3, z: 10.5 ... 14, x: 2, tone: Tone.webbing),
-			box(length: 1.4, width: 1.6, z: 10 ... 11.8, x: 2.4, y: -1.2, tone: Tone.pack),
-			box(length: 1.4, width: 1.6, z: 10 ... 11.8, x: 2.4, y: 1.2, tone: Tone.pack),
-			cylinder(at: at(0.6, 0, 16.7), radius: 1.6, length: 3.2, axis: .z, tone: Tone.skin),
-			cylinder(at: at(0.1, 0, 18), radius: 2.3, length: 0.9, axis: .z, tone: helmet),
-			armour(length: 4.4, width: 4.5, z: 18.1 ... 20, x: 0.1,
-				front: 0.9, rear: 0.7, side: 0.7, corner: 0.7, tone: helmet),
+			box(length: 5.25, width: 7.5, z: 12.75 ... 15, tone: Tone.webbing),
+			armour(length: 6.3, width: 8.25, z: 14.25 ... 22.8,
+				front: 0.6, rear: 0.3, side: 0.75, corner: 0.9, tone: Tone.fatigues),
+			box(length: 1.35, width: 6.45, z: 15.75 ... 21, x: 3, tone: Tone.webbing),
+			box(length: 2.1, width: 2.4, z: 15 ... 17.7, x: 3.6, y: -1.8, tone: Tone.pack),
+			box(length: 2.1, width: 2.4, z: 15 ... 17.7, x: 3.6, y: 1.8, tone: Tone.pack),
+			cylinder(at: at(0.9, 0, 25.05), radius: 2.4, length: 4.8, axis: .z, tone: Tone.skin),
+			cylinder(at: at(0.15, 0, 27), radius: 3.45, length: 1.35, axis: .z, tone: helmet),
+			armour(length: 6.6, width: 6.75, z: 27.15 ... 30, x: 0.15,
+				front: 1.35, rear: 1.05, side: 1.05, corner: 1.05, tone: helmet),
 		]
 		return Model(solids, lines: [
-			Line(from: at(2.3, -1.5, 15.9), to: at(2.3, 1.5, 15.9), tone: Tone.webbing),
+			Line(from: at(3.45, -2.25, 23.85), to: at(3.45, 2.25, 23.85), tone: Tone.webbing),
 		])
 	}
 
-	static func backpack(length: Float = 2.8, width: Float = 4.8) -> Model {
-		Model(armour(length: length, width: width, z: 9 ... 14.5, x: -3,
-			front: 0.3, rear: 0.5, side: 0.4, corner: 0.5, tone: Tone.pack))
+	static func backpack(length: Float = 4.2, width: Float = 7.2) -> Model {
+		Model(armour(length: length, width: width, z: 13.5 ... 21.75, x: -4.5,
+			front: 0.45, rear: 0.75, side: 0.6, corner: 0.75, tone: Tone.pack))
 	}
 
 	static func arms(left: V3, right: V3) -> Model {
 		let hands = [left, right]
 		var solids: [Solid] = []
-		for (index, y): (Int, Float) in [-3.0, 3.0].enumerated() {
-			let elbow = at(1.2, y, 11.1)
+		for (index, y): (Int, Float) in [-4.5, 4.5].enumerated() {
+			let elbow = at(1.8, y, 16.65)
 			solids += [
-				limb(from: at(0, y * 0.85, 14.2), to: elbow, radius: 1.1, tone: Tone.fatigues),
-				limb(from: elbow, to: hands[index], radius: 0.9, tone: Tone.fatigues),
-				cylinder(at: hands[index], radius: 0.9, length: 1.5, axis: .z, tone: Tone.skin),
+				limb(from: at(0, y * 0.85, 21.3), to: elbow, radius: 1.65, tone: Tone.fatigues),
+				limb(from: elbow, to: hands[index], radius: 1.35, tone: Tone.fatigues),
+				cylinder(at: hands[index], radius: 1.35, length: 2.25, axis: .z, tone: Tone.skin),
 			]
 		}
 		return Model(solids)
 	}
 
 	static func rifle(compact: Bool = false) -> Model {
-		let muzzle: Float = compact ? 10.5 : 12
-		return arms(left: at(4.8, 2.4, 12), right: at(1.8, 2.8, 11.7)) + Model([
-			box(length: 2.8, width: 1.1, z: 12 ... 13.2, x: -0.2, y: 2.8, tone: Tone.weapon),
-			box(length: 3, width: 1.4, z: 12 ... 13.5, x: 2.3, y: 2.8, tone: Tone.weapon),
-			box(length: 3.4, width: 1.2, z: 12.3 ... 13.2, x: 5.2, y: 2.8, tone: Tone.weapon),
-			wedge(length: 1.4, width: 1.1, z: 9.7 ... 11.8, x: 2.7, y: 2.8, rising: .xPlus, tone: Tone.weapon),
-			box(length: 1.8, width: 0.8, z: 13.5 ... 14.1, x: 2.6, y: 2.8, tone: Tone.weapon),
-			barrel(from: at(6.5, 2.8, 12.9), to: at(muzzle, 2.8, 12.9),
-				caliber: compact ? 1.2 : 0.7, tone: Tone.weapon),
+		let muzzle: Float = compact ? 15.75 : 18
+		return arms(left: at(7.2, 3.6, 18), right: at(2.7, 4.2, 17.55)) + Model([
+			box(length: 4.2, width: 1.65, z: 18 ... 19.8, x: -0.3, y: 4.2, tone: Tone.weapon),
+			box(length: 4.5, width: 2.1, z: 18 ... 20.25, x: 3.45, y: 4.2, tone: Tone.weapon),
+			box(length: 5.1, width: 1.8, z: 18.45 ... 19.8, x: 7.8, y: 4.2, tone: Tone.weapon),
+			wedge(length: 2.1, width: 1.65, z: 14.55 ... 17.7, x: 4.05, y: 4.2, rising: .xPlus, tone: Tone.weapon),
+			box(length: 2.7, width: 1.2, z: 20.25 ... 21.15, x: 3.9, y: 4.2, tone: Tone.weapon),
+			barrel(from: at(9.75, 4.2, 19.35), to: at(muzzle, 4.2, 19.35),
+				caliber: compact ? 1.8 : 1.05, tone: Tone.weapon),
 		], lines: [
-			Line(from: at(0, 3.4, 13.2), to: at(5.5, 3.4, 13.2), tone: 110),
-			Line(from: at(muzzle - 0.3, 2.8, 12.9), to: at(muzzle - 0.3, 2.8, 13.8), tone: Tone.weapon),
+			Line(from: at(0, 5.1, 19.8), to: at(8.25, 5.1, 19.8), tone: 110),
+			Line(from: at(muzzle - 0.45, 4.2, 19.35), to: at(muzzle - 0.45, 4.2, 20.7), tone: Tone.weapon),
 		])
 	}
 

@@ -1,8 +1,8 @@
-/// The authoring volume: a 32 x 32 footprint, 16 units of headroom.
-/// `Canvas.pixelsPerUnit` projects it to a 96 x 48 diamond with 24 px of unit headroom.
+/// The authoring volume: a 48 x 48 footprint, 24 units of headroom.
+/// One world unit projects to one pixel, producing a 96 x 48 base diamond.
 public enum Volume {
-	public static let footprint: Float = 32
-	public static let height: Float = 16
+	public static let footprint: Float = 48
+	public static let height: Float = 24
 	public static var center: V3 { V3(footprint / 2, footprint / 2, 0) }
 }
 

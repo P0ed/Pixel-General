@@ -6,7 +6,7 @@ public struct Outline: Hashable, Sendable {
 	public var faces: UInt8?
 	public var depth: Float
 
-	public init(silhouette: UInt8? = nil, creases: UInt8? = nil, faces: UInt8? = nil, depth: Float = 0.5) {
+	public init(silhouette: UInt8? = nil, creases: UInt8? = nil, faces: UInt8? = nil, depth: Float = 0.75) {
 		self.silhouette = silhouette
 		self.creases = creases
 		self.faces = faces
