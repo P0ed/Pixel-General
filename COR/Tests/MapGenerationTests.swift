@@ -99,7 +99,7 @@ struct MapGenerationTests {
 				return high
 			}
 			let field = highground(.field)
-			let hill = highground(.hill)
+			let hill = highground(.rough)
 			let mountain = highground(.mountain)
 			#expect(field < hill, "hill bias did not raise highground for seed \(seed)")
 			#expect(hill < mountain, "mountain bias did not raise highground for seed \(seed)")
@@ -113,14 +113,13 @@ struct MapGenerationTests {
 				var result = 0
 				for xy in map.indices {
 					switch map[xy] {
-					case .forest, .forestHill: result += 1
+					case .forest: result += 1
 					default: break
 					}
 				}
 				return result
 			}
 			#expect(forests(.field) < forests(.forest), "forest bias had no effect for seed \(seed)")
-			#expect(forests(.hill) < forests(.forestHill), "forest-hill bias had no effect for seed \(seed)")
 		}
 	}
 
@@ -344,7 +343,7 @@ struct MapGenerationTests {
 				if map[xy] == .fort {
 					forts += 1
 					switch base[xy] {
-					case .field, .forest, .hill: break
+					case .field, .forest, .rough: break
 					default: Issue.record("Fort replaced \(base[xy]) at \(xy) for seed \(seed)")
 					}
 				} else if map[xy] != base[xy] {
@@ -401,7 +400,7 @@ struct MapGenerationTests {
 				var fort = false
 				for i in ring.indices {
 					switch base[ring[i]] {
-					case .field, .forest, .hill: open = true
+					case .field, .forest, .rough: open = true
 					default: break
 					}
 					if map[ring[i]] == .fort { fort = true }

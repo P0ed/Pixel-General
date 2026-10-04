@@ -28,6 +28,8 @@ extension SKColor {
 
 	static var fieldSurface: SKColor { .hex(0xDAD8D6) }
 	static var forestSurface: SKColor { .hex(0xA0C0A7) }
+	static var roughSurface: SKColor { .hex(0xBFBFB7) }
+	static var mountainSurface: SKColor { .hex(0xA7A79F) }
 	static var waterSurface: SKColor { .hex(0x90C0F0) }
 	static var seaSurface: SKColor { .hex(0x507CA8) }
 

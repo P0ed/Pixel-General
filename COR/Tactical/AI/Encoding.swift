@@ -35,8 +35,7 @@ public enum Plane {
 	public static let bridge = 3
 	public static let field = 4
 	public static let forest = 5
-	public static let hill = 6
-	public static let forestHill = 7
+	public static let rough = 6
 	public static let mountain = 8
 	public static let city = 9
 	public static let fort = 10
@@ -228,8 +227,7 @@ extension Terrain {
 		case .bridgeWE, .bridgeSN: Plane.bridge
 		case .field: Plane.field
 		case .forest: Plane.forest
-		case .hill: Plane.hill
-		case .forestHill: Plane.forestHill
+		case .rough: Plane.rough
 		case .mountain: Plane.mountain
 		case .city: Plane.city
 		case .fort: Plane.fort

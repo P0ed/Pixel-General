@@ -45,8 +45,8 @@ extension Terrain {
 
 	var supply: Int8 {
 		switch self {
-		case .forest, .hill, .river, .sea: -2
-		case .forestHill, .mountain: -3
+		case .forest, .rough, .river, .sea: -2
+		case .mountain: -3
 		default: hasRoad ? 1 : 0
 		}
 	}

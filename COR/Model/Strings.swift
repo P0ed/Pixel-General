@@ -173,7 +173,7 @@ extension Terrain: CustomStringConvertible {
 		case .bridgeWE, .bridgeSN: "bridge"
 		case .field: "field"
 		case .forest: "forest"
-		case .hill, .forestHill: "hill"
+		case .rough: "hill"
 		case .mountain: "mountain"
 		case .city: "city"
 		case .airfield: "airfield"

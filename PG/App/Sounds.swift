@@ -65,22 +65,17 @@ final class Sounds {
 		}
 		self.engine = engine
 
-		engine.prepare()
-	}
-
-	func preheat() {
-		guard settings.soundLevel != 0, !engine.isRunning else { return }
-		try? engine.start()
+		Task { @SoundActor in try? engine.start() }
 	}
 
 	func play(_ sound: Sound) {
 		guard settings.soundLevel != 0, banks[sound.rawValue] != nil else { return }
-
-		if !engine.isRunning {
-			try? engine.start()
-		}
 		engine.mainMixerNode.outputVolume = settings.outputVolume
-
 		banks[sound.rawValue]?.play(rate: sound.variesPitch ? .random(in: 0.9 ... 1.1) : 1.0)
 	}
+}
+
+@globalActor
+actor SoundActor {
+	static let shared = SoundActor()
 }

@@ -201,7 +201,7 @@ enum Eval {
 		let seats = 2
 		let count = configs.count * seats
 		var results = [Match?](repeating: nil, count: count)
-		unsafe results.withUnsafeMutableBufferPointer { buffer in
+		results.withUnsafeMutableBufferPointer { buffer in
 			let out = unsafe UnsafeSendable(buffer)
 			DispatchQueue.concurrentPerform(iterations: count) { task in
 				autoreleasepool {

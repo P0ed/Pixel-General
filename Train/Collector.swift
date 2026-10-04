@@ -167,7 +167,7 @@ enum Collector {
 		let base = Int(difficulty)
 		let frac = difficulty - Float(base)
 		var results = [Episode?](repeating: nil, count: count)
-		unsafe results.withUnsafeMutableBufferPointer { buffer in
+		results.withUnsafeMutableBufferPointer { buffer in
 			let out = unsafe UnsafeSendable(buffer)
 			DispatchQueue.concurrentPerform(iterations: count) { j in
 				let index = startIndex + j

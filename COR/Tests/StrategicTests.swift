@@ -120,7 +120,7 @@ struct StrategicTests {
 		for xy in sim.terrain.indices {
 			switch sim.terrain[xy] {
 			case .forest: forests += 1
-			case .hill: hills += 1
+			case .rough: hills += 1
 			case .mountain: mountains += 1
 			default: break
 			}
@@ -144,7 +144,7 @@ struct StrategicTests {
 		var terrain = Map<32, Terrain>(zero: .field)
 		let defender = XY(2, 2)
 		terrain[XY(1, 2)] = .forest
-		terrain[defender] = .hill
+		terrain[defender] = .rough
 		terrain[XY(1, 3)] = .mountain
 		owner[XY(3, 2)] = .none
 
@@ -156,7 +156,7 @@ struct StrategicTests {
 		let sample = sim.battleTerrain(at: defender, attackingFrom: XY(1, 2))
 
 		#expect(sample[3] == .forest, "attacker terrain must occupy index 3")
-		#expect(sample[4] == .hill, "defender terrain must occupy index 4")
+		#expect(sample[4] == .rough, "defender terrain must occupy index 4")
 		#expect(sample[0] == .mountain, "north-west orientation was lost")
 		#expect(sample[5] == .sea, "unowned strategic tiles must sample as sea")
 	}
@@ -752,10 +752,10 @@ struct StrategicTests {
 		for xy in tactical.map.indices where (8 ..< 16).contains(xy.x)
 			&& (8 ..< 16).contains(xy.y)
 		{
-			if tactical.map[xy] == .forest || tactical.map[xy] == .forestHill {
+			if tactical.map[xy] == .forest {
 				tacticalForests += 1
 			}
-			if plains[xy] == .forest || plains[xy] == .forestHill {
+			if plains[xy] == .forest {
 				plainsForests += 1
 			}
 		}

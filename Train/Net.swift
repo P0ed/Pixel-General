@@ -193,7 +193,7 @@ enum Net {
 // MARK: - Tensor data plumbing
 
 func floatData(_ values: [Float]) -> Data {
-	unsafe values.withUnsafeBufferPointer { unsafe Data(buffer: $0) }
+	values.withUnsafeBufferPointer { unsafe Data(buffer: $0) }
 }
 
 func tensorData(_ device: MPSGraphDevice, _ values: [Float], _ shape: [NSNumber]) -> MPSGraphTensorData {
@@ -201,13 +201,13 @@ func tensorData(_ device: MPSGraphDevice, _ values: [Float], _ shape: [NSNumber]
 }
 
 func tensorData(_ device: MPSGraphDevice, _ values: [Int32], _ shape: [NSNumber]) -> MPSGraphTensorData {
-	let data = unsafe values.withUnsafeBufferPointer { unsafe Data(buffer: $0) }
+	let data = values.withUnsafeBufferPointer { unsafe Data(buffer: $0) }
 	return MPSGraphTensorData(device: device, data: data, shape: shape, dataType: .int32)
 }
 
 func readFloats(_ td: MPSGraphTensorData, _ count: Int) -> [Float] {
 	var out = [Float](repeating: 0, count: count)
-	unsafe out.withUnsafeMutableBufferPointer { buf in
+	out.withUnsafeMutableBufferPointer { buf in
 		unsafe td.mpsndarray().readBytes(buf.baseAddress!, strideBytes: nil)
 	}
 	return out

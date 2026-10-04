@@ -2,7 +2,7 @@
 	case none
 	case river
 	case bridgeWE, bridgeSN
-	case field, forest, hill, forestHill, mountain
+	case field, forest, rough, mountain
 	case city, airfield
 	case villageE, villageN, villageW, villageS
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
@@ -14,8 +14,8 @@ public extension Terrain {
 
 	var elevationLevel: Int {
 		switch self {
-		case .hill, .forestHill: 1
-		case .mountain: 2
+		case .rough: 0
+		case .mountain: 0
 		default: 0
 		}
 	}
@@ -74,7 +74,7 @@ public extension Terrain {
 
 	var isHighground: Bool {
 		switch self {
-		case .hill, .forestHill, .mountain: true
+		case .rough, .mountain: true
 		default: false
 		}
 	}
@@ -85,8 +85,7 @@ public extension Terrain {
 			switch self {
 			case _ where hasRoad: 1
 			case .field, .fort: 1
-			case .forest, .hill: min(stats.mov, 2)
-			case .forestHill: min(stats.mov, 3)
+			case .forest, .rough: min(stats.mov, 2)
 			case .mountain: stats.mov
 			case _ where isRiver: stats.mov
 			default: 0x10
@@ -95,8 +94,7 @@ public extension Terrain {
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 2
-			case .forest, .hill, .fort: 3
-			case .forestHill: stats.mov
+			case .forest, .rough, .fort: 3
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
@@ -104,8 +102,7 @@ public extension Terrain {
 			switch self {
 			case _ where hasRoad: 1
 			case .field: 1
-			case .forest, .hill, .fort: 2
-			case .forestHill: stats.mov
+			case .forest, .rough, .fort: 2
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
@@ -119,8 +116,8 @@ public extension Terrain {
 	var baseEntrenchment: UInt8 {
 		switch self {
 		case .field: 0
-		case .hill, .airfield: 1
-		case .forest, .forestHill, .mountain, .villageE, .villageN, .villageW, .villageS: 2
+		case .rough, .airfield: 1
+		case .forest, .mountain, .villageE, .villageN, .villageW, .villageS: 2
 		case .city, .fort: 3
 		default: 0
 		}
@@ -130,9 +127,9 @@ public extension Terrain {
 		guard type.targetType == .hard else { return 0 }
 		let penalty: Int8 = type == .heavyTrack ? -2 : -1
 		return switch self {
-		case .hill, .airfield: penalty * 1
+		case .rough, .airfield: penalty * 1
 		case .forest, .villageE, .villageN, .villageW, .villageS: penalty * 2
-		case .city, .mountain, .forestHill, .fort: penalty * 3
+		case .city, .mountain, .fort: penalty * 3
 		default: 0
 		}
 	}
@@ -149,7 +146,7 @@ public extension Terrain {
 			case .heavyTrack: -5
 			default: 0
 			}
-		case .hill, .airfield:
+		case .rough, .airfield:
 			switch type {
 			case .inf, .art, .aa: 1
 			case .supply, .wheelArt, .wheelAA: 1
@@ -163,7 +160,7 @@ public extension Terrain {
 			case .trackAA, .trackArt: 1
 			default: 0
 			}
-		case .city, .mountain, .forestHill, .fort:
+		case .city, .mountain, .fort:
 			switch type {
 			case .inf, .art, .aa: 3
 			case .supply, .wheelArt, .wheelAA: 2

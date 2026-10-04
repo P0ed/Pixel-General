@@ -55,7 +55,7 @@ public extension StrategicSim {
 		(UInt16(level) + 1) * {
 			switch terrain[xy] {
 			case .mountain: 300
-			case .hill: 240
+			case .rough: 240
 			default: 200
 			}
 		}()

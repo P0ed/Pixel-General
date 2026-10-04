@@ -7,7 +7,7 @@ import GFX
 /// political ownership, or supply level. Decorations and fog are separate
 /// layers, so adding a mode only adds surfaces here.
 enum TileSurface: Hashable {
-	case none, field, forest, water, sea
+	case none, field, forest, rough, mountain, water, sea
 	case team(Team)
 	case country(Country)
 	case supply(UInt8)
@@ -17,6 +17,8 @@ enum TileSurface: Hashable {
 		case .none: .graySurface
 		case .field: .fieldSurface
 		case .forest: .forestSurface
+		case .rough: .roughSurface
+		case .mountain: .mountainSurface
 		case .water: .waterSurface
 		case .sea: .seaSurface
 		case .team(let team): team.color
@@ -30,7 +32,7 @@ enum TileSurface: Hashable {
 	func image(elevation: Int) -> CGImage? {
 		let image = CGImage.surface(elevation).tinted(color.cgColor)
 		switch self {
-		case .field, .forest, .water, .sea:
+		case .field, .forest, .rough, .mountain, .water, .sea:
 			return image?.noised()
 		case .none, .team, .country, .supply:
 			return image
@@ -42,7 +44,9 @@ extension Terrain {
 
 	var tileSurface: TileSurface {
 		switch self {
-		case .forest, .forestHill: .forest
+		case .forest: .forest
+		case .rough: .rough
+		case .mountain: .mountain
 		case .river, .bridgeWE, .bridgeSN: .water
 		case .sea: .sea
 		default: .field
@@ -54,7 +58,7 @@ extension Terrain {
 	@MainActor
 	var decoration: CGImage? {
 		switch self {
-		case .none, .river, .sea, .field, .forest, .hill, .forestHill, .mountain: nil
+		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
 		case .city: .decoration(.city)
 		case .fort: .decoration(.fort)
 		case .airfield: .decoration(.airfield)
@@ -211,7 +215,7 @@ extension SKTileSet {
 	static let terrain = SKTileSet(
 		tileGroups: .make { ts in
 			for elevation in 0 ... 2 {
-				for surface in [TileSurface.field, .forest, .water, .sea] {
+				for surface in [TileSurface.field, .forest, .rough, .mountain, .water, .sea] {
 					ts.append(.base(surface: surface, elevation: elevation))
 				}
 				for team in Team.allCases {

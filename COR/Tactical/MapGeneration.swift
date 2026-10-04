@@ -75,7 +75,7 @@ public extension Map<32, Terrain> {
 		let dominant = strategicTerrain(at: xy, terrain: terrain)
 		let elevationBias = 0.22 * Float(dominant.elevationLevel)
 		let humidityBias: Float = switch dominant {
-		case .forest, .forestHill: 0.33
+		case .forest: 0.33
 		default: 0.0
 		}
 		return Terrain(
@@ -485,7 +485,7 @@ public extension Map<32, Terrain> {
 		}
 		if clearing, candidates.isEmpty {
 			candidates = city.n4.compactMap { p in
-				contains(p) && [.forest, .hill, .forestHill].contains(self[p]) ? p : nil
+				contains(p) && [.forest, .rough].contains(self[p]) ? p : nil
 			}
 		}
 		guard let ap = candidates.randomElement(using: &d20) else { return false }
@@ -658,7 +658,7 @@ public extension Map<32, Terrain> {
 					let xy = ring[cursors[k]]
 					cursors[k] += 1
 					switch self[xy] {
-					case .field, .forest, .hill:
+					case .field, .forest, .rough:
 						self[xy] = .fort
 						budget -= 1
 						placed = true
@@ -708,8 +708,7 @@ public extension Map<32, Terrain> {
 		switch t {
 		case .field: return 4
 		case .forest: return 6
-		case .hill: return 10
-		case .forestHill: return 12
+		case .rough: return 10
 		default: return bridgableRiver(at: to, from: l) ? 8 : nil
 		}
 	}
@@ -882,8 +881,8 @@ extension Terrain {
 	init(height: Float, humidity: Float) {
 		self = switch height {
 		case -0.5 ..< 0.3: humidity > 0.5 ? .forest : .field
-		case 0.3 ..< 0.7: humidity > 0.5 ? .forestHill : .hill
-		case 0.7 ..< 0.85: .hill
+		case 0.3 ..< 0.7: humidity > height ? .forest : .rough
+		case 0.7 ..< 0.85: .rough
 		case 0.85...: .mountain
 		default: .field
 		}

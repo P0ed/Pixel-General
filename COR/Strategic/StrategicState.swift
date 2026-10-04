@@ -336,9 +336,8 @@ extension Terrain {
 	init?(legend ch: Character) {
 		switch ch {
 		case "^": self = .mountain
-		case "n": self = .hill
+		case "n": self = .rough
 		case "f": self = .forest
-		case "F": self = .forestHill
 		case ".": self = .field
 		default: return nil
 		}

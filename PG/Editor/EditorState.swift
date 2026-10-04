@@ -189,7 +189,7 @@ private extension EditorState {
 extension Terrain {
 
 	static let palette: [Terrain] = [
-		.field, .forest, .hill, .forestHill,
+		.field, .forest, .rough,
 		.mountain, .river, .sea, .city,
 		.airfield, .roadWE, .bridgeWE, .fort
 	]
@@ -199,8 +199,7 @@ extension Terrain {
 		case .none: "."
 		case .field: "F"
 		case .forest: "f"
-		case .hill: "H"
-		case .forestHill: "h"
+		case .rough: "H"
 		case .mountain: "M"
 		case .river: "W"
 		case .sea: "S"
@@ -218,8 +217,7 @@ extension Terrain {
 		case ".": self = .none
 		case "F": self = .field
 		case "f": self = .forest
-		case "H": self = .hill
-		case "h": self = .forestHill
+		case "H": self = .rough
 		case "M": self = .mountain
 		case "W": self = .river
 		case "S": self = .sea
