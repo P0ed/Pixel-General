@@ -7,25 +7,19 @@ public enum Settlements {
 		public static let rampart: UInt8 = 215
 	}
 
-	public static var city: Model {
-		// Two houses per corner block leave the central crossroad open. The inner
-		// houses are lower so their roofs cannot hide the road in the isometric view.
-		var solids: [Solid] = []
-		for (column, x) in ([6, 13.5, 34.5, 42] as [Float]).enumerated() {
-			for y: Float in [9, 39] {
-				let outer = column == 0 || column == 3
-				solids += house(
-					x: x,
-					y: y,
-					length: outer ? 6 : 4.5,
-					width: 9,
-					walls: outer ? 4.5 : 3.75,
-					roof: outer ? 4.5 : 3,
-					ridge: outer ? .y : .x
-				)
-			}
-		}
+	public static var city: Model { city(variant: .first) }
 
+	public static func city(variant: Tiles.Variant) -> Model {
+		let blocks: [CityBlock] = switch variant {
+		case .first: [.houses, .houses, .houses, .houses]
+		case .second: [.apartments, .apartments, .market, .apartments]
+		case .third: [.market, .houses, .houses, .market]
+		case .fourth: [.houses, .market, .apartments, .houses]
+		}
+		let centers: [(Float, Float)] = [(9, 9), (39, 9), (9, 39), (39, 39)]
+		let solids = zip(blocks, centers).flatMap { block, center in
+			buildings(block, x: center.0, y: center.1)
+		}
 		return Roads.road(Direction.allCases) + Model(solids)
 	}
 
@@ -66,6 +60,28 @@ public enum Settlements {
 }
 
 private extension Settlements {
+
+	enum CityBlock {
+		case houses, apartments, market
+	}
+
+	static func buildings(_ block: CityBlock, x: Float, y: Float) -> [Solid] {
+		switch block {
+		case .houses:
+			// The inner house sits lower so its roof leaves the crossroad visible.
+			let outward: Float = x < Volume.footprint / 2 ? -1 : 1
+			return house(x: x + outward * 3, y: y, length: 6, width: 9, walls: 4.5, roof: 4.5, ridge: .y)
+				+ house(x: x - outward * 4.5, y: y, length: 4.5, width: 9, walls: 3.75, roof: 3, ridge: .x)
+		case .apartments:
+			return [
+				.box(from: V3(x - 4.5, y - 4.5, 0), to: V3(x + 4.5, y + 4.5, 7.5), tone: Tone.wall),
+				.box(from: V3(x - 5.25, y - 5.25, 7.5), to: V3(x + 5.25, y + 5.25, 8.25), tone: Tone.roof),
+			]
+		case .market:
+			return house(x: x, y: y - 4.5, length: 12, width: 4.5, walls: 3.75, roof: 3, ridge: .x)
+				+ house(x: x, y: y + 4.5, length: 9, width: 4.5, walls: 3, roof: 2.25, ridge: .x)
+		}
+	}
 
 	/// A wide, low shed: half the height of a house so it reads as a hangar next to one.
 	static func hangar(x: Float, y: Float) -> [Solid] {

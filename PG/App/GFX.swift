@@ -28,33 +28,25 @@ extension CGImage {
 
 	/// Everything a tile carries on top of its surface, all of it modelled in GFX.
 	enum Decoration: Hashable {
-		case mountain, city, fort, airfield
+		case city(Tiles.Variant)
+		case fort, airfield
 		case road([GFX.Direction])
 		case bridge(GFX.Axis)
 
-		var model: Model {
+		var image: CGImage? {
 			switch self {
-			case .mountain: Tiles.mountain
-			case .city: Settlements.city
-			case .fort: Settlements.fort
-			case .airfield: Settlements.airfield
-			case .road(let directions): Roads.road(directions)
-			case .bridge(let axis): Roads.bridge(along: axis)
-			}
-		}
-
-		/// Road and bridge approaches share the same pavement edge tone.
-		var renderer: Renderer {
-			switch self {
-			case .road, .bridge: .decal
-			default: .building
+			case .city(let variant): Renderer.building.image(Settlements.city(variant: variant))
+			case .fort: Renderer.building.image(Settlements.fort)
+			case .airfield: Renderer.building.image(Settlements.airfield)
+			case .road(let directions): Renderer.decal.image(Roads.road(directions))
+			case .bridge(let axis): Renderer.decal.image(Roads.bridge(along: axis))
 			}
 		}
 	}
 
 	static func decoration(_ decoration: Decoration) -> CGImage {
 		if let image = decorations[decoration] { return image }
-		let image = decoration.renderer.image(decoration.model)!
+		let image = decoration.image!
 		decorations[decoration] = image
 		return image
 	}

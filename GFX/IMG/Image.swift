@@ -9,7 +9,7 @@ public extension Bitmap {
 	var rgba: [UInt8] {
 		var bytes = [UInt8](repeating: 0, count: width * height * 4)
 		for i in 0 ..< width * height {
-			let value = alpha[i] == 0 ? 0 : gray[i]
+			let value = UInt8((UInt16(gray[i]) * UInt16(alpha[i]) + 127) / 255)
 			bytes[i * 4 + 0] = value
 			bytes[i * 4 + 1] = value
 			bytes[i * 4 + 2] = value

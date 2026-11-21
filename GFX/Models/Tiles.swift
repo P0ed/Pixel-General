@@ -1,5 +1,9 @@
 public enum Tiles {
 
+	public enum Variant: Int, CaseIterable, Sendable {
+		case first, second, third, fourth
+	}
+
 	public static let step: Float = 6
 
 	/// Bleed the footprint half a pixel each way so sampling at pixel centres
@@ -31,23 +35,6 @@ public enum Tiles {
 			return line
 		}
 		return Model(lines: shadows + lines)
-	}
-
-	public static var mountain: Model {
-		let snowline: Float = 16
-		var rock = Solid.pyramid(from: V3(7, 8, 0), to: V3(35, 36, 24), tone: 164)
-		var snow = rock.toned(248)
-		// Split the highest peak at the snowline so the two parts share the same slopes.
-		rock.to.z = snowline
-		rock.planes.append(Plane(normal: V3(0, 0, 1), offset: snowline))
-		snow.from.z = snowline
-		snow.planes.append(Plane(normal: V3(0, 0, -1), offset: -snowline))
-
-		return Model([
-			rock, snow,
-			.pyramid(from: V3(7, 20, 0), to: V3(25, 46, 18), tone: 153),
-			.pyramid(from: V3(24, 7, 0), to: V3(46, 26, 17), tone: 145),
-		])
 	}
 
 	public static func base(elevation: Int) -> Model {

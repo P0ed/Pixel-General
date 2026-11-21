@@ -63,9 +63,11 @@ struct CatalogTests {
 		}
 	}
 
-	@Test func cityHasVisibleCrossroads() {
-		expectVisibleRoad(Settlements.city, along: .x)
-		expectVisibleRoad(Settlements.city, along: .y)
+	@Test(arguments: Tiles.Variant.allCases)
+	func cityHasVisibleCrossroads(variant: Tiles.Variant) {
+		let city = Settlements.city(variant: variant)
+		expectVisibleRoad(city, along: .x)
+		expectVisibleRoad(city, along: .y)
 	}
 
 	private func expectVisibleRoad(_ model: Model, along axis: Axis) {

@@ -26,13 +26,15 @@ public enum Catalog {
 		+ [
 			CatalogEntry(name: "Slope", model: Tiles.slope(elevation: 0, rising: .xPlus), renderer: .tile),
 			CatalogEntry(name: "Cursor", model: Tiles.cursor, renderer: .cursor),
-			CatalogEntry(name: "Mountain", model: Tiles.mountain, renderer: .building),
 		]
 	}
 
 	public static var settlements: [CatalogEntry] {
-		[
-			CatalogEntry(name: "City", model: Settlements.city, renderer: .building),
+		Tiles.Variant.allCases.map { variant in
+			let name = variant == .first ? "City" : "City \(variant.rawValue + 1)"
+			return CatalogEntry(name: name, model: Settlements.city(variant: variant), renderer: .building)
+		}
+		+ [
 			CatalogEntry(name: "Fort", model: Settlements.fort, renderer: .building),
 			CatalogEntry(name: "Airfield", model: Settlements.airfield, renderer: .building),
 		]

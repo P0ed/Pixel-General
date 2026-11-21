@@ -29,16 +29,25 @@ enum TileSurface: Hashable {
 
 	/// Tinted flat surface; terrain surfaces have stable texture.
 	@MainActor
-	var image: CGImage? {
+	func image(variant: Tiles.Variant = .first) -> CGImage? {
 		let image = CGImage.surface.tinted(color.cgColor)
 		switch self {
 		case .forest, .rough, .mountain:
-			return image?.noised(with: .strongNoise)
+			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
 		case .field, .water, .sea:
-			return image?.noised(with: .noise)
+			return image?.noised(with: CGImage.noise[variant.rawValue])
 		case .none, .team, .country, .supply:
 			return image
 		}
+	}
+}
+
+private extension XY {
+
+	var tileVariant: Tiles.Variant {
+		var d20 = D20(seed: x * 64 + y)
+		let variants = Tiles.Variant.allCases
+		return variants[Int(d20.next() % UInt64(variants.count))]
 	}
 }
 
@@ -57,27 +66,25 @@ extension Terrain {
 
 	/// Compass names map onto GFX axes the way `XY.point` puts them on screen:
 	/// E is `xPlus`, N `yMinus`, W `xMinus`, S `yPlus`.
-	@MainActor
-	var decoration: CGImage? {
+	func decoration(variant: Tiles.Variant = .first) -> CGImage.Decoration? {
 		switch self {
-		case .none, .river, .sea, .field, .forest, .rough: nil
-		case .mountain: .decoration(.mountain)
-		case .city: .decoration(.city)
-		case .fort: .decoration(.fort)
-		case .airfield: .decoration(.airfield)
-		case .bridgeWE: .decoration(.bridge(.x))
-		case .bridgeSN: .decoration(.bridge(.y))
-		case .roadNW: .decoration(.road([.yMinus, .xMinus]))
-		case .roadNE: .decoration(.road([.yMinus, .xPlus]))
-		case .roadWE: .decoration(.road([.xMinus, .xPlus]))
-		case .roadSN: .decoration(.road([.yPlus, .yMinus]))
-		case .roadSW: .decoration(.road([.yPlus, .xMinus]))
-		case .roadSE: .decoration(.road([.yPlus, .xPlus]))
-		case .roadTE: .decoration(.road([.xMinus, .yPlus, .yMinus]))
-		case .roadTN: .decoration(.road([.xPlus, .xMinus, .yPlus]))
-		case .roadTW: .decoration(.road([.xPlus, .yPlus, .yMinus]))
-		case .roadTS: .decoration(.road([.xPlus, .xMinus, .yMinus]))
-		case .roadX: .decoration(.road(GFX.Direction.allCases))
+		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
+		case .city: .city(variant)
+		case .fort: .fort
+		case .airfield: .airfield
+		case .bridgeWE: .bridge(.x)
+		case .bridgeSN: .bridge(.y)
+		case .roadNW: .road([.yMinus, .xMinus])
+		case .roadNE: .road([.yMinus, .xPlus])
+		case .roadWE: .road([.xMinus, .xPlus])
+		case .roadSN: .road([.yPlus, .yMinus])
+		case .roadSW: .road([.yPlus, .xMinus])
+		case .roadSE: .road([.yPlus, .xPlus])
+		case .roadTE: .road([.xMinus, .yPlus, .yMinus])
+		case .roadTN: .road([.xPlus, .xMinus, .yPlus])
+		case .roadTW: .road([.xPlus, .yPlus, .yMinus])
+		case .roadTS: .road([.xPlus, .xMinus, .yMinus])
+		case .roadX: .road(GFX.Direction.allCases)
 		}
 	}
 }
@@ -93,15 +100,16 @@ extension SKTileGroup {
 	private struct BaseKey: Hashable {
 		let surface: TileSurface
 		let fog: Bool
+		let variant: Tiles.Variant
 	}
 	private static var baseCache: [BaseKey: SKTileGroup] = [:]
 
-	static func base(surface: TileSurface, fog: Bool = false) -> SKTileGroup {
-		let key = BaseKey(surface: surface, fog: fog)
+	static func base(surface: TileSurface, fog: Bool = false, variant: Tiles.Variant = .first) -> SKTileGroup {
+		let key = BaseKey(surface: surface, fog: fog, variant: variant)
 		if let group = baseCache[key] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(surface.image)
+				ctx.drawTile(surface.image(variant: variant))
 				ctx.drawTile(.frame)
 				if fog { ctx.dim() }
 			}
@@ -110,23 +118,27 @@ extension SKTileGroup {
 		return group
 	}
 
-	static func base(terrain: Terrain, fog: Bool = false) -> SKTileGroup {
-		base(surface: terrain.tileSurface, fog: fog)
+	static func base(terrain: Terrain, fog: Bool, at xy: XY) -> SKTileGroup {
+		base(surface: terrain.tileSurface, fog: fog, variant: xy.tileVariant)
 	}
 
 	private struct DecorationKey: Hashable {
-		let terrain: Terrain
+		let decoration: CGImage.Decoration
 		let fog: Bool
 	}
 	private static var decorationCache: [DecorationKey: SKTileGroup] = [:]
 
-	static func decoration(_ terrain: Terrain, fog: Bool) -> SKTileGroup? {
-		guard let image = terrain.decoration else { return nil }
-		let key = DecorationKey(terrain: terrain, fog: fog)
+	static func decoration(_ terrain: Terrain, fog: Bool, at xy: XY) -> SKTileGroup? {
+		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
+		return self.decoration(decoration, fog: fog)
+	}
+
+	static func decoration(_ decoration: CGImage.Decoration, fog: Bool) -> SKTileGroup {
+		let key = DecorationKey(decoration: decoration, fog: fog)
 		if let group = decorationCache[key] { return group }
 		let group = make(
 			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(image)
+				ctx.drawTile(.decoration(decoration))
 				if fog { ctx.dim() }
 			}
 		)
@@ -151,31 +163,27 @@ private extension CGImage {
 
 	/// Stable tile-sized speckle, rendered once — noising a surface is then a
 	/// single masked draw instead of a per-pixel fill on every texture build.
-	static let noise: CGImage = .draw(size: .tile3D) { ctx in
-		var d20 = D20()
-		for y in 0 ..< ctx.height {
-			for x in 0 ..< ctx.width {
-				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.033).cgColor)
-				ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
-			}
+	static let noise = Tiles.Variant.allCases.map { variant in
+		CGImage.draw(size: .tile3D) { ctx in
+			drawNoise(in: ctx, grainSize: 1, maxOpacity: 0.033, seed: variant.rawValue * 2)
 		}
 	}
 
-	static let strongNoise: CGImage = .draw(size: .tile3D) { ctx in
-		var d20 = D20(seed: 1)
-		for y in -1 ... ctx.height {
-			// The four-pixel stagger lets the tips from adjacent rows fill the gaps.
-			let startX = (y + 1) * 4 % 10 - 10
-			for x in stride(from: startX, to: ctx.width, by: 10) {
-				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.1).cgColor)
-				ctx.fill([
-					CGRect(x: x + 2, y: y - 1, width: 2, height: 1),
-					CGRect(x: x, y: y, width: 6, height: 1),
-					CGRect(x: x + 2, y: y + 1, width: 2, height: 1),
-				])
+	static let strongNoise = Tiles.Variant.allCases.map { variant in
+		CGImage.draw(size: .tile3D) { ctx in
+			drawNoise(in: ctx, grainSize: 2, maxOpacity: 0.1, seed: variant.rawValue * 2 + 1)
+			ctx.draw(noise[variant.rawValue], in: CGRect(origin: .zero, size: .tile3D))
+		}
+	}
+
+	private static func drawNoise(in ctx: CGContext, grainSize: Int, maxOpacity: CGFloat, seed: Int) {
+		var d20 = D20(seed: seed)
+		for y in stride(from: 0, to: ctx.height, by: grainSize) {
+			for x in stride(from: 0, to: ctx.width, by: grainSize) {
+				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * maxOpacity).cgColor)
+				ctx.fill(CGRect(x: x, y: y, width: grainSize, height: grainSize))
 			}
 		}
-		ctx.draw(noise, in: CGRect(origin: .zero, size: .tile3D))
 	}
 
 	/// Applies speckle only where the source image is nontransparent.
@@ -209,7 +217,7 @@ private extension CGContext {
 extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
-		.mountain, .city, .airfield, .bridgeWE, .bridgeSN, .fort,
+		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
 		.roadTE, .roadTN, .roadTW, .roadTS, .roadX,
 	]
@@ -218,7 +226,9 @@ extension SKTileSet {
 		tileGroups: .make { ts in
 			for fog in [false, true] {
 				for surface in [TileSurface.field, .forest, .rough, .mountain, .water, .sea] {
-					ts.append(.base(surface: surface, fog: fog))
+					for variant in Tiles.Variant.allCases {
+						ts.append(.base(surface: surface, fog: fog, variant: variant))
+					}
 				}
 				for team in Team.allCases {
 					ts.append(.base(surface: .team(team), fog: fog))
@@ -236,9 +246,13 @@ extension SKTileSet {
 
 	static let decorations = SKTileSet(
 		tileGroups: .make { ts in
-			decorated.forEach { terrain in
-				ts.append(.decoration(terrain, fog: false)!)
-				ts.append(.decoration(terrain, fog: true)!)
+			for terrain in decorated {
+				let variants = terrain == .city ? Tiles.Variant.allCases : [.first]
+				for variant in variants {
+					guard let decoration = terrain.decoration(variant: variant) else { continue }
+					ts.append(.decoration(decoration, fog: false))
+					ts.append(.decoration(decoration, fog: true))
+				}
 			}
 		},
 		tileSetType: .isometric
@@ -275,9 +289,9 @@ extension SKTexture {
 	static func tile(_ terrain: Terrain) -> SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
-			ctx.drawTile(terrain.tileSurface.image)
+			ctx.drawTile(terrain.tileSurface.image())
 			ctx.drawTile(.frame)
-			ctx.drawTile(terrain.decoration)
+			ctx.drawTile(terrain.decoration().map(CGImage.decoration))
 		})
 		texture.filteringMode = .nearest
 		tileCache[terrain] = texture

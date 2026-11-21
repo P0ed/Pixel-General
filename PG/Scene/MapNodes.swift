@@ -38,13 +38,13 @@ extension MapNodes {
 	}
 
 	func setTile(_ terrain: Terrain, fog: Bool = false, at xy: XY) {
-		setBase(.base(terrain: terrain, fog: fog), at: xy)
+		setBase(.base(terrain: terrain, fog: fog, at: xy), at: xy)
 		setDecoration(terrain, fog: fog, at: xy)
 	}
 
 	func setDecoration(_ terrain: Terrain, fog: Bool, at xy: XY) {
 		guard !decorationLayers.isEmpty else { return }
-		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog), at: xy)
+		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog, at: xy), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
