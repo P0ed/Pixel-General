@@ -42,7 +42,7 @@ public extension Units {
 			cylinder(at: at(-7.5, 3.45, 12.6), radius: 1.95, length: 1.65, axis: .z, tone: Tone.turret),
 		], lines: grille(x: -12.45, z: 11.475, length: 5.25, width: 10.5) + sides(9.6) { y in
 			Line(from: at(-13.5, y, 8.4), to: at(10.5, y, 8.4), tone: 100, dash: 2.25)
-		}) + tankGun(from: 4.5, length: 24, z: 7.95, caliber: 1.95)
+		}) + tankGun(from: 4.5, length: 24, z: 10.2, caliber: 1.95)
 	}
 
 	/// KF51: angular autoloader bustle, a larger gun and roof-mounted drone canisters.

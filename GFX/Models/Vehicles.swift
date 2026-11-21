@@ -65,35 +65,84 @@ public extension Units {
 		])
 	}
 
-	/// BRDM-2: a faceted boat-shaped hull, four tyres and the small auxiliary belly wheels.
+	/// BRDM-2: an upturned amphibious bow, paired windshields and a low conical turret.
 	static var brdm2: Model {
-		wheeled(at: [-11.25, 10.5], width: 15, radius: 3.3)
-		+ wheeled(at: [-2.7, 2.7], width: 13.2, radius: 1.8)
+		let roof: Float = 14.4
+		var hull = armour(length: 34.5, width: 16.5, z: 4.2 ... 9.9,
+			corner: 3, tone: Tone.body)
+		hull.planes += [
+			Plane(normal: V3(1, 0, -1.65), through: at(8.1, 0, 4.2)),
+			Plane(normal: V3(-1, 0, -0.65), through: at(-14.1, 0, 4.2)),
+			Plane(normal: V3(0, 1, -0.3), through: at(0, 8.25, 9.9)),
+			Plane(normal: V3(0, -1, -0.3), through: at(0, -8.25, 9.9)),
+		]
+		let bellyWheels = wheeled(at: [-2.7, 2.7], width: 10.5, radius: 1.8).translated(by: V3(0, 0, 2.4))
+
+		return wheeled(at: [-10.8, 10.8], width: 15.9, radius: 3.9) + bellyWheels
 		+ Model([
-			armour(length: 34.5, width: 15, z: 4.8 ... 11.7,
-				front: 9, rear: 1.5, side: 1.2, corner: 2.1, tone: Tone.body),
-			hatch(x: -10.5, y: -2.55, z: 11.7),
-		] + sides(3) {
-			box(length: 1.5, width: 3, z: 10.8 ... 11.7, x: 6.6, y: $0, tone: 100)
-		}, lines: grille(x: -10.5, y: 2.7, z: 11.775, length: 4.5, width: 3.75))
-		+ turret(length: 8.25, width: 8.25, z: 11.85 ... 15.3, x: -0.75,
-			front: 1.5, rear: 0.9, side: 1.35, corner: 1.8)
-		+ cannon(from: at(2.25, 0, 13.8), to: at(15, 0, 14.25), caliber: 1.65)
+			hull,
+			armour(length: 25.8, width: 16.2, z: 9.75 ... roof, x: -3.75,
+				front: 4.2, rear: 1.8, side: 1.95, corner: 1.05, tone: Tone.body),
+			hatch(x: -12, y: -3, z: roof),
+			cylinder(at: at(-2.55, 0, 14.7), radius: 3.75, length: 0.9, axis: .z, tone: Tone.turret),
+			armour(length: 7.2, width: 7.8, z: 14.85 ... 18, x: -2.55,
+				front: 1.65, rear: 1.35, side: 1.8, corner: 2.4, tone: Tone.turret),
+			barrel(from: at(-0.3, 0, 16.35), to: at(9.6, 0, 18.15), caliber: 1.35, tone: Tone.barrel),
+		] + sides(2.55) {
+			armour(length: 4.5, width: 4.2, z: 11.4 ... 13.8, x: 5.7, y: $0,
+				front: 2.175, side: 0.15, tone: 96)
+		} + sides(5.7) {
+			cylinder(at: at(11.55, $0, 10.65), radius: 1.05, length: 1.35, axis: .x, tone: 235)
+		}, lines: grille(x: -10.8, y: 2.25, z: roof + 0.075, length: 2.25, width: 4.5, tone: 115) + [
+			Line(from: at(15.75, -6.15, 9.95), to: at(15.75, 6.15, 9.95), tone: 110),
+			Line(from: at(-11.7, -5.1, roof), to: at(-13.2, -5.1, 20.7), tone: Tone.antenna),
+		])
 	}
 
-	/// Boxer: four axles below the high troop compartment, with a compact remote turret.
+	/// Boxer CRV: a long glacis, tall rear mission module and broad Lance turret.
 	static var boxer: Model {
-		wheeled(at: [-12.75, -4.5, 4.5, 12.75], width: 17.25, radius: 3.225)
+		let roof: Float = 15.3
+		var bow = armour(length: 12.3, width: 17.7, z: 5.7 ... 8.25, x: 13.65,
+			corner: 2.4, tone: Tone.turret)
+		bow.planes.append(Plane(normal: V3(1, 0, -1.35), through: at(16.35, 0, 5.7)))
+		let fenders = [-10.2, -0.9, 8.4].map { (x: Float) in
+			var fender = box(length: 5.4, width: 19.2, z: 5.7 ... 8.25, x: x, tone: Tone.turret)
+			fender.planes += [
+				Plane(normal: V3(1, 0, -0.9), through: at(x + 0.75, 0, 5.7)),
+				Plane(normal: V3(-1, 0, -0.9), through: at(x - 0.75, 0, 5.7)),
+			]
+			return fender
+		}
+
+		return wheeled(at: [-14.1, -6.3, 4.5, 12.3], width: 18.3, radius: 3.825)
 		+ Model([
-			armour(length: 37.5, width: 17.25, z: 6 ... 12.9,
-				front: 7.2, rear: 0.75, side: 1.05, corner: 1.8, tone: Tone.body),
-			hatch(x: -11.25, y: 3.75, z: 12.9, radius: 1.95),
-			hatch(x: 8.25, y: -3, z: 12.9),
-		], lines: grille(x: -11.25, y: -3, z: 12.975, length: 4.5, width: 4.5) + [
-			Line(from: at(-6, 7.2, 12), to: at(-7.2, 7.2, 18), tone: Tone.antenna),
+			bow,
+			armour(length: 39.6, width: 19.5, z: 7.5 ... 13.8,
+				front: 12.6, rear: 1.2, side: 0.6, corner: 2.4, tone: Tone.body),
+			armour(length: 21.6, width: 19.2, z: 11.4 ... roof, x: -8.1,
+				front: 0.9, rear: 0.75, side: 0.75, corner: 1.35, tone: Tone.body),
+			armour(length: 4.5, width: 4.5, z: 11.4 ... 14.25, x: 9.3, y: 4.2,
+				front: 1.5, side: 0.45, corner: 0.45, tone: Tone.turret),
+			box(length: 1.2, width: 3, z: 13.05 ... 13.8, x: 10.65, y: 4.2, tone: 90),
+			hatch(x: -15, y: 4.05, z: roof, radius: 2.1),
+		] + fenders + sides(6.15) {
+			armour(length: 2.7, width: 1.8, z: 7.95 ... 9.15, x: 17.7, y: $0,
+				front: 2.4, tone: 235)
+		}, lines: sides(9.45) {
+			Line(from: at(-17.4, $0, 12.45), to: at(1.65, $0, 12.45), tone: 104)
+		} + [
+			Line(from: at(-16.5, -6.9, roof), to: at(-18, -6.9, 22.2), tone: Tone.antenna),
+			Line(from: at(-16.5, 6.9, roof), to: at(-17.7, 6.9, 21), tone: Tone.antenna),
 		])
-		+ turret(length: 9.75, width: 9.75, z: 13.2 ... 16.95, x: -2.25, corner: 2.1)
-		+ cannon(from: at(1.5, 0, 15), to: at(17.25, 0, 15.75), caliber: 1.8)
+		+ turret(length: 12.6, width: 13.2, z: 15.3 ... 20.1, x: -3,
+			front: 2.1, rear: 1.2, side: 1.65, corner: 2.55)
+		+ Model([
+			armour(length: 4.5, width: 3, z: 16.35 ... 19.8, x: -1.5, y: 5.1,
+				front: 0.75, side: 0.45, corner: 0.6, tone: Tone.turret),
+			box(length: 2.55, width: 2.85, z: 20.1 ... 22.35, x: -4.05, y: -2.85, tone: Tone.turret),
+			box(length: 0.6, width: 1.65, z: 20.85 ... 21.9, x: -2.7, y: -2.85, tone: 93),
+		])
+		+ cannon(from: at(1.5, 0, 17.7), to: at(17.25, 0, 18.45), caliber: 1.8)
 	}
 
 	/// Strf 9040: exposed six-wheel suspension, sloped glacis and an autocannon turret.

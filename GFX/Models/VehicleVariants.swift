@@ -1,28 +1,84 @@
 public extension Units {
 
+	/// M1117 Guardian: a faceted four-wheel hull, split windshield and angular turret.
 	static var m1117: Model {
-		wheeled(at: [-9.75, 9.75], width: 15.75, radius: 3.6)
+		let roof: Float = 14.25
+		let windowTone: UInt8 = 88
+		var hull = armour(length: 31.5, width: 16.8, z: 4.95 ... 9.75, corner: 2.1, tone: Tone.body)
+		hull.planes += [
+			Plane(normal: V3(1, 0, -0.75), through: at(12.15, 0, 4.95)),
+			Plane(normal: V3(-1, 0, -0.9), through: at(-12.3, 0, 4.95)),
+			Plane(normal: V3(0, 1, -0.45), through: at(0, 8.4, 9.75)),
+			Plane(normal: V3(0, -1, -0.45), through: at(0, -8.4, 9.75)),
+		]
+
+		return wheeled(at: [-10.2, 10.2], width: 16.05, radius: 4.05)
 		+ Model([
-			armour(length: 31.5, width: 15.75, z: 5.25 ... 12, front: 6.75, rear: 3.75,
-				side: 1.5, corner: 1.95, tone: Tone.body),
-			box(length: 1.05, width: 9, z: 9.75 ... 11.7, x: 9, tone: Tone.glass),
-			hatch(x: -9.75, y: -3.75, z: 12),
-		], lines: sides(7.5) { Line(from: at(-1.5, $0, 6.45), to: at(-1.5, $0, 11.25), tone: 100) })
-		+ turret(length: 9, width: 9, z: 12.3 ... 16.5, x: -1.5, corner: 1.95)
-		+ cannon(from: at(1.5, 0, 14.55), to: at(11.25, 0, 15), caliber: 1.95)
+			hull,
+			box(length: 10.2, width: 13.2, z: 4.5 ... 6.9, tone: Tone.body),
+			armour(length: 30.6, width: 16.8, z: 9.6 ... roof,
+				front: 6.3, rear: 3.3, side: 2.1, corner: 1.2, tone: Tone.body),
+			hatch(x: -8.7, y: -3.3, z: roof),
+		] + sides(2.85) {
+			armour(length: 4.5, width: 4.65, z: 12.15 ... 13.8, x: 9.75, y: $0,
+				front: 2.25, side: 0.15, tone: windowTone)
+		} + sides(6.45) {
+			armour(length: 4.2, width: 2.1, z: 12.15 ... 13.8, x: 5.7, y: $0,
+				front: 1.05, side: 0.75, tone: windowTone)
+		} + sides(5.4) {
+			cylinder(at: at(14.55, $0, 7.65), radius: 1.05, length: 1.5, axis: .x, tone: 240)
+		}, lines: [
+			Line(from: at(15.6, -6.75, 9.75), to: at(15.6, 6.75, 9.75), tone: 115),
+		] + sides(1) { sign in
+			[
+				Line(from: at(-2.7, sign * 7.25, 7.05), to: at(-2.7, sign * 8.4, 9.75), tone: 98),
+				Line(from: at(-2.7, sign * 8.4, 9.75), to: at(-2.7, sign * 7.35, 12), tone: 98),
+			]
+		}.flatMap { $0 })
+		+ turret(length: 8.7, width: 9.3, z: roof ... 18.6, x: -2.25,
+			front: 0.9, rear: 1.2, side: 1.35, corner: 1.8)
+		+ Model([
+			box(length: 1.2, width: 2.25, z: 17.4 ... 18.45, x: 1.35, y: 2.25, tone: 100),
+			barrel(from: at(0.9, -1.5, 16.5), to: at(11.55, -1.5, 17.25), caliber: 1.35, tone: Tone.barrel),
+		])
 	}
 
+	/// M1126 Stryker: a low troop deck, upswept lower bow and a raised weapon station.
 	static var stryker: Model {
-		wheeled(at: [-13.5, -4.95, 4.95, 13.5], width: 17.25, radius: 3.15)
+		let roof: Float = 12.9
+		let stationY: Float = 2.85
+		var lowerHull = armour(length: 38.4, width: 18, z: 5.1 ... 8.7, corner: 2.4, tone: Tone.turret)
+		lowerHull.planes += [
+			Plane(normal: V3(1, 0, -1.85), through: at(12.15, 0, 5.1)),
+			Plane(normal: V3(-1, 0, -0.8), through: at(-16.2, 0, 5.1)),
+			Plane(normal: V3(0, 1, -0.3), through: at(0, 9, 8.4)),
+			Plane(normal: V3(0, -1, -0.3), through: at(0, -9, 8.4)),
+		]
+
+		return wheeled(at: [-13.2, -4.5, 4.5, 13.2], width: 17.25, radius: 3.6)
 		+ Model([
-			armour(length: 37.5, width: 17.25, z: 5.7 ... 12, front: 7.5, rear: 0.9,
-				side: 1.5, corner: 2.1, tone: Tone.body),
-			hatch(x: -10.5, y: 3.75, z: 12, radius: 2.1),
-			hatch(x: 6, y: -3.75, z: 12),
-			box(length: 6, width: 3, z: 12 ... 12.9, x: -6.75, y: -4.5, tone: Tone.cargo),
-		], lines: grille(x: -10.5, y: -3.75, z: 12.15, length: 5.25, width: 4.5))
-		+ turret(length: 5.25, width: 5.25, z: 12.45 ... 16.5, x: 1.5, corner: 1.05)
-		+ cannon(from: at(3, 0, 15), to: at(10.5, 0, 15.45), caliber: 1.35)
+			lowerHull,
+			armour(length: 38.4, width: 18, z: 8.4 ... roof, front: 7.5, rear: 1.2,
+				side: 1.65, corner: 2.4, tone: Tone.body),
+			hatch(x: -11.1, y: 3.6, z: roof, radius: 2.55),
+			hatch(x: -11.1, y: -3.6, z: roof, radius: 2.55),
+			hatch(x: 6.75, y: -3.3, z: roof, radius: 1.95),
+			box(length: 2.1, width: 3.75, z: roof ... 13.8, x: 9, y: -3.3, tone: Tone.turret),
+			box(length: 0.45, width: 2.7, z: 13.2 ... 13.8, x: 10.2, y: -3.3, tone: 96),
+			cylinder(at: at(3.3, stationY, 13.65), radius: 2.1, length: 1.5, axis: .z, tone: Tone.turret),
+			armour(length: 3.9, width: 4.5, z: 14.4 ... 17.25, x: 3.3, y: stationY,
+				front: 0.45, corner: 0.75, tone: Tone.turret),
+			box(length: 1.8, width: 1.8, z: 16.2 ... 18.15, x: 3.9, y: 4.65, tone: Tone.turret),
+			barrel(from: at(4.5, stationY, 16.65), to: at(11.4, stationY, 17.25), caliber: 1.2, tone: Tone.barrel),
+		] + sides(7.65) {
+			armour(length: 13.2, width: 2.1, z: 10.35 ... 11.7, x: -9.15, y: $0,
+				front: 0.6, rear: 0.45, side: 0.45, corner: 0.45, tone: Tone.turret)
+		} + sides(6) {
+			cylinder(at: at(16.65, $0, 9.9), radius: 1.05, length: 1.5, axis: .x, tone: 238)
+		}, lines: [
+			Line(from: at(-15.6, 5.7, roof), to: at(-16.8, 5.7, 22.8), tone: Tone.antenna),
+			Line(from: at(-11.7, -5.7, roof), to: at(-12.9, -5.7, 21), tone: Tone.antenna),
+		])
 	}
 
 	static var btr80: Model {
