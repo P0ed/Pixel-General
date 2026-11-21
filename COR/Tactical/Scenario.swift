@@ -1,5 +1,4 @@
-/// Complete, reusable recipe for a tactical battle, shared by the app and
-/// AI training tools.
+/// Complete, reusable recipe for a tactical battle.
 public struct Scenario {
 	public var players: [Player]
 	public var units: [Unit]

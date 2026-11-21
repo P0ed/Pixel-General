@@ -1,4 +1,3 @@
-import Foundation
 import COR
 
 typealias Unit = COR.Unit
@@ -6,30 +5,18 @@ typealias Unit = COR.Unit
 typealias TacticalMode = SceneMode<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
 typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
 
-extension LSTMWeights {
-
-	/// The shipped opponent weights; `nil` (→ heuristic fallback) when the
-	/// resource is missing or fails `spec` validation.
-	static let bundled: LSTMWeights? = Bundle.main
-		.url(forResource: "policy", withExtension: "pgw")
-		.flatMap { url in try? Data(contentsOf: url) }
-		.flatMap(LSTMWeights.init(data:))
-}
-
 extension TacticalMode {
 
 	static var tactical: Self {
 		let heuristic = AI.heuristic
-		let lstm = AI.lstm(.bundled)
 		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
 			next: { state in
-				let ai = settings.ai ? lstm : heuristic
-				return if let net {
-					net.nextAction(state.sim, state.auto ? ai : { _ in nil })
+				if let net {
+					net.nextAction(state.sim, state.auto ? heuristic : { _ in nil })
 				} else {
-					(state.auto ? ai(state.sim) : nil)
+					state.auto ? heuristic(state.sim) : nil
 				}
 			},
 			relay: { state, action in net?.relay(state.sim, action) ?? false },

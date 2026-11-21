@@ -1,5 +1,5 @@
 public struct SetXY: BitwiseCopyable {
-	private var storage: InlineArray<32, UInt32>
+	private var storage: InlineArray<64, UInt64>
 }
 
 extension SetXY: Monoid {
@@ -50,7 +50,7 @@ public extension SetXY {
 	}
 
 	private func bounds(_ xy: XY) -> Bool {
-		xy.x >= 0 && xy.x < 32 && xy.y >= 0 && xy.y < 32
+		xy.x >= 0 && xy.x < UInt64.bitWidth && storage.indices.contains(xy.y)
 	}
 
 	func forEach(_ body: (XY) -> Void) {

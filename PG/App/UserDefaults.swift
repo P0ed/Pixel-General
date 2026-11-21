@@ -25,7 +25,13 @@ extension UserDefaults {
 	}
 
 	var settings: Settings {
-		get { data(forKey: "settings").flatMap(decode) ?? Settings() }
+		get {
+			guard let data = data(forKey: "settings") else { return Settings() }
+			let size = MemoryLayout<Settings>.size
+			// The old layout appended a one-byte opponent setting.
+			let preferences = data.count == size + 1 ? Data(data.prefix(size)) : data
+			return decode(preferences) ?? Settings()
+		}
 		set { set(encode(newValue), forKey: "settings") }
 	}
 

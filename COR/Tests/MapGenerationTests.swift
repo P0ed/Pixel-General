@@ -5,7 +5,7 @@ struct MapGenerationTests {
 
 	@Test func terminatesAcrossManySeeds() {
 		for seed in 0 ..< 16 {
-			_ = Map<32, Terrain>(seed: seed)
+			_ = Map<64, Terrain>(seed: seed)
 		}
 	}
 
@@ -15,7 +15,7 @@ struct MapGenerationTests {
 		var noRiverSeeds: [Int] = []
 
 		for seed in 0 ..< 8 {
-			let map = Map<32, Terrain>(seed: seed * 7)
+			let map = Map<64, Terrain>(seed: seed * 7)
 			var hasNonZero = false
 			var hasCity = false
 			var hasRiver = false
@@ -38,7 +38,7 @@ struct MapGenerationTests {
 	@Test func spawnPointCitiesHaveAirfields() {
 		for seed in 0 ..< 8 {
 			let spawns = Array(XY.one.n4)
-			let map = Map<32, Terrain>(
+			let map = Map<64, Terrain>(
 				seed: seed * 13,
 				terrain: .init(repeating: .field),
 				spawns: spawns
@@ -66,8 +66,8 @@ struct MapGenerationTests {
 
 	@Test func isDeterministicForSameSeed() {
 		for seed in [0, 1, 7, 100, 999, 1023] {
-			let a = Map<32, Terrain>(seed: seed)
-			let b = Map<32, Terrain>(seed: seed)
+			let a = Map<64, Terrain>(seed: seed)
+			let b = Map<64, Terrain>(seed: seed)
 			for xy in a.indices where a[xy] != b[xy] {
 				Issue.record("Map differs at \(xy) for seed \(seed): \(a[xy]) vs \(b[xy])")
 				break
@@ -76,9 +76,9 @@ struct MapGenerationTests {
 	}
 
 	@Test func usesConstantMapSize() {
-		let map = Map<32, Terrain>(seed: 0)
-		#expect(map.size == 32)
-		#expect(map.count == 32 * 32)
+		let map = Map<64, Terrain>(seed: 0)
+		#expect(map.size == 64)
+		#expect(map.count == 4096)
 		var hasCity = false
 		for xy in map.indices where map[xy] == .city { hasCity = true; break }
 		#expect(hasCity, "Generated map has no city")
@@ -87,7 +87,7 @@ struct MapGenerationTests {
 	@Test func terrainBiasRaisesForestCoverage() {
 		for seed in [1, 5, 42] {
 			func forests(_ terrain: Terrain) -> Int {
-				let map = Map<32, Terrain>(seed: seed, terrain: terrain)
+				let map = Map<64, Terrain>(seed: seed, terrain: terrain)
 				var result = 0
 				for xy in map.indices {
 					switch map[xy] {
@@ -104,8 +104,8 @@ struct MapGenerationTests {
 	@Test func terrainNeighborhoodShapesSeaWithHeightMap() {
 		var terrain = [9 of Terrain](repeating: .field)
 		terrain[0] = .sea // north-west terrain cell
-		let a = Map<32, Terrain>(seed: 7, players: 2, terrain: terrain)
-		let b = Map<32, Terrain>(seed: 19, players: 2, terrain: terrain)
+		let a = Map<64, Terrain>(seed: 7, players: 2, terrain: terrain)
+		let b = Map<64, Terrain>(seed: 19, players: 2, terrain: terrain)
 
 		var aSea = Set<XY>()
 		var bSea = Set<XY>()
@@ -121,10 +121,11 @@ struct MapGenerationTests {
 		var centerTiles = 0
 		var peripheralSea = 0
 		var peripheralTiles = 0
+		let centerXY = XY(0, 2).cellCenter(size: a.size)
 		for xy in a.indices {
-			let nominalSea = xy.x < 11 && xy.y >= 21
+			let nominalSea = xy.x * 3 / a.size == 0 && xy.y * 3 / a.size == 2
 			if !a[xy].isSea, nominalSea { landInsideNominalShore += 1 }
-			let center = (3 ..< 8).contains(xy.x) && (24 ..< 29).contains(xy.y)
+			let center = abs(xy.x - centerXY.x) <= 4 && abs(xy.y - centerXY.y) <= 4
 			if center {
 				centerTiles += 1
 				if a[xy].isSea { centerSea += 1 }
@@ -183,7 +184,7 @@ struct MapGenerationTests {
 		terrain[3] = .sea
 		var mouths = 0
 		for seed in 0 ..< 24 {
-			let map = Map<32, Terrain>(seed: seed, players: 4, terrain: terrain)
+			let map = Map<64, Terrain>(seed: seed, players: 4, terrain: terrain)
 			for xy in map.indices where map[xy].isRiver || map[xy].isBridge {
 				let touchesSea = xy.n8.contains { p in map[p].isSea }
 				guard touchesSea else { continue }
@@ -210,7 +211,7 @@ struct MapGenerationTests {
 		terrain[1] = .sea
 		terrain[3] = .sea
 		for seed in 0 ..< 16 {
-			let map = Map<32, Terrain>(seed: seed, players: 4, terrain: terrain)
+			let map = Map<64, Terrain>(seed: seed, players: 4, terrain: terrain)
 
 			func landmass(from start: XY, into visited: inout Set<XY>) -> [XY] {
 				var tiles = [start]
@@ -251,7 +252,7 @@ struct MapGenerationTests {
 		// one network; on these seeds all cities share one landmass, so a
 		// flood along road tiles from any city must reach every other.
 		for seed in [0, 7, 21, 42, 5, 11] {
-			let map = Map<32, Terrain>(seed: seed)
+			let map = Map<64, Terrain>(seed: seed)
 			var cities = [] as [XY]
 			for xy in map.indices where map[xy] == .city { cities.append(xy) }
 			guard let first = cities.first else {
@@ -281,7 +282,7 @@ struct MapGenerationTests {
 		// orthogonal neighbors. Diagonal-only adjacency would mean the river
 		// was disconnected.
 		for seed in [3, 11, 23] {
-			let map = Map<32, Terrain>(seed: seed)
+			let map = Map<64, Terrain>(seed: seed)
 			for xy in map.indices where map[xy].isRiver {
 				let n4 = xy.n4
 				var connected = false
@@ -300,7 +301,7 @@ struct MapGenerationTests {
 
 	@Test func defaultGenerationPlacesNoForts() {
 		for seed in [0, 7, 42, 100] {
-			let map = Map<32, Terrain>(seed: seed)
+			let map = Map<64, Terrain>(seed: seed)
 			for xy in map.indices where map[xy] == .fort {
 				Issue.record("Fort at \(xy) for seed \(seed) before placeForts")
 				break
@@ -313,7 +314,7 @@ struct MapGenerationTests {
 		// where open ground used to be, and every other tile must be
 		// untouched — roads, rivers and settlements survive.
 		for seed in [0, 7, 5] {
-			let base = Map<32, Terrain>(seed: seed)
+			let base = Map<64, Terrain>(seed: seed)
 			var map = clone(base)
 			map.placeForts(around: cities(of: base), level: 3)
 			var forts = 0
@@ -336,7 +337,7 @@ struct MapGenerationTests {
 		// Every fort must lie on some city's ring: Chebyshev distance
 		// exactly 2 with the four corners cut.
 		for seed in [0, 7, 42] {
-			var map = Map<32, Terrain>(seed: seed)
+			var map = Map<64, Terrain>(seed: seed)
 			let centers = cities(of: map)
 			map.placeForts(around: centers, level: 3)
 			for xy in map.indices where map[xy] == .fort {
@@ -352,7 +353,7 @@ struct MapGenerationTests {
 	@Test func fortCountScalesWithLevelAndCaps() {
 		for seed in [0, 7, 42] {
 			func forts(_ level: Int) -> Int {
-				var map = Map<32, Terrain>(seed: seed)
+				var map = Map<64, Terrain>(seed: seed)
 				let centers = cities(of: map)
 				map.placeForts(around: centers, level: level)
 				var count = 0
@@ -360,7 +361,7 @@ struct MapGenerationTests {
 				return count
 			}
 			#expect(forts(3) >= forts(1), "Level 3 placed fewer forts than level 1 for seed \(seed)")
-			#expect(forts(3) <= 3 * 3 * 32 / 4, "Level 3 exceeded the fort cap for seed \(seed)")
+			#expect(forts(3) <= 3 * 3 * 64 / 4, "Level 3 exceeded the fort cap for seed \(seed)")
 		}
 	}
 
@@ -368,7 +369,7 @@ struct MapGenerationTests {
 		// Round-robin placement: every city whose ring has open ground
 		// must get at least one fort, even at the lowest level.
 		for seed in [0, 7, 42] {
-			let base = Map<32, Terrain>(seed: seed)
+			let base = Map<64, Terrain>(seed: seed)
 			var map = clone(base)
 			let centers = cities(of: base)
 			map.placeForts(around: centers, level: 1)
@@ -392,8 +393,8 @@ struct MapGenerationTests {
 
 	@Test func fortPlacementIsDeterministic() {
 		for seed in [0, 7, 999] {
-			var a = Map<32, Terrain>(seed: seed)
-			var b = Map<32, Terrain>(seed: seed)
+			var a = Map<64, Terrain>(seed: seed)
+			var b = Map<64, Terrain>(seed: seed)
 			let centers = cities(of: a)
 			a.placeForts(around: centers, level: 3)
 			b.placeForts(around: centers, level: 3)
@@ -404,7 +405,7 @@ struct MapGenerationTests {
 		}
 	}
 
-	private func cities(of map: borrowing Map<32, Terrain>) -> [XY] {
+	private func cities(of map: borrowing Map<64, Terrain>) -> [XY] {
 		map.indices.compactMap { xy in map[xy] == .city ? xy : nil }
 	}
 
@@ -412,7 +413,7 @@ struct MapGenerationTests {
 		// River mouths sit on map edges by construction, so every generated
 		// map must have at least one river tile on its border.
 		for seed in [3, 11, 23] {
-			let map = Map<32, Terrain>(seed: seed)
+			let map = Map<64, Terrain>(seed: seed)
 			var touches = false
 			for xy in map.indices where map[xy].isRiver && map.edge(at: xy) != nil {
 				touches = true; break

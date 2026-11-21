@@ -19,13 +19,6 @@
 - Display action hints depending on current input method
   (gamepad is connected / fallback to keyboard).
 
-## AI
-
-- Strengthen the neural opponent toward >60% vs the heuristic, then self-play for
-  emergent behavior. Bundled: bc8. Pure BC of a deterministic teacher caps near 50%,
-  so >60% needs RL: revisit PPO at even matchups (`--curriculum 0`) from this prior,
-  or DAgger to close the covariate-shift gap, then self-play.
-
 ## Multiplayer
 
 - Ship the joining player's HQ roster in `joinRequest` — clients currently play

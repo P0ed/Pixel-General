@@ -1,7 +1,7 @@
 public struct TacticalSim: ~Copyable {
-	public var map: Map<32, Terrain>
-	public var control: Map<32, Country>
-	public var unitsMap: Map<32, UID>
+	public var map: Map<64, Terrain>
+	public var control: Map<64, Country>
+	public var unitsMap: Map<64, UID>
 	public var settlements: SetXY = .empty
 
 	public var players: CArray<4, Player>
@@ -29,7 +29,7 @@ public struct TacticalSim: ~Copyable {
 public extension TacticalSim {
 
 	init(
-		map: consuming Map<32, Terrain>,
+		map: consuming Map<64, Terrain>,
 		players: [Player],
 		cities: [(XY, Country)],
 		units: [Unit],
@@ -53,19 +53,20 @@ public extension TacticalSim {
 		}
 		assignControl()
 
-		let placements = [4 of CArray<1024, XY>].init { i in
+		let placements = [4 of CArray<4096, XY>].init { i in
 			guard i < players.count else { return .init(tail: .zero) }
 
 			let cityXYs = cities
 				.filter { _, c in c == players[i].country }
 				.map { xy, _ in xy }
 			let squares = (cityXYs.isEmpty ? [.zero] : cityXYs).map { $0.s49.map { $0 } }
-			var out = CArray<1024, XY>(tail: .zero)
+			var out = CArray<4096, XY>(tail: .zero)
 			var cursors = [Int](repeating: 0, count: squares.count)
 			var progressed = true
 			while progressed {
 				progressed = false
 				for k in squares.indices where cursors[k] < squares[k].count {
+					if out.isFull { return out }
 					out.add(squares[k][cursors[k]])
 					cursors[k] += 1
 					progressed = true

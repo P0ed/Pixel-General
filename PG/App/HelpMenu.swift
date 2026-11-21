@@ -151,7 +151,7 @@ private enum Help {
 	Pixel General — a turn-based wargame
 
 	A Panzer-General-inspired game of operational combat. Purchase units \
-	with prestige, maneuver them across a 32×32 tactical grid, capture cities \
+	with prestige, maneuver them across a 64×64 tactical grid, capture cities \
 	and villages for income, and destroy the enemy force.
 
 	Units are real modern platforms — infantry, artillery, anti-air, recon, \
@@ -160,7 +160,8 @@ private enum Help {
 	kills, and can be resupplied, repaired and re-equipped.
 
 	Build a roster of veterans in HQ, take them into custom scenarios, and \
-	face other commanders in LAN multiplayer.
+	face other commanders in LAN multiplayer. AI opponents and auto-battle \
+	use the same rule-based tactics.
 
 	Made by Konstantin Sukharev
 	poed@me.com

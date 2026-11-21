@@ -26,7 +26,9 @@ struct MultiplayerTests {
 	/// `PlayerType` and the never-reduced UI fields (cursor, selection,
 	/// camera), which are allowed to diverge between peers.
 	private func gameStateEqual(_ a: borrowing TacticalSim, _ b: borrowing TacticalSim) -> Bool {
-		guard a.turn == b.turn, a.d20 == b.d20 else { return false }
+		guard a.turn == b.turn, a.d20 == b.d20,
+			  a.objective == b.objective, a.settlements == b.settlements
+		else { return false }
 		for i in 0 ..< 4 {
 			guard a.players[i].country == b.players[i].country,
 				  a.players[i].prestige == b.players[i].prestige,
@@ -83,9 +85,9 @@ struct MultiplayerTests {
 
 	@Test func actionSerializationRoundTrip() {
 		let actions: [TacticalAction] = [
-			.move(3.uid, XY(5, 9)),
+			.move(3.uid, XY(63, 63)),
 			.embark(1.uid, 2.uid),
-			.disembark(7.uid, XY(0, 31)),
+			.disembark(7.uid, XY(0, 63)),
 			.attack(12.uid, 100.uid),
 			.resupply(127.uid),
 			.purchase(5, XY(16, 16)),
@@ -99,12 +101,21 @@ struct MultiplayerTests {
 	}
 
 	@Test func stateSerializationRoundTrip() {
-		let state = Self.make(seed: 12)
+		var state = Self.make(seed: 12)
+		let corner = XY(63, 63)
+		state.map[corner] = .city
+		state.control[corner] = .swe
+		state.indexSettlements()
+		state.place(0.uid, at: corner)
+		state.vision[0] = state.vision(for: .swe)
 		guard let copy: TacticalSim = decode(encode(state)) else {
 			Issue.record("State failed to decode")
 			return
 		}
 		let survived = gameStateEqual(state, copy)
 		#expect(survived, "Decoded state differs from the original")
+		#expect(copy.settlements[corner])
+		#expect(copy.unitsMap[corner] == 0.uid)
+		#expect(copy.vision[0][corner])
 	}
 }

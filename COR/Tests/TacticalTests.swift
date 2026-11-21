@@ -3,6 +3,70 @@ import Testing
 
 struct TacticalTests {
 
+	@Test func coordinateSetCoversTheMapInRowMajorOrder() {
+		let corner = XY(63, 63)
+		let otherTiles = [XY(63, 0), XY(0, 63), XY(32, 63)]
+		var set = SetXY([corner] + otherTiles)
+		set[XY(64, 63)] = true
+		set[XY(63, 64)] = true
+		set[XY(-1, 63)] = true
+
+		#expect(set[corner])
+		#expect(set.reduce(into: [XY]()) { $0.append($1) } == otherTiles + [corner])
+		#expect(SetXY.full[corner])
+		#expect(SetXY.full.reduce(into: 0) { count, _ in count += 1 } == 4096)
+		set[corner] = false
+		#expect(!set[corner])
+	}
+
+	@Test func movementAndVisionReachTheFarEdge() {
+		var unit = Unit(model: .regular, country: .ger)
+		unit.reset()
+		var sim = TacticalSim(
+			map: Map(zero: .field),
+			players: [Player(country: .ger)],
+			cities: [],
+			units: []
+		)
+		let start = XY(62, 62)
+		let corner = XY(63, 63)
+		let uid = sim.spawn(unit, at: start)
+		sim.vision[0] = sim.vision(for: uid)
+
+		#expect(sim.vision[0][corner])
+		#expect(!sim.vision[0][XY(64, 63)])
+		#expect(sim.moves(for: uid).setXY[corner])
+		_ = sim.reduce(.move(uid, corner))
+		#expect(sim.position[uid] == corner)
+		#expect(sim.unitAt(corner)?.country == .ger)
+
+		for xy in [XY(62, 62), XY(62, 63), XY(63, 62)] { sim.map[xy] = .sea }
+		sim.units[uid].reset()
+		let hasMoves = sim.hasMoves(for: uid)
+		#expect(!hasMoves)
+		#expect(sim.reduce(.move(uid, XY(64, 63))).isEmpty)
+		#expect(sim.position[uid] == corner)
+	}
+
+	@Test func fullDeploymentBufferFallsBackToTheRestOfTheMap() {
+		var map = Map<64, Terrain>(zero: .field)
+		let corner = XY(63, 63)
+		map[corner] = .sea
+		let cities: [(XY, Country)] = (0 ..< 100).map { (XY($0 % 10 + 3, $0 / 10 + 3), .ger) }
+		for (city, _) in cities { map[city] = .city }
+		var ship = Unit(model: .destroyer, country: .ger)
+		ship.reset()
+
+		let sim = TacticalSim(
+			map: map,
+			players: [Player(country: .ger)],
+			cities: cities,
+			units: [ship]
+		)
+		#expect(sim.position[0] == corner)
+		#expect(sim.unitAt(corner)?.type.isNaval == true)
+	}
+
 	private static func players(
 		types: [PlayerType] = [.human, .ai, .ai, .ai]
 	) -> [Player] {
@@ -21,7 +85,7 @@ struct TacticalTests {
 			seed: 0
 		)
 
-		#expect(sim.map.size == 32)
+		#expect(sim.map.size == 64)
 		#expect(sim.players.count == 4)
 		#expect(sim.units.count > 0, "No units placed")
 		var cityCount = 0
@@ -239,16 +303,17 @@ struct TacticalTests {
 			players: players,
 			terrain: terrain,
 			cities: [
-				(XY(3, 3), .fin),
-				(XY(7, 3), .swe),
-				(XY(28, 28), .rus),
-				(XY(28, 3), .usa),
-			]
+				(XY(6, 6), .fin),
+				(XY(14, 6), .swe),
+				(XY(56, 56), .rus),
+				(XY(56, 6), .usa),
+			],
+			size: 64
 		)
 
-		#expect(centers[.axis] == XY(5, 5))
-		#expect(centers[.soviet] == XY(26, 26))
-		#expect(centers[.allies] == XY(26, 5))
+		#expect(centers[.axis] == XY(10, 10))
+		#expect(centers[.soviet] == XY(53, 53))
+		#expect(centers[.allies] == XY(53, 10))
 	}
 
 	@Test func seaIsImpassableOnlyToLandUnits() {
@@ -349,7 +414,7 @@ struct TacticalTests {
 		// embarks it, then moves again. The sim position after the second move
 		// must match the last tile of the emitted move event (what the sprite
 		// animates to).
-		let map = Map<32, Terrain>(zero: .field)
+		let map = Map<64, Terrain>(zero: .field)
 		let players = [Player(country: .usa, type: .human, prestige: 0xF00)]
 		var heli = Unit(model: .mh6, country: .usa)
 		heli.reset()
@@ -405,7 +470,7 @@ struct TacticalTests {
 		// A move ambushed by a hidden enemy on the *first* step must not emit a
 		// move event whose path runs past where the unit actually stops. The
 		// sprite animates the event's path; the sim stores `pos`. They must agree.
-		let map = Map<32, Terrain>(zero: .field)
+		let map = Map<64, Terrain>(zero: .field)
 		let players = [
 			Player(country: .usa, type: .human, prestige: 0xF00),
 			Player(country: .rus, type: .ai, prestige: 0xF00),
@@ -453,7 +518,7 @@ struct TacticalTests {
 		// An air unit entering charged enemy AA range stops at the first
 		// covered tile and takes one overwatch shot; the charge is spent until
 		// the AA owner's end of turn re-arms it.
-		let map = Map<32, Terrain>(zero: .field)
+		let map = Map<64, Terrain>(zero: .field)
 		let players = [
 			Player(country: .usa, type: .human, prestige: 0xF00),
 			Player(country: .rus, type: .ai, prestige: 0xF00),
@@ -568,7 +633,7 @@ struct TacticalTests {
 	/// `controller`, for exercising `winner` in isolation. fin = axis (attacker),
 	/// rus = soviet (defender).
 	private static func objectiveSim(cityXY: XY, controller: Country) -> TacticalSim {
-		var map = Map<32, Terrain>(zero: .field)
+		var map = Map<64, Terrain>(zero: .field)
 		map[cityXY] = .city
 		let players = [
 			Player(country: .fin, type: .human, prestige: 0xF00),
@@ -618,7 +683,7 @@ struct TacticalTests {
 	/// Two-city field sim: swe (axis) owns (0, 0), rus (soviet) owns (7, 7),
 	/// and `control` splits along their diagonal.
 	private static func supplySim() -> TacticalSim {
-		var map = Map<32, Terrain>(zero: .field)
+		var map = Map<64, Terrain>(zero: .field)
 		map[XY(0, 0)] = .city
 		map[XY(7, 7)] = .city
 		let players = [

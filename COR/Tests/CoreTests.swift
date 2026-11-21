@@ -4,8 +4,8 @@ import Testing
 struct CoreTests {
 
 	private static func battle(units: [Unit] = []) -> TacticalSim {
-		var map = Map<32, Terrain>(zero: .field)
-		let cities: [(XY, Country)] = [(XY(5, 5), .ger), (XY(26, 26), .usa)]
+		var map = Map<64, Terrain>(zero: .field)
+		let cities: [(XY, Country)] = [(XY(5, 5), .ger), (XY(63, 63), .usa)]
 		for (xy, _) in cities { map[xy] = .city }
 		return TacticalSim(
 			map: consume map,
@@ -98,9 +98,14 @@ struct CoreTests {
 		var hq = clone(core.hq)
 		hq.player.prestige = 900
 		core.store(hq)
+		let corner = XY(63, 63)
 		if hasBattle {
-			var battle = Self.battle(units: [Unit(model: .leo1, country: .ger)])
+			var unit = Unit(model: .leo1, country: .ger)
+			unit.reset()
+			var battle = Self.battle(units: [unit])
 			battle.turn = 6
+			battle.place(0.uid, at: corner)
+			battle.vision[0] = battle.vision(for: .ger)
 			core.startScenario(battle)
 		}
 		guard let restored: Core = decode(encode(core)) else {
@@ -119,6 +124,10 @@ struct CoreTests {
 			let model = battle.units[0].model
 			#expect(turn == 6)
 			#expect(model == .leo1)
+			#expect(battle.map[corner] == .city)
+			#expect(battle.control[corner] == .usa)
+			#expect(battle.unitsMap[corner] == 0.uid)
+			#expect(battle.vision[0][corner])
 		}
 	}
 }

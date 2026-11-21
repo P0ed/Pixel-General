@@ -13,9 +13,6 @@ extension MenuItem {
 					.toggle(icon: .toggle4(settings.animationSpeed), status: "Animation speed") {
 						settings.toggleAnimation()
 					},
-					.toggle(icon: .toggle(settings.ai), status: "Neural opponent") {
-						settings.ai.toggle()
-					},
 				],
 				leftButtons: [.back, .space, .space, .space]
 			)

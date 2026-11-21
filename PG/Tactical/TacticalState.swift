@@ -98,7 +98,8 @@ extension TacticalState {
 		case .target(.next): nextUnit()
 		case .tile(let xy): select(xy)
 		case .scale(let value): { ui.scale = value; return .none }()
-		case .pan(let dxy): handlePan(dxy)
+		case .pan(let offset):
+			{ ui.camera = ui.camera.panned(by: offset, size: sim.map.size); return .none }()
 		case .menu: .presentation(.menu)
 		default: .none
 		}
@@ -254,11 +255,6 @@ extension TacticalState {
 			}
 		}
 		ui.selectedUnit = .none
-		return .none
-	}
-
-	private mutating func handlePan(_ dxy: XY) -> TacticalInputReaction {
-		ui.camera = (ui.camera + dxy).clamped(sim.map.size)
 		return .none
 	}
 }

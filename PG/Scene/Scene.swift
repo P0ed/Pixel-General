@@ -375,10 +375,10 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		)
 	}
 
-	private func gridOffset(for point: CGPoint) -> XY {
-		XY(
-			Int((point.x / CGSize.tile.width - point.y / CGSize.tile.height).rounded()),
-			Int((point.x / CGSize.tile.width + point.y / CGSize.tile.height).rounded())
+	private func gridOffset(for point: CGPoint) -> CGPoint {
+		CGPoint(
+			x: point.x / CGSize.tile.width - point.y / CGSize.tile.height,
+			y: point.x / CGSize.tile.width + point.y / CGSize.tile.height
 		)
 	}
 

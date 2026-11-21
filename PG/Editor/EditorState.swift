@@ -2,7 +2,7 @@ import Foundation
 import COR
 
 struct EditorState: ~Copyable {
-	var map: Map<32, Terrain>
+	var map: Map<64, Terrain>
 	var brush: Terrain = .field
 	var cursor: XY = .zero
 	var camera: XY = .zero
@@ -48,7 +48,8 @@ extension EditorState {
 		case .menu: { intent = .menu; return nil }()
 		case .tile(let xy): tileTap(xy)
 		case .scale(let value): { scale = value; return nil }()
-		case .pan(let dxy): handlePan(dxy)
+		case .pan(let offset):
+			{ camera = camera.panned(by: offset, size: map.size); return nil }()
 		default: nil
 		}
 		if let intent { return .presentation(intent) }
@@ -106,11 +107,6 @@ private extension EditorState {
 		guard map.contains(xy) else { return nil }
 		cursor = xy
 		return .paint(xy, brush)
-	}
-
-	mutating func handlePan(_ dxy: XY) -> EditorAction? {
-		camera = (camera + dxy).clamped(map.size)
-		return nil
 	}
 
 	func cycleBrush(reversed: Bool) -> EditorAction? {
@@ -175,6 +171,7 @@ private extension EditorState {
 	mutating func decodeMap(_ str: String) {
 		map.indices.forEach { xy in map[xy] = .field }
 		let lines = str.split(separator: "\n", omittingEmptySubsequences: false)
+		// Rows are saved from north to south, so smaller maps stay in the northwest.
 		for (lineIdx, line) in lines.enumerated() where lineIdx < map.size {
 			let y = map.size - 1 - lineIdx
 			for (x, ch) in line.enumerated() where x < map.size {

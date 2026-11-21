@@ -5,13 +5,11 @@ The codebase is split into two modules:
 - **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI, with no UI/SpriteKit dependency.
 - **PG** — the app/presentation layer: composite scene state, input interpretation, presentation intents, SpriteKit scenes and nodes, rendering, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`.
 
-A third target, **Train**, is a macOS-only command-line tool for the LSTM opponent's
-training pipeline. PG, Train, and the tests all build the same local-package `COR`
-product; see [AI](./AI.md).
+PG and the tests build the same local-package `COR` product.
 
 Two game modes:
 - **HQ** (unit management),
-- **Tactical** (32×32 grid combat).
+- **Tactical** (64×64 grid combat).
 
 ### Mode Pattern
 
@@ -61,8 +59,8 @@ The same file provides `encode(borrowing A) -> Data` and `decode(Data) -> A?` fo
 |------|------|---------|
 | `CArray<N, Element>` | `COR/Foundation/CArray.swift` | Fixed-capacity array, must be used in game mechanics instead of `Array<Element>` |
 | `Speicher<N, Element: DeadOrAlive>` | `COR/Foundation/Speicher.swift` | Same as CArray + quick elements removal and slot reuse |
-| `Map<Element>` | `COR/Foundation/Map.swift` | 32×32 grid |
-| `SetXY` | `COR/Foundation/SetXY.swift` | Efficient coordinate set (visibility, movement, the settlement index); iterates row-major like `Map.indices` |
+| `Map<size, Element>` | `COR/Foundation/Map.swift` | Fixed-size grid used at 64×64 for tactical battles and the editor |
+| `SetXY` | `COR/Foundation/SetXY.swift` | Coordinate set with 64 rows of 64 bits for visibility, movement, and settlements. Iterates in the same row-major order as `Map.indices`. |
 | `D20` | `COR/Foundation/D20.swift` | PRNG for combat resolution |
 
 ### State
@@ -77,14 +75,14 @@ returns surviving non-auxiliary units and remaining prestige to HQ, clears the
 battle, and switches back. `store` persists edits to either sim; storing HQ
 clears the active battle.
 
-Save slots contain the native `Core` layout. When that layout changes,
-incompatible data falls back to a fresh HQ in `UserDefaults.load(slot:)`.
-App-level `Settings` (sound, animation speed, and neural opponent selection)
-live separately in `PG/Scene/Settings.swift`.
+Save slots contain the native `Core` layout. Slots written with the 32×32
+layout open a fresh HQ through `UserDefaults.load(slot:)`. Sound and animation
+preferences are stored separately and carry over. The editor loads older maps
+in the northwest corner of its 64×64 grid and fills the extra space with fields.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.
 
-Each `TacticalAction` reducer opens with a guard on its sim-level legality predicate — `canMove` / `canAttack` / `canEmbark` / `canDisembark` / `canResupply` / `canBuy`, colocated with the reducer it mirrors — and an illegal action leaves the sim bitwise-unchanged (see the `reduce` doc in `COR/Tactical/TacticalReaction.swift`). The LSTM action masks and the heuristic AIs consult the same predicates, so mask/reducer/AI legality cannot drift. `TacticalSim.settlements: SetXY` indexes the settlement tiles once at battle creation (the map never changes during a battle, only `control` does); turn bookkeeping, the AIs, and the masks iterate it instead of rescanning the map.
+Each `TacticalAction` reducer opens with a guard on its sim-level legality predicate — `canMove` / `canAttack` / `canEmbark` / `canDisembark` / `canResupply` / `canBuy`, colocated with the reducer it mirrors — and an illegal action leaves the sim bitwise-unchanged (see the `reduce` doc in `COR/Tactical/TacticalReaction.swift`). The heuristic AI consults the same predicates. `TacticalSim.settlements: SetXY` indexes settlement tiles at battle creation. Turn bookkeeping and the AI use this index while ownership changes in `control`. See [Tactical AI](./AI.md).
 
 ### Concurrency
 
@@ -120,8 +118,9 @@ guarded by `COR/Tests/MultiplayerTests.swift`.
   host. PG-only `.presentation` reactions are never networked.
 - **Protocol** (`PG/Networking/Messages.swift`) — `hello(version)` →
   `joinRequest` → `joinAccept(seat)` + `lobby(snapshot)` → `start(state)` →
-  `action(…)` relay → `leave`. Payloads are `encode(_:)` native bytes; peers
-  must run the same build on the same architecture (see `Connection.swift`).
+  `action(…)` relay → `leave`. Protocol 4 carries 64×64 snapshots and rejects
+  older peers during the handshake. Payloads are `encode(_:)` native bytes.
+  Peers must run the same build on the same architecture (see `Connection.swift`).
 - **Lobby** — HQ menu *Host LAN* / *Join LAN* (`PG/HQ/HQLobby.swift`). The
   host configures four seats (country, human–AI–open cycle, prestige), sees
   joins live and starts; clients enter `ip:port` (default port

@@ -1,6 +1,6 @@
 import GameplayKit
 
-public extension Map<32, Terrain> {
+public extension Map<64, Terrain> {
 
 	/// `terrain` is the dominant terrain of the generated map: forests raise
 	/// humidity.
@@ -343,7 +343,7 @@ public extension Map<32, Terrain> {
 	/// is also impassable so parallel rivers keep a gap — a tributary
 	/// (`mouth == nil`) instead pays a penalty there and terminates on the
 	/// first river tile it touches.
-	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt16? {
+	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt32? {
 		guard contains(xy), !self[xy].isSea else { return nil }
 		if !hasNoSeaNeighbors(at: xy), mouth.map({ $0 == xy }) != true { return nil }
 		if self[xy].isRiver { return mouth == nil ? 1 : nil }
@@ -353,7 +353,7 @@ public extension Map<32, Terrain> {
 		let local = height.value(at: xy.simd)
 		let lift = max(0, min(2, 0.75 * macro + 0.25 * local + 1))
 		let bend = max(0, min(2, meander.value(at: xy.simd) + 1))
-		var cost = UInt16(3 + lift * lift * 16 + bend * bend * 24) + wiggle(xy, salt)
+		var cost = UInt32(3 + lift * lift * 16 + bend * bend * 24) + wiggle(xy, salt)
 		if near { cost += 40 }
 		if edge(at: xy) != nil, xy != mouth { cost += 40 }
 		return cost
@@ -368,9 +368,9 @@ public extension Map<32, Terrain> {
 	/// Per-tile jitter hashed from coordinates and a per-river salt — meander
 	/// that doesn't depend on RNG draw order, so carving stays reproducible
 	/// for a given seed.
-	private func wiggle(_ xy: XY, _ salt: UInt64) -> UInt16 {
+	private func wiggle(_ xy: XY, _ salt: UInt64) -> UInt32 {
 		var mix = D20(seed: salt &+ UInt64(bitPattern: Int64(xy.y &* 64 &+ xy.x)))
-		return UInt16(mix.next() & 3)
+		return UInt32(mix.next() & 3)
 	}
 
 	private func hasNoRivers(at xy: XY) -> Bool {
@@ -516,9 +516,9 @@ public extension Map<32, Terrain> {
 	/// (pre-road) map, from one Dijkstra flood per city. `.max` marks pairs
 	/// with no route at all — opposite banks of an unbridgable river — that
 	/// no road should attempt.
-	private func travelCosts(between cities: [XY]) -> [[UInt16]] {
+	private func travelCosts(between cities: [XY]) -> [[UInt32]] {
 		var costs = Array(
-			repeating: Array(repeating: UInt16.max, count: cities.count),
+			repeating: Array(repeating: UInt32.max, count: cities.count),
 			count: cities.count
 		)
 		cities.indices.forEach { i in costs[i][i] = 0 }
@@ -535,12 +535,12 @@ public extension Map<32, Terrain> {
 	/// Prim's minimum spanning forest over the travel-cost matrix. When
 	/// rivers split the map each side grows its own tree, so every city
 	/// still joins the cheapest network available to it.
-	private func spanningEdges(costs: [[UInt16]]) -> [(a: Int, b: Int, w: UInt16)] {
+	private func spanningEdges(costs: [[UInt32]]) -> [(a: Int, b: Int, w: UInt32)] {
 		let n = costs.count
-		var linkW = Array(repeating: UInt16.max, count: n)
+		var linkW = Array(repeating: UInt32.max, count: n)
 		var linkTo = Array(repeating: -1, count: n)
 		var inTree = Array(repeating: false, count: n)
-		var edges = [] as [(a: Int, b: Int, w: UInt16)]
+		var edges = [] as [(a: Int, b: Int, w: UInt32)]
 		linkW[0] = 0
 
 		(0 ..< n).forEach { _ in
@@ -568,11 +568,11 @@ public extension Map<32, Terrain> {
 	/// graph (Floyd–Warshall over at most 16 cities), refreshed after each
 	/// pick so one new link can cure several detours.
 	private func detourEdges(
-		costs: [[UInt16]],
+		costs: [[UInt32]],
 		carved: [(a: Int, b: Int)]
 	) -> [(a: Int, b: Int)] {
 		let n = costs.count
-		let far = 1 << 20
+		let far = UInt32.max / 2
 		var net = Array(repeating: Array(repeating: far, count: n), count: n)
 		(0 ..< n).forEach { i in net[i][i] = 0 }
 
@@ -586,7 +586,7 @@ public extension Map<32, Terrain> {
 			}
 		}
 		carved.forEach { e in
-			net[e.a][e.b] = Int(costs[e.a][e.b])
+			net[e.a][e.b] = costs[e.a][e.b]
 			net[e.b][e.a] = net[e.a][e.b]
 		}
 		relax()
@@ -607,7 +607,7 @@ public extension Map<32, Terrain> {
 			}
 			guard let pick else { return }
 			extras.append(pick)
-			net[pick.a][pick.b] = Int(costs[pick.a][pick.b])
+			net[pick.a][pick.b] = costs[pick.a][pick.b]
 			net[pick.b][pick.a] = net[pick.a][pick.b]
 			relax()
 		}
@@ -686,9 +686,10 @@ public extension Map<32, Terrain> {
 	}
 
 	private func bridgableRiver(at r: XY, from l: XY) -> Bool {
+		guard self[r].isRiver, self[l].isBridgable else { return false }
+		let step = r - l
 		let n4 = r.n4
-		return self[r].isRiver
-		&& self[l].isBridgable && self[r + r + r - l - l].isBridgable
+		return self[r + step + step].isBridgable
 		&& (
 			self[n4[0]].isRiver && self[n4[2]].isRiver
 			|| self[n4[1]].isRiver && self[n4[3]].isRiver
@@ -699,7 +700,7 @@ public extension Map<32, Terrain> {
 	/// buildings are nearly free, open ground is cheap, and forest/hills cost
 	/// progressively more so a route only carves through them when there's no
 	/// gentler way around. Rivers are passable solely where a bridge fits.
-	private func stepCost(to: XY, from l: XY) -> UInt16? {
+	private func stepCost(to: XY, from l: XY) -> UInt32? {
 		let t = self[to]
 		if t.hasRoad { return 1 }
 		switch t {
@@ -731,10 +732,10 @@ public extension Map<32, Terrain> {
 	private func shortestPath(
 		from start: XY,
 		reached: (XY) -> Bool,
-		cost: (XY, XY) -> UInt16?
+		cost: (XY, XY) -> UInt32?
 	) -> [XY]? {
-		var dist = Map<32, UInt16>(zero: .max)
-		var prev = Map<32, UInt16>(zero: 0)
+		var dist = Map<64, UInt32>(zero: .max)
+		var prev = Map<64, UInt16>(zero: 0)
 		guard let goal = dijkstra(from: start, reached: reached, cost: cost, dist: &dist, prev: &prev)
 		else { return nil }
 
@@ -752,9 +753,9 @@ public extension Map<32, Terrain> {
 
 	/// Travel cost from `start` to every tile over `stepCost` terrain,
 	/// flooded to exhaustion; `.max` = unreachable.
-	private func distances(from start: XY) -> Map<32, UInt16> {
-		var dist = Map<32, UInt16>(zero: .max)
-		var prev = Map<32, UInt16>(zero: 0)
+	private func distances(from start: XY) -> Map<64, UInt32> {
+		var dist = Map<64, UInt32>(zero: .max)
+		var prev = Map<64, UInt16>(zero: 0)
 		_ = dijkstra(
 			from: start,
 			reached: { _ in false },
@@ -768,19 +769,19 @@ public extension Map<32, Terrain> {
 	/// Core of `shortestPath`/`distances`: relaxes `dist`/`prev` outward
 	/// from `start` and returns the first finalized tile satisfying
 	/// `reached`, or `nil` once the flood exhausts. Lazy deletion pushes one
-	/// heap entry per relaxation — at most the grid's directed edge count,
-	/// 3969 for 32×32 — so 4096 never overflows.
+	/// heap entry per relaxation. The 64×64 grid has 16,128 directed edges,
+	/// so 16,384 entries cover every possible relaxation plus the start.
 	private func dijkstra(
 		from start: XY,
 		reached: (XY) -> Bool,
-		cost: (XY, XY) -> UInt16?,
-		dist: inout Map<32, UInt16>,
-		prev: inout Map<32, UInt16>
+		cost: (XY, XY) -> UInt32?,
+		dist: inout Map<64, UInt32>,
+		prev: inout Map<64, UInt16>
 	) -> XY? {
 		dist[start] = 0
 
-		var heapD = CArray<4096, UInt16>(head: 0, tail: 0)
-		var heapL = CArray<4096, XY>(head: start, tail: .zero)
+		var heapD = CArray<16384, UInt32>(head: 0, tail: 0)
+		var heapL = CArray<16384, XY>(head: start, tail: .zero)
 
 		func siftUp(_ from: Int) {
 			var i = from
@@ -823,7 +824,7 @@ public extension Map<32, Terrain> {
 			for i in n4.indices {
 				let nb = n4[i]
 				guard contains(nb), let w = cost(topL, nb) else { continue }
-				let nd = topD &+ w
+				let nd = topD + w
 				if nd < dist[nb] {
 					dist[nb] = nd
 					prev[nb] = UInt16(topL.y * size + topL.x + 1)

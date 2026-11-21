@@ -1,8 +1,8 @@
 # Game Mechanics
 
-Panzer-General-style wargame. Combat plays out on a 32×32 tactical grid;
-units are purchased with prestige, fight, gain experience, and capture cities.
-All mechanics use integer arithmetic on inline state (see [Architecture](./Architecture.md)).
+Combat plays out on a 64×64 tactical grid. Units are purchased with prestige,
+fight, gain experience, and capture cities. AI seats and auto-battle use the same
+rule-based opponent. [Tactical AI](./AI.md)
 
 ## Turn Structure
 
@@ -339,8 +339,8 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   seat's holdings cluster around its spawn), and villages/airfields follow
   their nearest city as usual. Map generation guarantees the city nearest
   each spawn center an adjacent airfield, clearing forest or hill for the
-  strip if it must. An empty `spawns` keeps the legacy index-proportional
-  split — trainers and tests are byte-identical to before.
+  strip if it must. With no spawn locations, city shares are assigned by
+  their order on the map.
 - Custom scenarios offer five spawn options
   `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
   west, center); each seat picks **I, II, III, IV, V, Random** with a menu

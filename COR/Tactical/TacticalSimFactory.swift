@@ -2,7 +2,7 @@ public extension TacticalSim {
 
 	init(new scenario: Scenario) {
 		let spawns = scenario.resolvedSpawnPoints
-		var map = Map<32, Terrain>(
+		var map = Map<64, Terrain>(
 			seed: scenario.seed,
 			players: scenario.players.count,
 			terrain: scenario.terrain,
@@ -23,17 +23,19 @@ public extension TacticalSim {
 			level: scenario.fortLevel
 		)
 		let units = scenario.units.mapInPlace { u in u.reset() }
+		let navalCenters = Self.navalCenters(
+			players: scenario.players,
+			terrain: scenario.terrain,
+			cities: cities,
+			size: map.size
+		)
 
 		self.init(
 			map: map,
 			players: scenario.players,
 			cities: cities,
 			units: units,
-			navalCenters: Self.navalCenters(
-				players: scenario.players,
-				terrain: scenario.terrain,
-				cities: cities
-			)
+			navalCenters: navalCenters
 		)
 		self.objective = scenario.objective
 	}
@@ -46,7 +48,8 @@ public extension TacticalSim {
 	static func navalCenters(
 		players: [Player],
 		terrain: [9 of Terrain],
-		cities: [(XY, Country)]
+		cities: [(XY, Country)],
+		size: Int
 	) -> [Team: XY] {
 		var teams: [Team] = []
 		for player in players where player.alive && player.country.team != .none {
@@ -57,14 +60,14 @@ public extension TacticalSim {
 		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
 
 		func cellCenter(_ index: Int) -> XY {
-			XY(index % 3, 2 - index / 3).cellCenter(size: 32)
+			XY(index % 3, 2 - index / 3).cellCenter(size: size)
 		}
 
 		let teamCenters = teams.map { team in
 			let anchors = cities.compactMap { xy, country in
 				country.team == team ? xy : nil
 			}
-			guard !anchors.isEmpty else { return XY(16, 16) }
+			guard !anchors.isEmpty else { return XY(size / 2, size / 2) }
 			return XY(
 				anchors.reduce(0) { $0 + $1.x } / anchors.count,
 				anchors.reduce(0) { $0 + $1.y } / anchors.count
@@ -124,7 +127,7 @@ public extension TacticalSim {
 		countries: [Country],
 		defending: Team?,
 		spawns: [XY],
-		map: borrowing Map<32, Terrain>
+		map: borrowing Map<64, Terrain>
 	) -> [(XY, Country)] {
 		let cityXYs: [XY] = map.indices.compactMap { xy in
 			map[xy] == .city ? xy : nil

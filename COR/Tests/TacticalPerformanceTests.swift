@@ -76,7 +76,7 @@ struct TacticalPerformanceTests {
 		unsafe print("""
 		── TacticalSim AI-battle performance ──
 		  match-up:      \(Self.countries.map(String.init(describing:)).joined(separator: " vs "))
-		  map:           32×32, \(Self.runs) runs
+		  map:           64×64, \(Self.runs) runs
 		  resolved:      \(resolvedCount)/\(Self.runs)
 		  total time:    \(String(format: "%.3f", secs))s
 		  avg / battle:  \(String(format: "%.3f", secs / Double(Self.runs)))s

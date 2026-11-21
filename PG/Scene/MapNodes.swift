@@ -23,12 +23,10 @@ extension MapNodes {
 		guard let scene = tiles.scene else { return .none }
 
 		let location = tiles.convert(point, from: scene)
-		return .tile(
-			XY(
-				tiles.tileColumnIndex(fromPosition: location),
-				tiles.tileRowIndex(fromPosition: location)
-			)
-		)
+		let x = tiles.tileColumnIndex(fromPosition: location)
+		let y = tiles.tileRowIndex(fromPosition: location)
+		guard (0 ..< size).contains(x), (0 ..< size).contains(y) else { return nil }
+		return .tile(XY(x, y))
 	}
 
 	func layer(at xy: XY) -> Int {

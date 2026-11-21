@@ -26,7 +26,7 @@ public extension TacticalSim {
 	@inline(__always) @discardableResult
 	private func fill(for uid: UID, target: XY?, earlyExit: Bool, into mov: inout Moves) -> Bool {
 		let unit = units[uid]
-		if !unit.canMove { return false }
+		guard unit.canMove, map.contains(mov.start) else { return false }
 
 		let team = unit.country.team
 		let air = unit.isAir
@@ -43,8 +43,8 @@ public extension TacticalSim {
 
 		let r = unit.mov
 		mov.moves[position[uid]] = r * 2 + 1
-		var front = CArray<1024, XY>(head: position[uid], tail: .zero)
-		var next = CArray<1024, XY>(tail: .zero)
+		var front = CArray<4096, XY>(head: position[uid], tail: .zero)
+		var next = CArray<4096, XY>(tail: .zero)
 
 		for _ in 0 ..< r where !front.isEmpty {
 			for fi in front.indices {
@@ -57,6 +57,7 @@ public extension TacticalSim {
 
 				for i in n4.indices {
 					let xy = n4[i]
+					if !map.contains(xy) { continue }
 					if mov[xy] { continue }
 					if enemy(at: xy) { continue }
 
@@ -71,6 +72,7 @@ public extension TacticalSim {
 					let x4 = from.x4
 					for i in x4.indices {
 						let xy = x4[i]
+						if !map.contains(xy) { continue }
 						if mov[xy] { continue }
 						if enemy(at: xy) { continue }
 
@@ -173,7 +175,7 @@ public extension TacticalSim {
 /// non-deterministic across launches.
 public struct Moves: ~Copyable {
 	public var start: XY
-	public var moves: Map<32, UInt8>
+	public var moves: Map<64, UInt8>
 
 	public subscript(_ xy: XY) -> Bool { moves[xy] != 0 }
 
