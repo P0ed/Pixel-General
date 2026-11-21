@@ -32,8 +32,10 @@ enum TileSurface: Hashable {
 	var image: CGImage? {
 		let image = CGImage.surface.tinted(color.cgColor)
 		switch self {
-		case .field, .forest, .rough, .mountain, .water, .sea:
-			return image?.noised()
+		case .forest, .rough, .mountain:
+			return image?.noised(with: .strongNoise)
+		case .field, .water, .sea:
+			return image?.noised(with: .noise)
 		case .none, .team, .country, .supply:
 			return image
 		}
@@ -151,20 +153,37 @@ private extension CGImage {
 	/// single masked draw instead of a per-pixel fill on every texture build.
 	static let noise: CGImage = .draw(size: .tile3D) { ctx in
 		var d20 = D20()
-		for y in 0 ..< Int(CGSize.tile3D.height) {
-			for x in 0 ..< Int(CGSize.tile3D.width) {
+		for y in 0 ..< ctx.height {
+			for x in 0 ..< ctx.width {
 				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.033).cgColor)
 				ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
 			}
 		}
 	}
 
-	/// Applies stable white noise only where the source image is nontransparent.
-	func noised() -> CGImage {
+	static let strongNoise: CGImage = .draw(size: .tile3D) { ctx in
+		var d20 = D20(seed: 1)
+		for y in -1 ... ctx.height {
+			// The four-pixel stagger lets the tips from adjacent rows fill the gaps.
+			let startX = (y + 1) * 4 % 10 - 10
+			for x in stride(from: startX, to: ctx.width, by: 10) {
+				ctx.setFillColor(UIColor.black.withAlphaComponent(CGFloat(d20.uniform()) * 0.1).cgColor)
+				ctx.fill([
+					CGRect(x: x + 2, y: y - 1, width: 2, height: 1),
+					CGRect(x: x, y: y, width: 6, height: 1),
+					CGRect(x: x + 2, y: y + 1, width: 2, height: 1),
+				])
+			}
+		}
+		ctx.draw(noise, in: CGRect(origin: .zero, size: .tile3D))
+	}
+
+	/// Applies speckle only where the source image is nontransparent.
+	func noised(with noise: CGImage) -> CGImage {
 		.draw(size: CGSize(width: width, height: height)) { ctx in
 			ctx.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
 			ctx.setBlendMode(.sourceAtop)
-			ctx.draw(CGImage.noise, in: CGRect(origin: .zero, size: .tile3D))
+			ctx.draw(noise, in: CGRect(origin: .zero, size: .tile3D))
 			ctx.setBlendMode(.normal)
 		}
 	}
