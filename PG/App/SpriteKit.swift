@@ -30,7 +30,27 @@ extension CGPath {
 }
 
 extension XY {
-	var point: CGPoint { pt * CGSize.tile.height }
+
+	var point: CGPoint {
+		CGPoint(x: CGFloat(x + y), y: CGFloat(y - x) * 0.5) * CGSize.tile.height
+	}
+}
+
+extension CGPoint {
+
+	var length: Double { sqrt(x * x + y * y) }
+
+	static func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+		CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+	}
+
+	static func - (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+		CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
+	}
+
+	static func * (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
+		CGPoint(x: lhs.x * rhs, y: lhs.y * rhs)
+	}
 }
 
 extension CGSize {

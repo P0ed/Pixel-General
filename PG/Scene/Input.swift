@@ -1,4 +1,3 @@
-import CoreGraphics
 import COR
 
 enum Direction { case right, up, left, down }
@@ -38,7 +37,7 @@ enum Input: Equatable {
 	case menu
 	case tile(XY)
 	case scale(Int)
-	case pan(CGPoint)
+	case pan(XY)
 }
 
 extension Input {
@@ -54,11 +53,11 @@ extension Input {
 
 extension XY {
 
-	func panned(by offset: CGPoint, size: Int) -> XY {
-		let limit = CGFloat(size - 1)
+	func panned(by offset: XY, size: Int) -> XY {
+		let limit = size - 1
 		return XY(
-			Int(min(limit, max(0, CGFloat(x) + offset.x.rounded()))),
-			Int(min(limit, max(0, CGFloat(y) + offset.y.rounded())))
+			min(limit, max(0, x + offset.x)),
+			min(limit, max(0, y + offset.y))
 		)
 	}
 

@@ -53,7 +53,7 @@ extension Terrain {
 		}
 	}
 
-	/// Compass names map onto GFX axes the way `XY.pt` puts them on screen:
+	/// Compass names map onto GFX axes the way `XY.point` puts them on screen:
 	/// E is `xPlus`, N `yMinus`, W `xMinus`, S `yPlus`.
 	@MainActor
 	var decoration: CGImage? {

@@ -375,11 +375,13 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		)
 	}
 
-	private func gridOffset(for point: CGPoint) -> CGPoint {
-		CGPoint(
-			x: point.x / CGSize.tile.width - point.y / CGSize.tile.height,
-			y: point.x / CGSize.tile.width + point.y / CGSize.tile.height
-		)
+	private func gridOffset(for point: CGPoint) -> XY {
+		func component(_ value: CGFloat) -> Int {
+			Int(min(CGFloat(Int8.max), max(CGFloat(Int8.min), value.rounded())))
+		}
+		let x = point.x / CGSize.tile.width
+		let y = point.y / CGSize.tile.height
+		return XY(component(x - y), component(x + y))
 	}
 
 	private func finishCameraPan() {

@@ -394,14 +394,22 @@ public extension Map<64, Terrain> {
 	) -> [XY] {
 		let citiesCount = 12 + density * 4
 
-		let cols = max(1, Int(Double(citiesCount).squareRoot().rounded()))
+		var cols = 1
+		while cols * (cols + 1) < citiesCount { cols += 1 }
 		let rows = (citiesCount + cols - 1) / cols
 		let minSpacing = max(2, size / 8)
 
 		let margin = 1
-		let span = Double(size - 2 * margin)
-		let cellW = span / Double(cols)
-		let cellH = span / Double(rows)
+		let span = size - 2 * margin
+		// Keep the same 53-bit draw, then place the city 15–85% across its cell.
+		let jitterSteps = 1 << 53
+		let scale = 100 * Int128(jitterSteps)
+		func coordinate(in cell: Int, outOf count: Int, using d20: inout D20) -> Int {
+			let draw = Int.random(in: 0 ... jitterSteps, using: &d20)
+			let jitter = 15 * Int128(jitterSteps) + 70 * Int128(draw)
+			let offset = (Int128(cell) * scale + jitter) * Int128(span)
+			return margin + Int(offset / (Int128(count) * scale))
+		}
 
 		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
 			contains(p)
@@ -418,11 +426,9 @@ public extension Map<64, Terrain> {
 		for i in 0 ..< citiesCount {
 			let gx = i % cols
 			let gy = i / cols
-			let jx = Double.random(in: 0.15 ... 0.85, using: &d20)
-			let jy = Double.random(in: 0.15 ... 0.85, using: &d20)
 			var p = XY(
-				margin + Int((Double(gx) + jx) * cellW),
-				margin + Int((Double(gy) + jy) * cellH)
+				coordinate(in: gx, outOf: cols, using: &d20),
+				coordinate(in: gy, outOf: rows, using: &d20)
 			).clamped(size)
 
 			if !isCitySite(p, placed),
@@ -594,13 +600,16 @@ public extension Map<64, Terrain> {
 		var extras = [] as [(a: Int, b: Int)]
 		(0 ..< max(1, n / 5)).forEach { _ in
 			var pick = nil as (a: Int, b: Int)?
-			var worst = 1.8
+			var worstDistance: UInt64 = 9
+			var worstDirect: UInt64 = 5
 			(0 ..< n).forEach { i in
 				(i + 1 ..< n).forEach { j in
 					guard costs[i][j] < .max, net[i][j] < far else { return }
-					let detour = Double(net[i][j]) / Double(costs[i][j])
-					if detour > worst {
-						worst = detour
+					let distance = UInt64(net[i][j])
+					let direct = UInt64(costs[i][j])
+					if distance * worstDirect > worstDistance * direct {
+						worstDistance = distance
+						worstDirect = direct
 						pick = (i, j)
 					}
 				}

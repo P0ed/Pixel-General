@@ -77,7 +77,8 @@ clears the active battle.
 
 Save slots contain the native `Core` layout. Slots written with the 32×32
 layout open a fresh HQ through `UserDefaults.load(slot:)`. Sound and animation
-preferences are stored separately and carry over. The editor loads older maps
+preferences are stored separately. Older settings data loads with the default
+sound and animation levels. The editor loads older maps
 in the northwest corner of its 64×64 grid and fills the extra space with fields.
 
 Game mechanics are implemented using integer arithmetics. All game state is stored inline, no heap references allowed. For performance reasons `CArray<capacity, Element>` should be used instead of `Array<Element>`. A `Unit` keeps only its runtime fields plus a `model: UnitModel` index; the fixed per-platform stats live in the global `UnitStats.table` (`COR/Model/UnitStats.swift`), so identical models share one stats row and the inline state stays small.

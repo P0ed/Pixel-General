@@ -1,5 +1,3 @@
-import CoreGraphics
-
 public struct XY: Hashable, Codable, BitwiseCopyable {
 	private var _x: Int8
 	private var _y: Int8
@@ -72,42 +70,13 @@ public extension XY {
 		XY(lhs.x / rhs.x, lhs.y / rhs.y)
 	}
 
-	var pt: CGPoint {
-		CGPoint(x: Double(x + y) * 1.0, y: Double(y - x) * 0.5)
-	}
-
 	func line(to xy: XY) -> [XY] {
-		.make { xs in
-			let dx = xy.x - x
-			let dy = xy.y - y
-			let n = max(abs(dx), abs(dy))
-			xs.reserveCapacity(n + 1)
-			let divN = n == 0 ? 0.0 : 1.0 / Double(n)
-			let xStep = Double(dx) * divN
-			let yStep = Double(dy) * divN
-			var (x, y) = (Double(x), Double(y))
-			for _ in 0...n {
-				xs.append(XY(Int(x), Int(y)))
-				x += xStep
-				y += yStep
-			}
+		let dx = xy.x - x
+		let dy = xy.y - y
+		let steps = max(abs(dx), abs(dy))
+		guard steps > 0 else { return [self] }
+		return (0 ... steps).map { i in
+			XY((x * steps + dx * i) / steps, (y * steps + dy * i) / steps)
 		}
-	}
-}
-
-public extension CGPoint {
-
-	var length: Double { sqrt(x * x + y * y) }
-
-	static func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-		CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
-	}
-
-	static func - (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-		CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
-	}
-
-	static func * (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
-		CGPoint(x: lhs.x * rhs, y: lhs.y * rhs)
 	}
 }
