@@ -6,7 +6,6 @@ extension Scene where State: ~Copyable {
 
 	@discardableResult
 	func handle(key: UIKey) -> Bool {
-		if alertState?.field != nil { return editAlertField(key) }
 		guard let nodes, let input = mode.keyboard(nodes, key) else { return false }
 		pressInput(input)
 		return true
@@ -17,7 +16,7 @@ extension Scene where State: ~Copyable {
 	/// back.
 	@discardableResult
 	func handle(keyUp key: UIKey, cancelled: Bool) -> Bool {
-		guard pressedSlot != nil, alertState?.field == nil else { return false }
+		guard pressedSlot != nil else { return false }
 		if cancelled {
 			cancelPress()
 			return true
@@ -34,7 +33,7 @@ extension Scene where State: ~Copyable {
 	/// Keyboard and gamepad presses land here: an `L`/`R` chord over an open
 	/// menu latches the side button, everything else applies immediately.
 	func pressInput(_ input: Input) {
-		guard menuState != nil, alertState == nil, let slot = input.menuSlot
+		guard menuState != nil, let slot = input.menuSlot
 		else { return apply(input) }
 		// Auto-repeat re-delivers the chord while it is still held down.
 		guard slot != pressedSlot else { return }
@@ -57,11 +56,6 @@ extension Scene where State: ~Copyable {
 
 	func processTouch(at scenePoint: CGPoint) {
 		guard let nodes, let baseNodes else { return }
-		if alertState != nil {
-			let buttons: [Input] = [.action(.a), .action(.b), .action(.c), .action(.d)]
-			baseNodes.alertActionIndex(at: scenePoint, in: self).map { apply(buttons[$0]) }
-			return
-		}
 		if menuState == nil {
 			if let input = mode.mouse(nodes, scenePoint) {
 				apply(input)

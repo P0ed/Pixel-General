@@ -1,7 +1,6 @@
 # Tactical AI
 
-AI seats and local auto-battle use the same deterministic heuristic. In LAN
-games, the host runs AI seats and relays their actions to the other peers.
+AI seats and auto-battle use the same deterministic heuristic.
 
 The heuristic assigns units to attack, hunt, defend, retreat, or support based
 on the objective, nearby settlements, and visible enemies. It rebuilds those

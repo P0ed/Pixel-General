@@ -3,7 +3,7 @@
 The codebase is split into two modules:
 
 - **COR** — the headless, deterministic game core: data structures, model, simulation state, legality rules, reducers, meaningful domain results, and AI, with no UI/SpriteKit dependency.
-- **PG** — the app/presentation layer: composite scene state, input interpretation, presentation intents, SpriteKit scenes and nodes, rendering, networking, editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`.
+- **PG** handles composite scene state, input interpretation, presentation intents, SpriteKit scenes and nodes, rendering, the editor, and save/load. Built on UIKit, it ships as a single universal app — iOS/iPadOS natively and macOS via Mac Catalyst. The app shell is an `AppDelegate` + `SceneDelegate` + `ViewController` (`PG/App.swift`) hosting one global `SKView`; `PG/App.swift` also owns the global root state `core: Core` and `settings`.
 
 PG and the tests build the same local-package `COR` product.
 
@@ -43,9 +43,9 @@ The module boundary follows this pipeline: `Sim`, domain `Action`, legality, red
 Each PG mode state wraps a COR sim and PG-owned presentation state (for example, `TacticalState = { sim: TacticalSim, ui: TacticalUI }`):
 
 - **`Sim`** (`~Copyable`) is the deterministic simulation: the map, units, players, turn counter, and the in-state `D20`. It owns `reduce` — by construction it *cannot* reference the UI half, so the reducer is a pure function of `(sim, action)`.
-- **`UI`** lives under `PG/<Mode>/` and owns cursor, camera, selection, scale, and map mode. It is mutated by `apply(input)` and reconciled after `reduce`, but is **not part of the COR module**, so it may freely diverge between peers.
+- **`UI`** lives under `PG/<Mode>/` and owns cursor, camera, selection, scale, and map mode. `apply(input)` updates it in response to input.
 
-`State.reduce(action)` runs `sim.reduce(action)` for the game-relevant mutation, then patches the UI (e.g. keeping a moved unit selected). This makes the multiplayer determinism guarantee *structural* rather than a discipline: networked peers relay only `Action`s into identical `Sim`s, while each peer's `UI` is its own.
+`State.reduce(action)` runs `sim.reduce(action)` for the game-relevant mutation, then updates the UI to reflect it. For example, it keeps a moved unit selected.
 
 ### Noncopyable State (`~Copyable`)
 
@@ -75,7 +75,8 @@ returns surviving non-auxiliary units and remaining prestige to HQ, clears the
 battle, and switches back. `store` persists edits to either sim; storing HQ
 clears the active battle.
 
-Save slots contain the native `Core` layout. Slots written with the 32×32
+Save slots contain the native `Core` layout. Battles saved with remote seats
+resume with those seats controlled by AI. Slots written with the 32×32
 layout open a fresh HQ through `UserDefaults.load(slot:)`. Sound and animation
 preferences are stored separately. Older settings data loads with the default
 sound and animation levels. The editor loads older maps
@@ -88,46 +89,3 @@ Each `TacticalAction` reducer opens with a guard on its sim-level legality predi
 ### Concurrency
 
 Strict concurrency is enabled project-wide.
-
-## Multiplayer (LAN)
-
-A Tactical battle can be played across machines as a **deterministic action
-relay**, coordinated by `NetSession` (`PG/Networking/NetSession.swift`, global
-`net`): the host generates the battle once and ships the whole encoded
-`TacticalSim`; afterwards only `TacticalAction`s travel, and every peer
-applies the same action stream through `reduce`. Because `reduce` is a pure
-function of `(state, action)` — the only randomness is the in-state seeded
-`D20` — all peers stay identical, combat rolls included. The invariant is
-guarded by `COR/Tests/MultiplayerTests.swift`.
-
-- **Topology** — star, host-authoritative. The game is strictly turn-rotated
-  (`playerIndex = turn % players.count`), so exactly one seat acts at a time.
-  The host drives its local seats and the AI for `.ai` seats, broadcasting
-  every applied action; a client sends its action as an intent and applies it
-  only when the host echoes it back (no optimistic apply). The host drops
-  out-of-turn intents.
-- **Peer-relative `PlayerType`** — after decoding the `start` state each peer
-  marks its own seat `.human` and every other seat `.remote`; only the host
-  keeps `.ai`. The existing `.human` guards in `PG/Tactical/TacticalState.swift` then stop a
-  peer from driving seats it doesn't own, and the per-peer `TacticalUI`
-  (`cursor`, `selectedUnit`, `camera`, …) may freely diverge — it lives
-  outside `TacticalSim`, so `reduce` cannot read it (see [Sim / UI split](#sim--ui-split)).
-- **Pipeline hooks** — `SceneMode.relay` inspects every locally produced
-  `.action` before Reduce (host: broadcast + apply; client: send intent +
-  suppress). The `ai` hook becomes `NetSession.nextAction`, which drains
-  actions queued from the wire and falls back to the local AI driver on the
-  host. PG-only `.presentation` reactions are never networked.
-- **Protocol** (`PG/Networking/Messages.swift`) — `hello(version)` →
-  `joinRequest` → `joinAccept(seat)` + `lobby(snapshot)` → `start(state)` →
-  `action(…)` relay → `leave`. Protocol 4 carries 64×64 snapshots and rejects
-  older peers during the handshake. Payloads are `encode(_:)` native bytes.
-  Peers must run the same build on the same architecture (see `Connection.swift`).
-- **Lobby** — HQ menu *Host LAN* / *Join LAN* (`PG/HQ/HQLobby.swift`). The
-  host configures four seats (country, human–AI–open cycle, prestige), sees
-  joins live and starts; clients enter `ip:port` (default port
-  9899) and mirror the seat table.
-- **Failure handling** — a disconnected or leaving seat is handed to the host
-  AI through the relayed `.takeover` action; when the host vanishes, clients
-  degrade to local play by taking over every seat they don't own. Saved
-  multiplayer battles load standalone the same way (`.remote → .ai` in
-  `Scenes.swift`).

@@ -12,14 +12,7 @@ extension TacticalMode {
 		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			next: { state in
-				if let net {
-					net.nextAction(state.sim, state.auto ? heuristic : { _ in nil })
-				} else {
-					state.auto ? heuristic(state.sim) : nil
-				}
-			},
-			relay: { state, action in net?.relay(state.sim, action) ?? false },
+			next: { state in state.auto ? heuristic(state.sim) : nil },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			present: { intent, nodes, state in await nodes.present(intent, state) },
@@ -35,6 +28,6 @@ extension TacticalMode {
 private extension TacticalState {
 
 	var auto: Bool {
-		sim.player.type == .ai || (sim.player.type == .human && ui.autoBattle)
+		sim.player.type == .ai || ui.autoBattle
 	}
 }

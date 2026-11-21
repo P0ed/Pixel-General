@@ -4,9 +4,7 @@ extension TacticalState {
 
 	@MainActor
 	var status: Status {
-		if sim.player.type == .remote {
-			Status(text: "day \(sim.day)\nwaiting for \(sim.player.country)")
-		} else if sim.player.type != .human {
+		if sim.player.type == .ai {
 			Status(text: "\(sim.player.country) turn")
 		} else if ui.selectedUnit != .none {
 			Status(

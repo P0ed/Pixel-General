@@ -71,7 +71,7 @@ private extension TacticalAction {
 		case .attack(let src, let dst):
 			let s = sim.position[src], d = sim.position[dst]
 			return sim.isVisibleToHuman(s) ? s : sim.isVisibleToHuman(d) ? d : nil
-		case .purchase, .takeover, .end:
+		case .purchase, .end:
 			return nil
 		}
 	}

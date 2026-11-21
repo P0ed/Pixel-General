@@ -12,12 +12,11 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	private(set) var cameraTracking = false
 	private var panOrigin: CGPoint?
 	private var panTranslation: CGPoint?
-	private(set) var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
+	private var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
 	var menuState: MenuState<Action>? { menuStack.last }
 	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
-	private(set) var alertState: Alert? { didSet { didSetAlert(oldValue) } }
 	private(set) var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
@@ -117,16 +116,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	func apply(_ input: Input) {
-		if alertState != nil {
-			switch input {
-			case .action(.a, modifiers: _): fireAlert(0)
-			case .action(.b, modifiers: _): fireAlert(1)
-			case .action(.c, modifiers: _): fireAlert(2)
-			case .action(.d, modifiers: _): fireAlert(3)
-			case .menu: alertState = nil
-			default: break
-			}
-		} else if !menuStack.isEmpty {
+		if !menuStack.isEmpty {
 			menuStack[menuStack.count - 1].apply(input)
 		} else if processing, case .pan = input {
 			_ = mode.input(&state, input)
@@ -135,10 +125,6 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		} else {
 			react(mode.input(&state, input))
 		}
-	}
-
-	func send(_ action: Action) {
-		react(.action(action))
 	}
 
 	private func react(_ reaction: InputReaction<Action, PresentationIntent>) {
@@ -150,7 +136,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			advance()
 		case .action(let action):
 			processing = true
-			let events = mode.relay(state, action) ? [] : mode.reduce(&state, action)
+			let events = mode.reduce(&state, action)
 			Task {
 				for event in events {
 					await mode.process(event, nodes, state)
@@ -172,14 +158,13 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		advance()
 	}
 
-	/// Also poked by `NetSession` when actions arrive over the wire.
-	func advance() {
-		guard !processing, menuState == nil, alertState == nil else { return }
+	private func advance() {
+		guard !processing, menuState == nil else { return }
 		if let input = pending {
 			pending = nil
 			apply(input)
 		} else if let action = mode.next(state) {
-			send(action)
+			react(.action(action))
 		}
 	}
 
@@ -187,61 +172,10 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		setMenu(menu.map { m in [m] } ?? [])
 	}
 
-	func pushMenu(_ menu: MenuState<Action>) {
-		setMenu(menuStack + [menu])
-		redrawMenu()
-	}
-
-	func popMenu() {
-		guard !menuStack.isEmpty else { return }
-		setMenu(modifying(menuStack) { stk in stk.removeLast() })
-		redrawMenu()
-	}
-
-	func replaceMenu(_ menu: MenuState<Action>) {
-		guard !menuStack.isEmpty else { return }
-		setMenu(modifying(menuStack) { stk in stk[stk.count - 1] = menu })
-		redrawMenu()
-	}
-
-	private func redrawMenu() {
-		if let menuState { baseNodes?.menu.redrawMenu(menuState) }
-	}
-
 	private func setMenu(_ stack: [MenuState<Action>]) {
 		menuStack = stack.compactMap { m in
 			m.items.isEmpty ? nil : modifying(m) { m in m.padItems() }
 		}
-	}
-
-	func showAlert(_ alert: Alert?) {
-		alertState = alert
-	}
-
-	private func fireAlert(_ index: Int) {
-		guard let alert = alertState, index < alert.actions.count else { return }
-		let text = alert.field?.text ?? ""
-		let handler = alert.actions[index].handler
-		alertState = nil
-		handler(text)
-	}
-
-	func editAlertField(_ key: UIKey) -> Bool {
-		guard let field = alertState?.field else { return false }
-		switch key.keyCode {
-		case .keyboardReturnOrEnter: apply(.action(.a))
-		case .keyboardEscape: apply(.menu)
-		case .keyboardDeleteOrBackspace:
-			if !field.text.isEmpty { alertState?.field?.text.removeLast() }
-		default:
-			let chars = key.characters
-			if !chars.isEmpty,
-				chars.unicodeScalars.allSatisfy({ $0.value >= 0x20 && $0.value != 0x7F }),
-				field.text.count + chars.count <= field.maxLength {
-				alertState?.field?.text.append(contentsOf: chars)
-			}
-		}
-		return true
 	}
 
 	func saveState() {
@@ -288,16 +222,6 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 			baseNodes?.menu.hideMenu()
 		}
 		updateStatus()
-		advance()
-	}
-
-	private func didSetAlert(_ oldValue: Alert?) {
-		switch (oldValue, alertState) {
-		case (.none, .some(let alert)): baseNodes?.showAlert(alert)
-		case (.some, .none): baseNodes?.hideAlert()
-		case (.some, .some(let alert)): baseNodes?.updateAlert(alert)
-		case (.none, .none): break
-		}
 		advance()
 	}
 

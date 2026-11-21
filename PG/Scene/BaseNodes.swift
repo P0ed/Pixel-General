@@ -4,7 +4,6 @@ import UIKit
 @MainActor
 struct BaseNodes {
 	var menu: MenuNodes
-	var alert: SKNode
 	var status: SKLabelNode
 	var icon: SKSpriteNode
 }
@@ -19,20 +18,9 @@ extension Scene where State: ~Copyable {
 	func makeBaseNodes() -> BaseNodes {
 		BaseNodes(
 			menu: addMenu(),
-			alert: addAlert(),
 			status: addStatus(),
 			icon: addIcon()
 		)
-	}
-
-	func addAlert() -> SKNode {
-		let alert = SKShapeNode(rectOf: BaseNodes.alertSize)
-		alert.fillColor = .darkGray.withAlphaComponent(0.9)
-		alert.strokeColor = .clear
-		alert.zPosition = 69.0
-		alert.isHidden = true
-		camera?.addChild(alert)
-		return alert
 	}
 
 	func addMenu() -> MenuNodes {
@@ -42,7 +30,12 @@ extension Scene where State: ~Copyable {
 	}
 
 	func addStatus() -> SKLabelNode {
-		let label = SKLabelNode(size: .s)
+		let label = SKLabelNode()
+		label.fontName = "Menlo"
+		label.fontSize = 14.0
+		label.fontColor = .white
+		label.setScale(0.5)
+		label.numberOfLines = 0
 		camera?.addChild(label)
 		label.zPosition = 67.0
 		label.horizontalAlignmentMode = .left

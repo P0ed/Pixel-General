@@ -28,11 +28,6 @@ extension UserDefaults {
 		get { data(forKey: "settings").flatMap(decode) ?? Settings() }
 		set { set(encode(newValue), forKey: "settings") }
 	}
-
-	var lanHost: Address {
-		get { string(forKey: "lanHost").flatMap(Address.init) ?? .default }
-		set { set(newValue.string, forKey: "lanHost") }
-	}
 }
 
 extension Core {

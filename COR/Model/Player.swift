@@ -1,10 +1,17 @@
 public struct Player {
 	public var country: Country
-	public var type: PlayerType
+	// Save slots store the native layout. Keep the original byte and map
+	// the former remote seat (1) to AI when loading those saves.
+	private var typeCode: UInt8
 	public var prestige: UInt16
 	public var baseLevel: UInt8
 	public var tier: UInt8
 	public var alive: Bool
+
+	public var type: PlayerType {
+		get { PlayerType(rawValue: typeCode) ?? .ai }
+		set { typeCode = newValue.rawValue }
+	}
 
 	public init(
 		country: Country = .default,
@@ -15,7 +22,7 @@ public struct Player {
 		alive: Bool = true
 	) {
 		self.country = country
-		self.type = type
+		self.typeCode = type.rawValue
 		self.prestige = prestige
 		self.baseLevel = baseLevel
 		self.tier = tier
@@ -24,7 +31,8 @@ public struct Player {
 }
 
 @frozen public enum PlayerType: UInt8, Sendable {
-	case human, remote, ai
+	case human = 0
+	case ai = 2
 }
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {

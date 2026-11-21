@@ -9,7 +9,6 @@ import COR
 @MainActor let sounds = Sounds()
 @MainActor let view = View()
 @MainActor let controller = ViewController()
-@MainActor var net: NetSession?
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {

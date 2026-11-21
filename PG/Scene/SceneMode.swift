@@ -6,7 +6,6 @@ struct SceneMode<State: ~Copyable, Action, Event, PresentationIntent, Nodes> {
 	var make: @MainActor (Scene<State, Action, Event, PresentationIntent, Nodes>) -> Nodes
 	var input: @MainActor (inout State, Input) -> InputReaction<Action, PresentationIntent>
 	var next: @MainActor (borrowing State) -> Action? = { _ in nil }
-	var relay: @MainActor (borrowing State, Action) -> Bool = { _, _ in false }
 	var reduce: @MainActor (inout State, Action) -> [Event] = { _, _ in [] }
 	var process: @MainActor (Event, Nodes, borrowing State) async -> Void
 	var present: @MainActor (PresentationIntent, Nodes, borrowing State) async -> Void

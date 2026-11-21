@@ -66,13 +66,6 @@ extension HQNodes {
 					guard let scene else { return nil }
 					return scenarioMenu(scene.state)
 				}),
-				.push(icon: .remote, status: "Host LAN", menu: {
-					guard let scene else { return nil }
-					return hostMenu(scene.state)
-				}),
-				.push(icon: .remote, status: "Join LAN", menu: {
-					joinMenu()
-				}),
 			],
 			leftButtons: [.back, .space, .space, .space],
 			rightButtons: [

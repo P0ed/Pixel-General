@@ -2,10 +2,7 @@ import Testing
 import Foundation
 @testable import COR
 
-/// Guards the invariants the multiplayer action relay rests on: `reduce` is a
-/// pure deterministic function of `(state, action)`, and states/actions
-/// survive the `encode`/`decode` wire round-trip.
-struct MultiplayerTests {
+struct TacticalSimTests {
 
 	private static func players() -> [Player] {
 		let countries: [4 of Country] = [.swe, .usa, .rus, .pak]
@@ -22,16 +19,16 @@ struct MultiplayerTests {
 		)
 	}
 
-	/// Everything `reduce` reads or writes except the peer-relative
-	/// `PlayerType` and the never-reduced UI fields (cursor, selection,
-	/// camera), which are allowed to diverge between peers.
 	private func gameStateEqual(_ a: borrowing TacticalSim, _ b: borrowing TacticalSim) -> Bool {
-		guard a.turn == b.turn, a.d20 == b.d20,
+		guard a.turn == b.turn, a.d20 == b.d20, a.players.count == b.players.count,
 			  a.objective == b.objective, a.settlements == b.settlements
 		else { return false }
 		for i in 0 ..< 4 {
 			guard a.players[i].country == b.players[i].country,
+				  a.players[i].type == b.players[i].type,
 				  a.players[i].prestige == b.players[i].prestige,
+				  a.players[i].baseLevel == b.players[i].baseLevel,
+				  a.players[i].tier == b.players[i].tier,
 				  a.players[i].alive == b.players[i].alive,
 				  a.vision[i] == b.vision[i]
 			else { return false }
@@ -51,7 +48,7 @@ struct MultiplayerTests {
 		return true
 	}
 
-	@Test func identicalActionStreamKeepsPeersIdentical() {
+	@Test func sameSeedAndActionsProduceIdenticalStates() {
 		var a = Self.make()
 		var b = Self.make()
 		var ai = AI.Plan()
@@ -77,27 +74,16 @@ struct MultiplayerTests {
 		#expect(a.turn > 0, "The action stream never advanced the turn")
 	}
 
-	@Test func takeoverHandsSeatToAI() {
-		var a = Self.make()
-		_ = a.reduce(.takeover(.usa))
-		#expect(a[.usa].type == .ai)
-	}
-
-	@Test func actionSerializationRoundTrip() {
-		let actions: [TacticalAction] = [
-			.move(3.uid, XY(63, 63)),
-			.embark(1.uid, 2.uid),
-			.disembark(7.uid, XY(0, 63)),
-			.attack(12.uid, 100.uid),
-			.resupply(127.uid),
-			.purchase(5, XY(16, 16)),
-			.takeover(.usa),
-			.end,
-		]
-		for action in actions {
-			#expect(decode(encode(action)) == action)
+	@Test func savedRemoteSeatLoadsAsAI() {
+		// An encoded Player from a save with a remote seat.
+		let bytes = Data([0, 1, 0x34, 0x12, 1, 3, 1])
+		guard let player: Player = decode(bytes) else {
+			Issue.record("Player failed to decode")
+			return
 		}
-		#expect(decode(Data()) as TacticalAction? == nil, "Size mismatch must fail, not crash")
+		#expect(player.type == .ai)
+		#expect(player.prestige == 0x1234)
+		#expect(player.alive)
 	}
 
 	@Test func stateSerializationRoundTrip() {

@@ -2,24 +2,6 @@ import SpriteKit
 import COR
 import GFX
 
-extension SKLabelNode {
-
-	enum Size: UInt8 {
-		case s = 14
-		case m = 16
-		case l = 22
-	}
-
-	convenience init(size: Size, color: SKColor = .white) {
-		self.init()
-		fontName = "Menlo"
-		fontSize = CGFloat(size.rawValue)
-		fontColor = color
-		setScale(0.5)
-		numberOfLines = 0
-	}
-}
-
 extension CGPath {
 
 	static func make(_ transform: (CGMutablePath) -> Void) -> CGPath {

@@ -187,9 +187,8 @@ the actual damage curve:
   `t1=max(0,9−dif)`, `t2=max(1,15−dif)`, `t3=max(2,20−dif)`, `t4=max(3,25−dif)`.
   Rounds = `(hp+2)/3`. Each round rolls `d20` (0–19): `>t4`→4, `>t3`→3,
   `>t2`→2, `>t1`→1, else 0 damage. `crit` may double a round (`d20>16`);
-  `evasion` may zero it (`d20>16`). The roll order — all main dice first,
-  then the per-round crit/evasion dice — is load-bearing for the multiplayer
-  relay (see [Architecture](./Architecture.md#multiplayer-lan)).
+  `evasion` may zero it (`d20>16`). The simulation rolls all main dice first,
+  then rolls for crit and evasion in each round.
 - Damage hits the unit (and its cargo). Each shot grants
   `dmg * du.value / 32` exp if the defender survives, `dmg * du.value / 24`
   if the shot kills. A kill also grants `du.stats.cost / 16` prestige
@@ -317,7 +316,8 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   **allies** (isr/pak/usa/fin/ltu/svk/hun), **soviet** (ind/irn/rus/est/lva/bel/rom/mol).
   `.none` maps to `Team.none`. Friendly fire is impossible within a team; combat
   requires cross-team.
-- `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
+- `PlayerType` is `human` for local play or `ai` for an AI-controlled seat
+  (`COR/Tactical/AI/TacticalAI.swift`).
 - At the end of the turn, a ground unit on an enemy city tile captures
   that district for its country. Airfields and surrounding terrain take the
   country of the nearest city tile by Manhattan distance, with ties resolved
@@ -337,8 +337,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 - Custom scenarios offer five spawn options
   `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
   west, center); each seat picks **I, II, III, IV, V, Random** with a menu
-  toggle. Random seats draw from the options no seat picked explicitly. LAN
-  battles spread seats in order over the same options: S, N, E, W.
+  toggle. Random seats draw from the options no seat picked explicitly.
 
 ### Objectives & victory
 
@@ -346,8 +345,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 Every battle carries an `Objective` on `TacticalSim`:
 
-- `none` — last team standing (the default; scenarios and multiplayer use
-  it, so they behave exactly as before).
+- `none` — last team standing (the default).
 - `survive(Team, day: UInt16)` — the named team wins by staying alive until the
   day count passes the deadline. If that team is annihilated first, the opposing
   team wins immediately; otherwise, once `day` exceeds the deadline, the surviving

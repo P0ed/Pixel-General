@@ -119,7 +119,6 @@ extension PlayerType {
 		self = switch self {
 		case .human: .ai
 		case .ai: .human
-		case .remote: .remote
 		}
 	}
 
@@ -128,7 +127,6 @@ extension PlayerType {
 		switch self {
 		case .human: .human
 		case .ai: .AI
-		case .remote: .remote
 		}
 	}
 }

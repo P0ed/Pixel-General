@@ -159,9 +159,9 @@ private enum Help {
 	behavior and counters. In battle they gain experience, earn skills on \
 	kills, and can be resupplied, repaired and re-equipped.
 
-	Build a roster of veterans in HQ, take them into custom scenarios, and \
-	face other commanders in LAN multiplayer. AI opponents and auto-battle \
-	use the same rule-based tactics.
+	Build a roster of veterans in HQ and take them into custom scenarios. \
+	Play against the AI or share a device with other players. Auto-battle \
+	uses the AI's tactics.
 
 	Made by Konstantin Sukharev
 	poed@me.com

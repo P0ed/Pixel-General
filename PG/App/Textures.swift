@@ -48,7 +48,6 @@ extension SKTexture {
 	static let plus = pixels(.plus)
 	static let prestige1 = pixels(.prestige1)
 	static let prestige2 = pixels(.prestige2)
-	static let remote = pixels(.remote)
 	static let restart = pixels(.restart)
 	static let rnd = pixels(.rnd)
 	static let settings = pixels(.settings)

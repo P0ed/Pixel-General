@@ -12,13 +12,7 @@ extension SKScene {
 	}
 
 	static var tactical: SKScene {
-		var state = TacticalState(sim: clone(core.tactical!))
-		if net == nil {
-			state.sim.players.modifyEach { _, p in
-				if p.type == .remote { p.type = .ai }
-			}
-		}
-		return Scene(mode: .tactical, state: state)
+		Scene(mode: .tactical, state: TacticalState(sim: clone(core.tactical!)))
 	}
 
 	static var editor: SKScene {

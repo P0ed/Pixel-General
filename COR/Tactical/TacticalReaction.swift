@@ -1,11 +1,10 @@
-@frozen public enum TacticalAction: Equatable, BitwiseCopyable {
+@frozen public enum TacticalAction: Equatable {
 	case move(UID, XY)
 	case embark(UID, UID)
 	case disembark(UID, XY)
 	case attack(UID, UID)
 	case resupply(UID)
 	case purchase(Int, XY)
-	case takeover(Country)
 	case end
 }
 
@@ -22,12 +21,8 @@ extension TacticalSim {
 
 	/// Applies `action` — the only mutation of deterministic state.
 	///
-	/// Contract: an **illegal action leaves the sim bitwise-unchanged** and
-	/// emits no events. The multiplayer host relies on this guarantee when
-	/// it applies client actions. Each reducer opens with a
-	/// guard on its legality predicate — `canMove` / `canAttack` /
-	/// `canEmbark` / `canDisembark` / `canResupply` / `canBuy` — which is
-	/// also what the heuristic consults.
+	/// An illegal action leaves the sim bitwise-unchanged and emits no events.
+	/// The tactical AI checks the same legality predicates as the reducers.
 	public mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
 		var events: [TacticalEvent] = []
 		switch action {
@@ -37,15 +32,8 @@ extension TacticalSim {
 		case .disembark(let t, let xy): disembark(unit: t, to: xy, into: &events)
 		case .resupply(let u): resupply(unit: u, into: &events)
 		case .purchase(let idx, let xy): buy(idx, at: xy, into: &events)
-		case .takeover(let c): takeover(country: c)
 		case .end: endTurn(into: &events)
 		}
 		return events
-	}
-
-	mutating func takeover(country: Country) {
-		players.modifyEach { _, p in
-			if p.country == country { p.type = .ai }
-		}
 	}
 }

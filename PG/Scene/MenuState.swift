@@ -67,17 +67,6 @@ extension MenuItem {
 		.init(icon: icon, status: .init(text: status), action: action, update: ø)
 	}
 
-	static func update(
-		icon: SKTexture,
-		status: String,
-		action: Action? = nil,
-		menu: @escaping (inout MenuState<Action>) -> Void
-	) -> Self {
-		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
-			menu(&stk[stk.count - 1])
-		})
-	}
-
 	static func toggle(
 		icon: @autoclosure @MainActor @escaping () -> SKTexture,
 		status: @autoclosure @MainActor @escaping () -> String,

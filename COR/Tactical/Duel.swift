@@ -13,10 +13,7 @@ struct Duel {
 	var crit: Bool
 	var evasion: Bool
 
-	/// The live roll. The two-phase roll order — all `rounds` main dice
-	/// first, then the per-round crit/evasion dice — is load-bearing: the
-	/// multiplayer relay compares `d20` state across peers, so the number and
-	/// order of `d20()` calls must not change.
+	/// Rolls all main dice first, then the per-round crit/evasion dice.
 	func resolve(_ d20: inout D20) -> UInt8 {
 		let ts = thresholds
 		let rounds = (Int(hp) + 2) / 3
