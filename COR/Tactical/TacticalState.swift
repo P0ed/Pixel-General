@@ -2,9 +2,6 @@ public struct TacticalSim: ~Copyable {
 	public var map: Map<32, Terrain>
 	public var control: Map<32, Country>
 	public var unitsMap: Map<32, UID>
-	/// The settlement tiles of `map`, indexed once at battle creation
-	/// (`indexSettlements`) — the map never changes during a battle, only
-	/// `control` does.
 	public var settlements: SetXY = .empty
 
 	public var players: CArray<4, Player>
@@ -98,8 +95,6 @@ public extension TacticalSim {
 				continue
 			}
 
-			// Rings exhausted — an edge-of-map city offers fewer than the
-			// seat's core + aux can need; any free tile beats crashing.
 			var fallback: XY?
 			for xy in self.map.indices where canDeploy(u, at: xy) {
 				fallback = xy
@@ -165,9 +160,6 @@ public extension TacticalSim {
 		}
 	}
 
-	/// Rebuilds the settlement index from `map`. Called by the battle
-	/// constructors; anything that mutates `map` afterwards (nothing does
-	/// today) must call it again.
 	mutating func indexSettlements() {
 		settlements = .empty
 		for xy in map.indices where map[xy].isSettlement {

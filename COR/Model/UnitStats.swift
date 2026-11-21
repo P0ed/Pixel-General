@@ -1,4 +1,4 @@
-public struct UnitStats {
+public struct UnitStats: Sendable {
 	public var type: UnitType = .supply
 	public var tier: UInt8 = 0
 	public var mov: UInt8 = 0
@@ -14,7 +14,7 @@ public struct UnitStats {
 	public var traits: Traits = []
 }
 
-public struct Traits: OptionSet, Equatable {
+public struct Traits: OptionSet, Equatable, Sendable {
 	public var rawValue: UInt16
 
 	public init(rawValue: UInt16) {
@@ -35,14 +35,14 @@ public extension Traits {
 public extension UnitStats {
 
 	// MARK: Common
-	@safe nonisolated(unsafe) static let truck = UnitStats(
+	static let truck = UnitStats(
 		type: .supply,
 		mov: 8,
 		groundDef: 3,
 		airDef: 1,
 		traits: .transport
 	)
-	@safe nonisolated(unsafe) static let regular = UnitStats(
+	static let regular = UnitStats(
 		type: .inf,
 		tier: 1,
 		mov: 3,
@@ -55,7 +55,7 @@ public extension UnitStats {
 		groundDef: 6,
 		airDef: 5
 	)
-	@safe nonisolated(unsafe) static let engineer = UnitStats(
+	static let engineer = UnitStats(
 		type: .inf,
 		tier: 2,
 		mov: 3,
@@ -70,7 +70,7 @@ public extension UnitStats {
 		airDef: 6,
 		traits: .engineer
 	)
-	@safe nonisolated(unsafe) static let fpv = UnitStats(
+	static let fpv = UnitStats(
 		type: .art,
 		tier: 2,
 		mov: 3,
@@ -84,7 +84,7 @@ public extension UnitStats {
 		airDef: 5,
 		traits: [.noRetaliation, .cheap]
 	)
-	@safe nonisolated(unsafe) static let art155 = UnitStats(
+	static let art155 = UnitStats(
 		type: .art,
 		tier: 1,
 		mov: 2,
@@ -98,7 +98,7 @@ public extension UnitStats {
 		airDef: 4,
 		traits: .cheap
 	)
-	@safe nonisolated(unsafe) static let cargo = UnitStats(
+	static let cargo = UnitStats(
 		type: .cargo,
 		tier: 1,
 		mov: 6,
@@ -107,7 +107,7 @@ public extension UnitStats {
 		airDef: 3,
 		traits: .transport
 	)
-	@safe nonisolated(unsafe) static let destroyer = UnitStats(
+	static let destroyer = UnitStats(
 		type: .destroyer,
 		tier: 2,
 		mov: 7,
@@ -122,7 +122,7 @@ public extension UnitStats {
 		airDef: 9,
 		traits: [.radar, .optics]
 	)
-	@safe nonisolated(unsafe) static let cruiser = UnitStats(
+	static let cruiser = UnitStats(
 		type: .cruiser,
 		tier: 2,
 		mov: 6,
@@ -141,7 +141,7 @@ public extension UnitStats {
 
 public extension UnitStats {
 
-	@safe nonisolated(unsafe) static let table: [256 of UnitStats] = .init { i in
+	static let table: [256 of UnitStats] = .init { i in
 		guard let model = UnitModel(rawValue: UInt8(i)) else { return .init() }
 		return switch model {
 

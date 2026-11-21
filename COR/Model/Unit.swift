@@ -1,4 +1,4 @@
-public struct Unit: Equatable {
+public struct Unit: Equatable, Sendable {
 	public var model: UnitModel = .none
 	public var country: Country = .default
 	public var hp: UInt8 = 0
@@ -13,7 +13,7 @@ public struct Unit: Equatable {
 	public var bits: Bits = []
 }
 
-public struct Bits: OptionSet, Equatable {
+public struct Bits: OptionSet, Equatable, Sendable {
 	public var rawValue: UInt8
 
 	public init(rawValue: UInt8) {
@@ -26,7 +26,7 @@ public extension Bits {
 	static var overwatch: Self { .init(rawValue: 1 << 1) }
 }
 
-public struct Skills: OptionSet, Equatable {
+public struct Skills: OptionSet, Equatable, Sendable {
 	public var rawValue: UInt16
 
 	public init(rawValue: UInt16) {
@@ -251,7 +251,7 @@ extension Unit {
 	}
 }
 
-@frozen public enum UnitType: UInt8, Hashable {
+@frozen public enum UnitType: UInt8, Hashable, Sendable {
 	case supply, inf,
 		 art, wheelArt, trackArt,
 		 aa, wheelAA, trackAA,
@@ -260,11 +260,11 @@ extension Unit {
 		 cargo, destroyer, cruiser
 }
 
-@frozen public enum MoveType: UInt8, Hashable {
+@frozen public enum MoveType: UInt8, Hashable, Sendable {
 	case leg, wheel, track, air, naval
 }
 
-@frozen public enum TargetType: UInt8, Hashable {
+@frozen public enum TargetType: UInt8, Hashable, Sendable {
 	case soft, hard, air, naval
 }
 
@@ -341,7 +341,7 @@ extension Unit: DeadOrAlive {
 	public var alive: Bool { hp > 0 }
 }
 
-public struct UID: Equatable, BitwiseCopyable {
+public struct UID: Equatable, BitwiseCopyable, Sendable {
 	public var rawValue: Int8
 
 	public init(_ value: Int8) { rawValue = value }
@@ -349,7 +349,7 @@ public struct UID: Equatable, BitwiseCopyable {
 
 public extension UID {
 
-	@safe nonisolated(unsafe) static let none = UID(-1)
+	static let none = UID(-1)
 
 	var index: Int { Int(rawValue) }
 }

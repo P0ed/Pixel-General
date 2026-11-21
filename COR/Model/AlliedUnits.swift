@@ -1,7 +1,7 @@
 extension UnitStats {
 
 	// MARK: Infantry
-	@safe nonisolated(unsafe) static let ranger = UnitStats(
+	static let ranger = UnitStats(
 		type: .inf,
 		tier: 1,
 		mov: 3,
@@ -14,7 +14,7 @@ extension UnitStats {
 		groundDef: 6,
 		airDef: 5
 	)
-	@safe nonisolated(unsafe) static let delta = UnitStats(
+	static let delta = UnitStats(
 		type: .inf,
 		tier: 3,
 		mov: 4,
@@ -31,7 +31,7 @@ extension UnitStats {
 	)
 
 	// MARK: IFV
-	@safe nonisolated(unsafe) static let m2A2 = UnitStats(
+	static let m2A2 = UnitStats(
 		type: .lightTrack,
 		tier: 1,
 		mov: 7,
@@ -46,7 +46,7 @@ extension UnitStats {
 		airDef: 7,
 		traits: .transport
 	)
-	@safe nonisolated(unsafe) static let m113 = UnitStats(
+	static let m113 = UnitStats(
 		type: .lightTrack,
 		mov: 6,
 		rng: 1,
@@ -62,7 +62,7 @@ extension UnitStats {
 	)
 
 	// MARK: Tanks
-	@safe nonisolated(unsafe) static let m48 = UnitStats(
+	static let m48 = UnitStats(
 		type: .heavyTrack,
 		mov: 5,
 		rng: 1,
@@ -74,7 +74,7 @@ extension UnitStats {
 		groundDef: 11,
 		airDef: 6
 	)
-	@safe nonisolated(unsafe) static let m1A1 = UnitStats(
+	static let m1A1 = UnitStats(
 		type: .heavyTrack,
 		tier: 1,
 		mov: 7,
@@ -87,7 +87,7 @@ extension UnitStats {
 		groundDef: 12,
 		airDef: 7
 	)
-	@safe nonisolated(unsafe) static let m1A2 = UnitStats(
+	static let m1A2 = UnitStats(
 		type: .heavyTrack,
 		tier: 2,
 		mov: 7,
@@ -103,7 +103,7 @@ extension UnitStats {
 	)
 
 	// MARK: Art
-	@safe nonisolated(unsafe) static let m777 = UnitStats(
+	static let m777 = UnitStats(
 		type: .art,
 		tier: 1,
 		mov: 2,
@@ -116,7 +116,7 @@ extension UnitStats {
 		groundDef: 5,
 		airDef: 4
 	)
-	@safe nonisolated(unsafe) static let m109A7 = UnitStats(
+	static let m109A7 = UnitStats(
 		type: .trackArt,
 		tier: 1,
 		mov: 5,
@@ -129,7 +129,7 @@ extension UnitStats {
 		groundDef: 5,
 		airDef: 4
 	)
-	@safe nonisolated(unsafe) static let m147 = UnitStats(
+	static let m147 = UnitStats(
 		type: .wheelArt,
 		tier: 1,
 		mov: 7,
@@ -145,7 +145,7 @@ extension UnitStats {
 	)
 
 	// MARK: AA
-	@safe nonisolated(unsafe) static let patriot = UnitStats(
+	static let patriot = UnitStats(
 		type: .wheelAA,
 		tier: 1,
 		mov: 7,
@@ -159,7 +159,7 @@ extension UnitStats {
 	)
 
 	// MARK: Air
-	@safe nonisolated(unsafe) static let mh6 = UnitStats(
+	static let mh6 = UnitStats(
 		type: .heli,
 		tier: 1,
 		mov: 10,
@@ -174,7 +174,7 @@ extension UnitStats {
 		airDef: 7,
 		traits: .transport
 	)
-	@safe nonisolated(unsafe) static let f16 = UnitStats(
+	static let f16 = UnitStats(
 		type: .fighter,
 		tier: 1,
 		mov: 12,
@@ -189,7 +189,7 @@ extension UnitStats {
 		airDef: 9,
 		traits: .radar
 	)
-	@safe nonisolated(unsafe) static let f35 = UnitStats(
+	static let f35 = UnitStats(
 		type: .fighter,
 		tier: 2,
 		mov: 12,
@@ -204,7 +204,7 @@ extension UnitStats {
 		airDef: 11,
 		traits: .radar
 	)
-	@safe nonisolated(unsafe) static let mq9 = UnitStats(
+	static let mq9 = UnitStats(
 		type: .heli,
 		tier: 2,
 		mov: 9,
