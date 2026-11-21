@@ -136,14 +136,40 @@ public extension Units {
 		]) + cannon(from: at(4.5, 0, 15), to: at(19.5, 0, 15.75), caliber: 1.5)
 	}
 
+	/// BMP-2: a long amphibious bow, ribbed track guards and a low two-man turret.
 	static var bmp2: Model {
-		ifvHull(length: 36, width: 18, deck: 9.75, front: 9)
-		+ turret(length: 9.75, width: 9.75, z: 10.05 ... 14.1, x: -3, side: 1.65, corner: 2.25)
+		let deck: Float = 11.25
+		var bow = armour(length: 36.6, width: 18.3, z: 5.1 ... 8.7, corner: 2.4, tone: Tone.turret)
+		bow.planes += [
+			Plane(normal: V3(1, 0, -2.55), through: at(9.45, 0, 5.1)),
+			Plane(normal: V3(-1, 0, -0.8), through: at(-15.45, 0, 5.1)),
+			Plane(normal: V3(0, 1, -0.55), through: at(0, 9.15, 8.7)),
+			Plane(normal: V3(0, -1, -0.55), through: at(0, -9.15, 8.7)),
+		]
+
+		return tracked(length: 35.4, width: 18, count: 6)
 		+ Model([
-			hatch(x: -4.5, y: 1.95, z: 14.1),
-			barrel(from: at(-3, 0, 15), to: at(4.5, 0, 15.45), caliber: 1.65, tone: Tone.running),
-			box(length: 15, width: 0.9, z: 8.7 ... 10.05, x: -6.75, y: 8.55, tone: Tone.cargo),
-		]) + cannon(from: at(0.75, 0, 12.3), to: at(21, 0, 13.2), caliber: 1.5)
+			bow,
+			armour(length: 36.6, width: 18.3, z: 8.4 ... deck, front: 10.5, rear: 0.75,
+				side: 1.2, corner: 2.4, tone: Tone.body),
+			hatch(x: 5.55, y: 3.9, z: deck, radius: 1.95),
+			box(length: 1.8, width: 3.3, z: deck ... 12.45, x: 7.05, y: 3.9, tone: Tone.turret),
+			box(length: 0.45, width: 2.25, z: 11.7 ... 12.45, x: 8.1, y: 3.9, tone: 96),
+			cylinder(at: at(-3.6, 0, 11.55), radius: 5.25, length: 0.9, axis: .z, tone: Tone.turret),
+			armour(length: 10.8, width: 11.4, z: 11.7 ... 15, x: -3.6,
+				front: 2.1, rear: 1.35, side: 1.65, corner: 2.4, tone: Tone.turret),
+			hatch(x: -4.35, y: 1.95, z: 15),
+			box(length: 2.4, width: 2.7, z: 14.25 ... 16.05, x: -1.5, y: -2.4, tone: Tone.glass),
+			barrel(from: at(0.3, 0, 13.8), to: at(18.75, 0, 15.45), caliber: 1.5, tone: Tone.barrel),
+		] + sides(3.75) {
+			armour(length: 5.4, width: 5.1, z: deck ... 12, x: -12, y: $0,
+				front: 0.45, side: 0.3, corner: 0.6, tone: Tone.cargo)
+		}, lines: grille(x: 4.95, y: -3.9, z: deck + 0.075, length: 4.5, width: 4.5, tone: 111) + [
+			Line(from: at(15.15, -6.45, 9.3), to: at(15.15, 6.45, 9.3), tone: 123),
+			Line(from: at(-11.1, -6.45, deck), to: at(-12.3, -6.45, 19.5), tone: Tone.antenna),
+		] + sides(8.95) {
+			Line(from: at(-15.6, $0, 8.95), to: at(11.4, $0, 8.95), tone: 110)
+		})
 	}
 
 	static var cv9035: Model {
@@ -324,15 +350,37 @@ public extension Units {
 		+ Model([cylinder(at: at(-3, -5.25, 19.05), radius: 2.25, length: 1.2, axis: .x, tone: Tone.glass)])
 	}
 
+	/// Tunguska: a front tracking dish, raised rear radar and paired side racks.
 	static var tunguska: Model {
-		tracked(length: 37.5, width: 21, count: 6)
+		let deck: Float = 10.5
+		let racks = sides(8.7) { y in
+			[
+				box(length: 7.2, width: 5.7, z: 12.15 ... 17.25, x: -3.75, y: y * 0.85, tone: Tone.turret),
+				barrel(from: at(-8.4, y, 14.25), to: at(7.05, y, 15.6), caliber: 2.55, tone: Tone.cargo),
+				barrel(from: at(-8.4, y, 16.8), to: at(7.05, y, 18.15), caliber: 2.55, tone: Tone.cargo),
+			]
+		}.flatMap { $0 }
+
+		return tracked(length: 38.4, width: 21, count: 6)
 		+ Model([
-			armour(length: 36, width: 18.75, z: 5.7 ... 9.3, front: 6, corner: 1.5, tone: Tone.body),
-			cylinder(at: at(-8.25, 0, 19.5), radius: 3.45, length: 1.8, axis: .x, tone: Tone.glass),
-			box(length: 1.5, width: 1.5, z: 13.5 ... 19.5, x: -8.25, tone: Tone.barrel),
-		]) + turret(length: 15, width: 12, z: 9.6 ... 15.75, x: -2.25, corner: 2.25)
-		+ Model(sides(6.3) { barrel(from: at(0, $0, 13.5), to: at(21, $0, 18.75), caliber: 1.5, tone: Tone.barrel) }
-		+ sides(9) { barrel(from: at(-9, $0, 15.75), to: at(7.5, $0, 19.5), caliber: 3.6, tone: Tone.cargo) })
+			armour(length: 36.6, width: 19.8, z: 5.7 ... deck, front: 6.75, rear: 0.9,
+				side: 0.75, corner: 2.1, tone: Tone.body),
+			armour(length: 4.5, width: 5.1, z: 9.6 ... 11.7, x: 10.2, y: 3.45,
+				front: 1.35, side: 0.45, corner: 0.75, tone: Tone.turret),
+			box(length: 0.9, width: 3.3, z: 10.65 ... 11.4, x: 11.7, y: 3.45, tone: 90),
+			armour(length: 15.9, width: 13.2, z: 11.1 ... 17.7, x: -3,
+				front: 1.35, rear: 0.9, side: 0.75, corner: 1.8, tone: Tone.turret),
+			cylinder(at: at(-2.55, 0, 11.1), radius: 7.2, length: 1.2, axis: .z, tone: Tone.turret),
+			barrel(from: at(3.3, 0, 16.05), to: at(5.55, 0, 17.4), caliber: 5.7, tone: Tone.turret),
+			barrel(from: at(5.55, 0, 17.4), to: at(6, 0, 17.67), caliber: 5.1, tone: 136),
+			box(length: 2.4, width: 3.3, z: 17.4 ... 21.75, x: -8.4, tone: Tone.barrel),
+			armour(length: 2.1, width: 11.4, z: 20.55 ... 24, x: -8.4,
+				side: 0.45, corner: 0.75, tone: Tone.cargo),
+		] + racks + sides(6.45) {
+			barrel(from: at(0.9, $0, 15.3), to: at(16.5, $0, 30.9), caliber: 1.8, tone: Tone.barrel)
+		}, lines: [
+			Line(from: at(-7.3, -4.2, 22.2), to: at(-7.3, 4.2, 22.2), tone: 92),
+		])
 	}
 
 	static var m167: Model {

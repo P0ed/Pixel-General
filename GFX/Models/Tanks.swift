@@ -134,7 +134,7 @@ extension Units {
 	static func tankChassis(length: Float, width: Float, wheels: Int, deck: Float) -> Model {
 		let trackWidth: Float = 4.2
 		let trackY = (width - trackWidth) / 2
-		let radius: Float = wheels == 4 ? 3.3 : (wheels <= 6 ? 2.775 : 2.475)
+		let radius: Float = wheels <= 5 ? 3.3 : (wheels == 6 ? 2.775 : 2.475)
 		let span = length - 7.5
 		var solids = sides(trackY) { y in
 			var track = GFX.box(length: length, width: trackWidth, z: 0 ... 7.5, y: y, tone: 36)
@@ -148,7 +148,8 @@ extension Units {
 		}
 		for sign: Float in [-1, 1] {
 			for index in 0 ..< wheels {
-				let x: Float = wheels == 5 ? [-13.5, -6, 0, 6, 12][index] : -span / 2 + span * Float(index) / Float(wheels - 1)
+				// The T-55 has a wider gap behind its leading road wheel.
+				let x: Float = wheels == 5 ? [-12.6, -6.9, -1.2, 4.5, 13.2][index] : -span / 2 + span * Float(index) / Float(wheels - 1)
 				let y = sign * (width / 2 - 0.15)
 				// A dark rubber rim separates each wheel from its neighbours and the metal hub.
 				solids.append(tankCylinder(at: at(x, y, 3.75), radius: radius, length: 1.2,
