@@ -284,37 +284,4 @@ struct TacticalAITests {
 		#expect(sim.winner != nil)
 		#expect(actions < 20_000)
 	}
-
-	/// A generated map can hold more settlements than the plan's `CArray<64>`
-	/// buckets — villages are emergent 3-way road junctions, so their count is
-	/// unbounded. The plan must truncate instead of trapping.
-	@Test func preplanHandlesSettlementOverflow() {
-		var sim = TacticalSim(
-			players: [
-				Player(country: .ger, type: .ai, prestige: .rich),
-				Player(country: .usa, type: .ai, prestige: .rich),
-			],
-			units: .base(.ger) + .aux(.ger) + .base(.usa) + .aux(.usa),
-			seed: 1
-		)
-
-		// Paint 160 extra cities, alternating own / enemy control, so both
-		// plan buckets overflow their 64-slot capacity.
-		var painted = 0
-		for xy in sim.map.indices where sim.map[xy] == .field {
-			sim.map[xy] = .city
-			sim.control[xy] = painted % 2 == 0 ? .ger : .usa
-			painted += 1
-			if painted == 160 { break }
-		}
-		sim.indexSettlements()
-		#expect(painted == 160)
-
-		var ai = AI.Plan()
-		for _ in 0 ..< 5 {
-			_ = sim.reduce(sim.run(ai: &ai))
-		}
-		#expect(ai.ownSettlements.count == 64)
-		#expect(ai.enemySettlements.count == 64)
-	}
 }

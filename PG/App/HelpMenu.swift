@@ -152,7 +152,7 @@ private enum Help {
 
 	A Panzer-General-inspired game of operational combat. Purchase units \
 	with prestige, maneuver them across a 64×64 tactical grid, capture cities \
-	and villages for income, and destroy the enemy force.
+	and airfields for income, and destroy the enemy force.
 
 	Units are real modern platforms — infantry, artillery, anti-air, recon, \
 	IFVs, tanks, helicopters and jets — each with its own stats, terrain \
@@ -211,9 +211,9 @@ private enum Help {
 
 	  • Players act in turn. A day passes once everyone has moved.
 	  • Each day you earn prestige from the settlements you control
-	    (city 24, village 8, airfield 4).
-	  • Spend prestige at an owned, enemy-free settlement to buy units:
-	    cities and villages sell ground units, airfields sell aircraft.
+	    (city 24, airfield 4).
+	  • Spend prestige at an owned, enemy-free settlement to buy units.
+	    Cities sell ground units and airfields sell aircraft.
 
 	MOVEMENT & TERRAIN
 

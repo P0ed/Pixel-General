@@ -626,7 +626,7 @@ public extension Map<64, Terrain> {
 	mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
-			if self[xy].hasRoad, !self[xy].isBridge, !self[xy].isSettlement {
+			if self[xy].isRoad {
 				let n4 = xy.n4
 				for i in n4.indices {
 					neighbors[i] = self[n4[i]].hasRoad
@@ -685,10 +685,10 @@ public extension Map<64, Terrain> {
 		case (true, false, false, true): .roadSE
 		case (false, true, true, false): .roadNW
 		case (false, false, true, true): .roadSW
-		case (false, true, true, true): .villageE
-		case (true, false, true, true): .villageN
-		case (true, true, false, true): .villageW
-		case (true, true, true, false): .villageS
+		case (false, true, true, true): .roadTE
+		case (true, false, true, true): .roadTN
+		case (true, true, false, true): .roadTW
+		case (true, true, true, false): .roadTS
 		case (true, true, true, true): .roadX
 		default: .none
 		}

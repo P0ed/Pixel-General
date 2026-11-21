@@ -46,7 +46,7 @@ public extension TacticalSim {
 		indexSettlements()
 		cities.forEach { xy, c in control[xy] = c }
 		settlements.forEach { xy in
-			guard self.map[xy].isVillage || self.map[xy] == .airfield else { return }
+			guard self.map[xy] == .airfield else { return }
 			control[xy] = cities.min { a, b in
 				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
 			}.map { $0.1 } ?? .default

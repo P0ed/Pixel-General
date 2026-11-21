@@ -62,10 +62,6 @@ extension Terrain {
 		case .city: .decoration(.city)
 		case .fort: .decoration(.fort)
 		case .airfield: .decoration(.airfield)
-		case .villageE: .decoration(.village(.xPlus))
-		case .villageN: .decoration(.village(.yMinus))
-		case .villageW: .decoration(.village(.xMinus))
-		case .villageS: .decoration(.village(.yPlus))
 		case .bridgeWE: .decoration(.bridge(.x))
 		case .bridgeSN: .decoration(.bridge(.y))
 		case .roadNW: .decoration(.road([.yMinus, .xMinus]))
@@ -74,7 +70,11 @@ extension Terrain {
 		case .roadSN: .decoration(.road([.yPlus, .yMinus]))
 		case .roadSW: .decoration(.road([.yPlus, .xMinus]))
 		case .roadSE: .decoration(.road([.yPlus, .xPlus]))
-		case .roadX: .decoration(.road([.xPlus, .xMinus, .yPlus, .yMinus]))
+		case .roadTE: .decoration(.road([.xMinus, .yPlus, .yMinus]))
+		case .roadTN: .decoration(.road([.xPlus, .xMinus, .yPlus]))
+		case .roadTW: .decoration(.road([.xPlus, .yPlus, .yMinus]))
+		case .roadTS: .decoration(.road([.xPlus, .xMinus, .yMinus]))
+		case .roadX: .decoration(.road(GFX.Direction.allCases))
 		}
 	}
 }
@@ -190,8 +190,8 @@ extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
 		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
-		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX,
-		.villageE, .villageN, .villageW, .villageS,
+		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
+		.roadTE, .roadTN, .roadTW, .roadTS, .roadX,
 	]
 
 	static let terrain = SKTileSet(

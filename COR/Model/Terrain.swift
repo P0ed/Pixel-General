@@ -4,7 +4,7 @@
 	case bridgeWE, bridgeSN
 	case field, forest, rough, mountain
 	case city, airfield
-	case villageE, villageN, villageW, villageS
+	case roadTE, roadTN, roadTW, roadTS
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
 	case fort
 	case sea
@@ -15,36 +15,23 @@ public extension Terrain {
 	var isBridgable: Bool {
 		switch self {
 		case .field, .forest, .city, .airfield: true
-		case .villageE, .villageN, .villageW, .villageS: true
-		case .roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE, .roadX: true
-		default: false
+		default: isRoad
 		}
 	}
 
 	var isSettlement: Bool {
 		switch self {
-		case .city, .airfield, .villageE, .villageN, .villageW, .villageS: true
+		case .city, .airfield: true
 		default: false
 		}
 	}
 
-	var isVillage: Bool {
-		switch self {
-		case .villageE, .villageN, .villageW, .villageS: true
-		default: false
-		}
-	}
-
-	var isNoFlyZone: Bool {
-		switch self {
-		case .city, .villageE, .villageN, .villageW, .villageS: true
-		default: false
-		}
-	}
+	var isNoFlyZone: Bool { self == .city }
 
 	var isRoad: Bool {
 		switch self {
-		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE, .roadX: true
+		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE,
+			.roadTE, .roadTN, .roadTW, .roadTS, .roadX: true
 		default: false
 		}
 	}
@@ -109,7 +96,7 @@ public extension Terrain {
 		switch self {
 		case .field: 0
 		case .rough, .airfield: 1
-		case .forest, .mountain, .villageE, .villageN, .villageW, .villageS: 2
+		case .forest, .mountain: 2
 		case .city, .fort: 3
 		default: 0
 		}
@@ -120,7 +107,7 @@ public extension Terrain {
 		let penalty: Int8 = type == .heavyTrack ? -2 : -1
 		return switch self {
 		case .rough, .airfield: penalty * 1
-		case .forest, .villageE, .villageN, .villageW, .villageS: penalty * 2
+		case .forest: penalty * 2
 		case .city, .mountain, .fort: penalty * 3
 		default: 0
 		}
@@ -145,7 +132,7 @@ public extension Terrain {
 			case .trackAA, .trackArt: 1
 			default: 0
 			}
-		case .forest, .villageE, .villageN, .villageW, .villageS:
+		case .forest:
 			switch type {
 			case .inf, .art, .aa: 2
 			case .supply, .wheelArt, .wheelAA: 1

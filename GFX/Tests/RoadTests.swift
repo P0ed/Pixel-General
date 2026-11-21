@@ -31,9 +31,31 @@ struct RoadTests {
 	}
 
 	@Test(arguments: [nil] + Direction.allCases.map(Optional.some))
-	func settlementRoadEdgesMatchOpenRoads(missingArm: Direction?) {
-		let model = missingArm.map { Settlements.village(facing: $0) } ?? Settlements.city
-		var road = Roads.road(Direction.allCases.filter { $0 != missingArm })
+	func junctionsAreFlatAndReachTheirConnectedEdges(missingArm: Direction?) throws {
+		let name = missingArm.map { "Road-T-\($0)" } ?? "Road-X"
+		let entry = try #require(Catalog.roads.first { $0.name == name })
+		let road = entry.model.solids
+		#expect(road.allSatisfy { $0.from.z == 0 && $0.to.z == 0 && $0.tone == Roads.Tone.bed })
+
+		let side = Volume.footprint
+		let half = side / 2
+		let exits: [(Direction, V3)] = [
+			(.xPlus, V3(side, half, 0)), (.xMinus, V3(0, half, 0)),
+			(.yPlus, V3(half, side, 0)), (.yMinus, V3(half, 0, 0)),
+		]
+		for (direction, edge) in exits {
+			#expect(road.contains { $0.contains(edge) } == (direction != missingArm))
+			guard direction != missingArm else { continue }
+			for step in 0 ... 16 {
+				let point = Volume.center + (edge - Volume.center) * (Float(step) / 16)
+				#expect(road.contains { $0.contains(point) }, "the road stays continuous from the junction to the tile edge")
+			}
+		}
+	}
+
+	@Test func cityRoadEdgesMatchOpenRoads() {
+		let model = Settlements.city
+		var road = Roads.road(Direction.allCases)
 		for i in road.solids.indices { road.solids[i].outline = nil }
 		let expected = Renderer.decal.edges(road)
 		let actual = Renderer.building.edges(model)
@@ -50,12 +72,11 @@ struct RoadTests {
 		}
 	}
 
-	@Test(arguments: [nil] + Direction.allCases.map(Optional.some))
-	func settlementBuildingsKeepTheirOutlinesOverPavement(missingArm: Direction?) {
-		let settlement = missingArm.map { Settlements.village(facing: $0) } ?? Settlements.city
-		let buildings = Model(settlement.solids.filter { $0.to.z > 0 })
+	@Test func cityBuildingsKeepTheirOutlinesOverPavement() {
+		let city = Settlements.city
+		let buildings = Model(city.solids.filter { $0.to.z > 0 })
 		let expected = Renderer.building.edges(buildings)
-		let actual = Renderer.building.render(settlement)
+		let actual = Renderer.building.render(city)
 
 		for i in expected.alpha.indices where expected.alpha[i] > 0 {
 			#expect(actual.alpha[i] == expected.alpha[i] && actual.gray[i] == expected.gray[i],

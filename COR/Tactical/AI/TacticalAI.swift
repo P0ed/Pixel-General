@@ -124,15 +124,13 @@ extension TacticalSim {
 			}
 		}
 
-		// Generated villages can push a bucket above 64. Truncation is stable
-		// because SetXY walks in row-major order.
 		settlements.forEach { xy in
 			let owner = control[xy]
 			if owner == acting {
-				if !ai.ownSettlements.isFull { ai.ownSettlements.add(xy) }
+				ai.ownSettlements.add(xy)
 			} else if owner.team == acting.team {
-				if !ai.alliedSettlements.isFull { ai.alliedSettlements.add(xy) }
-			} else if !ai.enemySettlements.isFull {
+				ai.alliedSettlements.add(xy)
+			} else {
 				ai.enemySettlements.add(xy)
 			}
 		}

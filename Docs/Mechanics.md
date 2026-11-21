@@ -119,12 +119,12 @@ option set from the model's `Traits`.
   costs `terrain.moveCost(unit)*2`, diagonal `*3`, plus `n` per step where
   `n` is the number of enemies adjacent to the *source* tile (zone of
   control). A unit standing next to ≥2 enemies cannot step diagonally.
-- `moveCost(_:)` is per-type. Roads/bridges/villages/cities/airfields are
+- `moveCost(_:)` is per-type. Roads, bridges, cities, and airfields are
   always 1 for ground units. Forests and hills run 2–3 (worse for wheels
   and heavy tracks); mountains and rivers cost the unit's full `mov`
   (one tile and done); mountains block wheeled types entirely.
-- Air units pay 1 per tile and are blocked from no-fly zones (city,
-  villages). Air and ground units cannot share tiles.
+- Air units pay 1 per tile and cannot enter cities. Air and ground units
+  cannot share tiles.
 - Moving resets `ent` to 0 and spends 1 `mp`. Foot `art`/`aa` lose `ap` after
   moving (`!canAttackAfterMove`); wheeled and tracked variants do not.
 - Walking onto a tile occupied by a hidden enemy interrupts the move and
@@ -205,28 +205,26 @@ combat is reproducible.
 
 `COR/Model/Terrain.swift`
 
-- **Tile kinds** include `field`, `forest`, `hill`, `forestHill`,
-  `mountain`, `water` (rivers), `bridgeWE`/`bridgeSN`, a 7-way road
-  system (`roadNW`/`roadNE`/`roadWE`/`roadSN`/`roadSW`/`roadSE`/`roadX`),
-  and the settlements `city`, `airfield`, and 4-direction villages
-  (`villageE`/`villageN`/`villageW`/`villageS`). `isSettlement` is true
-  for cities, airfields, and villages — all three are capturable.
+- **Tile kinds** include `field`, `forest`, `rough`, `mountain`, `river`,
+  `sea`, bridges, roads, forts, cities, and airfields. Roads come in straight
+  segments, corners, four T-junction orientations, and X junctions. Cities
+  and airfields are capturable settlements.
 - **Move cost** varies by `UnitType`. Roads, bridges, and settlements are
   always 1 for ground units. Rivers cost the full `mov` (one tile, then
   done). Forests/hills cost 2–3 for foot and wheeled units, less for
   tracked. Mountains block wheels entirely (`0x10`) and cost foot units
   their full `mov`. Air units pay 1 per tile unless the tile is a
-  no-fly zone (city, village).
+  city.
 - **Base entrenchment** (per tile, before the `*4` scaling):
-  field 0; hill/airfield 1; forest/forestHill/mountain/villages 2;
-  city 3. Standing still, ground units gain `entRate` per turn
+  roads and fields 0, hills and airfields 1, forests and mountains 2,
+  cities and forts 3. Standing still, ground units gain `entRate` per turn
   (supply/inf 4; foot art/aa, wheeled vehicles, light tracks 3;
   heavy/track variants 2; air 0 — all doubled by `engineer`) up to
   `base*4 + 20`.
 - **`terrain.def(unitType)`** is a per-tile defensive modifier applied
   to whoever sits on the tile. Roads -1, bridges -2, rivers -2 to -5
   by type, hill/airfield +1 / -1 / -2 (foot-ish / light / heavy track),
-  forest/village +2 / -2 / -4, city/mountain/forestHill +3 / -3 / -6.
+  forest +2 / -2 / -4, city/mountain/forestHill +3 / -3 / -6.
   Air units ignore terrain. **`terrain.closeCombat(unitType)`** is the
   attacker-side penalty applied during a counter: rough terrain
   penalizes wheeled and tracked attackers (heavy track worst), and is 0
@@ -290,10 +288,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 
 - Each player has **prestige** (`.poor` = `0x0A00` / `.rich` = `0x1F00`).
   Income per day = sum of owned settlements' income (`Terrain.income` in
-  `COR/Tactical/TacticalState.swift`: city 24, village 8, airfield 4).
+  `COR/Tactical/TacticalTurns.swift`): 24 per city and 4 per airfield.
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
-  unit if prestige ≥ `unit.stats.cost`. Airfields sell air units; cities (and
-  villages) sell ground. Bought units start at `lvl += player.baseLevel`.
+  unit if prestige ≥ `unit.stats.cost`. Airfields sell air units and cities
+  sell ground units. Bought units start at `lvl += player.baseLevel`.
 - **Catalogue**: `Shop(country:air:tier:).units` — the full per-country
   roster (`COR/Model/Shop.swift`) filtered by the building's air/ground kind
   and by `player.tier` (units above the player's tech tier are hidden).
@@ -336,7 +334,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   player as (column, row-from-south), each 0…2. When present, all settlements
   are assigned from these locations: cities go greedily to the nearest spawn
   center under defender-weighted quotas (so counts stay balanced and each
-  seat's holdings cluster around its spawn), and villages/airfields follow
+  seat's holdings cluster around its spawn), and airfields follow
   their nearest city as usual. Map generation guarantees the city nearest
   each spawn center an adjacent airfield, clearing forest or hill for the
   strip if it must. With no spawn locations, city shares are assigned by

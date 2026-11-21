@@ -277,6 +277,31 @@ struct MapGenerationTests {
 		}
 	}
 
+	@Test func roadShapingCreatesJunctionsWithOrdinaryRoadRules() {
+		let junctions: [(missingArm: Int?, terrain: Terrain)] = [
+			(0, .roadTE), (1, .roadTN), (2, .roadTW), (3, .roadTS), (nil, .roadX),
+		]
+		let center = XY(32, 32)
+		let neighbors = center.n4
+		for (missingArm, expected) in junctions {
+			var map = Map<64, Terrain>(zero: .field)
+			map[center] = .roadWE
+			for i in neighbors.indices where i != missingArm {
+				map[neighbors[i]] = .roadWE
+			}
+			map.shapeRoads()
+
+			let road = map[center]
+			#expect(road == expected)
+			#expect(road.isRoad && road.isBridgable)
+			#expect(!road.isSettlement && !road.isNoFlyZone)
+			#expect(road.income == 0)
+			#expect(road.baseEntrenchment == 0)
+			#expect(road.def(.inf) == Terrain.roadWE.def(.inf))
+			#expect(road.closeCombat(.heavyTrack) == 0)
+		}
+	}
+
 	@Test func riversAreContiguousAndOrthogonal() {
 		// A river tile must touch another river/bridge through one of its 4
 		// orthogonal neighbors. Diagonal-only adjacency would mean the river

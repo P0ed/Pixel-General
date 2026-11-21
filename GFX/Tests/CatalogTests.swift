@@ -63,37 +63,6 @@ struct CatalogTests {
 		}
 	}
 
-	@Test(arguments: Direction.allCases)
-	func villageRoadsConnectEveryArmExceptTheNamedSide(facing: Direction) {
-		let village = Settlements.village(facing: facing)
-		let road = village.solids.filter { $0.tone == Roads.Tone.bed && $0.to.z == 0 }
-		let buildings = village.solids.filter { $0.to.z > 0 }
-		let side = Volume.footprint
-		let half = side / 2
-		let exits: [(Direction, V3)] = [
-			(.xPlus, V3(side, half, 0)), (.xMinus, V3(0, half, 0)),
-			(.yPlus, V3(half, side, 0)), (.yMinus, V3(half, 0, 0)),
-		]
-		for (direction, edge) in exits {
-			#expect(road.contains { $0.contains(edge) } == (direction != facing))
-			guard direction != facing else { continue }
-			for step in 0 ... 16 {
-				let point = Volume.center + (edge - Volume.center) * (Float(step) / 16)
-				#expect(road.contains { $0.contains(point) }, "the road stays continuous from the junction to the tile edge")
-			}
-		}
-
-		for x in 0 ..< Int(side) {
-			for y in 0 ..< Int(side) {
-				let point = V3(Float(x) + 0.5, Float(y) + 0.5, 0)
-				guard road.contains(where: { $0.contains(point) }) else { continue }
-				#expect(!buildings.contains { $0.contains(point + V3(0, 0, 0.1)) }, "houses leave the carriageway clear")
-			}
-		}
-
-		expectVisibleRoad(village, along: facing.axis == .x ? .y : .x)
-	}
-
 	@Test func cityHasVisibleCrossroads() {
 		expectVisibleRoad(Settlements.city, along: .x)
 		expectVisibleRoad(Settlements.city, along: .y)

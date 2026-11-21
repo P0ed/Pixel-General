@@ -29,23 +29,6 @@ public enum Settlements {
 		return Roads.road(Direction.allCases) + Model(solids)
 	}
 
-	/// A T junction with houses clear of its carriageway. `facing` names the missing
-	/// road arm, matching villageE/N/W/S in the map generator.
-	public static func village(facing: Direction) -> Model {
-		let base = Roads.road([.yMinus, .yPlus, .xPlus]) + Model(
-			house(x: 9, y: 11.25, length: 10.5, width: 9, walls: 4.5, roof: 3.75, ridge: .x)
-				+ house(x: 9, y: 36.75, length: 9, width: 9, walls: 4.5, roof: 3.75, ridge: .y)
-				+ house(x: 39, y: 39, length: 9, width: 9, walls: 4.5, roof: 3.75, ridge: .x)
-		)
-
-		switch facing {
-		case .xMinus: return base
-		case .yMinus: return base.rotated(.left)
-		case .xPlus: return base.rotated(.half)
-		case .yPlus: return base.rotated(.right)
-		}
-	}
-
 	/// Runway with dashed centreline, a control tower and two hangars set back from it.
 	public static var airfield: Model {
 		let strip = Solid.box(from: V3(1.5, 28.5, 0), to: V3(46.5, 39, 0), tone: Roads.Tone.bed)

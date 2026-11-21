@@ -35,9 +35,6 @@ public enum Catalog {
 			CatalogEntry(name: "Fort", model: Settlements.fort, renderer: .building),
 			CatalogEntry(name: "Airfield", model: Settlements.airfield, renderer: .building),
 		]
-		+ Direction.allCases.map {
-			CatalogEntry(name: "Village-\($0)", model: Settlements.village(facing: $0), renderer: .building)
-		}
 	}
 
 	public static var roads: [CatalogEntry] {
@@ -48,6 +45,10 @@ public enum Catalog {
 			CatalogEntry(name: "Bridge-WE", model: Roads.bridge(along: .x), renderer: .decal),
 			CatalogEntry(name: "Bridge-SN", model: Roads.bridge(along: .y), renderer: .decal),
 		]
+		+ Direction.allCases.map { missingArm in
+			let directions = Direction.allCases.filter { $0 != missingArm }
+			return CatalogEntry(name: "Road-T-\(missingArm)", model: Roads.road(directions), renderer: .decal)
+		}
 	}
 
 	public static var all: [CatalogEntry] {
