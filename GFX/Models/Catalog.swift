@@ -34,8 +34,11 @@ public enum Catalog {
 			let name = variant == .first ? "City" : "City \(variant.rawValue + 1)"
 			return CatalogEntry(name: name, model: Settlements.city(variant: variant), renderer: .building)
 		}
+		+ Tiles.Variant.allCases.map { variant in
+			let name = variant == .first ? "Fort" : "Fort \(variant.rawValue + 1)"
+			return CatalogEntry(name: name, model: Settlements.fort(variant: variant), renderer: .decal)
+		}
 		+ [
-			CatalogEntry(name: "Fort", model: Settlements.fort, renderer: .building),
 			CatalogEntry(name: "Airfield", model: Settlements.airfield, renderer: .building),
 		]
 	}

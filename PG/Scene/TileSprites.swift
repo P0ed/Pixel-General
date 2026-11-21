@@ -70,7 +70,7 @@ extension Terrain {
 		switch self {
 		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
 		case .city: .city(variant)
-		case .fort: .fort
+		case .fort: .fort(variant)
 		case .airfield: .airfield
 		case .bridgeWE: .bridge(.x)
 		case .bridgeSN: .bridge(.y)
@@ -247,7 +247,7 @@ extension SKTileSet {
 	static let decorations = SKTileSet(
 		tileGroups: .make { ts in
 			for terrain in decorated {
-				let variants = terrain == .city ? Tiles.Variant.allCases : [.first]
+				let variants = terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first]
 				for variant in variants {
 					guard let decoration = terrain.decoration(variant: variant) else { continue }
 					ts.append(.decoration(decoration, fog: false))

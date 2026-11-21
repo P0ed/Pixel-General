@@ -4,7 +4,6 @@ public enum Settlements {
 	public enum Tone {
 		public static let wall: UInt8 = 235
 		public static let roof: UInt8 = 185
-		public static let rampart: UInt8 = 215
 	}
 
 	public static var city: Model { city(variant: .first) }
@@ -40,20 +39,76 @@ public enum Settlements {
 		])
 	}
 
-	public static var fort: Model {
-		let inset: Float = 7.5
-		let side = Volume.footprint
-		let near = inset
-		let far = side - inset
+	public static var fort: Model { fort(variant: .first) }
+
+	public static func fort(variant: Tiles.Variant) -> Model {
+		let layout = switch variant {
+		case .first:
+			"""
+			......
+			###...
+			..#...
+			..###.
+			....##
+			......
+			"""
+		case .second:
+			"""
+			...#..
+			...#..
+			.###..
+			.#....
+			.####.
+			......
+			"""
+		case .third:
+			"""
+			..#...
+			..#...
+			####..
+			...#..
+			...###
+			......
+			"""
+		case .fourth:
+			"""
+			......
+			#####.
+			.#....
+			.#....
+			.#####
+			......
+			"""
+		}
+		let cells = layout.split(separator: "\n").map(Array.init)
+		let cellSize: Float = 6
+		let half = cellSize / 2
+		let firstCenter = cellSize + half
+		let corner = V3(half, half, 0)
 		var solids: [Solid] = []
 
-		solids.append(.box(from: V3(near, near, 0), to: V3(far, far, 4.5), tone: Tone.rampart))
-		for x in [near, far - 9] {
-			for y in [near, far - 9] {
-				solids.append(.box(from: V3(x, y, 0), to: V3(x + 9, y + 9, 10.5), tone: Tone.wall))
+		for (row, cellsInRow) in cells.enumerated() {
+			for column in cellsInRow.indices where cellsInRow[column] == "#" {
+				let center = V3(firstCenter + Float(column) * cellSize, firstCenter + Float(row) * cellSize, 0)
+				solids.append(.box(from: center - corner, to: center + corner, tone: 99))
+
+				// The earth slopes up toward the cut and leaves the passage open at joins.
+				let bank = Solid.wedge(
+					from: center + V3(-half, -half - 3, 0),
+					to: center + V3(half, -half, 3),
+					rising: .yPlus,
+					tone: 180
+				)
+				for turn in Turn.allCases {
+					let offset = turn.apply(V3(0, -1, 0))
+					let neighborRow = row + Int(offset.y)
+					let neighborColumn = column + Int(offset.x)
+					if cells.indices.contains(neighborRow), cells[neighborRow].indices.contains(neighborColumn),
+						cells[neighborRow][neighborColumn] == "#" { continue }
+					solids.append(bank.rotated(turn, about: center))
+				}
 			}
 		}
-		solids.append(.box(from: V3(19.5, 19.5, 4.5), to: V3(28.5, 28.5, 13.5), tone: Tone.wall))
 
 		return Model(solids)
 	}

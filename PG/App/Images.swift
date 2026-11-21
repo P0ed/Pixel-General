@@ -13,14 +13,14 @@ extension UIImage {
 
 extension CGImage {
 
-	func tinted(_ color: CGColor) -> CGImage? {
+	func tinted(_ color: CGColor, blendMode: CGBlendMode = .multiply) -> CGImage? {
 		.draw(size: CGSize(width: width, height: height)) { ctx in
 			let rect = CGRect(x: 0, y: 0, width: width, height: height)
 
 			ctx.setBlendMode(.normal)
 			ctx.draw(self, in: rect)
 
-			ctx.setBlendMode(.multiply)
+			ctx.setBlendMode(blendMode)
 			ctx.setFillColor(color)
 			ctx.fill(rect)
 

@@ -70,6 +70,15 @@ struct CatalogTests {
 		expectVisibleRoad(city, along: .y)
 	}
 
+	@Test func fortVariantsStayInsideTheTileFrame() {
+		let interior = Tiles.interior(on: .tile)
+		let trenches = Tiles.Variant.allCases.map { Renderer.decal.render(Settlements.fort(variant: $0)) }
+		#expect(Set(trenches.map(\.rgba)).count == trenches.count)
+		for trench in trenches {
+			#expect(zip(trench.alpha, interior).allSatisfy { $0 == 0 || $1 })
+		}
+	}
+
 	private func expectVisibleRoad(_ model: Model, along axis: Axis) {
 		let raster = Renderer.building.raster(model)
 		let roadIDs = model.solids.indices.filter { model.solids[$0].to.z == 0 }.map { Int32($0) }
