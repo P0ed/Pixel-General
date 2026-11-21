@@ -94,13 +94,18 @@ extension HQNodes {
 					+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
 					+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
 					let seed = Int.random(in: 0 ..< 1024)
-					let options = XY.one.c5
+					let seats = players.indices.filter { players[$0].alive }
+					let options = Scenario.spawnOptions
+					let spawnCells = seats.map { seat -> XY? in
+						let choice = Int(spawns[seat])
+						return options.indices.contains(choice) ? options[choice] : nil
+					}
 
 					core.startScenario(.init(new: Scenario(
-						players: players.compactMap { $0.alive ? $0 : nil },
+						players: seats.map { players[$0] },
 						units: units,
 						terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
-						spawns: .init { i in spawns[i] < spawns.count ? options[spawns.count - i] : nil },
+						spawns: .init(head: spawnCells, tail: nil),
 						cityLevel: Int(density),
 						fortLevel: Int(forts),
 						seed: seed

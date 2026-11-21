@@ -1,8 +1,12 @@
 /// Complete, reusable recipe for a tactical battle.
 public struct Scenario {
+	public static var spawnOptions: [5 of XY] {
+		[XY(1, 0), XY(1, 3), XY(3, 1), XY(0, 1), XY(1, 1)]
+	}
+
 	public var players: [Player]
 	public var units: [Unit]
-	public var terrain: [9 of Terrain]
+	public var terrain: [16 of Terrain]
 	public var spawns: [4 of XY?]
 	public var cityLevel: Int
 	public var fortLevel: Int
@@ -12,7 +16,7 @@ public struct Scenario {
 	public init(
 		players: [Player],
 		units: [Unit],
-		terrain: [9 of Terrain] = .init(repeating: .field),
+		terrain: [16 of Terrain] = .init(repeating: .field),
 		spawns: [4 of XY?] = .init(repeating: nil),
 		cityLevel: Int = 0,
 		fortLevel: Int = 0,
@@ -34,7 +38,7 @@ public struct Scenario {
 	private static func addingNavalAux(
 		to units: [Unit],
 		for players: [Player],
-		terrain: [9 of Terrain]
+		terrain: [16 of Terrain]
 	) -> [Unit] {
 		let seaTiles = terrain.reduce(into: 0) { r, t in r += t == .sea ? 1 : 0 }
 		guard seaTiles >= 3 else { return units }
@@ -75,27 +79,27 @@ public struct Scenario {
 		return result
 	}
 
-	public static func cornerTerrain(seaLevel: UInt8, seed: Int) -> [9 of Terrain] {
-		var terrain = [9 of Terrain](repeating: .field)
+	public static func cornerTerrain(seaLevel: UInt8, seed: Int) -> [16 of Terrain] {
+		var terrain = [16 of Terrain](repeating: .field)
 		guard seaLevel > 0 else { return terrain }
 
 		var d20 = D20(seed: seed)
 		let tiles: [Int] = switch d20() {
-		case ..<5: [2, 1, 5, 0] // north-east
-		case ..<10: [0, 1, 3, 2] // north-west
-		case ..<15: [6, 7, 3, 8] // south-west
-		default: [8, 7, 5, 2] // south-east
+		case ..<5: [3, 2, 7, 1, 0] // north-east
+		case ..<10: [0, 1, 4, 2, 3] // north-west
+		case ..<15: [12, 13, 8, 14, 15] // south-west
+		default: [15, 14, 11, 13, 12] // south-east
 		}
-		for index in tiles.prefix(Int(min(seaLevel + 1, 4))) {
+		let count = [0, 2, 3, 5][Int(min(seaLevel, 3))]
+		for index in tiles.prefix(count) {
 			terrain[index] = .sea
 		}
 		return terrain
 	}
 
 	var resolvedSpawnPoints: [XY] {
-		let options: [5 of XY] = XY.one.c5
 		var d20 = D20(seed: seed)
-		var pool = Array(options).filter { option in
+		var pool = Array(Self.spawnOptions).filter { option in
 			!players.indices.contains { i in players[i].alive && spawns[i] == option }
 		}
 		.shuffled(using: &d20)
@@ -105,7 +109,6 @@ public struct Scenario {
 			if let xy = spawns[idx] {
 				resolved.append(xy)
 			} else {
-				if pool.isEmpty { pool = Array(XY.one.x4) }
 				resolved.append(pool.removeFirst())
 			}
 		}
@@ -114,12 +117,23 @@ public struct Scenario {
 	}
 }
 
+extension XY {
+	init(terrainIndex: Int) {
+		self.init(terrainIndex % 4, 3 - terrainIndex / 4)
+	}
+
+	var terrainIndex: Int {
+		(3 - y) * 4 + x
+	}
+}
+
 public extension XY {
 
-	/// Tactical-map center of a 3×3 terrain cell; `self` is the cell as
-	/// (column, row-from-south), each 0…2.
+	/// Tactical-map center of a 4×4 terrain cell given its column and
+	/// row from the south, both in 0…3.
 	func cellCenter(size: Int) -> XY {
-		XY((x * 2 + 1) * size / 6, (y * 2 + 1) * size / 6)
+		let width = size / 4
+		return XY(x * width + width / 2, y * width + width / 2)
 	}
 }
 

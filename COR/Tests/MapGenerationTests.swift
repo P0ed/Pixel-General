@@ -38,7 +38,7 @@ struct MapGenerationTests {
 	@Test(arguments: [Terrain.field, .forest])
 	func spawnPointCitiesHaveAirfields(terrain: Terrain) {
 		for seed in 0 ..< 8 {
-			let spawns = Array(XY.one.n4)
+			let spawns = (0 ..< 4).map { Scenario.spawnOptions[$0] }
 			let map = Map<64, Terrain>(
 				seed: seed * 13,
 				terrain: .init(repeating: terrain),
@@ -92,7 +92,12 @@ struct MapGenerationTests {
 
 	@Test(arguments: [7, 19, 42])
 	func clampsDensityOnCoastalAndMountainousMaps(seed: Int) {
-		let coast: [9 of Terrain] = [.sea, .sea, .sea, .sea, .forest, .field, .sea, .field, .field]
+		let coast: [16 of Terrain] = [
+			.sea, .sea, .sea, .sea,
+			.sea, .forest, .field, .field,
+			.field, .field, .field, .field,
+			.field, .field, .field, .field,
+		]
 		let high = Map<64, Terrain>(seed: seed, terrain: coast, density: 3)
 		let above = Map<64, Terrain>(seed: seed, terrain: coast, density: 100)
 		let inland = Map<64, Terrain>(seed: seed, terrain: .mountain, density: 3)
@@ -147,7 +152,7 @@ struct MapGenerationTests {
 	}
 
 	@Test func terrainNeighborhoodShapesSeaWithHeightMap() {
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea // north-west terrain cell
 		let a = Map<64, Terrain>(seed: 7, players: 2, terrain: terrain)
 		let b = Map<64, Terrain>(seed: 19, players: 2, terrain: terrain)
@@ -166,9 +171,9 @@ struct MapGenerationTests {
 		var centerTiles = 0
 		var peripheralSea = 0
 		var peripheralTiles = 0
-		let centerXY = XY(0, 2).cellCenter(size: a.size)
+		let centerXY = XY(0, 3).cellCenter(size: a.size)
 		for xy in a.indices {
-			let nominalSea = xy.x * 3 / a.size == 0 && xy.y * 3 / a.size == 2
+			let nominalSea = xy.x < 16 && xy.y >= 48
 			if !a[xy].isSea, nominalSea { landInsideNominalShore += 1 }
 			let center = abs(xy.x - centerXY.x) <= 4 && abs(xy.y - centerXY.y) <= 4
 			if center {
@@ -189,13 +194,13 @@ struct MapGenerationTests {
 
 	@Test func scenarioSeaLevelsAreCumulativeAndSeededByCorner() {
 		let validPairs: Set<Set<Int>> = [
-			[2, 1], [0, 1], [6, 7], [8, 7],
+			[3, 2], [0, 1], [12, 13], [15, 14],
 		]
 		let validCorners: Set<Set<Int>> = [
-			[2, 1, 5], [0, 1, 3], [6, 7, 3], [8, 7, 5],
+			[3, 2, 7], [0, 1, 4], [12, 13, 8], [15, 14, 11],
 		]
 		let validCoasts: Set<Set<Int>> = [
-			[2, 1, 5, 0], [0, 1, 3, 2], [6, 7, 3, 8], [8, 7, 5, 2],
+			[0, 1, 2, 3, 7], [0, 1, 2, 3, 4], [8, 12, 13, 14, 15], [11, 12, 13, 14, 15],
 		]
 		var observedPairs = Set<Set<Int>>()
 		for seed in 0 ..< 64 {
@@ -203,7 +208,7 @@ struct MapGenerationTests {
 			for level: UInt8 in 0 ... 3 {
 				let terrain = Scenario.cornerTerrain(seaLevel: level, seed: seed)
 				let sea = Set(terrain.indices.filter { terrain[$0].isSea })
-				let expected = level == 0 ? 0 : Int(level) + 1
+				let expected = [0, 2, 3, 5][Int(level)]
 				#expect(sea.count == expected, "Sea level \(level) produced \(sea.count) squares for seed \(seed)")
 				#expect(previous.isSubset(of: sea), "Sea level \(level) was not cumulative for seed \(seed)")
 				previous = sea
@@ -223,10 +228,10 @@ struct MapGenerationTests {
 	}
 
 	@Test func riversOnlyTouchSeaAtTerminalMouths() {
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
 		terrain[1] = .sea
-		terrain[3] = .sea
+		terrain[4] = .sea
 		var mouths = 0
 		for seed in 0 ..< 24 {
 			let map = Map<64, Terrain>(seed: seed, players: 4, terrain: terrain)
@@ -251,10 +256,10 @@ struct MapGenerationTests {
 	}
 
 	@Test func citiesStayOffIslandsAndSmallIslandsAreRemoved() {
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
 		terrain[1] = .sea
-		terrain[3] = .sea
+		terrain[4] = .sea
 		for seed in 0 ..< 16 {
 			let map = Map<64, Terrain>(seed: seed, players: 4, terrain: terrain)
 

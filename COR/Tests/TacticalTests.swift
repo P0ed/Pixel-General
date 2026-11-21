@@ -125,8 +125,8 @@ struct TacticalTests {
 	}
 
 	@Test func scenarioBuildsFromTerrainNeighborhood() {
-		var terrain = [9 of Terrain](repeating: .field)
-		terrain[2] = .sea
+		var terrain = [16 of Terrain](repeating: .field)
+		terrain[3] = .sea
 		let objective = Objective.survive(.soviet, day: 12)
 		let scenario = Scenario(
 			players: [
@@ -154,7 +154,7 @@ struct TacticalTests {
 			Player(country: .rus, type: .ai),
 		]
 		for seed in 0 ..< 8 {
-			let spawns: [4 of XY?] = [XY(0, 1), XY(2, 1), nil, nil]
+			let spawns: [4 of XY?] = [XY(0, 1), XY(3, 1), nil, nil]
 			let sim = Scenario(
 				players: players,
 				units: [],
@@ -209,7 +209,7 @@ struct TacticalTests {
 			Player(country: .fin, type: .human, baseLevel: 2),
 			Player(country: .rus, type: .ai),
 		]
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
 		terrain[1] = .sea
 
@@ -241,7 +241,7 @@ struct TacticalTests {
 		let countries: [Country] = [.swe, .den, .ned, .nor]
 		let players = countries.map { Player(country: $0, type: .ai) }
 		let units = countries.flatMap { [Unit].base($0) + .aux($0) }
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
 		terrain[1] = .sea
 		terrain[2] = .sea
@@ -274,9 +274,8 @@ struct TacticalTests {
 			sim.units.forEachAlive { i, unit in
 				guard unit.type.isNaval else { return }
 				let xy = sim.position[i]
-				let column = min(2, xy.x * 3 / sim.map.size)
-				let rowFromSouth = min(2, xy.y * 3 / sim.map.size)
-				cellsByTeam[unit.country.team, default: []].insert((2 - rowFromSouth) * 3 + column)
+				let cell = XY(xy.x / 16, xy.y / 16)
+				cellsByTeam[unit.country.team, default: []].insert(cell.terrainIndex)
 				let neighbors = xy.n4
 				for j in neighbors.indices {
 					let p = neighbors[j]
@@ -301,11 +300,11 @@ struct TacticalTests {
 			Player(country: .usa, type: .ai),
 			Player(country: .swe, type: .ai),
 		]
-		var terrain = [9 of Terrain](repeating: .field)
+		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
-		terrain[2] = .sea
-		terrain[6] = .sea
-		terrain[8] = .sea
+		terrain[3] = .sea
+		terrain[12] = .sea
+		terrain[15] = .sea
 		let centers = TacticalSim.navalCenters(
 			players: players,
 			terrain: terrain,
@@ -318,9 +317,9 @@ struct TacticalTests {
 			size: 64
 		)
 
-		#expect(centers[.axis] == XY(10, 10))
-		#expect(centers[.soviet] == XY(53, 53))
-		#expect(centers[.allies] == XY(53, 10))
+		#expect(centers[.axis] == XY(8, 8))
+		#expect(centers[.soviet] == XY(56, 56))
+		#expect(centers[.allies] == XY(56, 8))
 	}
 
 	@Test func seaIsImpassableOnlyToLandUnits() {

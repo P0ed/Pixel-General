@@ -47,7 +47,7 @@ public extension TacticalSim {
 	/// cell centers.
 	static func navalCenters(
 		players: [Player],
-		terrain: [9 of Terrain],
+		terrain: [16 of Terrain],
 		cities: [(XY, Country)],
 		size: Int
 	) -> [Team: XY] {
@@ -60,7 +60,7 @@ public extension TacticalSim {
 		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
 
 		func cellCenter(_ index: Int) -> XY {
-			XY(index % 3, 2 - index / 3).cellCenter(size: size)
+			XY(terrainIndex: index).cellCenter(size: size)
 		}
 
 		let teamCenters = teams.map { team in
@@ -111,7 +111,7 @@ public extension TacticalSim {
 		self.init(new: Scenario(
 			players: players,
 			units: units,
-			terrain: [9 of Terrain](repeating: terrain),
+			terrain: [16 of Terrain](repeating: terrain),
 			fortLevel: forts,
 			seed: seed,
 			objective: objective

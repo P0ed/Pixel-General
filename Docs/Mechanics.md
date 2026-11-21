@@ -329,15 +329,15 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Tactical/Scenario.swift`, `COR/Tactical/TacticalSimFactory.swift`,
 `COR/Tactical/MapGeneration.swift`
 
-- `Scenario.spawns` holds one cell of the 3×3 terrain grid per
-  player as (column, row-from-south), each 0…2. Whole city footprints are
+- `Scenario.spawns` holds one cell of the 4×4 terrain grid per
+  player as (column, row-from-south), each 0…3. Whole city footprints are
   assigned by spawn distance, using defender-weighted quotas measured in city
   tiles. Map generation prioritizes airfield sites near spawn cities and can
   clear forest or hill to place those airfields.
 - Custom scenarios offer five spawn options
-  `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
-  west, center); each seat picks **I, II, III, IV, V, Random** with a menu
-  toggle. Random seats draw from the options no seat picked explicitly.
+  `[XY(1, 0), XY(1, 3), XY(3, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
+  west, near center). Each seat picks **I, II, III, IV, V, Random** with a
+  menu toggle. Random seats draw from the options no seat picked explicitly.
 
 ### Objectives & victory
 

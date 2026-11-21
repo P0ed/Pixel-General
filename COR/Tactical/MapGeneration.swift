@@ -8,23 +8,19 @@ public extension Map<64, Terrain> {
 		self.init(
 			seed: seed,
 			players: players,
-			terrain: [9 of Terrain](repeating: terrain),
+			terrain: [16 of Terrain](repeating: terrain),
 			density: density
 		)
 	}
 
-	/// Generates one tactical map from a 3×3 terrain grid. The
-	/// array is row-major from north-west to south-east:
-	///
-	///     0 1 2
-	///     3 4 5
-	///     6 7 8
+	/// Generates one tactical map from a 4×4 grid of 16×16 terrain cells.
+	/// The array is row-major from north-west to south-east.
 	///
 	/// Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
 	/// `spawns` are the players' spawn cells of the neighborhood. Airfields
 	/// are placed near their nearest cities first, where terrain permits.
-	init(seed: Int, players _: Int = 4, terrain: [9 of Terrain], density: Int = 1, spawns: [XY] = []) {
+	init(seed: Int, players _: Int = 4, terrain: [16 of Terrain], density: Int = 1, spawns: [XY] = []) {
 		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
@@ -66,7 +62,7 @@ public extension Map<64, Terrain> {
 	private mutating func generateTerrain(
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
-		terrain: [9 of Terrain]
+		terrain: [16 of Terrain]
 	) -> SetXY {
 		indices.forEach { xy in
 			self[xy] = isSea(at: xy, height: height, terrain: terrain)
@@ -81,7 +77,7 @@ public extension Map<64, Terrain> {
 		at xy: XY,
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
-		terrain: [9 of Terrain]
+		terrain: [16 of Terrain]
 	) -> Terrain {
 		let dominant = regionalTerrain(at: xy, terrain: terrain)
 		let humidityBias: Float = switch dominant {
@@ -101,7 +97,7 @@ public extension Map<64, Terrain> {
 	private mutating func removeDisconnectedSea(
 		height: GKNoiseMap,
 		humidity: GKNoiseMap,
-		terrain: [9 of Terrain]
+		terrain: [16 of Terrain]
 	) {
 		var connected = SetXY.empty
 		let seeds = indices.filter { xy in
@@ -157,36 +153,28 @@ public extension Map<64, Terrain> {
 		return SetXY(landmasses[mainlandIndex])
 	}
 
-	/// Treats the 3×3 terrain sea mask as the broad coastline, then moves
+	/// Treats the terrain sea mask as the broad coastline, then moves
 	/// that coastline inland at low elevations and out to sea at high ones.
 	/// Distance from the nearest sea-cell center adds a growing landward bias,
 	/// so peripheral water needs distinctly lower elevation than the sea core.
 	/// Capping nominal sea depth keeps that bias relevant even in an outer map
 	/// corner far from every terrain land cell.
-	private func isSea(at xy: XY, height: GKNoiseMap, terrain: [9 of Terrain]) -> Bool {
+	private func isSea(at xy: XY, height: GKNoiseMap, terrain: [16 of Terrain]) -> Bool {
 		let hasSea = terrain.contains { $0.isSea }
 		guard hasSea else { return false }
 		guard terrain.contains({ !$0.isSea }) else { return true }
 
-		let scale = 3.0 / Float(size)
-		let point = SIMD2<Float>(
-			(Float(xy.x) + 0.5) * scale,
-			(Float(xy.y) + 0.5) * scale
-		)
+		let point = SIMD2<Float>(Float(xy.x) + 0.5, Float(xy.y) + 0.5) / Float(size / 4)
 		var seaDistance = Float.greatestFiniteMagnitude
 		var landDistance = Float.greatestFiniteMagnitude
 		var seaCenterDistance = Float.greatestFiniteMagnitude
 		for index in terrain.indices {
-			let column = index % 3
-			let rowFromSouth = 2 - index / 3
-			let cell = SIMD2<Float>(Float(column), Float(rowFromSouth))
-			let distance = distance(
-				from: point,
-				toCellAt: cell
-			)
+			let cell = XY(terrainIndex: index)
+			let origin = SIMD2<Float>(Float(cell.x), Float(cell.y))
+			let distance = distance(from: point, toCellAt: origin)
 			if terrain[index].isSea {
 				seaDistance = min(seaDistance, distance)
-				let centerOffset = point - cell - SIMD2<Float>(repeating: 0.5)
+				let centerOffset = point - origin - 0.5
 				seaCenterDistance = min(
 					seaCenterDistance,
 					(centerOffset.x * centerOffset.x + centerOffset.y * centerOffset.y).squareRoot()
@@ -197,9 +185,9 @@ public extension Map<64, Terrain> {
 		}
 
 		let elevation = 0.6 * lowpass(height, at: xy) + 0.4 * height.value(at: xy.simd)
-		let seaDepth = min(landDistance, 0.6)
-		let centerPenalty = max(0, seaCenterDistance - 0.15) * 0.65
-		return seaDistance - seaDepth + centerPenalty + 0.05 + elevation * 0.75 < 0
+		let seaDepth = min(landDistance, 0.8)
+		let centerPenalty = max(0, seaCenterDistance - 0.2) * 0.65
+		return (seaDistance - seaDepth + centerPenalty + elevation) * 0.75 + 0.05 < 0
 	}
 
 	private func distance(from point: SIMD2<Float>, toCellAt origin: SIMD2<Float>) -> Float {
@@ -208,11 +196,9 @@ public extension Map<64, Terrain> {
 		return (dx * dx + dy * dy).squareRoot()
 	}
 
-	private func regionalTerrain(at xy: XY, terrain: [9 of Terrain]) -> Terrain {
-		let column = min(2, xy.x * 3 / size)
-		let rowFromSouth = min(2, xy.y * 3 / size)
-		let rowFromNorth = 2 - rowFromSouth
-		return terrain[rowFromNorth * 3 + column]
+	private func regionalTerrain(at xy: XY, terrain: [16 of Terrain]) -> Terrain {
+		let width = size / 4
+		return terrain[XY(xy.x / width, xy.y / width).terrainIndex]
 	}
 
 	/// Rivers enter and leave at seed-chosen edge points and follow valleys of
