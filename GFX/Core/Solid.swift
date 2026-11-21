@@ -20,6 +20,7 @@ public struct Solid: Sendable {
 	public var from: V3
 	public var to: V3
 	public var tone: UInt8
+	var outline: Outline?
 
 	public init(planes: [Plane], from: V3, to: V3, tone: UInt8 = .max) {
 		self.planes = planes
@@ -108,33 +109,37 @@ public extension Solid {
 public extension Solid {
 
 	func translated(by v: V3) -> Solid {
-		Solid(planes: planes.map { $0.translated(by: v) }, from: from + v, to: to + v, tone: tone)
+		var solid = self
+		solid.planes = planes.map { $0.translated(by: v) }
+		solid.from = from + v
+		solid.to = to + v
+		return solid
 	}
 
 	func rotated(_ turn: Turn, about center: V3) -> Solid {
 		let a = turn.apply(from - center) + center
 		let b = turn.apply(to - center) + center
-		return Solid(
-			planes: planes.map { $0.rotated(turn, about: center) },
-			from: a.min(b),
-			to: a.max(b),
-			tone: tone
-		)
+		var solid = self
+		solid.planes = planes.map { $0.rotated(turn, about: center) }
+		solid.from = a.min(b)
+		solid.to = a.max(b)
+		return solid
 	}
 
 	func mirrored(about center: V3) -> Solid {
 		let a = V3(from.y - center.y + center.x, from.x - center.x + center.y, from.z)
 		let b = V3(to.y - center.y + center.x, to.x - center.x + center.y, to.z)
-		return Solid(
-			planes: planes.map { $0.mirrored(about: center) },
-			from: a.min(b),
-			to: a.max(b),
-			tone: tone
-		)
+		var solid = self
+		solid.planes = planes.map { $0.mirrored(about: center) }
+		solid.from = a.min(b)
+		solid.to = a.max(b)
+		return solid
 	}
 
 	func toned(_ tone: UInt8) -> Solid {
-		Solid(planes: planes, from: from, to: to, tone: tone)
+		var solid = self
+		solid.tone = tone
+		return solid
 	}
 
 	func contains(_ p: V3) -> Bool {

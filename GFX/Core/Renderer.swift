@@ -27,7 +27,7 @@ public extension Renderer {
 
 	func render(_ model: Model) -> Bitmap {
 		var raster = raster(model)
-		outline.apply(to: &raster)
+		outline.apply(to: &raster, solids: model.solids)
 		draw(model.lines, into: &raster)
 		return raster.bitmap
 	}
@@ -42,7 +42,7 @@ public extension Renderer {
 	/// The outline alone, for drawing over an independently tinted fill.
 	func edges(_ model: Model) -> Bitmap {
 		var raster = raster(model)
-		outline.apply(to: &raster)
+		outline.apply(to: &raster, solids: model.solids)
 
 		var edges = Bitmap(canvas: canvas)
 		for i in 0 ..< canvas.count where raster.outlined[i] {
@@ -61,6 +61,7 @@ extension Renderer {
 		var ids: [Int32]
 		var faces: [Int32]
 		var outlined: [Bool]
+		let tileInterior: [Bool]?
 	}
 
 	func raster(_ model: Model) -> Raster {
@@ -69,16 +70,19 @@ extension Renderer {
 			depths: [Float](repeating: -.greatestFiniteMagnitude, count: canvas.count),
 			ids: [Int32](repeating: -1, count: canvas.count),
 			faces: [Int32](repeating: -1, count: canvas.count),
-			outlined: [Bool](repeating: false, count: canvas.count)
+			outlined: [Bool](repeating: false, count: canvas.count),
+			tileInterior: model.solids.contains { $0.outline?.tileEdges != nil }
+				? Tiles.interior(on: canvas) : nil
 		)
 
 		for (id, solid) in model.solids.enumerated() {
+			let interior = solid.outline?.tileEdges == .framed ? raster.tileInterior : nil
 			let rect = canvas.rect(of: solid)
 			for y in rect.y {
 				for x in rect.x {
 					guard let hit = solid.hit(canvas.origin(x: x, y: y)) else { continue }
 					let i = raster.bitmap.index(x: x, y: y)
-					guard hit.t > raster.depths[i] else { continue }
+					guard interior?[i] != false, hit.t > raster.depths[i] else { continue }
 
 					raster.depths[i] = hit.t
 					raster.ids[i] = Int32(id)

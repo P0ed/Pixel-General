@@ -6,6 +6,17 @@ public enum Tiles {
 	/// keeps the full 96 x 48 cell covered, including its four tips.
 	private static let near: Float = -0.5
 	private static let far = Volume.footprint - near
+	private static let tileInterior = interiorPixels(on: .tile)
+
+	static func interior(on canvas: Canvas) -> [Bool] {
+		canvas == .tile ? tileInterior : interiorPixels(on: canvas)
+	}
+
+	private static func interiorPixels(on canvas: Canvas) -> [Bool] {
+		let model = base(elevation: 0)
+		let renderer = Renderer(canvas: canvas, outline: .tile)
+		return zip(renderer.fill(model).alpha, renderer.edges(model).alpha).map { $0 > 0 && $1 == 0 }
+	}
 
 	/// Dashed, pixel-width perimeter of the base diamond. Tinting happens downstream.
 	public static var cursor: Model {

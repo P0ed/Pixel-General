@@ -5,6 +5,11 @@ public struct Outline: Hashable, Sendable {
 	public var creases: UInt8?
 	public var faces: UInt8?
 	public var depth: Float
+	var tileEdges: TileEdges?
+
+	enum TileEdges: Hashable, Sendable {
+		case open, framed
+	}
 
 	public init(silhouette: UInt8? = nil, creases: UInt8? = nil, faces: UInt8? = nil, depth: Float = 0.75) {
 		self.silhouette = silhouette
@@ -30,14 +35,18 @@ public struct Outline: Hashable, Sendable {
 
 extension Outline {
 
-	func apply(to raster: inout Renderer.Raster) {
-		guard silhouette != nil || creases != nil || faces != nil else { return }
+	func apply(to raster: inout Renderer.Raster, solids: [Solid]) {
+		guard silhouette != nil || creases != nil || faces != nil
+			|| solids.contains(where: { $0.outline != nil }) else { return }
 		let source = raster.bitmap
 
 		for y in 0 ..< source.height {
 			for x in 0 ..< source.width {
 				let i = source.index(x: x, y: y)
 				guard source.alpha[i] > 0 else { continue }
+				let id = raster.ids[i]
+				let outline = solids[Int(id)].outline ?? self
+				let interior = outline.tileEdges != nil ? raster.tileInterior : nil
 
 				var rim = false
 				var seam = false
@@ -52,9 +61,16 @@ extension Outline {
 					}
 					let n = source.index(x: nx, y: ny)
 					if source.alpha[n] == 0 {
-						rim = true
-					} else if raster.ids[n] != raster.ids[i] {
-						seam = seam || raster.depths[n] > raster.depths[i] + depth
+						// The tile frame itself borders the open ends of a road.
+						rim = rim || interior?[n] != false
+					} else if raster.ids[n] != id {
+						let neighbor = solids[Int(raster.ids[n])]
+						if outline.tileEdges == nil && neighbor.outline?.tileEdges == .framed {
+							// Ground pavement is the backdrop for a building's silhouette.
+							rim = true
+						} else {
+							seam = seam || raster.depths[n] > raster.depths[i] + outline.depth
+						}
 					} else if raster.faces[n] != raster.faces[i] {
 						// Only the darker side of the crease takes the line, so it stays 1 face thick.
 						crease = crease || source.gray[i] < source.gray[n]
@@ -62,7 +78,7 @@ extension Outline {
 					}
 				}
 
-				let tone = rim ? silhouette : (seam ? creases : (crease ? self.faces : nil))
+				let tone = rim ? outline.silhouette : (seam ? outline.creases : (crease ? outline.faces : nil))
 				if let tone {
 					raster.bitmap.gray[i] = min(source.gray[i], tone)
 					raster.outlined[i] = true

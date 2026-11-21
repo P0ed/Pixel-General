@@ -14,10 +14,23 @@ public enum Roads {
 	public static let width: Float = 9
 
 	public static func road(_ directions: [Direction]) -> Model {
+		road(directions, tileEdges: .framed)
+	}
+
+	private static func road(_ directions: [Direction], tileEdges: Outline.TileEdges) -> Model {
+		var outline = Outline.decal
+		outline.tileEdges = tileEdges
+
+		func pavement(from: V3, to: V3) -> Solid {
+			var solid = Solid.box(from: from, to: to, tone: Tone.bed)
+			solid.outline = outline
+			return solid
+		}
+
 		let half = Volume.footprint / 2
 		let near = half - width / 2
 		let far = half + width / 2
-		var solids = [Solid.box(from: V3(near, near, 0), to: V3(far, far, 0), tone: Tone.bed)]
+		var solids = [pavement(from: V3(near, near, 0), to: V3(far, far, 0))]
 
 		for direction in directions {
 			let from: V3
@@ -28,7 +41,7 @@ public enum Roads {
 			case .yPlus: (from, to) = (V3(near, half, 0), V3(far, Volume.footprint, 0))
 			case .yMinus: (from, to) = (V3(near, 0, 0), V3(far, half, 0))
 			}
-			solids.append(.box(from: from, to: to, tone: Tone.bed))
+			solids.append(pavement(from: from, to: to))
 		}
 
 		return Model(solids, lines: directions.map {
@@ -52,8 +65,8 @@ public enum Roads {
 			lines.append(Line(from: V3(x, far, -1.5), to: V3(x, far, -6), tone: Tone.pile))
 		}
 
-		// The road comes first so its asphalt wins the coplanar tie with the deck.
-		let model = road([.xMinus, .xPlus]) + Model([deck], lines: lines)
+		// The asphalt reaches the ends of the deck and wins the coplanar tie.
+		let model = road([.xMinus, .xPlus], tileEdges: .open) + Model([deck], lines: lines)
 		return axis == .x ? model : model.rotated(.right)
 	}
 }
