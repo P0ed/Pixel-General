@@ -28,12 +28,13 @@ extension CGImage {
 
 	/// Everything a tile carries on top of its surface, all of it modelled in GFX.
 	enum Decoration: Hashable {
-		case city, fort, airfield
+		case mountain, city, fort, airfield
 		case road([GFX.Direction])
 		case bridge(GFX.Axis)
 
 		var model: Model {
 			switch self {
+			case .mountain: Tiles.mountain
 			case .city: Settlements.city
 			case .fort: Settlements.fort
 			case .airfield: Settlements.airfield

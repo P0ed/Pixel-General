@@ -58,7 +58,8 @@ extension Terrain {
 	@MainActor
 	var decoration: CGImage? {
 		switch self {
-		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
+		case .none, .river, .sea, .field, .forest, .rough: nil
+		case .mountain: .decoration(.mountain)
 		case .city: .decoration(.city)
 		case .fort: .decoration(.fort)
 		case .airfield: .decoration(.airfield)
@@ -189,7 +190,7 @@ private extension CGContext {
 extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
-		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
+		.mountain, .city, .airfield, .bridgeWE, .bridgeSN, .fort,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
 		.roadTE, .roadTN, .roadTW, .roadTS, .roadX,
 	]
