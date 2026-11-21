@@ -15,27 +15,54 @@ public extension Units {
 		])
 	}
 
-	/// Scout car with separate tyres, cabin glazing, a bonnet and a telescopic observation head.
+	/// Fennek scout car: a low wedge nose, wraparound glazing and a raised observation mast.
 	static var fennek: Model {
-		wheeled(at: [-11.25, 10.8], width: 15, radius: 3.45)
+		let roof: Float = 14.1
+		let glazing: ClosedRange<Float> = 10.5 ... 13.65
+		let windowRake: Float = 3.825
+		let windowTone: UInt8 = 90
+		let mastX: Float = -4.5
+		let mastY: Float = -2.25
+		var shoulders = armour(length: 33.6, width: 16.5, z: 7.95 ... 10.5,
+			front: 0.75, rear: 0.45, side: 0.45, corner: 1.8, tone: Tone.body)
+		shoulders.planes += [
+			Plane(normal: V3(0.18, 0, 1), through: at(9, 0, 10.5)),
+			Plane(normal: V3(1, 0, -1.2), through: at(15, 0, 7.95)),
+			Plane(normal: V3(-1, 0, -0.75), through: at(-15.3, 0, 7.95)),
+		]
+
+		// The skirt flares above the tyres to form the inner edges of both wheel arches.
+		var skirt = box(length: 18.6, width: 16.5, z: 4.35 ... 8.1, tone: Tone.body)
+		skirt.planes += [
+			Plane(normal: V3(1, 0, -0.8), through: at(6.3, 0, 4.35)),
+			Plane(normal: V3(-1, 0, -0.8), through: at(-6.3, 0, 4.35)),
+			Plane(normal: V3(0, 1, -0.15), through: at(0, 8.25, 7.95)),
+			Plane(normal: V3(0, -1, -0.15), through: at(0, -8.25, 7.95)),
+		]
+
+		return wheeled(at: [-10.65, 10.65], width: 15.75, radius: 4.05)
 		+ Model([
-			armour(length: 33, width: 14.7, z: 4.95 ... 9.9,
-				front: 3.9, rear: 1.05, side: 0.75, corner: 1.2, tone: Tone.body),
-			armour(length: 18, width: 13.95, z: 9 ... 14.4, x: -6,
-				front: 3, rear: 0.75, side: 0.9, corner: 1.05, tone: Tone.body),
-			wedge(length: 3, width: 11.7, z: 10.8 ... 14.475, x: 1.5, rising: .xMinus, tone: 120),
-			hatch(x: -4.5, z: 14.4, radius: 2.1),
-			cylinder(at: at(-11.25, 0, 16.8), radius: 1.05, length: 4.8, axis: .z, tone: Tone.barrel),
-			armour(length: 4.2, width: 4.95, z: 19.2 ... 21, x: -11.25, corner: 0.75, tone: Tone.turret),
-			box(length: 0.6, width: 3, z: 19.5 ... 20.55, x: -9, tone: 75),
-		] + sides(6.525) {
-			box(length: 6.75, width: 0.375, z: 10.8 ... 13.2, x: -3.75, y: $0, tone: Tone.glass)
-		}, lines: grille(x: 9, z: 9.975, length: 4.5, width: 6, tone: 125) + [
-			Line(from: at(0.3, 0, 14.4), to: at(2.7, 0, 11.25), tone: Tone.body),
-			Line(from: at(-12, 4.5, 14.1), to: at(-13.5, 4.5, 19.8), tone: Tone.antenna),
-		] + sides(6.75) {
-			Line(from: at(-3, $0, 6.75), to: at(-3, $0, 10.65), tone: 100)
-		})
+			box(length: 31.2, width: 10.5, z: 4.95 ... 8.25, tone: Tone.turret),
+			skirt,
+			shoulders,
+			armour(length: 26.4, width: 16.5, z: 9.9 ... roof, x: -2.85,
+				front: 5.1, rear: 0.9, side: 1.35, corner: 0.9, tone: Tone.body),
+			armour(length: 7.2, width: 13.5, z: glazing, x: 6.3,
+				front: windowRake, side: 1.05, corner: 0.3, tone: windowTone),
+			hatch(x: 1.95, y: 2.55, z: roof, radius: 2.4),
+			box(length: 3.9, width: 3.9, z: roof ... 15.45, x: mastX, y: mastY, tone: Tone.turret),
+			box(length: 1.35, width: 1.65, z: 15.45 ... 20.55, x: mastX, y: mastY, tone: Tone.barrel),
+			armour(length: 3.3, width: 4.5, z: 20.55 ... 23.85, x: mastX, y: mastY,
+				corner: 0.6, tone: Tone.turret),
+			cylinder(at: at(mastX + 1.8, mastY, 22.35), radius: 1.2, length: 0.6, axis: .x, tone: 78),
+		] + sides(7.05) {
+			armour(length: 8.1, width: 2.7, z: glazing, x: 4.05, y: $0,
+				front: windowRake, side: 1.05, tone: windowTone)
+		} + sides(5.4) {
+			box(length: 1.5, width: 1.8, z: 8.1 ... 9.45, x: 16.05, y: $0, tone: 235)
+		}, lines: grille(x: -10.5, y: -1.5, z: roof + 0.075, length: 2.25, width: 3.6, tone: 120) + [
+			Line(from: at(-13.2, 4.95, roof), to: at(-15, 4.95, 23.4), tone: Tone.antenna),
+		])
 	}
 
 	/// BRDM-2: a faceted boat-shaped hull, four tyres and the small auxiliary belly wheels.
