@@ -8,6 +8,7 @@ struct MenuState<Action> {
 	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
 	var cursor: Int = 0
 	var action: MenuSlot?
+	var selectedSideButton: MenuSlot?
 }
 
 enum MenuSlot: Equatable { case item(Int), left(Int), right(Int) }
@@ -147,14 +148,16 @@ extension MenuState {
 		}
 		switch input {
 		case .direction(let direction?, modifiers: _): moveCursor(direction)
-		case .tile(let xy) where xy.x != cursor: cursor = xy.x
-		case .action(.a, modifiers: _), .tile: action = .item(cursor)
+		case .tile(let xy) where items.indices.contains(xy.x):
+			if xy.x == cursor { action = .item(cursor) } else { cursor = xy.x }
+		case .action(.a, modifiers: _) where items.indices.contains(cursor): action = .item(cursor)
 		case .menu, .action(.b, modifiers: _): action = .back
 		default: break
 		}
 	}
 
 	mutating func moveCursor(_ direction: Direction) {
+		guard !items.isEmpty else { return }
 		cursor = switch direction {
 		case .down: (cursor + min(4, items.count)) % items.count
 		case .up: (cursor - min(4, items.count) + items.count) % items.count

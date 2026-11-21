@@ -191,8 +191,8 @@ the actual damage curve:
   then the per-round crit/evasion dice — is load-bearing for the multiplayer
   relay (see [Architecture](./Architecture.md#multiplayer-lan)).
 - Damage hits the unit (and its cargo). Each shot grants
-  `dmg * du.cost / 32` exp if the defender survives, `dmg * du.cost / 24`
-  if the shot kills. A kill also grants a flat `du.cost / 16` prestige
+  `dmg * du.value / 32` exp if the defender survives, `dmg * du.value / 24`
+  if the shot kills. A kill also grants `du.stats.cost / 16` prestige
   bounty and rolls for promotion. `Duel.expected()` — the closed-form mean
   of the same curve — is the AI's deterministic preview (via
   `estimateDamage`), so it can never plan against a model that disagrees with
@@ -292,7 +292,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   Income per day = sum of owned settlements' income (`Terrain.income` in
   `COR/Tactical/TacticalState.swift`: city 24, village 8, airfield 4).
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
-  unit if prestige ≥ `unit.cost`. Airfields sell air units; cities (and
+  unit if prestige ≥ `unit.stats.cost`. Airfields sell air units; cities (and
   villages) sell ground. Bought units start at `lvl += player.baseLevel`.
 - **Catalogue**: `Shop(country:air:tier:).units` — the full per-country
   roster (`COR/Model/Shop.swift`) filtered by the building's air/ground kind
@@ -306,19 +306,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   recon, ifv, tank, art, aa, air) that the current tier unlocks — select the
   unit (`.a`) and press `.c` to open the upgrade menu (`.d` sells it; `.c` over
   an empty slot opens the purchase shop). The crew's veterancy
-  (`exp`, `kills`, skills, bits) carries over; the upgrade is charged the full
-  cost of the resulting unit (`Unit.upgradeCost` = the new platform at the
-  unit's current level), with no credit for the old platform. Supply (the
-  truck) has no family and cannot be upgraded.
-- **Unit `cost`** =
-  `(typeCost + traitCost + skillCost + weightedStats) / 7`:
-  - `typeCost`: inf/aa/art 10; supply/wheelAA/wheelArt/lightWheel 100;
-    trackAA/lightTrack 150; trackArt/heavyTrack 220; heli 270; fighter/cas 330.
-  - `traitCost = traitsCount * 15`; `skillCost = skillsCount * 15`.
-  - `weightedStats = (lvl + 7) * (softAtk*4 + hardAtk*5 + airAtk*6 + groundDef*4
-    + airDef*4 + ini*4 + mov*4 + rng*7)`.
-  - `lvl + 7` makes veterans (and the skills they earn) linearly pricier; `aux`
-    divides by 11 instead of 7.
+  (`exp`, `kills`, skills, bits) carries over. The upgrade costs the new
+  model's full price (`Unit.upgradeCost`). Supply (the truck) has no family
+  and cannot be upgraded.
+- **Unit prices** are fixed per model in `UnitStats.cost`.
 
 ## Players & Victory
 

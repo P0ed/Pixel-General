@@ -26,7 +26,7 @@ public extension HQSim {
 
 	private mutating func purchase(_ t: Int, _ idx: Int, into events: inout [HQEvent]) {
 		let u = shop[t]
-		let cost = u.cost
+		let cost = u.stats.cost
 		guard player.prestige >= cost, !units[idx].alive else { return }
 
 		let unit = modifying(u) { u in u.reset() }
@@ -51,7 +51,7 @@ public extension HQSim {
 	}
 
 	private mutating func sell(_ idx: Int, into events: inout [HQEvent]) {
-		player.prestige.increment(by: units[idx].cost / 2)
+		player.prestige.increment(by: units[idx].stats.cost / 2)
 		units[idx].hp = 0x0
 		events.append(.remove(idx.uid))
 	}

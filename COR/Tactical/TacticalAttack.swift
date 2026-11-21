@@ -93,7 +93,7 @@ extension TacticalSim {
 			vacate(dst)
 			source.kills.increment(by: 1)
 			source.promote(using: &d20)
-			self[source.country].prestige.increment(by: destination.cost / 16)
+			self[source.country].prestige.increment(by: destination.stats.cost / 16)
 		}
 		units[src] = source
 		units[dst] = destination

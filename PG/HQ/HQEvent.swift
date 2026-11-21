@@ -33,15 +33,11 @@ extension HQNodes {
 	}
 
 	private func processShop(_ state: borrowing HQState) {
-		scene?.showMenu(.init(
-			items: Shop(country: state.sim.country, tier: state.sim.player.tier).units.enumerated().map { i, u in
-				.close(
-					icon: u.image,
-					status: .init(text: "\(u.cost) / \(state.sim.player.prestige)\n" + u.status()),
-					action: .purchase(i, state.ui.cursor.x + state.ui.cursor.y * 4)
-				)
-			},
-			leftButtons: [.back, .space, .space, .space]
+		let slot = state.ui.cursor.x + state.ui.cursor.y * 4
+		scene?.showMenu(.shop(
+			units: Shop(country: state.sim.country, tier: state.sim.player.tier).units,
+			prestige: state.sim.player.prestige,
+			purchase: { .purchase($0, slot) }
 		))
 	}
 

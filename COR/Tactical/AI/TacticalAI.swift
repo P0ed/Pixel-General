@@ -454,6 +454,8 @@ extension TacticalSim {
 	) -> Int {
 		let u = units[uid]
 		let target = units[tid]
+		let ownCost = Int(u.stats.cost)
+		let targetCost = Int(target.stats.cost)
 		let targetXY = position[tid]
 		let removedHP = min(damage, target.hp)
 		let removedValue = Int(removedHP) * Int(target.value) / Int(target.maxHP)
@@ -476,7 +478,7 @@ extension TacticalSim {
 		}
 
 		let ownDamage = min(Int(u.hp), Int(counterDamage) + Int(supportDamage))
-		let ownLoss = ownDamage * Int(u.cost) / Int(u.maxHP)
+		let ownLoss = ownDamage * ownCost / Int(u.maxHP)
 		let lossWeight = switch ai.stance {
 		case .defendSurvival: 28
 		case .balanced: 17
@@ -484,26 +486,26 @@ extension TacticalSim {
 		}
 
 		var score = removedValue * 24 - ownLoss * lossWeight
-		if kill { score += Int(target.cost) * 9 }
+		if kill { score += targetCost * 9 }
 		// Wounded targets invite coordinated focus fire; the kill term then
 		// makes the final shot much more valuable than spreading damage.
-		score += Int(target.maxHP - target.hp) * Int(target.cost) / 3
+		score += Int(target.maxHP - target.hp) * targetCost / 3
 		score += (Int(target.atk(u)) + Int(target.ini) + Int(target.rng) * 3) * 18
 
-		if target.isArt { score += Int(target.cost) * 3 }
-		if target.isAA, u.isAir { score += Int(u.cost) * 4 }
-		if target.type == .supply { score += Int(target.cost) * 2 }
-		if target.ammo == 0 { score += Int(target.cost) }
-		if ai.focusTarget == targetXY { score += Int(target.cost) * 4 }
+		if target.isArt { score += targetCost * 3 }
+		if target.isAA, u.isAir { score += ownCost * 4 }
+		if target.type == .supply { score += targetCost * 2 }
+		if target.ammo == 0 { score += targetCost }
+		if ai.focusTarget == targetXY { score += targetCost * 4 }
 
 		if map[targetXY].isSettlement {
 			if control[targetXY].team == u.country.team {
-				score += Int(target.cost) * 6
+				score += targetCost * 6
 			} else {
-				score += Int(target.cost) * (ai.stance == .attackSurvival ? 5 : 3)
+				score += targetCost * (ai.stance == .attackSurvival ? 5 : 3)
 			}
 		}
-		if supportDamage >= u.hp { score -= Int(u.cost) * 20 }
+		if supportDamage >= u.hp { score -= ownCost * 20 }
 		return score
 	}
 
@@ -647,8 +649,9 @@ extension TacticalSim {
 			let e = units[enemy]
 			let d = xy.stepDistance(to: position[enemy])
 			if mayFire, d <= uRange, u.atk(e) > 0 {
-				score += Int(u.atk(e)) * 24 + Int(e.cost) / 5
-				if e.hp <= 4 { score += Int(e.cost) / 2 }
+				let cost = Int(e.stats.cost)
+				score += Int(u.atk(e)) * 24 + cost / 5
+				if e.hp <= 4 { score += cost / 2 }
 			}
 			guard e.atk(u) > 0 else { return }
 			let range = Int(e.rng) * 2 + 1
@@ -732,7 +735,7 @@ extension TacticalSim {
 			if let focus = ai.focusTarget { locationScore -= xy.stepDistance(to: focus) * 5 }
 			for slot in shop.indices {
 				let template = shop[slot]
-				guard template.cost + reserve <= player.prestige else { continue }
+				guard template.stats.cost + reserve <= player.prestige else { continue }
 				let score = locationScore + purchaseScore(
 					template,
 					ground: ground, capture: capture, artillery: artillery,
@@ -764,7 +767,7 @@ extension TacticalSim {
 		score += Int(u.airAtk) * (enemyAir > 0 ? 14 : 4)
 		score += Int(u.groundDef) * 5 + Int(u.airDef) * (enemyAir > 0 ? 7 : 4)
 		score += Int(u.ini) * 7 + Int(u.mov) * 6 + Int(u.rng) * 10
-		score -= Int(u.cost) / 5
+		score -= Int(u.stats.cost) / 5
 
 		if u.type == .supply, supply * 6 < max(ground, 1) { score += 260 }
 		if u.isArt, artillery * 4 < max(ground, 1) { score += 230 }

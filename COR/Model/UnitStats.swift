@@ -12,6 +12,7 @@ public struct UnitStats: Sendable {
 	public var groundDef: UInt8 = 0
 	public var airDef: UInt8 = 0
 	public var traits: Traits = []
+	public var cost: UInt16 = 0
 }
 
 public struct Traits: OptionSet, Equatable, Sendable {
@@ -29,7 +30,6 @@ public extension Traits {
 	static var optics: Self { .init(rawValue: 1 << 3) }
 	static var radar: Self { .init(rawValue: 1 << 4) }
 	static var noRetaliation: Self { .init(rawValue: 1 << 5) }
-	static var cheap: Self { .init(rawValue: 1 << 6) }
 }
 
 public extension UnitStats {
@@ -40,7 +40,8 @@ public extension UnitStats {
 		mov: 8,
 		groundDef: 3,
 		airDef: 1,
-		traits: .transport
+		traits: .transport,
+		cost: 94
 	)
 	static let regular = UnitStats(
 		type: .inf,
@@ -53,7 +54,8 @@ public extension UnitStats {
 		hardAtk: 3,
 		navAtk: 1,
 		groundDef: 6,
-		airDef: 5
+		airDef: 5,
+		cost: 143
 	)
 	static let engineer = UnitStats(
 		type: .inf,
@@ -68,7 +70,8 @@ public extension UnitStats {
 		navAtk: 2,
 		groundDef: 7,
 		airDef: 6,
-		traits: .engineer
+		traits: .engineer,
+		cost: 223
 	)
 	static let fpv = UnitStats(
 		type: .art,
@@ -82,7 +85,8 @@ public extension UnitStats {
 		navAtk: 5,
 		groundDef: 6,
 		airDef: 5,
-		traits: [.noRetaliation, .cheap]
+		traits: [.noRetaliation],
+		cost: 243
 	)
 	static let art155 = UnitStats(
 		type: .art,
@@ -96,7 +100,7 @@ public extension UnitStats {
 		navAtk: 5,
 		groundDef: 5,
 		airDef: 4,
-		traits: .cheap
+		cost: 178
 	)
 	static let cargo = UnitStats(
 		type: .cargo,
@@ -105,7 +109,8 @@ public extension UnitStats {
 		ini: 1,
 		groundDef: 5,
 		airDef: 3,
-		traits: .transport
+		traits: .transport,
+		cost: 190
 	)
 	static let destroyer = UnitStats(
 		type: .destroyer,
@@ -120,7 +125,8 @@ public extension UnitStats {
 		navAtk: 12,
 		groundDef: 8,
 		airDef: 9,
-		traits: [.radar, .optics]
+		traits: [.radar, .optics],
+		cost: 541
 	)
 	static let cruiser = UnitStats(
 		type: .cruiser,
@@ -135,7 +141,8 @@ public extension UnitStats {
 		navAtk: 14,
 		groundDef: 10,
 		airDef: 8,
-		traits: [.optics]
+		traits: [.optics],
+		cost: 543
 	)
 }
 

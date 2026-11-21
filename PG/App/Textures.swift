@@ -10,6 +10,7 @@ extension SKTexture {
 	// Decorations.spriteatlas
 	static let BTN_0 = pixels(.BTN_0)
 	static let BTN_1 = pixels(.BTN_1)
+	static let BTN_2 = pixels(.BTN_2)
 	static let highlighted = pixels(.highlighted)
 	static let HP_0 = pixels(.HP_0)
 	static let HP_1 = pixels(.HP_1)
@@ -51,6 +52,10 @@ extension SKTexture {
 	static let restart = pixels(.restart)
 	static let rnd = pixels(.rnd)
 	static let settings = pixels(.settings)
+	static let shopAir = pixels(.shopAir)
+	static let shopInfantry = pixels(.shopInfantry)
+	static let shopTracked = pixels(.shopTracked)
+	static let shopWheels = pixels(.shopWheels)
 	static let sound0 = pixels(.sound0)
 	static let sound1 = pixels(.sound1)
 	static let sound2 = pixels(.sound2)

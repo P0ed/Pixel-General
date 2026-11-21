@@ -136,7 +136,7 @@ extension TacticalSim {
 		if serviced, unit.untouched, !endOfTurn {
 			let healed = unit.heal(UInt8(clamping: level + 3))
 			unit.exp.decrement(by: UInt16(healed) * 4 << unit.lvl)
-			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.cost / 32)
+			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.stats.cost / 32)
 		}
 		if endOfTurn, unit[.regen], serviced {
 			unit.hp.increment(by: 1, cap: unit.maxHP)

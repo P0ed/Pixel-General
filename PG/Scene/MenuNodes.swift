@@ -143,8 +143,13 @@ extension MenuNodes {
 
 	func setMenuButton(_ slot: MenuSlot, pressed: Bool) {
 		guard let frame = sideButton(slot) else { return }
-		frame.texture = pressed ? .BTN_1 : .BTN_0
-		frame.icon?.position.y = Self.buttonTravel / 2.0 * (pressed ? -1.0 : 1.0)
+		frame.isPressed = pressed
+		updateButtonAppearance(frame)
+	}
+
+	private func updateButtonAppearance(_ frame: MenuSlotNode) {
+		frame.texture = frame.isPressed ? .BTN_1 : frame.isSelected ? .BTN_2 : .BTN_0
+		frame.icon?.position.y = Self.buttonTravel / 2.0 * (frame.isPressed ? -1.0 : 1.0)
 	}
 
 	private func sideButton(_ slot: MenuSlot) -> MenuSlotNode? {
@@ -173,8 +178,11 @@ extension MenuNodes {
 			frame.icon?.size = CGSize(width: size.width * scale, height: size.height * scale)
 		}
 		for index in 0 ..< 4 {
-			left[index].icon?.texture = menuState.leftButtons[index].icon
-			right[index].icon?.texture = menuState.rightButtons[index].icon
+			for frame in [left[index], right[index]] {
+				frame.icon?.texture = menuState[frame.slot].icon
+				frame.isSelected = frame.slot == menuState.selectedSideButton
+				updateButtonAppearance(frame)
+			}
 		}
 	}
 
@@ -194,6 +202,8 @@ extension MenuNodes {
 final class MenuSlotNode: SKSpriteNode {
 	var slot: MenuSlot = .item(0)
 	var icon: SKSpriteNode?
+	var isPressed = false
+	var isSelected = false
 }
 
 extension Input {

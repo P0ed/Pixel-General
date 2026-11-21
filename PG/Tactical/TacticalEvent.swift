@@ -131,21 +131,10 @@ private extension TacticalNodes {
 		else { return }
 
 		let xy = state.ui.cursor
-		let items = state.sim.shopUnits(at: xy).enumerated().map { i, template in
-			MenuItem<TacticalAction>.close(
-				icon: template.image,
-				status: .init(
-					text: "\(template.cost) / \(state.sim.player.prestige)\n" + template.status()
-				),
-				action: .purchase(i, xy)
-			)
-		}
-
-		if !items.isEmpty {
-			scene?.showMenu(MenuState(
-				items: items,
-				leftButtons: [.back, .space, .space, .space]
-			))
-		}
+		scene?.showMenu(.shop(
+			units: state.sim.shopUnits(at: xy),
+			prestige: state.sim.player.prestige,
+			purchase: { .purchase($0, xy) }
+		))
 	}
 }

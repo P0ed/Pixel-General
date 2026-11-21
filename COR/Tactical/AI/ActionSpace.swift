@@ -188,7 +188,7 @@ public extension TacticalSim {
 	func slotMask(actor: Int) -> [Bool] {
 		var mask = [Bool](repeating: false, count: ActionSpace.slots)
 		let shop = shopUnits(at: ActionSpace.xy(actor))
-		for (i, u) in shop.enumerated() where i < ActionSpace.slots && u.cost <= player.prestige {
+		for (i, u) in shop.enumerated() where i < ActionSpace.slots && u.stats.cost <= player.prestige {
 			mask[i] = true
 		}
 		return mask

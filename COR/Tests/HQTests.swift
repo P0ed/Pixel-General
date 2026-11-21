@@ -3,8 +3,8 @@ import Testing
 
 /// HQ roster management: **unit upgrades within a family**. An upgrade swaps the
 /// platform of a deployed unit for a costlier sibling in the same shop category
-/// while preserving the crew's veterancy, charging only the prestige the new
-/// platform adds over the old. `HQSim` is noncopyable, so every value read by
+/// while preserving the crew's veterancy and charging the new model's full price.
+/// `HQSim` is noncopyable, so every value read by
 /// `#expect` is hoisted into a local first.
 struct HQTests {
 
@@ -44,9 +44,7 @@ struct HQTests {
 			u.kills = 7
 		}
 		let cost = veteran.upgradeCost(to: .kf51)
-		// The full cost of the resulting unit — the new platform at lvl 3 — not
-		// the difference over the Leopard 1.
-		#expect(cost == Unit(model: .kf51, country: .ger).lvl(3).cost)
+		#expect(cost == UnitStats.kf51.cost)
 
 		var sim = Self.sim(veteran)
 		let events = sim.reduce(.upgrade(0, .kf51))

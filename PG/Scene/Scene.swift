@@ -397,7 +397,7 @@ extension SKAction {
 extension MenuState {
 
 	var status: Status {
-		cursor < items.count ? items[cursor].status : Status()
+		items.indices.contains(cursor) ? items[cursor].status : Status()
 	}
 
 	func status(hovering slot: MenuSlot?) -> Status {

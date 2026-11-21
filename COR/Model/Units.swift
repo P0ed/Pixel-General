@@ -25,11 +25,9 @@ public extension Unit {
 		}
 	}
 
-	/// Prestige charged to upgrade into `model`: the full cost of the resulting
-	/// unit — the new platform carrying the crew's current experience. The old
-	/// platform is not credited back.
+	/// Prestige charged to upgrade into `model`, equal to that model's full price.
 	func upgradeCost(to model: UnitModel) -> UInt16 {
-		upgraded(to: model).cost
+		UnitStats.table[Int(model.rawValue)].cost
 	}
 }
 

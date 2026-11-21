@@ -357,7 +357,7 @@ enum Collector {
 			mine: Float(0), theirs: Float(0), mineUnits: Float(0), theirsUnits: Float(0)
 		)) { r, i, u in
 			guard !sim.offMap(unit: i.uid) else { return }
-			let v = Float(u.cost) * Float(u.hp) / 15
+			let v = Float(u.stats.cost) * Float(u.hp) / 15
 			if u.country.team == mine {
 				r.mine += v
 				r.mineUnits += 1

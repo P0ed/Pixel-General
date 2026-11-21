@@ -27,13 +27,13 @@ extension TacticalSim {
 	func canBuy(slot idx: Int, at pos: XY) -> Bool {
 		guard unitsMap[pos] == .none else { return false }
 		let shop = shopUnits(at: pos)
-		return idx >= 0 && idx < shop.count && player.prestige >= shop[idx].cost
+		return idx >= 0 && idx < shop.count && player.prestige >= shop[idx].stats.cost
 	}
 
 	/// `canBuy(slot:at:)` for any slot — the purchase actor mask.
 	func canBuy(at xy: XY) -> Bool {
 		unitsMap[xy] == .none
-		&& shopUnits(at: xy).contains { u in player.prestige >= u.cost }
+		&& shopUnits(at: xy).contains { u in player.prestige >= u.stats.cost }
 	}
 
 	mutating func buy(_ idx: Int, at pos: XY, into events: inout [TacticalEvent]) {
@@ -47,7 +47,7 @@ extension TacticalSim {
 			u.lvl += player.baseLevel
 		}
 		let id = spawn(unit, at: pos)
-		player.prestige.decrement(by: unit.cost)
+		player.prestige.decrement(by: unit.stats.cost)
 		events.append(.spawn(id))
 	}
 }

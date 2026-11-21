@@ -14,7 +14,8 @@ extension UnitStats {
 		navAtk: 2,
 		groundDef: 9,
 		airDef: 8,
-		traits: .elite
+		traits: .elite,
+		cost: 264
 	)
 
 	// MARK: IFV
@@ -30,7 +31,8 @@ extension UnitStats {
 		navAtk: 1,
 		groundDef: 6,
 		airDef: 6,
-		traits: [.optics, .cheap]
+		traits: [.optics],
+		cost: 170
 	)
 	static let boxer = UnitStats(
 		type: .lightWheel,
@@ -45,7 +47,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 9,
 		airDef: 7,
-		traits: .transport
+		traits: .transport,
+		cost: 315
 	)
 	static let marder = UnitStats(
 		type: .lightTrack,
@@ -60,7 +63,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 10,
 		airDef: 7,
-		traits: [.transport, .cheap]
+		traits: [.transport],
+		cost: 244
 	)
 	static let strf90 = UnitStats(
 		type: .lightTrack,
@@ -75,7 +79,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 11,
 		airDef: 8,
-		traits: .transport
+		traits: .transport,
+		cost: 381
 	)
 	static let kf41 = UnitStats(
 		type: .lightTrack,
@@ -90,7 +95,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 12,
 		airDef: 8,
-		traits: [.transport, .elite]
+		traits: [.transport, .elite],
+		cost: 406
 	)
 	static let cv9035 = UnitStats(
 		type: .lightTrack,
@@ -105,7 +111,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 11,
 		airDef: 8,
-		traits: .transport
+		traits: .transport,
+		cost: 359
 	)
 
 	// MARK: Art
@@ -120,7 +127,8 @@ extension UnitStats {
 		hardAtk: 7,
 		navAtk: 6,
 		groundDef: 6,
-		airDef: 5
+		airDef: 5,
+		cost: 301
 	)
 	static let mars = UnitStats(
 		type: .trackArt,
@@ -134,7 +142,8 @@ extension UnitStats {
 		navAtk: 11,
 		groundDef: 5,
 		airDef: 4,
-		traits: [.elite, .noRetaliation]
+		traits: [.elite, .noRetaliation],
+		cost: 437
 	)
 
 	// MARK: Tanks
@@ -149,7 +158,7 @@ extension UnitStats {
 		navAtk: 4,
 		groundDef: 11,
 		airDef: 7,
-		traits: .cheap
+		cost: 216
 	)
 	static let leo2a6 = UnitStats(
 		type: .heavyTrack,
@@ -163,7 +172,8 @@ extension UnitStats {
 		navAtk: 5,
 		groundDef: 13,
 		airDef: 8,
-		traits: .elite
+		traits: .elite,
+		cost: 364
 	)
 	static let strv103 = UnitStats(
 		type: .heavyTrack,
@@ -175,7 +185,8 @@ extension UnitStats {
 		hardAtk: 13,
 		navAtk: 4,
 		groundDef: 11,
-		airDef: 7
+		airDef: 7,
+		cost: 281
 	)
 	static let strv122 = UnitStats(
 		type: .heavyTrack,
@@ -189,7 +200,8 @@ extension UnitStats {
 		navAtk: 5,
 		groundDef: 14,
 		airDef: 8,
-		traits: .elite
+		traits: .elite,
+		cost: 371
 	)
 	static let kf51 = UnitStats(
 		type: .heavyTrack,
@@ -203,7 +215,8 @@ extension UnitStats {
 		navAtk: 6,
 		groundDef: 14,
 		airDef: 8,
-		traits: .elite
+		traits: .elite,
+		cost: 408
 	)
 
 	// MARK: AA
@@ -219,7 +232,7 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 6,
 		airDef: 7,
-		traits: .cheap
+		cost: 193
 	)
 	static let nasams = UnitStats(
 		type: .wheelAA,
@@ -231,7 +244,8 @@ extension UnitStats {
 		airAtk: 14,
 		groundDef: 4,
 		airDef: 8,
-		traits: .radar
+		traits: .radar,
+		cost: 312
 	)
 	static let lvkv90 = UnitStats(
 		type: .trackAA,
@@ -246,7 +260,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 10,
 		airDef: 9,
-		traits: .radar
+		traits: .radar,
+		cost: 399
 	)
 	static let p1sun = UnitStats(
 		type: .aa,
@@ -261,7 +276,8 @@ extension UnitStats {
 		navAtk: 6,
 		groundDef: 6,
 		airDef: 5,
-		traits: [.noRetaliation, .cheap]
+		traits: [.noRetaliation],
+		cost: 251
 	)
 
 	// MARK: Air
@@ -272,7 +288,8 @@ extension UnitStats {
 		ini: 7,
 		groundDef: 7,
 		airDef: 5,
-		traits: [.radar, .optics]
+		traits: [.radar, .optics],
+		cost: 253
 	)
 	static let skeldarm = UnitStats(
 		type: .heli,
@@ -285,7 +302,8 @@ extension UnitStats {
 		hardAtk: 5,
 		navAtk: 3,
 		groundDef: 7,
-		airDef: 5
+		airDef: 5,
+		cost: 286
 	)
 	static let nh90 = UnitStats(
 		type: .heli,
@@ -299,7 +317,8 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 7,
 		airDef: 6,
-		traits: .transport
+		traits: .transport,
+		cost: 293
 	)
 	static let gripen = UnitStats(
 		type: .fighter,
@@ -314,7 +333,8 @@ extension UnitStats {
 		navAtk: 8,
 		groundDef: 10,
 		airDef: 10,
-		traits: .radar
+		traits: .radar,
+		cost: 504
 	)
 	static let su25 = UnitStats(
 		type: .cas,
@@ -327,6 +347,7 @@ extension UnitStats {
 		airAtk: 6,
 		navAtk: 9,
 		groundDef: 10,
-		airDef: 7
+		airDef: 7,
+		cost: 326
 	)
 }

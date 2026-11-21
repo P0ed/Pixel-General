@@ -173,15 +173,8 @@ public extension Unit {
 		(src.isAir ? airDef : groundDef) + lvl / 2
 	}
 
-	var cost: UInt16 {
-		country.team == .soviet ? value * 7 / 8 : value
-	}
 	var value: UInt16 {
-		(typeValue + traitValue + statsValue) * valueMultiplyer / 8
-	}
-
-	private var valueMultiplyer: UInt16 {
-		UInt16(self[.cheap] ? 5 : 7) + UInt16(lvl)
+		(typeValue + traitValue + statsValue) * UInt16(lvl) / 8
 	}
 
 	private var typeValue: UInt16 {
