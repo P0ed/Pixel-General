@@ -12,8 +12,8 @@ struct TacticalNodes {
 
 	enum BaseKey: Equatable {
 		case terrain
-		case team
-		case country
+		case team(UInt32)
+		case country(UInt32)
 		case supply(SupplySources, air: Bool)
 		case defense(UnitType)
 	}
@@ -97,8 +97,8 @@ extension TacticalNodes {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
 		let key: BaseKey = switch state.ui.mapMode {
 		case .terrain: .terrain
-		case .team: .team
-		case .country: .country
+		case .team: .team(state.sim.turn)
+		case .country: .country(state.sim.turn)
 		case .supply: .supply(state.sim.humanSupply, air: Self.selectedType(state).isAir)
 		case .defense: .defense(Self.selectedType(state))
 		}

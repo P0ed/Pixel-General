@@ -16,6 +16,9 @@ extension TacticalSim {
 
 	mutating func endTurn(into events: inout [TacticalEvent]) {
 		captureCities()
+		assignControl()
+		updateSurvivingTeams()
+		refreshVision()
 
 		player.prestige.increment(by: income(for: player.country))
 
@@ -36,10 +39,7 @@ extension TacticalSim {
 			if case let .survive(_, day: deadline) = objective, day > deadline {
 				return false
 			}
-			if player.alive {
-				vision[playerIndex] = vision(for: player.country)
-				return true
-			}
+			if player.alive { return true }
 		}
 		return false
 	}
@@ -69,42 +69,51 @@ extension TacticalSim {
 	}
 
 	private mutating func captureCities() {
-		var reflag = false
 		units.forEachAlive { i, u in
+			guard !u.isAir, !u.type.isNaval, !offMap(unit: i.uid) else { return }
 			let xy = position[i]
-			if map[xy].isSettlement, control[xy].team != u.country.team, !u.isAir {
+			if map[xy] == .city, control[xy].team != u.country.team {
 				control[xy] = u.country
-				reflag = true
-			}
-		}
-		if reflag {
-			assignControl()
-
-			players.modifyEach { i, p in
-				p.alive = p.alive && settlements.contains { [team = p.country.team] xy in
-					control[xy].team == team
-				}
 			}
 		}
 	}
 
-	mutating func assignControl() {
-		var anchors = CArray<128, XY>(tail: .zero)
-		var owners = CArray<128, Country>(tail: .default)
-		settlements.forEach { xy in
-			anchors.add(xy)
-			owners.add(control[xy])
-		}
-		guard !anchors.isEmpty else { return }
-
-		for xy in map.indices where !settlements[xy] {
-			var best = 0
-			var bestD = xy.manhattanDistance(to: anchors[0])
-			for k in 1 ..< anchors.count {
-				let d = xy.manhattanDistance(to: anchors[k])
-				if d < bestD { bestD = d; best = k }
+	private mutating func updateSurvivingTeams() {
+		let cityTeams: UInt8 = settlements.reduce(into: 0) { mask, xy in
+			if map[xy] == .city {
+				mask |= 1 << control[xy].team.rawValue
 			}
-			control[xy] = owners[best]
+		}
+		players.modifyEach { _, p in
+			p.alive = p.alive && cityTeams & (1 << p.country.team.rawValue) != 0
+		}
+	}
+
+	mutating func assignControl() {
+		var visited = SetXY.empty
+		var frontier = CArray<4096, XY>(tail: .zero)
+		settlements.forEach { xy in
+			guard map[xy] == .city else { return }
+			visited[xy] = true
+			frontier.add(xy)
+		}
+		guard !frontier.isEmpty else {
+			control = .init(zero: .none)
+			return
+		}
+
+		// A four-neighbor flood expands by Manhattan distance. The row-major
+		// seed order gives the earlier city first claim on each equal-distance tile.
+		var head = 0
+		while head < frontier.count {
+			let xy = frontier[head]
+			let owner = control[xy]
+			head += 1
+			for neighbor in xy.n4 where map.contains(neighbor) && !visited[neighbor] {
+				visited[neighbor] = true
+				control[neighbor] = owner
+				frontier.add(neighbor)
+			}
 		}
 	}
 }

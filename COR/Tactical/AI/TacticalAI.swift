@@ -23,7 +23,6 @@ public enum AI {
 
 		public var ownSettlements: CArray<64, XY> = .init(tail: .zero)
 		public var alliedSettlements: CArray<64, XY> = .init(tail: .zero)
-		/// Hostile settlements only. The historical name stays source-compatible.
 		public var enemySettlements: CArray<64, XY> = .init(tail: .zero)
 
 		@frozen public enum Stance: UInt8 {
@@ -151,10 +150,10 @@ extension TacticalSim {
 
 		guard !ai.roster.isEmpty else { return }
 
-		// Visible pressure per owned settlement, computed once for the whole
+		// Visible pressure per owned city, computed once for the whole
 		// rebuild — the survival focus and the garrison assignment both read it.
 		var pressures: [64 of Int] = .init(repeating: 0)
-		for i in ai.ownSettlements.indices {
+		for i in ai.ownSettlements.indices where map[ai.ownSettlements[i]] == .city {
 			pressures[i] = threat(at: ai.ownSettlements[i], from: ai.enemies)
 		}
 		ai.focusTarget = strategicFocus(ai, pressures: pressures)
@@ -178,11 +177,12 @@ extension TacticalSim {
 		// Assign garrisons by visible pressure, highest pressure first. A
 		// survival defender also screens its strategic focus in a quiet sector.
 		var visited: UInt64 = 0
-		while visited.nonzeroBitCount < ai.ownSettlements.count {
+		while true {
 			var pick = -1
 			var pickScore = Int.min
 			for i in ai.ownSettlements.indices where visited & (UInt64(1) << i) == 0 {
 				let xy = ai.ownSettlements[i]
+				guard map[xy] == .city else { continue }
 				var score = pressures[i] * 100 + Int(map[xy].income) * 8
 				if ai.focusTarget == xy { score += 500 }
 				if score > pickScore { pickScore = score; pick = i }
@@ -293,7 +293,7 @@ extension TacticalSim {
 		if ai.stance == .defendSurvival {
 			var focus: XY?
 			var score = Int.min
-			for i in ai.ownSettlements.indices {
+			for i in ai.ownSettlements.indices where map[ai.ownSettlements[i]] == .city {
 				let xy = ai.ownSettlements[i]
 				let s = pressures[i] * 100 + Int(map[xy].income) * 12
 				if s > score { score = s; focus = xy }
@@ -304,6 +304,7 @@ extension TacticalSim {
 		var focus: XY?
 		var score = Int.min
 		ai.enemySettlements.forEach { _, xy in
+			guard map[xy] == .city else { return }
 			var nearest = Int.max
 			ai.roster.forEach { _, uid in
 				guard !units[uid].isAir, !offMap(unit: uid) else { return }
@@ -321,11 +322,10 @@ extension TacticalSim {
 		loads: borrowing [64 of UInt8],
 		ai: borrowing AI.Plan
 	) -> Int? {
-		guard !ai.enemySettlements.isEmpty else { return nil }
 		let p = position[uid]
-		var best = 0
+		var best: Int?
 		var bestScore = Int.min
-		for i in ai.enemySettlements.indices {
+		for i in ai.enemySettlements.indices where map[ai.enemySettlements[i]] == .city {
 			let xy = ai.enemySettlements[i]
 			var score = Int(map[xy].income) * 26 - p.stepDistance(to: xy) * 8
 			score -= Int(loads[i]) * (ai.stance == .attackSurvival ? 90 : 150)
@@ -489,7 +489,7 @@ extension TacticalSim {
 		if map[targetXY].isSettlement {
 			if control[targetXY].team == u.country.team {
 				score += targetCost * 6
-			} else {
+			} else if map[targetXY] == .city {
 				score += targetCost * (ai.stance == .attackSurvival ? 5 : 3)
 			}
 		}
@@ -512,7 +512,7 @@ extension TacticalSim {
 			let n4 = position[transport].n4
 			for i in n4.indices where canDisembark(unit: transport, to: n4[i]) {
 				let xy = n4[i]
-				let capture = map[xy].isSettlement && control[xy].team != country.team
+			let capture = map[xy] == .city && control[xy].team != country.team
 				guard close || capture else { continue }
 				var score = -xy.stepDistance(to: goal) * 20
 				if capture { score += 5_000 }
@@ -554,7 +554,7 @@ extension TacticalSim {
 			let uid = ai.order[i]
 			guard ai.skippedMoves & bit(uid) == 0, units[uid].canMove, !offMap(unit: uid) else { continue }
 			let p = position[uid]
-			if !units[uid].isAir, map[p].isSettlement, control[p].team != country.team { continue }
+			if !units[uid].isAir, map[p] == .city, control[p].team != country.team { continue }
 			let role = ai.role[uid.index]
 			if role == .support, let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai),
 			   p.stepDistance(to: position[anchor]) <= 3 { continue }
@@ -670,15 +670,11 @@ extension TacticalSim {
 		}
 		score -= danger * dangerWeight
 
-		if map[xy].isSettlement {
-			if control[xy].team != team {
-				// Air cannot capture and must never plug the tile a ground unit needs.
-				score += u.isAir ? -20_000 : 6_000 + Int(map[xy].income) * 20
-			} else if u.isAir {
-				// Friendly airfields are useful, but an idle aircraft should not
-				// casually close a deployment tile.
-				score += map[xy] == .airfield ? 35 : -500
-			}
+		if map[xy] == .city, !u.isAir, control[xy].team != team {
+			score += 6_000 + Int(map[xy].income) * 20
+		}
+		if map[xy] == .airfield, u.isAir, control[xy].team == team {
+			score += 35
 		}
 		return score
 	}

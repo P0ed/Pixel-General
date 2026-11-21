@@ -166,6 +166,11 @@ struct TacticalTests {
 			var counts = [0, 0]
 			var nearestOwner = [Country.default, Country.default]
 			var nearestDistance = [Int.max, Int.max]
+			for city in sim.map.cityFootprints {
+				let owner = sim.control[city[0]]
+				let oneOwner = city.allSatisfy { sim.control[$0] == owner }
+				#expect(oneOwner)
+			}
 			for xy in sim.map.indices where sim.map[xy] == .city {
 				let owner = sim.control[xy]
 				if let idx = players.firstIndex(where: { p in p.country == owner }) {
@@ -188,6 +193,8 @@ struct TacticalTests {
 				counts[1] > counts[0],
 				"Seed \(seed * 11): defender weighting lost (\(counts))"
 			)
+			let attackerQuota = (counts[0] + counts[1]) / 3
+			#expect(abs(counts[0] - attackerQuota) <= 2)
 			for i in players.indices {
 				#expect(
 					nearestOwner[i] == players[i].country,
@@ -518,7 +525,9 @@ struct TacticalTests {
 		// An air unit entering charged enemy AA range stops at the first
 		// covered tile and takes one overwatch shot; the charge is spent until
 		// the AA owner's end of turn re-arms it.
-		let map = Map<64, Terrain>(zero: .field)
+		var map = Map<64, Terrain>(zero: .field)
+		let cities: [(XY, Country)] = [(XY(2, 2), .usa), (XY(60, 60), .rus)]
+		for (xy, _) in cities { map[xy] = .city }
 		let players = [
 			Player(country: .usa, type: .human, prestige: 0xF00),
 			Player(country: .rus, type: .ai, prestige: 0xF00),
@@ -528,7 +537,7 @@ struct TacticalTests {
 		var aa = Unit(model: .s300, country: .rus)
 		aa.reset()
 
-		var sim = TacticalSim(map: map, players: players, cities: [], units: [heli, aa])
+		var sim = TacticalSim(map: map, players: players, cities: cities, units: [heli, aa])
 		let heliUID = sim.units.firstMapAlive { i, u in u.country == .usa ? i.uid : nil }!
 		let aaUID = sim.units.firstMapAlive { i, u in u.country == .rus ? i.uid : nil }!
 		sim.place(heliUID, at: XY(4, 10))
@@ -676,6 +685,112 @@ struct TacticalTests {
 
 		sim.players.modifyEach { _, p in if p.country == .rus { p.alive = false } }
 		#expect(sim.winner == .axis, "Last team standing wins")
+	}
+
+	@Test func airfieldFollowsIndividuallyCapturedDistrict() {
+		let airfield = XY(7, 5)
+		let district = XY(6, 5)
+		let otherDistricts = [XY(5, 5), XY(6, 6)]
+		let airfieldSight = XY(8, 4)
+		var map = Map<64, Terrain>(zero: .field)
+		let cities = [(XY(16, 10), Country.swe), (district, .rus)]
+			+ otherDistricts.map { ($0, .rus) }
+		for (xy, _) in cities { map[xy] = .city }
+		map[airfield] = .airfield
+		var sim = TacticalSim(
+			map: map,
+			players: [Player(country: .swe), Player(country: .rus)],
+			cities: cities,
+			units: []
+		)
+		#expect(sim.control[airfield] == .rus)
+		#expect(sim.vision[1][airfieldSight])
+		let ground = sim.spawn(Self.infantry(ammo: 4, hp: 15), at: airfield)
+		let air = sim.spawn(Self.fighter(), at: XY(8, 5))
+		let prestige = sim[.swe].prestige
+
+		_ = sim.reduce(.end)
+		#expect(sim.control[airfield] == .rus)
+		#expect(sim[.swe].prestige == prestige + 24)
+		#expect(sim.units[air].ammo == 0)
+		_ = sim.reduce(.end)
+
+		_ = sim.reduce(.move(ground, district))
+		#expect(sim.position[ground] == district)
+		#expect(sim.control[district] == .rus)
+		_ = sim.reduce(.end)
+		#expect(sim.control[district] == .swe)
+		#expect(sim.control[airfield] == .swe)
+		for xy in otherDistricts { #expect(sim.control[xy] == .rus) }
+		#expect(sim[.swe].prestige == prestige + 24 + 48 + 4)
+		#expect(sim.units[air].ammo > 0)
+		#expect(!sim.vision[1][airfieldSight])
+		#expect(sim.shopUnits(at: airfield).isEmpty)
+		_ = sim.reduce(.end)
+		let aircraft = sim.shopUnits(at: airfield)
+		#expect(!aircraft.isEmpty)
+		#expect(aircraft.allSatisfy { $0.isAir })
+	}
+
+	@Test func controlBreaksManhattanTiesInRowMajorOrder() {
+		let earlier = XY(8, 4)
+		let later = XY(4, 8)
+		let airfield = XY(8, 8)
+		let ground = XY(6, 6)
+		var map = Map<64, Terrain>(zero: .field)
+		map[earlier] = .city
+		map[later] = .city
+		map[airfield] = .airfield
+		let sim = TacticalSim(
+			map: map,
+			players: [Player(country: .swe), Player(country: .rus)],
+			cities: [(later, .rus), (earlier, .swe)],
+			units: []
+		)
+		#expect(sim.control[airfield] == .swe)
+		#expect(sim.control[ground] == .swe)
+		#expect(sim.control[later] == .rus)
+	}
+
+	@Test func airfieldWithoutCitiesIsNeutral() {
+		let airfield = XY(2, 3)
+		var map = Map<64, Terrain>(zero: .field)
+		map[airfield] = .airfield
+		var sim = TacticalSim(map: map, players: [Player(country: .swe)], cities: [], units: [])
+		#expect(sim.control[airfield] == .none)
+
+		let prestige = sim[.swe].prestige
+		_ = sim.spawn(Self.infantry(), at: airfield)
+		_ = sim.reduce(.end)
+		#expect(sim.control[airfield] == .none)
+		#expect(sim[.swe].prestige == prestige)
+		#expect(sim.aliveTeams == 0)
+	}
+
+	@Test func losingLastCityEliminatesTeamEvenWithAirfieldOccupied() {
+		let city = XY(10, 10)
+		let airfield = XY(11, 10)
+		var map = Map<64, Terrain>(zero: .field)
+		let cities = [(XY(2, 3), Country.swe), (city, .rus)]
+		for (xy, _) in cities { map[xy] = .city }
+		map[airfield] = .airfield
+		var sim = TacticalSim(
+			map: map,
+			players: [Player(country: .swe), Player(country: .fin), Player(country: .rus)],
+			cities: cities,
+			units: []
+		)
+		var defender = Unit(model: .regular, country: .rus)
+		defender.reset()
+		_ = sim.spawn(defender, at: airfield)
+		_ = sim.spawn(Self.infantry(), at: city)
+		let events = sim.reduce(.end)
+		let ended = events.contains { if case .end = $0 { true } else { false } }
+		#expect(ended)
+		#expect(sim.control[airfield] == .swe)
+		#expect(sim[.fin].alive)
+		#expect(!sim[.rus].alive)
+		#expect(sim.winner == .axis)
 	}
 
 	// MARK: Supply penalties

@@ -118,4 +118,39 @@ struct MultiplayerTests {
 		#expect(copy.unitsMap[corner] == 0.uid)
 		#expect(copy.vision[0][corner])
 	}
+
+	@Test func firstEndTurnRecomputesAirfieldControlAfterResume() {
+		let home = XY(2, 3)
+		let away = XY(12, 12)
+		let airfield = XY(3, 3)
+		let nearby = XY(4, 3)
+		var map = Map<64, Terrain>(zero: .field)
+		map[home] = .city
+		map[away] = .city
+		map[airfield] = .airfield
+		var state = TacticalSim(
+			map: map,
+			players: [Player(country: .swe), Player(country: .rus)],
+			cities: [(home, .swe), (away, .rus)],
+			units: []
+		)
+		state.control[airfield] = .rus
+		state.control[nearby] = .rus
+		state.vision[0] = state.vision(for: .swe)
+		state.vision[1] = state.vision(for: .rus)
+		let prestige = state[.swe].prestige
+
+		guard var resumed: TacticalSim = decode(encode(state)) else {
+			Issue.record("State failed to decode")
+			return
+		}
+		#expect(resumed.control[airfield] == .rus)
+		#expect(resumed.vision[1][nearby])
+		_ = resumed.reduce(.end)
+		#expect(resumed.control[airfield] == .swe)
+		#expect(resumed.control[nearby] == .swe)
+		#expect(resumed[.swe].prestige == prestige + 24 + 4)
+		#expect(resumed.vision[0][nearby])
+		#expect(!resumed.vision[1][nearby])
+	}
 }

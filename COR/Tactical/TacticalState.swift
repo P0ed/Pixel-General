@@ -42,15 +42,10 @@ public extension TacticalSim {
 		vision = .init(repeating: .empty)
 		cargo = .init(repeating: .none)
 		unitsMap = .init(zero: .none)
-		control = .init(zero: .default)
+		control = .init(zero: .none)
 		indexSettlements()
+		let cities = cities.filter { xy, _ in self.map[xy] == .city }
 		cities.forEach { xy, c in control[xy] = c }
-		settlements.forEach { xy in
-			guard self.map[xy] == .airfield else { return }
-			control[xy] = cities.min { a, b in
-				xy.manhattanDistance(to: a.0) < xy.manhattanDistance(to: b.0)
-			}.map { $0.1 } ?? .default
-		}
 		assignControl()
 
 		let placements = [4 of CArray<4096, XY>].init { i in
@@ -105,8 +100,7 @@ public extension TacticalSim {
 			place(i.uid, at: fallback)
 		}
 
-		let v = self.players.map { i, p in vision(for: p.country) }
-		self.players.modifyEach { i, p in vision[i] = v[i] }
+		refreshVision()
 	}
 
 	private func canDeploy(_ u: Unit, at xy: XY) -> Bool {
@@ -201,6 +195,12 @@ public extension TacticalSim {
 			xy.n8.forEach { xy in v[xy] = true }
 		}
 		return v
+	}
+
+	internal mutating func refreshVision() {
+		for i in players.indices {
+			vision[i] = vision(for: players[i].country)
+		}
 	}
 
 	func neighbors(at position: XY) -> CArray<8, UID> {

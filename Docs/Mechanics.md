@@ -207,8 +207,8 @@ combat is reproducible.
 
 - **Tile kinds** include `field`, `forest`, `rough`, `mountain`, `river`,
   `sea`, bridges, roads, forts, cities, and airfields. Roads come in straight
-  segments, corners, four T-junction orientations, and X junctions. Cities
-  and airfields are capturable settlements.
+  segments, corners, four T-junction orientations, and X junctions.
+  City districts and airfields are settlements.
 - **Move cost** varies by `UnitType`. Roads, bridges, and settlements are
   always 1 for ground units. Rivers cost the full `mov` (one tile, then
   done). Forests/hills cost 2–3 for foot and wheeled units, less for
@@ -287,8 +287,7 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Tactical/TacticalShop.swift`, `COR/Model/Shop.swift`, `COR/Model/Templates.swift`
 
 - Each player has **prestige** (`.poor` = `0x0A00` / `.rich` = `0x1F00`).
-  Income per day = sum of owned settlements' income (`Terrain.income` in
-  `COR/Tactical/TacticalTurns.swift`): 24 per city and 4 per airfield.
+  Daily income is 24 prestige per owned city tile and 4 per owned airfield.
 - Buying at an owned, enemy-free settlement (`shopUnits`/`buy`) spawns a
   unit if prestige ≥ `unit.stats.cost`. Airfields sell air units and cities
   sell ground units. Bought units start at `lvl += player.baseLevel`.
@@ -319,10 +318,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
   `.none` maps to `Team.none`. Friendly fire is impossible within a team; combat
   requires cross-team.
 - `PlayerType`: `human`, `remote` (network), `ai` (`COR/Tactical/AI/TacticalAI.swift`).
-- A ground unit standing on a settlement controlled by a different team
-  reflags it to the unit's country. A player whose team controls no
-  settlements is eliminated (`alive = false`) — a country with no
-  settlements of its own stays alive while a teammate still holds one.
+- At the end of the turn, a ground unit on an enemy city tile captures
+  that district for its country. Airfields and surrounding terrain take the
+  country of the nearest city tile by Manhattan distance, with ties resolved
+  in row-major order. A player stays alive while their team holds a city tile.
   Last team standing wins, unless an `Objective` decides the battle first.
 
 ### Spawn locations
@@ -331,14 +330,10 @@ loaded transport also damages its cargo; destroying it kills the cargo.
 `COR/Tactical/MapGeneration.swift`
 
 - `Scenario.spawns` holds one cell of the 3×3 terrain grid per
-  player as (column, row-from-south), each 0…2. When present, all settlements
-  are assigned from these locations: cities go greedily to the nearest spawn
-  center under defender-weighted quotas (so counts stay balanced and each
-  seat's holdings cluster around its spawn), and airfields follow
-  their nearest city as usual. Map generation guarantees the city nearest
-  each spawn center an adjacent airfield, clearing forest or hill for the
-  strip if it must. With no spawn locations, city shares are assigned by
-  their order on the map.
+  player as (column, row-from-south), each 0…2. Whole city footprints are
+  assigned by spawn distance, using defender-weighted quotas measured in city
+  tiles. Map generation prioritizes airfield sites near spawn cities and can
+  clear forest or hill to place those airfields.
 - Custom scenarios offer five spawn options
   `[XY(1, 0), XY(1, 2), XY(2, 1), XY(0, 1), XY(1, 1)]` (south, north, east,
   west, center); each seat picks **I, II, III, IV, V, Random** with a menu

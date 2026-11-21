@@ -22,9 +22,9 @@ public extension Map<64, Terrain> {
 	///
 	/// Land entries bias the local noise; sea entries seed an
 	/// impassable coast whose precise shoreline follows the height field.
-	/// `spawns` are the players' spawn cells of the neighborhood — the city
-	/// nearest each spawn center is guaranteed an adjacent airfield.
-	init(seed: Int, players: Int = 4, terrain: [9 of Terrain], density: Int = 1, spawns: [XY] = []) {
+	/// `spawns` are the players' spawn cells of the neighborhood. Airfields
+	/// are placed near their nearest cities first, where terrain permits.
+	init(seed: Int, players _: Int = 4, terrain: [9 of Terrain], density: Int = 1, spawns: [XY] = []) {
 		self = Map(zero: .none)
 
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
@@ -39,15 +39,28 @@ public extension Map<64, Terrain> {
 			terrain: terrain
 		)
 		placeRivers(height: height, d20: &d20)
+		let targets = [
+			(settlements: 20, airfields: 4, pairs: 2, triples: 1),
+			(settlements: 32, airfields: 6, pairs: 3, triples: 2),
+			(settlements: 48, airfields: 9, pairs: 4, triples: 3),
+			(settlements: 64, airfields: 12, pairs: 5, triples: 4),
+		][min(3, max(0, density))]
 		let cities = placeCities(
-			d20: &d20,
-			players: players,
-			mainland: mainland,
-			density: density,
-			spawns: spawns
+			d20: &d20, mainland: mainland, tiles: targets.settlements - targets.airfields,
+			pairs: targets.pairs, triples: targets.triples
 		)
-		connectCities(cities: cities)
+		placeAirfields(near: cities, spawns: spawns, target: targets.airfields, d20: &d20)
+		connectCities(cities: cities.map { $0[0] })
 		shapeRoads()
+	}
+
+	internal var cityFootprints: [[XY]] {
+		var visited = SetXY.empty
+		var cities: [[XY]] = []
+		for xy in indices where self[xy] == .city && !visited[xy] {
+			cities.append(flood(from: [xy], visited: &visited) { self[$0] == .city })
+		}
+		return cities
 	}
 
 	private mutating func generateTerrain(
@@ -387,16 +400,16 @@ public extension Map<64, Terrain> {
 
 	private mutating func placeCities(
 		d20: inout D20,
-		players: Int,
 		mainland: SetXY,
-		density: Int,
-		spawns: [XY]
-	) -> [XY] {
-		let citiesCount = 12 + density * 4
+		tiles: Int,
+		pairs: Int,
+		triples: Int
+	) -> [[XY]] {
+		let centerTarget = tiles - pairs - 2 * triples
 
 		var cols = 1
-		while cols * (cols + 1) < citiesCount { cols += 1 }
-		let rows = (citiesCount + cols - 1) / cols
+		while cols * (cols + 1) < centerTarget { cols += 1 }
+		let rows = (centerTarget + cols - 1) / cols
 		let minSpacing = max(2, size / 8)
 
 		let margin = 1
@@ -411,75 +424,111 @@ public extension Map<64, Terrain> {
 			return margin + Int(offset / (Int128(count) * scale))
 		}
 
-		func isCitySite(_ p: XY, _ placed: [XY]) -> Bool {
-			contains(p)
-			&& mainland[p]
+		func isCityLand(_ p: XY) -> Bool {
+			mainland[p]
 			&& !self[p].isWater
 			&& !self[p].isSettlement
 			&& self[p] != .mountain
-			&& !placed.contains { $0.stepDistance(to: p) < minSpacing }
 		}
 
-		var placed: [XY] = []
-		var cities: [XY] = []
+		func isCitySite(_ p: XY, awayFrom cities: [[XY]], except current: Int? = nil) -> Bool {
+			isCityLand(p) && !cities.indices.contains { i in
+				i != current && cities[i].contains { $0.stepDistance(to: p) < minSpacing }
+			}
+		}
 
-		for i in 0 ..< citiesCount {
+		var cities: [[XY]] = []
+
+		for i in 0 ..< centerTarget {
 			let gx = i % cols
 			let gy = i / cols
-			var p = XY(
+			let center = XY(
 				coordinate(in: gx, outOf: cols, using: &d20),
 				coordinate(in: gy, outOf: rows, using: &d20)
-			).clamped(size)
-
-			if !isCitySite(p, placed),
-			   let alt = p.n36.firstMap({ isCitySite($0, placed) ? $0 : nil }) {
-				p = alt
-			}
-			guard isCitySite(p, placed) else { continue }
-
-			self[p] = .city
-			placed.append(p)
-			cities.append(p)
-
-			if cities.count % 3 == 0 { placeAirfield(near: p, placed: &placed, d20: &d20) }
-		}
-
-		var airfieldCount = placed.count - cities.count
-		for city in cities where airfieldCount < players {
-			if !hasAirfield(near: city), placeAirfield(near: city, placed: &placed, d20: &d20) {
-				airfieldCount += 1
+			)
+			if isCitySite(center, awayFrom: cities) {
+				cities.append([center])
+			} else if let nearby = center.n36.firstMap({ isCitySite($0, awayFrom: cities) ? $0 : nil }) {
+				cities.append([nearby])
 			}
 		}
 
-		// Each spawn cell's nearest city fields the seat's air force: walk
-		// cities nearest-first from the spawn center until one already has an
-		// adjacent airfield or accepts a new one — clearing forest or hill for
-		// the strip when no open field is adjacent.
+		for xy in indices where cities.count < centerTarget && isCitySite(xy, awayFrom: cities) {
+			cities.append([xy])
+		}
+
+		var remaining = tiles - cities.count
+		for (districts, target) in [(3, triples), (2, pairs)] {
+			var grown = 0
+			for i in cities.indices where grown < target && cities[i].count == 1 {
+				var footprint = cities[i]
+				var head = 0
+				while head < footprint.count && footprint.count < districts {
+					for p in footprint[head].n4 where footprint.count < districts {
+						if !footprint.contains(p), isCitySite(p, awayFrom: cities, except: i) {
+							footprint.append(p)
+						}
+					}
+					head += 1
+				}
+				guard footprint.count == districts else { continue }
+				cities[i] = footprint
+				remaining -= districts - 1
+				grown += 1
+			}
+		}
+
+		for xy in indices where remaining > 0 && isCitySite(xy, awayFrom: cities) {
+			cities.append([xy])
+			remaining -= 1
+		}
+		for city in cities {
+			for xy in city { self[xy] = .city }
+		}
+		return cities
+	}
+
+	private mutating func placeAirfields(
+		near cities: [[XY]], spawns: [XY], target: Int, d20: inout D20
+	) {
+		var remaining = target
+		let districts = cities.flatMap { $0 }
 		for spawn in spawns {
+			guard remaining > 0 else { return }
 			let center = spawn.cellCenter(size: size)
-			let ranked = cities.sorted { a, b in
-				(a.manhattanDistance(to: center), a.x, a.y)
-					< (b.manhattanDistance(to: center), b.x, b.y)
+			let ranked = districts.sorted { a, b in
+				(a.manhattanDistance(to: center), a.y, a.x)
+					< (b.manhattanDistance(to: center), b.y, b.x)
 			}
 			for city in ranked {
-				if hasAirfield(near: city)
-					|| placeAirfield(near: city, placed: &placed, d20: &d20, clearing: true) {
+				if hasAirfield(near: city) { break }
+				if placeAirfield(near: city, d20: &d20, clearing: true) {
+					remaining -= 1
 					break
 				}
 			}
 		}
 
-		return placed
+		guard remaining > 0 else { return }
+		let sites = cities.shuffled(using: &d20)
+		for city in sites where remaining > 0 {
+			guard !city.contains(where: { hasAirfield(near: $0) }) else { continue }
+			if city.contains(where: { placeAirfield(near: $0, d20: &d20) }) {
+				remaining -= 1
+			}
+		}
+		// If few footprints have clear ground, use other open sites nearby.
+		while remaining > 0, districts.contains(where: { placeAirfield(near: $0, d20: &d20) }) {
+			remaining -= 1
+		}
 	}
 
 	private func hasAirfield(near city: XY) -> Bool {
 		city.n4.contains { ap in contains(ap) && self[ap] == .airfield }
 	}
 
-	@discardableResult
 	private mutating func placeAirfield(
 		near city: XY,
-		placed: inout [XY],
 		d20: inout D20,
 		clearing: Bool = false
 	) -> Bool {
@@ -493,7 +542,6 @@ public extension Map<64, Terrain> {
 		}
 		guard let ap = candidates.randomElement(using: &d20) else { return false }
 		self[ap] = .airfield
-		placed.append(ap)
 		return true
 	}
 
@@ -503,7 +551,6 @@ public extension Map<64, Terrain> {
 	/// routes reuse them as trunks, and a few extra edges then close the
 	/// worst detours into loops.
 	private mutating func connectCities(cities: [XY]) {
-		let cities = cities.filter { xy in self[xy] == .city }
 		guard cities.count > 1 else { return }
 
 		let costs = travelCosts(between: cities)
@@ -571,7 +618,7 @@ public extension Map<64, Terrain> {
 	/// Non-tree city pairs whose route through the carved network runs far
 	/// longer than a direct road, worst first — the loops real networks grow
 	/// once trunks exist. Network distances run over the abstract carved
-	/// graph (Floyd–Warshall over at most 16 cities), refreshed after each
+	/// graph (Floyd–Warshall over the city centers), refreshed after each
 	/// pick so one new link can cure several detours.
 	private func detourEdges(
 		costs: [[UInt32]],

@@ -3,7 +3,7 @@ import COR
 
 /// Protocol version for the `hello` handshake. Bump whenever the message set
 /// or the layout or simulation rules of the native payloads change.
-let netVersion: UInt16 = 5
+let netVersion: UInt16 = 6
 
 enum Message {
 	case hello(UInt16)

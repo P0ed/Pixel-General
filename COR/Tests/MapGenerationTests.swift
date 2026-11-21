@@ -35,20 +35,22 @@ struct MapGenerationTests {
 		#expect(noRiverSeeds.isEmpty, "Seeds with no river: \(noRiverSeeds)")
 	}
 
-	@Test func spawnPointCitiesHaveAirfields() {
+	@Test(arguments: [Terrain.field, .forest])
+	func spawnPointCitiesHaveAirfields(terrain: Terrain) {
 		for seed in 0 ..< 8 {
 			let spawns = Array(XY.one.n4)
 			let map = Map<64, Terrain>(
 				seed: seed * 13,
-				terrain: .init(repeating: .field),
+				terrain: .init(repeating: terrain),
+				density: 0,
 				spawns: spawns
 			)
 			let cities = cities(of: map)
 			for spawn in spawns {
 				let center = spawn.cellCenter(size: map.size)
 				guard let city = cities.min(by: { a, b in
-					(a.manhattanDistance(to: center), a.x, a.y)
-						< (b.manhattanDistance(to: center), b.x, b.y)
+					(a.manhattanDistance(to: center), a.y, a.x)
+						< (b.manhattanDistance(to: center), b.y, b.x)
 				}) else {
 					Issue.record("Seed \(seed * 13) generated no cities")
 					continue
@@ -62,6 +64,49 @@ struct MapGenerationTests {
 				)
 			}
 		}
+	}
+
+	@Test(arguments: [0, 7, 42], [0, 1, 2, 3])
+	func inlandSettlementTargets(seed: Int, density: Int) {
+		let map = Map<64, Terrain>(seed: seed, density: density)
+		let targets = [(20, 4, 2, 1), (32, 6, 3, 2), (48, 9, 4, 3), (64, 12, 5, 4)]
+		let (settlements, airfields, pairs, triples) = targets[density]
+		#expect(map.indices.count { map[$0].isSettlement } == settlements)
+		#expect(map.indices.count { map[$0] == .airfield } == airfields)
+
+		let footprints = map.cityFootprints
+		#expect(footprints.count { $0.count == 2 } == pairs)
+		#expect(footprints.count { $0.count == 3 } == triples)
+		#expect(footprints.allSatisfy { $0.count <= 3 })
+		for i in footprints.indices {
+			for j in footprints.indices.dropFirst(i + 1) {
+				let spaced = footprints[i].allSatisfy { a in
+					footprints[j].allSatisfy { b in a.stepDistance(to: b) >= map.size / 8 }
+				}
+				#expect(spaced)
+			}
+		}
+
+		expectRoadNetworkConnectsCities(map)
+	}
+
+	@Test(arguments: [7, 19, 42])
+	func clampsDensityOnCoastalAndMountainousMaps(seed: Int) {
+		let coast: [9 of Terrain] = [.sea, .sea, .sea, .sea, .forest, .field, .sea, .field, .field]
+		let high = Map<64, Terrain>(seed: seed, terrain: coast, density: 3)
+		let above = Map<64, Terrain>(seed: seed, terrain: coast, density: 100)
+		let inland = Map<64, Terrain>(seed: seed, terrain: .mountain, density: 3)
+		#expect(high.indices.contains { high[$0].isSea })
+		#expect(inland.indices.contains { inland[$0] == .mountain })
+		#expect(high.indices.count { high[$0].isSettlement } <= 64)
+		#expect(inland.indices.count { inland[$0].isSettlement } <= 64)
+		let sameHigh = high.indices.allSatisfy { high[$0] == above[$0] }
+		#expect(sameHigh)
+
+		let low = Map<64, Terrain>(seed: seed, terrain: coast, density: 0)
+		let below = Map<64, Terrain>(seed: seed, terrain: coast, density: -1)
+		let sameLow = low.indices.allSatisfy { low[$0] == below[$0] }
+		#expect(sameLow)
 	}
 
 	@Test func isDeterministicForSameSeed() {
@@ -253,27 +298,25 @@ struct MapGenerationTests {
 		// flood along road tiles from any city must reach every other.
 		for seed in [0, 7, 21, 42, 5, 11] {
 			let map = Map<64, Terrain>(seed: seed)
-			var cities = [] as [XY]
-			for xy in map.indices where map[xy] == .city { cities.append(xy) }
-			guard let first = cities.first else {
-				Issue.record("No cities for seed \(seed)")
-				continue
+			expectRoadNetworkConnectsCities(map)
+		}
+	}
+
+	private func expectRoadNetworkConnectsCities(_ map: borrowing Map<64, Terrain>) {
+		let cities = cities(of: map)
+		guard let first = cities.first else {
+			Issue.record("No cities generated")
+			return
+		}
+		var seen = Set([first])
+		var stack = [first]
+		while let xy = stack.popLast() {
+			for p in xy.n4 where map.contains(p) && map[p].hasRoad && seen.insert(p).inserted {
+				stack.append(p)
 			}
-			var seen = Set([first])
-			var stack = [first]
-			while let xy = stack.popLast() {
-				let n4 = xy.n4
-				for i in n4.indices {
-					let p = n4[i]
-					if map.contains(p), map[p].hasRoad, !seen.contains(p) {
-						seen.insert(p)
-						stack.append(p)
-					}
-				}
-			}
-			for c in cities where !seen.contains(c) {
-				Issue.record("City \(c) off the road network for seed \(seed)")
-			}
+		}
+		for city in cities where !seen.contains(city) {
+			Issue.record("City tile \(city) off the road network")
 		}
 	}
 

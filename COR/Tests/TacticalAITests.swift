@@ -199,15 +199,49 @@ struct TacticalAITests {
 		#expect(a == .attack(0.uid, 1.uid))
 	}
 
-	@Test func reachableHostileSettlementIsCapturedByMovement() {
-		let sim = Self.duelSim(
-			cities: [(XY(0, 0), .ger), (XY(3, 0), .usa)],
-			units: [Unit(model: .regular, country: .ger)],
-			at: [XY(2, 0)]
+	@Test func aiSeeksAndHoldsCityTilesForCapture() {
+		let airfield = XY(4, 0)
+		let enemyCity = XY(5, 0)
+		var map = Map<64, Terrain>(zero: .field)
+		map[XY(0, 0)] = .city
+		map[enemyCity] = .city
+		map[airfield] = .airfield
+		var sim = TacticalSim(
+			map: map,
+			players: [Player(country: .ger, prestige: 0), Player(country: .usa)],
+			cities: [(XY(0, 0), .ger), (enemyCity, .usa)],
+			units: []
 		)
+		var ground = Unit(model: .regular, country: .ger)
+		ground.reset()
+		let uid = sim.spawn(ground, at: airfield)
 
 		var ai = AI.Plan()
-		#expect(sim.run(ai: &ai) == .move(0.uid, XY(3, 0)))
+		#expect(sim.run(ai: &ai) == .move(uid, enemyCity))
+		let seesAirfield = ai.enemySettlements.contains(airfield)
+		#expect(seesAirfield)
+		#expect(ai.focusTarget == enemyCity)
+		_ = sim.reduce(.move(uid, enemyCity))
+		sim.units[uid].reset()
+		#expect(sim.run(ai: &ai) == .end)
+		_ = sim.reduce(.end)
+		#expect(sim.control[enemyCity] == .ger)
+	}
+
+	@Test func aiProcesses64SettlementTiles() {
+		let sim = Scenario(
+			players: [Player(country: .ger, type: .ai)],
+			units: [Unit(model: .regular, country: .ger)],
+			cityLevel: 3,
+			seed: 7,
+			objective: .survive(.axis, day: 12)
+		).makeSim()
+		var ai = AI.Plan()
+		_ = sim.run(ai: &ai)
+		#expect(ai.ownSettlements.count == 64)
+		let airfields = ai.ownSettlements.count { sim.map[$0] == .airfield }
+		#expect(airfields == 12)
+		#expect(ai.focusTarget.map { sim.map[$0] } == .city)
 	}
 
 	@Test func rangedMoverSeeksPostMoveFiringPosition() {

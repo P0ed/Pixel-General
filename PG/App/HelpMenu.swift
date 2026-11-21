@@ -151,8 +151,8 @@ private enum Help {
 	Pixel General — a turn-based wargame
 
 	A Panzer-General-inspired game of operational combat. Purchase units \
-	with prestige, maneuver them across a 64×64 tactical grid, capture cities \
-	and airfields for income, and destroy the enemy force.
+	with prestige, maneuver them across a 64×64 tactical grid, and capture \
+	city districts to control territory and earn income.
 
 	Units are real modern platforms — infantry, artillery, anti-air, recon, \
 	IFVs, tanks, helicopters and jets — each with its own stats, terrain \
@@ -203,15 +203,14 @@ private enum Help {
 	static let rules = """
 	THE GOAL
 
-	Eliminate the enemy team. A player is knocked out once they hold no \
-	settlements; the last team standing wins — or, in a scenario, whoever \
-	meets its objective first.
+	A team is eliminated when it loses its last city tile. The last team \
+	standing wins. Scenarios can also end when their objective is met.
 
 	TURNS & ECONOMY
 
 	  • Players act in turn. A day passes once everyone has moved.
-	  • Each day you earn prestige from the settlements you control
-	    (city 24, airfield 4).
+	  • Each day you earn 24 prestige per city tile and 4 per airfield
+	    you control.
 	  • Spend prestige at an owned, enemy-free settlement to buy units.
 	    Cities sell ground units and airfields sell aircraft.
 
@@ -241,7 +240,10 @@ private enum Help {
 
 	CAPTURING
 
-	  • Move a ground unit onto an enemy settlement to flag it for your side.
-	    Take all of a player's settlements to eliminate them.
+	  • Hold an enemy city tile with a ground unit at the end of a turn
+	    to capture it. A city can have up to three districts, and each
+	    district is captured independently.
+	  • Airfields and surrounding tiles follow the nearest city tile.
+	    Ties go to the first city tile in row-major map order.
 	"""
 }
