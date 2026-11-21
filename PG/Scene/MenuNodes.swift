@@ -23,7 +23,6 @@ extension MenuNodes {
 			width: (image.size.width - insets.left - insets.right) / image.size.width,
 			height: (image.size.height - insets.top - insets.bottom) / image.size.height
 		)
-		root.zPosition = 68.0
 		root.isHidden = true
 
 		let items = [16 of MenuSlotNode] { index in

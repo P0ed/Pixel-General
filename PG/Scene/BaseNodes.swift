@@ -13,6 +13,13 @@ struct Status {
 	var flag: SKTexture?
 }
 
+private enum OverlayZ {
+	// The 64×64 map uses 127 depth layers, plus offsets for sprites and effects.
+	static let flag: CGFloat = 256.0
+	static let status = flag + 1.0
+	static let menu = status + 1.0
+}
+
 extension Scene where State: ~Copyable {
 
 	func makeBaseNodes() -> BaseNodes {
@@ -25,6 +32,7 @@ extension Scene where State: ~Copyable {
 
 	func addMenu() -> MenuNodes {
 		let menu = MenuNodes.make()
+		menu.root.zPosition = OverlayZ.menu
 		camera?.addChild(menu.root)
 		return menu
 	}
@@ -37,7 +45,7 @@ extension Scene where State: ~Copyable {
 		label.setScale(0.5)
 		label.numberOfLines = 0
 		camera?.addChild(label)
-		label.zPosition = 67.0
+		label.zPosition = OverlayZ.status
 		label.horizontalAlignmentMode = .left
 		label.verticalAlignmentMode = .bottom
 		return label
@@ -45,7 +53,7 @@ extension Scene where State: ~Copyable {
 
 	func addIcon() -> SKSpriteNode {
 		let node = SKSpriteNode()
-		node.zPosition = 66.0
+		node.zPosition = OverlayZ.flag
 		node.size = CGSize(width: 24.0, height: 12.0)
 		camera?.addChild(node)
 		return node
