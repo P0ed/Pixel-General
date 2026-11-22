@@ -11,6 +11,8 @@ struct RoadTests {
 		let fill = Renderer.decal.fill(model)
 		let frame = Renderer.tile.edges(Tiles.base(elevation: 0))
 		let half = Volume.footprint / 2
+		let midArm = road.width * 3 / 8
+		#expect((0 ..< road.height).count { road[midArm, $0].alpha > 0 } == 7)
 
 		for y in 0 ..< road.height {
 			for x in 0 ..< road.width {
@@ -35,6 +37,7 @@ struct RoadTests {
 		let name = missingArm.map { "Road-T-\($0)" } ?? "Road-X"
 		let entry = try #require(Catalog.roads.first { $0.name == name })
 		let road = entry.model.solids
+		#expect(entry.model.lines.isEmpty)
 		#expect(road.allSatisfy { $0.from.z == 0 && $0.to.z == 0 && $0.tone == Roads.Tone.bed })
 
 		let side = Volume.footprint
@@ -85,7 +88,7 @@ struct RoadTests {
 	}
 
 	@Test(arguments: Axis.allCases)
-	func bridgeContinuesThePavementAndMarkingsOfAdjoiningRoads(axis: Axis) {
+	func bridgeContinuesThePavementOfAdjoiningRoads(axis: Axis) {
 		let directions: [Direction] = axis == .x ? [.xMinus, .xPlus] : [.yMinus, .yPlus]
 		let road = Renderer.decal.render(Roads.road(directions))
 		let bridge = Renderer.decal.render(Roads.bridge(along: axis))
@@ -94,8 +97,8 @@ struct RoadTests {
 
 		for i in expected.alpha.indices where expected.alpha[i] > 0 {
 			#expect(actual.alpha[i] == 255, "the road–bridge joins must not expose holes")
-			if expected.gray[i] == Roads.Tone.bed || expected.gray[i] == Roads.Tone.mark {
-				#expect(actual.gray[i] == expected.gray[i], "asphalt and center stripes continue across the span")
+			if expected.gray[i] == Roads.Tone.bed {
+				#expect(actual.gray[i] == expected.gray[i], "the asphalt continues across the span")
 			}
 		}
 	}

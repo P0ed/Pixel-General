@@ -32,7 +32,9 @@ enum TileSurface: Hashable {
 	func image(variant: Tiles.Variant = .first) -> CGImage? {
 		let image = CGImage.surface.tinted(color.cgColor)
 		switch self {
-		case .forest, .rough, .mountain:
+		case .mountain:
+			return image?.noised(with: CGImage.harshNoise[variant.rawValue])
+		case .forest, .rough:
 			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
 		case .field, .water, .sea:
 			return image?.noised(with: CGImage.noise[variant.rawValue])
@@ -173,6 +175,13 @@ private extension CGImage {
 		CGImage.draw(size: .tile3D) { ctx in
 			drawNoise(in: ctx, grainSize: 2, maxOpacity: 0.1, seed: variant.rawValue * 2 + 1)
 			ctx.draw(noise[variant.rawValue], in: CGRect(origin: .zero, size: .tile3D))
+		}
+	}
+
+	static let harshNoise = Tiles.Variant.allCases.map { variant in
+		CGImage.draw(size: .tile3D) { ctx in
+			drawNoise(in: ctx, grainSize: 4, maxOpacity: 0.15, seed: variant.rawValue + 8)
+			ctx.draw(strongNoise[variant.rawValue], in: CGRect(origin: .zero, size: .tile3D))
 		}
 	}
 

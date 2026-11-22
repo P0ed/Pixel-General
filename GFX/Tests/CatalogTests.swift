@@ -53,21 +53,28 @@ struct CatalogTests {
 		}
 	}
 
-	@Test func settlementsNeverSpillOffTheTile() {
-		for entry in Catalog.settlements {
+	@Test func citiesAndAirfieldsStayInsideTheTileFrame() {
+		let interior = Tiles.interior(on: .tile)
+		for entry in Catalog.settlements where entry.renderer.outline == .building {
 			let bitmap = entry.renderer.render(entry.model)
-			let occupied = bitmap.occupied!
-
-			#expect(occupied.y.upperBound <= 59)
-			#expect(occupied.y.lowerBound >= 0)
+			#expect(zip(bitmap.alpha, interior).allSatisfy { $0 == 0 || $1 }, "\(entry.name) fits inside the tile frame")
 		}
 	}
 
 	@Test(arguments: Tiles.Variant.allCases)
 	func cityHasVisibleCrossroads(variant: Tiles.Variant) {
 		let city = Settlements.city(variant: variant)
+		#expect(city.lines.isEmpty)
 		expectVisibleRoad(city, along: .x)
 		expectVisibleRoad(city, along: .y)
+	}
+
+	@Test func airfieldKeepsItsDashedRunwayCenterline() {
+		let airfield = Settlements.airfield
+		let bitmap = Renderer.building.render(airfield)
+		#expect(airfield.lines.contains { line in
+			line.dash != nil && line.tone > Roads.Tone.bed && bitmap.gray.contains(line.tone)
+		})
 	}
 
 	@Test func fortVariantsStayInsideTheTileFrame() {

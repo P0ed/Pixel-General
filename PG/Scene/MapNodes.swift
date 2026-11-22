@@ -4,15 +4,14 @@ import COR
 @MainActor
 struct MapNodes {
 	var tiles: SKTileMapNode
-	var decorationLayers: [SKTileMapNode]
+	var decorations: SKTileMapNode
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
 }
 
-/// Z offsets within one anti-diagonal above the flat terrain map:
-/// decorations carry their own fogged variant, with units on top.
-enum TileZ {
+/// Decorations sit above the terrain. Units are ordered by diagonal above both tilemaps.
+private enum TileZ {
 	static let decoration: CGFloat = 0.4
 	static let unit: CGFloat = 0.6
 }
@@ -29,10 +28,6 @@ extension MapNodes {
 		return .tile(XY(x, y))
 	}
 
-	func layer(at xy: XY) -> Int {
-		xy.x + size - 1 - xy.y
-	}
-
 	func setBase(_ tileGroup: SKTileGroup?, at xy: XY) {
 		tiles.setTileGroup(tileGroup, at: xy)
 	}
@@ -43,12 +38,12 @@ extension MapNodes {
 	}
 
 	func setDecoration(_ terrain: Terrain, fog: Bool, at xy: XY) {
-		guard !decorationLayers.isEmpty else { return }
-		decorationLayers[layer(at: xy)].setTileGroup(.decoration(terrain, fog: fog, at: xy), at: xy)
+		guard decorations.parent != nil else { return }
+		decorations.setTileGroup(.decoration(terrain, fog: fog, at: xy), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
-		CGFloat(layer(at: xy)) + TileZ.unit
+		CGFloat(xy.x + size - 1 - xy.y) + TileZ.unit
 	}
 
 	static func make(
@@ -67,9 +62,7 @@ extension MapNodes {
 		}
 		return MapNodes(
 			tiles: addTiles(tiles, z: 0.0),
-			decorationLayers: decorations ? (0 ..< size * 2 - 1).map {
-				addTiles(.decorations, z: CGFloat($0) + TileZ.decoration)
-			} : [],
+			decorations: decorations ? addTiles(.decorations, z: TileZ.decoration) : SKTileMapNode(),
 			size: size,
 			cursor: addCursor(root: root),
 			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)

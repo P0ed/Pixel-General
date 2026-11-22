@@ -1,4 +1,4 @@
-/// Buildings drawn on a tile: rendered with `Renderer.tile`, never leaving the footprint.
+/// Settlement art that fits inside the projected tile frame.
 public enum Settlements {
 
 	public enum Tone {
@@ -15,7 +15,10 @@ public enum Settlements {
 		case .third: [.market, .houses, .houses, .market]
 		case .fourth: [.houses, .market, .apartments, .houses]
 		}
-		let centers: [(Float, Float)] = [(9, 9), (39, 9), (9, 39), (39, 39)]
+		// Leave room for the roofs to project towards the back of the tile.
+		let near: Float = 12
+		let far: Float = 39
+		let centers = [(near, near), (far, near), (near, far), (far, far)]
 		let solids = zip(blocks, centers).flatMap { block, center in
 			buildings(block, x: center.0, y: center.1)
 		}
@@ -25,17 +28,15 @@ public enum Settlements {
 	/// Runway with dashed centreline, a control tower and two hangars set back from it.
 	public static var airfield: Model {
 		let strip = Solid.box(from: V3(1.5, 28.5, 0), to: V3(46.5, 39, 0), tone: Roads.Tone.bed)
-		let apron = Solid.box(from: V3(19.5, 19.5, 0), to: V3(28.5, 28.5, 0), tone: Roads.Tone.bed)
-
-		var solids = [strip, apron]
-		solids += [
-			.box(from: V3(21, 9, 0), to: V3(27, 15, 9), tone: Tone.wall),
-			.box(from: V3(19.5, 7.5, 9), to: V3(28.5, 16.5, 12.75), tone: Settlements.Tone.roof),
-		]
-		solids += hangar(x: 7.5, y: 13.5) + hangar(x: 36, y: 12)
+		let apron = Solid.box(from: V3(19.5, 16.5, 0), to: V3(28.5, 28.5, 0), tone: Roads.Tone.bed)
+		let solids = [
+			strip, apron,
+			.box(from: V3(21.75, 11.25, 0), to: V3(26.25, 15.75, 6), tone: Tone.wall),
+			.box(from: V3(21, 10.5, 6), to: V3(27, 16.5, 8.25), tone: Tone.roof),
+		] + hangar(x: 12, y: 15) + hangar(x: 36, y: 15)
 
 		return Model(solids, lines: [
-			Line(from: V3(4.5, 33.75, 0), to: V3(43.5, 33.75, 0), tone: Roads.Tone.mark, dash: 4.5),
+			Line(from: V3(4.5, 33.75, 0), to: V3(43.5, 33.75, 0), tone: 236, dash: 4.5),
 		])
 	}
 
@@ -45,45 +46,57 @@ public enum Settlements {
 		let layout = switch variant {
 		case .first:
 			"""
-			......
-			###...
-			..#...
-			..###.
-			....##
-			......
+			.........
+			.#######.
+			..#...#..
+			..#...#..
+			.######..
+			....#....
+			....#....
+			..######.
+			.........
 			"""
 		case .second:
 			"""
-			...#..
-			...#..
-			.###..
-			.#....
-			.####.
-			......
+			.........
+			####.....
+			...#####.
+			....#..#.
+			....#..#.
+			.#######.
+			.#.......
+			.###.....
+			.........
 			"""
 		case .third:
 			"""
-			..#...
-			..#...
-			####..
-			...#..
-			...###
-			......
+			.........
+			.#..#.#..
+			.#..#.#..
+			.####.#..
+			.#..###..
+			.#..#.#..
+			.####.#..
+			....#.#..
+			.........
 			"""
 		case .fourth:
 			"""
-			......
-			#####.
-			.#....
-			.#....
-			.#####
-			......
+			.........
+			..####...
+			..#..###.
+			..#....#.
+			####.###.
+			...#...#.
+			...##..#.
+			....####.
+			.........
 			"""
 		}
 		let cells = layout.split(separator: "\n").map(Array.init)
-		let cellSize: Float = 6
+		let cellSize: Float = 4
 		let half = cellSize / 2
-		let firstCenter = cellSize + half
+		let firstCenter = (Volume.footprint - Float(cells.count - 1) * cellSize) / 2
 		let corner = V3(half, half, 0)
 		var solids: [Solid] = []
 
@@ -94,8 +107,8 @@ public enum Settlements {
 
 				// The earth slopes up toward the cut and leaves the passage open at joins.
 				let bank = Solid.wedge(
-					from: center + V3(-half, -half - 3, 0),
-					to: center + V3(half, -half, 3),
+					from: center + V3(-half, -half - 1.5, 0),
+					to: center + V3(half, -half, 1.5),
 					rising: .yPlus,
 					tone: 180
 				)
@@ -125,24 +138,24 @@ private extension Settlements {
 		case .houses:
 			// The inner house sits lower so its roof leaves the crossroad visible.
 			let outward: Float = x < Volume.footprint / 2 ? -1 : 1
-			return house(x: x + outward * 3, y: y, length: 6, width: 9, walls: 4.5, roof: 4.5, ridge: .y)
-				+ house(x: x - outward * 4.5, y: y, length: 4.5, width: 9, walls: 3.75, roof: 3, ridge: .x)
+			return house(x: x + outward * 2.25, y: y, length: 4.5, width: 6, walls: 3, roof: 3, ridge: .y)
+				+ house(x: x - outward * 3.75, y: y, length: 3.75, width: 6, walls: 3, roof: 2.25, ridge: .x)
 		case .apartments:
 			return [
-				.box(from: V3(x - 4.5, y - 4.5, 0), to: V3(x + 4.5, y + 4.5, 7.5), tone: Tone.wall),
-				.box(from: V3(x - 5.25, y - 5.25, 7.5), to: V3(x + 5.25, y + 5.25, 8.25), tone: Tone.roof),
+				.box(from: V3(x - 3, y - 3, 0), to: V3(x + 3, y + 3, 5.25), tone: Tone.wall),
+				.box(from: V3(x - 3.75, y - 3.75, 5.25), to: V3(x + 3.75, y + 3.75, 6), tone: Tone.roof),
 			]
 		case .market:
-			return house(x: x, y: y - 4.5, length: 12, width: 4.5, walls: 3.75, roof: 3, ridge: .x)
-				+ house(x: x, y: y + 4.5, length: 9, width: 4.5, walls: 3, roof: 2.25, ridge: .x)
+			return house(x: x, y: y - 3.75, length: 9, width: 3.75, walls: 3, roof: 2.25, ridge: .x)
+				+ house(x: x, y: y + 3.75, length: 6.75, width: 3.75, walls: 2.25, roof: 1.5, ridge: .x)
 		}
 	}
 
-	/// A wide, low shed: half the height of a house so it reads as a hangar next to one.
+	/// A wide, low shed beside the control tower.
 	static func hangar(x: Float, y: Float) -> [Solid] {
 		[
-			.box(from: V3(x - 6, y - 4.5, 0), to: V3(x + 6, y + 4.5, 3), tone: Tone.wall),
-			.gable(from: V3(x - 6.75, y - 5.25, 3), to: V3(x + 6.75, y + 5.25, 7.5), ridge: .x, tone: Tone.roof),
+			.box(from: V3(x - 4.5, y - 3, 0), to: V3(x + 4.5, y + 3, 2.25), tone: Tone.wall),
+			.gable(from: V3(x - 5.25, y - 3.75, 2.25), to: V3(x + 5.25, y + 3.75, 5.25), ridge: .x, tone: Tone.roof),
 		]
 	}
 

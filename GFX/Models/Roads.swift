@@ -1,17 +1,15 @@
-/// Flat art laid on a tile: a road is a slab out to each connected edge with a dashed
-/// centreline, a bridge a paved deck on piles. Drawn on the tile canvas, over the base.
+/// Flat art laid over the tile base. Paving extends to each connected edge, and bridges add a deck on piles.
 public enum Roads {
 
 	public enum Tone {
 		public static let bed: UInt8 = 176
-		public static let mark: UInt8 = 236
 		public static let deck: UInt8 = 214
 		public static let rail: UInt8 = 96
 		public static let pile: UInt8 = 84
 	}
 
 	/// Width of the carriageway, in footprint units.
-	public static let width: Float = 9
+	public static let width: Float = 7
 
 	public static func road(_ directions: [Direction]) -> Model {
 		road(directions, tileEdges: .framed)
@@ -44,12 +42,10 @@ public enum Roads {
 			solids.append(pavement(from: from, to: to))
 		}
 
-		return Model(solids, lines: directions.map {
-			.spoke($0, z: 0, tone: Tone.mark, width: 1, dash: 4.5)
-		})
+		return Model(solids)
 	}
 
-	/// The same carriageway and markings as a road, with a wider deck beneath it.
+	/// The same carriageway as a road, with a wider deck beneath it.
 	/// Paving stays at z = 0 so both approaches meet neighbouring road tiles exactly.
 	public static func bridge(along axis: Axis) -> Model {
 		let side = Volume.footprint
