@@ -16,9 +16,9 @@ struct MapNodes {
 /// Units are ordered by diagonal above the map layers.
 private enum TileZ {
 	static let decoration: CGFloat = 0.2
-	static let grid: CGFloat = 0.3
-	static let overlay: CGFloat = 0.4
-	static let fog: CGFloat = 0.5
+	static let overlay: CGFloat = 0.3
+	static let fog: CGFloat = 0.4
+	static let grid: CGFloat = 0.25
 	static let unit: CGFloat = 0.6
 }
 
@@ -41,8 +41,10 @@ extension MapNodes {
 		}
 	}
 
-	func setFog(_ fogged: Bool, at xy: XY) {
+	func setShading(_ tint: TileOverlay?, fogged: Bool, at xy: XY) {
+		overlay.setTileGroup(tint.map { .overlay($0) }, at: xy)
 		fog.setTileGroup(fogged ? .fog : nil, at: xy)
+		grid.setTileGroup(.grid(overlay: tint, fogged: fogged), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
@@ -67,17 +69,11 @@ extension MapNodes {
 			return map
 		}
 		let grid = addTiles(.grid, z: TileZ.grid)
-		grid.position.x -= 1 // SpriteKit places the padded texture at the tile's left edge.
 		grid.fill(with: .grid)
-		let last = size - 1
-		for i in 0 ..< last {
-			grid.setTileGroup(.gridTopLeft, at: XY(0, i))
-			grid.setTileGroup(.gridTopRight, at: XY(i + 1, last))
-		}
-		grid.setTileGroup(.gridTopCorner, at: XY(0, last))
 		grid.isHidden = !settings.gridLines
 		let selection = addCursor(.selection, to: root)
 		selection.isHidden = true
+
 		return MapNodes(
 			terrain: addTiles(terrain, z: 0.0),
 			grid: grid,

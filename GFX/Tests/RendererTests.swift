@@ -45,30 +45,16 @@ struct RendererTests {
 		}
 	}
 
-	@Test func sharedGridEdgesStayWithinTheOwningTile() {
-		let canvas = Canvas.tile
-		let grid = Tiles.grid()
-		let closed = Tiles.grid(topLeft: true, topRight: true)
-		let footprint = Renderer.tile.fill(Tiles.footprint)
-		for y in 0 ..< grid.height {
-			for x in 0 ..< grid.width where grid[x, y].alpha > 0 {
-				#expect(footprint.contains(x: x - 1, y: y) && footprint[x - 1, y].alpha > 0)
+	@Test func gridHasFourPixelTipsAndSharesItsStrokesWithNeighbors() {
+		let grid = Tiles.grid
+		let top = Canvas.tile.baseTop
+		#expect((0 ..< grid.width).filter { grid[$0, top].alpha > 0 } == [46, 47, 48, 49])
+		#expect((0 ..< grid.width).filter { grid[$0, grid.height - 1].alpha > 0 } == [46, 47, 48, 49])
+		for y in top ..< top + 24 {
+			for x in 0 ..< 48 {
+				#expect(grid[x, y] == grid[x + 48, y + 24])
+				#expect(grid[x + 48, y] == grid[x, y + 24])
 			}
-		}
-		#expect(closed.alpha == Tiles.gridHighlight.alpha)
-
-		let middle = Volume.footprint / 2
-		let far = Volume.footprint - 0.5
-		let samples: [(V3, Bool)] = [
-			(V3(0.5, middle, 0), false), (V3(middle, 0.5, 0), false),
-			(V3(far, middle, 0), true), (V3(middle, far, 0), true),
-		]
-		for (point, owned) in samples {
-			let pixel = canvas.project(point)
-			let x = Int(pixel.x) + 1
-			let y = Int(pixel.y)
-			#expect((grid[x, y].alpha > 0) == owned)
-			#expect(closed[x, owned ? y : y - 1].alpha > 0)
 		}
 	}
 
@@ -104,40 +90,28 @@ struct RendererTests {
 		}
 	}
 
-	@Test(arguments: [false, true], [false, true])
-	func cursorColorsTheSharedGridPixels(topLeft: Bool, topRight: Bool) {
+	@Test func cursorPatternFollowsTheGridOneStepInside() {
 		let highlight = Tiles.gridHighlight
-		let grid = Tiles.grid(topLeft: topLeft, topRight: topRight)
-		let neighbor = Tiles.grid()
-		var gridTiles = [(bitmap: grid, x: 0, y: 0)]
-		if !topLeft { gridTiles.append((neighbor, -48, -24)) }
-		if !topRight { gridTiles.append((neighbor, 48, -24)) }
-		if !topLeft && !topRight { gridTiles.append((neighbor, 0, -48)) }
-
-		for y in 0 ..< highlight.height {
-			for x in 0 ..< highlight.width where highlight[x, y].alpha > 0 {
-				#expect(highlight[x, y] == highlight[x ^ 1, y])
-				#expect(gridTiles.contains { tile in
-					let tx = x - tile.x
-					let ty = y - tile.y
-					return tile.bitmap.contains(x: tx, y: ty) && tile.bitmap[tx, ty].alpha > 0
-				})
-			}
+		let footprint = Renderer.tile.fill(Tiles.footprint)
+		let grid = Tiles.grid
+		#expect(highlight.occupied?.y == 13 ... 58)
+		#expect(highlight.occupied?.x == 2 ... 93)
+		for i in highlight.alpha.indices where highlight.alpha[i] > 0 {
+			#expect(footprint.alpha[i] > 0 && grid.alpha[i] == 0)
 		}
-	}
-
-	@Test func cursorPatternMakesAContinuousDiamondOfTwoPixelSteps() {
-		let highlight = Tiles.gridHighlight
-		let pattern: [UInt8] = [255, 255, 0, 0]
-		#expect(highlight.occupied?.y == 11 ... 59)
-		for row in 0 ... 48 {
-			let left = 2 * abs(row - 24)
-			let right = 96 - left
-			let steps = (0 ..< highlight.width).filter { highlight[$0, row + 11].alpha > 0 }
-			#expect(steps == (left == right ? [left, left + 1] : [left, left + 1, right, right + 1]))
-			#expect(highlight[left, row + 11].gray == pattern[(96 - row) % 4])
-			#expect(highlight[right, row + 11].gray == pattern[row % 4])
+		var leftTones: [UInt8] = []
+		var rightTones: [UInt8] = []
+		for y in 13 ... 58 {
+			let steps = (0 ..< highlight.width).filter { highlight[$0, y].alpha > 0 }
+			#expect(steps.count == 4)
+			guard steps.count == 4 else { continue }
+			#expect(highlight[steps[0], y] == highlight[steps[1], y])
+			#expect(highlight[steps[2], y] == highlight[steps[3], y])
+			leftTones.append(highlight[steps[0], y].gray)
+			rightTones.append(highlight[steps[2], y].gray)
 		}
+		let pattern: [UInt8] = [0, 0, 255, 255]
+		#expect((rightTones + leftTones.reversed()) == (0 ..< 92).map { pattern[$0 % 4] })
 	}
 
 	@Test func cardinalFacesMatchTheHandDrawnRamp() {

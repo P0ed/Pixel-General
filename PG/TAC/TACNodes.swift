@@ -55,7 +55,7 @@ extension TacticalNodes {
 		)
 		state.sim.map.indices.forEach { xy in
 			map.setTile(state.sim.map[xy], at: xy)
-			if !lit[xy] { map.setFog(true, at: xy) }
+			if !lit[xy] { map.setShading(nil, fogged: true, at: xy) }
 		}
 		return map
 	}
@@ -75,8 +75,7 @@ extension TacticalNodes {
 
 	func update(_ state: borrowing TacticalState) {
 		updateView(state)
-		updateFogIfNeeded(state: state)
-		updateOverlayIfNeeded(state: state)
+		updateShadingIfNeeded(state: state)
 	}
 
 	private func updateView(_ state: borrowing TacticalState) {
@@ -97,21 +96,7 @@ extension TacticalNodes {
 		)
 	}
 
-	private func updateFogIfNeeded(state: borrowing TacticalState) {
-		let lit = state.ui.selectable ?? state.sim.visibleToHuman
-		let previous = self.lit
-		guard lit != previous else { return }
-		self.lit = lit
-
-		for xy in state.sim.map.indices where lit[xy] != previous[xy] {
-			map.setFog(!lit[xy], at: xy)
-		}
-		state.sim.units.forEachAlive { i, u in
-			units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
-		}
-	}
-
-	private func updateOverlayIfNeeded(state: borrowing TacticalState) {
+	private func updateShadingIfNeeded(state: borrowing TacticalState) {
 		let key: OverlayKey = switch state.ui.mapMode {
 		case .terrain: .terrain
 		case .team: .team(state.sim.turn)
@@ -120,15 +105,21 @@ extension TacticalNodes {
 		case .defense: .defense(Self.selectedType(state))
 		}
 
-		guard key != overlayKey else { return }
+		let lit = state.ui.selectable ?? state.sim.visibleToHuman
+		let previousLit = self.lit
+		let overlayChanged = key != overlayKey
+		let fogChanged = lit != previousLit
+		guard overlayChanged || fogChanged else { return }
+		self.lit = lit
 		overlayKey = key
 
-		if key == .terrain {
-			map.overlay.fill(with: nil)
-			return
+		for xy in state.sim.map.indices where overlayChanged || lit[xy] != previousLit[xy] {
+			map.setShading(overlay(for: state, at: xy, key: key), fogged: !lit[xy], at: xy)
 		}
-		for xy in state.sim.map.indices {
-			map.overlay.setTileGroup(overlayGroup(for: state, at: xy, key: key), at: xy)
+		if fogChanged {
+			state.sim.units.forEachAlive { i, u in
+				units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
+			}
 		}
 	}
 
@@ -138,18 +129,18 @@ extension TacticalNodes {
 		return unit.alive ? unit.type : .inf
 	}
 
-	private func overlayGroup(
+	private func overlay(
 		for state: borrowing TacticalState,
 		at xy: XY,
 		key: OverlayKey
-	) -> SKTileGroup? {
+	) -> TileOverlay? {
 		switch key {
 		case .terrain:
 			return nil
 		case .team:
-			return .overlay(.team(state.sim.control[xy].team))
+			return .team(state.sim.control[xy].team)
 		case .country:
-			return .overlay(.country(state.sim.control[xy]))
+			return .country(state.sim.control[xy])
 		case .supply(let supply, let air):
 			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
@@ -164,12 +155,12 @@ extension TacticalNodes {
 			case 3: 6
 			default: 7
 			}
-			return .overlay(.level(level))
+			return .level(level)
 		case .defense(let defense):
 			let terrain = state.sim.map[xy]
 			let value = defense.isAir
 				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)
-			return .overlay(.level(UInt8(clamping: (value + 5) * 7 / 11)))
+			return .level(UInt8(clamping: (value + 5) * 7 / 11))
 		}
 	}
 }

@@ -9,7 +9,7 @@ extension CGImage {
 	private static let slab: (surface: CGImage, frame: CGImage) = {
 		return (
 			surface: Renderer.tile.fill(Tiles.footprint).cgImage!,
-			frame: Renderer.tile.edges(Tiles.base(elevation: 0)).cgImage!
+			frame: Tiles.grid.cgImage!
 		)
 	}()
 

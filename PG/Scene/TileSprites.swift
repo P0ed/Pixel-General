@@ -37,6 +37,10 @@ enum TileOverlay: Hashable {
 	case country(Country)
 	case level(UInt8)
 
+	static let palette = Team.allCases.map(Self.team)
+		+ Country.allCases.map(Self.country)
+		+ (0 ... 7 as ClosedRange<UInt8>).map(Self.level)
+
 	var color: SKColor {
 		switch self {
 		case .team(let team): team.color
@@ -97,19 +101,21 @@ extension Terrain {
 extension SKTileGroup {
 
 	static let gray = make(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
+	static let grid = make(image: .frame)
 	static let fog = overlay(color: .black)
-	static let grid = make(image: Tiles.grid().cgImage!)
-	static let gridTopLeft = make(image: Tiles.grid(topLeft: true).cgImage!)
-	static let gridTopRight = make(image: Tiles.grid(topRight: true).cgImage!)
-	static let gridTopCorner = make(image: Tiles.grid(topLeft: true, topRight: true).cgImage!)
 
 	private struct TerrainKey: Hashable {
 		let surface: TileSurface
 		let variant: Tiles.Variant
 	}
+	private struct GridTint: Hashable {
+		let overlay: TileOverlay?
+		let fogged: Bool
+	}
 	private static var terrainCache: [TerrainKey: SKTileGroup] = [:]
 	private static var decorationCache: [CGImage.Decoration: SKTileGroup] = [:]
 	private static var overlayCache: [TileOverlay: SKTileGroup] = [:]
+	private static var gridCache: [GridTint: SKTileGroup] = [:]
 	private static let overlayOpacity: CGFloat = 0.5
 
 	static func terrain(surface: TileSurface, variant: Tiles.Variant) -> SKTileGroup {
@@ -140,6 +146,27 @@ extension SKTileGroup {
 		if let group = overlayCache[overlay] { return group }
 		let group = self.overlay(color: overlay.color)
 		overlayCache[overlay] = group
+		return group
+	}
+
+	static func grid(overlay: TileOverlay?, fogged: Bool) -> SKTileGroup {
+		if overlay == nil && !fogged { return .grid }
+		let key = GridTint(overlay: overlay, fogged: fogged)
+		if let group = gridCache[key] { return group }
+		let group = make(image: ImageBuffer.tile.draw { ctx in
+			ctx.drawTile(.frame)
+			ctx.setBlendMode(.sourceAtop)
+			if let overlay {
+				ctx.setFillColor(overlay.color.withAlphaComponent(overlayOpacity).cgColor)
+				ctx.fill(CGRect(origin: .zero, size: .tile3D))
+			}
+			if fogged {
+				ctx.setFillColor(SKColor.black.withAlphaComponent(overlayOpacity).cgColor)
+				ctx.fill(CGRect(origin: .zero, size: .tile3D))
+			}
+			ctx.setBlendMode(.normal)
+		})
+		gridCache[key] = group
 		return group
 	}
 
@@ -249,16 +276,16 @@ extension SKTileSet {
 	)
 
 	static let overlay = SKTileSet(
-		tileGroups: Team.allCases.map { .overlay(.team($0)) }
-			+ Country.allCases.map { .overlay(.country($0)) }
-			+ (0 ... 7 as ClosedRange<UInt8>).map { .overlay(.level($0)) },
+		tileGroups: TileOverlay.palette.map { .overlay($0) },
 		tileSetType: .isometric
 	)
 
 	static let fog = SKTileSet(tileGroups: [.fog], tileSetType: .isometric)
 
 	static let grid = SKTileSet(
-		tileGroups: [.grid, .gridTopLeft, .gridTopRight, .gridTopCorner],
+		tileGroups: [.grid, .grid(overlay: nil, fogged: true)] + TileOverlay.palette.flatMap { overlay in
+			[.grid(overlay: overlay, fogged: false), .grid(overlay: overlay, fogged: true)]
+		},
 		tileSetType: .isometric
 	)
 

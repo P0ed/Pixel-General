@@ -18,39 +18,25 @@ public enum Tiles {
 		return Model(.box(from: .zero, to: V3(side, side, 0)))
 	}
 
-	/// Draws the two lower edges inside the tile so each shared line has one owner.
-	/// The upper edges close the grid along the outer boundary of the map.
-	public static func grid(topLeft: Bool = false, topRight: Bool = false) -> Bitmap {
-		let gray = Outline.tile.silhouette!
-		return gridOutline(topLeft: topLeft, topRight: topRight) { _ in gray }
-	}
+	public static let grid = Renderer.tile.edges(base(elevation: 0))
 
-	public static let gridHighlight = gridOutline(topLeft: true, topRight: true) { step in
-		step % 4 < 2 ? .max : 0
-	}
-
-	private static func gridOutline(topLeft: Bool, topRight: Bool, tone: (Int) -> UInt8) -> Bitmap {
+	public static let gridHighlight: Bitmap = {
 		let canvas = Canvas.tile
-		let halfHeight = canvas.baseHeight / 2
-		let topRow = canvas.baseTop - 1
-		var bitmap = Bitmap(width: canvas.width + 2, height: canvas.height)
-		func drawStep(x: Int, y: Int, step: Int) {
-			let gray = tone(step)
-			bitmap[x, y] = (gray, .max)
-			bitmap[x + 1, y] = (gray, .max)
-		}
-		for row in 0 ... canvas.baseHeight {
-			let left = 2 * abs(row - halfHeight)
-			let y = topRow + row
-			if row > halfHeight || topLeft {
-				drawStep(x: left, y: y, step: 2 * canvas.baseHeight - row)
-			}
-			if row > halfHeight || topRight {
-				drawStep(x: canvas.width - left, y: y, step: row)
-			}
+		let height = canvas.baseHeight - 2
+		var bitmap = Bitmap(canvas: canvas)
+		for row in 0 ..< height {
+			let left = canvas.width / 2 - 2 - 2 * min(row, height - 1 - row)
+			let right = canvas.width - 2 - left
+			let y = canvas.baseTop + 1 + row
+			let leftTone: UInt8 = (2 * height + 1 - row) % 4 < 2 ? .max : 0
+			let rightTone: UInt8 = (row + 2) % 4 < 2 ? .max : 0
+			bitmap[left, y] = (leftTone, .max)
+			bitmap[left + 1, y] = (leftTone, .max)
+			bitmap[right, y] = (rightTone, .max)
+			bitmap[right + 1, y] = (rightTone, .max)
 		}
 		return bitmap
-	}
+	}()
 
 	static func footprintMask(on canvas: Canvas) -> [Bool] {
 		canvas == .tile ? tileFootprint : footprintPixels(on: canvas)
