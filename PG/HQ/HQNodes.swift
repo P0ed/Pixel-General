@@ -34,10 +34,10 @@ extension HQNodes {
 		let nodes = MapNodes.make(
 			root: root,
 			size: state.sim.map.size,
-			tiles: .colors
+			terrain: .hq
 		)
 		state.sim.map.indices.forEach { xy in
-			nodes.setBase(.gray, at: xy)
+			nodes.terrain.setTileGroup(.gray, at: xy)
 		}
 		return nodes
 	}

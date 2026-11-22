@@ -3,7 +3,7 @@ import COR
 
 extension MenuItem {
 
-	static var prefs: MenuItem {
+	static func prefs(grid: SKTileMapNode) -> MenuItem {
 		.push(icon: .settings, status: "Settings", menu: {
 			MenuState(
 				items: [
@@ -12,6 +12,10 @@ extension MenuItem {
 					},
 					.toggle(icon: .toggle4(settings.animationSpeed), status: "Animation speed") {
 						settings.toggleAnimation()
+					},
+					.toggle(icon: .toggle(settings.gridLines), status: settings.gridLines ? "Grid Lines On" : "Grid Lines Off") {
+						settings.gridLines.toggle()
+						grid.isHidden = !settings.gridLines
 					},
 				],
 				leftButtons: [.back, .space, .space, .space]

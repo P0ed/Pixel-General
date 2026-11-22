@@ -3,43 +3,47 @@ import COR
 
 @MainActor
 struct MapNodes {
-	var tiles: SKTileMapNode
+	var terrain: SKTileMapNode
 	var decorations: SKTileMapNode
+	var overlay: SKTileMapNode
+	var fog: SKTileMapNode
+	var grid: SKTileMapNode
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
 }
 
-/// Decorations sit above the terrain. Units are ordered by diagonal above both tilemaps.
+/// Units are ordered by diagonal above the map layers.
 private enum TileZ {
 	static let decoration: CGFloat = 0.4
+	static let overlay: CGFloat = 0.45
+	static let fog: CGFloat = 0.5
+	static let grid: CGFloat = 0.55
 	static let unit: CGFloat = 0.6
 }
 
 extension MapNodes {
 
 	func tile(at point: CGPoint) -> Input? {
-		guard let scene = tiles.scene else { return .none }
+		guard let scene = terrain.scene else { return .none }
 
-		let location = tiles.convert(point, from: scene)
-		let x = tiles.tileColumnIndex(fromPosition: location)
-		let y = tiles.tileRowIndex(fromPosition: location)
+		let location = terrain.convert(point, from: scene)
+		let x = terrain.tileColumnIndex(fromPosition: location)
+		let y = terrain.tileRowIndex(fromPosition: location)
 		guard (0 ..< size).contains(x), (0 ..< size).contains(y) else { return nil }
 		return .tile(XY(x, y))
 	}
 
-	func setBase(_ tileGroup: SKTileGroup?, at xy: XY) {
-		tiles.setTileGroup(tileGroup, at: xy)
+	func setTile(_ tile: Terrain, at xy: XY) {
+		terrain.setTileGroup(.terrain(tile, at: xy), at: xy)
+		if decorations.parent != nil {
+			decorations.setTileGroup(.decoration(tile, at: xy), at: xy)
+		}
 	}
 
-	func setTile(_ terrain: Terrain, fog: Bool = false, at xy: XY) {
-		setBase(.base(terrain: terrain, fog: fog, at: xy), at: xy)
-		setDecoration(terrain, fog: fog, at: xy)
-	}
-
-	func setDecoration(_ terrain: Terrain, fog: Bool, at xy: XY) {
-		guard decorations.parent != nil else { return }
-		decorations.setTileGroup(.decoration(terrain, fog: fog, at: xy), at: xy)
+	func setFog(_ fogged: Bool, at xy: XY) {
+		fog.setTileGroup(fogged ? .fog : nil, at: xy)
+		grid.setTileGroup(fogged ? .foggedGrid : .grid, at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
@@ -49,10 +53,13 @@ extension MapNodes {
 	static func make(
 		root: SKNode,
 		size: Int,
-		tiles: SKTileSet,
-		decorations: Bool = false
+		terrain: SKTileSet = .terrain,
+		decorations: SKTileSet? = nil,
+		overlay: SKTileSet? = nil,
+		fog: SKTileSet? = nil
 	) -> MapNodes {
-		func addTiles(_ tiles: SKTileSet, z: CGFloat) -> SKTileMapNode {
+		func addTiles(_ tiles: SKTileSet?, z: CGFloat) -> SKTileMapNode {
+			guard let tiles else { return SKTileMapNode() }
 			let map = SKTileMapNode(tiles: tiles, size: size)
 			map.anchorPoint = CGPoint(x: 0.0, y: 0.5)
 			map.position = CGPoint(x: -CGSize.tile.width * 0.5, y: 0.0)
@@ -60,9 +67,15 @@ extension MapNodes {
 			root.addChild(map)
 			return map
 		}
+		let grid = addTiles(.grid, z: TileZ.grid)
+		grid.fill(with: .grid)
+		grid.isHidden = !settings.gridLines
 		return MapNodes(
-			tiles: addTiles(tiles, z: 0.0),
-			decorations: decorations ? addTiles(.decorations, z: TileZ.decoration) : SKTileMapNode(),
+			terrain: addTiles(terrain, z: 0.0),
+			decorations: addTiles(decorations, z: TileZ.decoration),
+			overlay: addTiles(overlay, z: TileZ.overlay),
+			fog: addTiles(fog, z: TileZ.fog),
+			grid: grid,
 			size: size,
 			cursor: addCursor(root: root),
 			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)

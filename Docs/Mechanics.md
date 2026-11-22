@@ -384,10 +384,11 @@ shade uniformly: they ignore terrain and never entrench.
 Map modes use the right modifier: Right+A selects terrain, Right+B toggles
 country/team, Right+C selects supply, and Right+D selects defense.
 
-Only the base tile changes with the mode. Fog of war is baked into each
-surface variant on one tile map; buildings/roads/bridges (decorations) retain
-separate tile-map layers with their own fogged variants
-(`PG/Scene/MapNodes.swift`, `TileZ`).
+Map modes use a translucent color overlay so the terrain and its decorations
+remain visible. Half-opacity black tiles above the color overlay dim areas
+under fog or outside the selected unit's movement range. The grid has its own
+tilemap with dimmed lines in those areas. Grid Lines in Settings turns the
+grid on or off (`PG/Scene/MapNodes.swift`).
 
 ### Skills:
 

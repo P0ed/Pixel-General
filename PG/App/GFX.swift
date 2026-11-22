@@ -7,10 +7,9 @@ import SpriteKit
 extension CGImage {
 
 	private static let slab: (surface: CGImage, frame: CGImage) = {
-		let model = Tiles.base(elevation: 0)
 		return (
-			surface: Renderer.tile.fill(model).cgImage!,
-			frame: Renderer.tile.edges(model).cgImage!
+			surface: Renderer.tile.fill(Tiles.footprint).cgImage!,
+			frame: Renderer.tile.edges(Tiles.base(elevation: 0)).cgImage!
 		)
 	}()
 

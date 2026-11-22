@@ -8,9 +8,9 @@ struct TacticalNodes {
 	var map: MapNodes
 	@IO var units: [128 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
-	@IO var baseKey: BaseKey = .terrain
+	@IO var overlayKey: OverlayKey = .terrain
 
-	enum BaseKey: Equatable {
+	enum OverlayKey: Equatable {
 		case terrain
 		case team(UInt32)
 		case country(UInt32)
@@ -22,11 +22,13 @@ struct TacticalNodes {
 extension TacticalNodes {
 
 	init(scene: TacticalScene) {
+		let lit = scene.state.ui.selectable ?? scene.state.sim.visibleToHuman
 		self = TacticalNodes(
 			scene: scene,
 			camera: Self.addCamera(root: scene),
-			map: Self.addMap(root: scene, state: scene.state)
+			map: Self.addMap(root: scene, state: scene.state, lit: lit)
 		)
+		self.lit = lit
 		units = .init(
 			head: scene.state.sim.units.map { i, u in
 				guard u.alive else { return nil }
@@ -43,15 +45,17 @@ extension TacticalNodes {
 		)
 	}
 
-	private static func addMap(root: SKNode, state: borrowing TacticalState) -> MapNodes {
+	private static func addMap(root: SKNode, state: borrowing TacticalState, lit: SetXY) -> MapNodes {
 		let map = MapNodes.make(
 			root: root,
 			size: state.sim.map.size,
-			tiles: .terrain,
-			decorations: true
+			decorations: .decorations,
+			overlay: .overlay,
+			fog: .fog
 		)
 		state.sim.map.indices.forEach { xy in
-			map.setTile(state.sim.map[xy], fog: true, at: xy)
+			map.setTile(state.sim.map[xy], at: xy)
+			if !lit[xy] { map.setFog(true, at: xy) }
 		}
 		return map
 	}
@@ -72,6 +76,7 @@ extension TacticalNodes {
 	func update(_ state: borrowing TacticalState) {
 		updateView(state)
 		updateFogIfNeeded(state: state)
+		updateOverlayIfNeeded(state: state)
 	}
 
 	private func updateView(_ state: borrowing TacticalState) {
@@ -95,7 +100,20 @@ extension TacticalNodes {
 
 	private func updateFogIfNeeded(state: borrowing TacticalState) {
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
-		let key: BaseKey = switch state.ui.mapMode {
+		let previous = self.lit
+		guard lit != previous else { return }
+		self.lit = lit
+
+		for xy in state.sim.map.indices where lit[xy] != previous[xy] {
+			map.setFog(!lit[xy], at: xy)
+		}
+		state.sim.units.forEachAlive { i, u in
+			units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
+		}
+	}
+
+	private func updateOverlayIfNeeded(state: borrowing TacticalState) {
+		let key: OverlayKey = switch state.ui.mapMode {
 		case .terrain: .terrain
 		case .team: .team(state.sim.turn)
 		case .country: .country(state.sim.turn)
@@ -103,22 +121,15 @@ extension TacticalNodes {
 		case .defense: .defense(Self.selectedType(state))
 		}
 
-		let baseChanged = key != baseKey
-		let litChanged = lit != self.lit
-		guard baseChanged || litChanged else { return }
-		defer { self.lit = lit; baseKey = key }
+		guard key != overlayKey else { return }
+		overlayKey = key
 
-		state.sim.map.indices.forEach { xy in
-			let fog = !lit[xy]
-			map.setBase(baseGroup(for: state, at: xy, key: key, fog: fog), at: xy)
-			if litChanged {
-				map.setDecoration(state.sim.map[xy], fog: fog, at: xy)
-			}
+		if key == .terrain {
+			map.overlay.fill(with: nil)
+			return
 		}
-		if litChanged {
-			state.sim.units.forEachAlive { i, u in
-				units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
-			}
+		for xy in state.sim.map.indices {
+			map.overlay.setTileGroup(overlayGroup(for: state, at: xy, key: key), at: xy)
 		}
 	}
 
@@ -128,17 +139,18 @@ extension TacticalNodes {
 		return unit.alive ? unit.type : .inf
 	}
 
-	private func baseGroup(
+	private func overlayGroup(
 		for state: borrowing TacticalState,
 		at xy: XY,
-		key: BaseKey,
-		fog: Bool
-	) -> SKTileGroup {
+		key: OverlayKey
+	) -> SKTileGroup? {
 		switch key {
 		case .terrain:
-			return .base(terrain: state.sim.map[xy], fog: fog, at: xy)
+			return nil
 		case .team:
-			return .base(surface: .team(state.sim.control[xy].team), fog: fog)
+			return .overlay(.team(state.sim.control[xy].team))
+		case .country:
+			return .overlay(.country(state.sim.control[xy]))
 		case .supply(let supply, let air):
 			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
@@ -153,17 +165,12 @@ extension TacticalNodes {
 			case 3: 6
 			default: 7
 			}
-			return .base(surface: .supply(level), fog: fog)
-		case .country:
-			return .base(surface: .country(state.sim.control[xy]), fog: fog)
+			return .overlay(.level(level))
 		case .defense(let defense):
 			let terrain = state.sim.map[xy]
 			let value = defense.isAir
 				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)
-			return .base(
-				surface: .supply(UInt8(clamping: (value + 5) * 7 / 11)),
-				fog: fog
-			)
+			return .overlay(.level(UInt8(clamping: (value + 5) * 7 / 11)))
 		}
 	}
 }

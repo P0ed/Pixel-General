@@ -29,8 +29,7 @@ extension EditorNodes {
 		let map = MapNodes.make(
 			root: root,
 			size: state.map.size,
-			tiles: .terrain,
-			decorations: true
+			decorations: .decorations
 		)
 		state.map.indices.forEach { xy in
 			map.setTile(state.map[xy], at: xy)
@@ -88,7 +87,7 @@ private extension EditorNodes {
 			},
 			leftButtons: [
 				.back,
-				.space,
+				.prefs(grid: map.grid),
 				.space,
 				.close(icon: .HQ, status: "HQ", action: .hq),
 			],

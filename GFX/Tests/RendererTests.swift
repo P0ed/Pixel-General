@@ -31,6 +31,20 @@ struct RendererTests {
 		#expect(rows[13].count == 8, "each row towards the corners is 4 px wider")
 	}
 
+	@Test func flatTileFootprintsMeetWithoutGapsOrOverlaps() {
+		let footprint = Renderer.tile.fill(Tiles.footprint)
+		let halfWidth = footprint.width / 2
+		let halfHeight = Canvas.tile.baseHeight / 2
+		for y in 0 ..< halfHeight {
+			let row = Canvas.tile.baseTop + y
+			for x in 0 ..< halfWidth {
+				let foreground = footprint[x, row].alpha > 0
+				let background = footprint[x + halfWidth, row + halfHeight].alpha > 0
+				#expect(foreground != background, "one tile covers each pixel at the join")
+			}
+		}
+	}
+
 	@Test func elevationRaisesTheTopFaceBySixPixelsPerLevel() {
 		let renderer = Renderer(canvas: .tile, outline: .none)
 		for elevation in 0 ... 2 {

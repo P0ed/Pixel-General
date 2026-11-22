@@ -3,27 +3,17 @@ import UIKit
 import COR
 import GFX
 
-/// What the top face of a base tile shows. Mode-dependent: terrain colors,
-/// political ownership, or supply level. Fog is baked into the base tile;
-/// decorations are separate layers.
-enum TileSurface: Hashable {
-	case none, field, forest, rough, mountain, water, sea
-	case team(Team)
-	case country(Country)
-	case supply(UInt8)
+enum TileSurface: CaseIterable, Hashable {
+	case field, forest, rough, mountain, water, sea
 
 	var color: SKColor {
 		switch self {
-		case .none: .graySurface
 		case .field: .fieldSurface
 		case .forest: .forestSurface
 		case .rough: .roughSurface
 		case .mountain: .mountainSurface
 		case .water: .waterSurface
 		case .sea: .seaSurface
-		case .team(let team): team.color
-		case .country(let country): country.color
-		case .supply(let level): .amberGreen8(level)
 		}
 	}
 
@@ -38,8 +28,20 @@ enum TileSurface: Hashable {
 			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
 		case .field, .water, .sea:
 			return image?.noised(with: CGImage.noise[variant.rawValue])
-		case .none, .team, .country, .supply:
-			return image
+		}
+	}
+}
+
+enum TileOverlay: Hashable {
+	case team(Team)
+	case country(Country)
+	case level(UInt8)
+
+	var color: SKColor {
+		switch self {
+		case .team(let team): team.color
+		case .country(let country): country.color
+		case .level(let level): .amberGreen8(level)
 		}
 	}
 }
@@ -94,58 +96,64 @@ extension Terrain {
 @MainActor
 extension SKTileGroup {
 
-	static let gray = base(surface: .none)
-	static let blue = base(surface: .team(.axis))
-	static let yellow = base(surface: .team(.allies))
-	static let red = base(surface: .team(.soviet))
+	static let gray = make(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
+	static let fog = overlay(color: .black)
+	static let grid = make(image: .frame)
+	static let foggedGrid = make(image: CGImage.draw(size: .tile3D) { ctx in
+		ctx.drawTile(.frame)
+		ctx.setBlendMode(.sourceAtop)
+		ctx.setFillColor(SKColor.black.withAlphaComponent(overlayOpacity).cgColor)
+		ctx.fill(CGRect(origin: .zero, size: .tile3D))
+	})
 
-	private struct BaseKey: Hashable {
+	private struct TerrainKey: Hashable {
 		let surface: TileSurface
-		let fog: Bool
 		let variant: Tiles.Variant
 	}
-	private static var baseCache: [BaseKey: SKTileGroup] = [:]
+	private static var terrainCache: [TerrainKey: SKTileGroup] = [:]
+	private static var decorationCache: [CGImage.Decoration: SKTileGroup] = [:]
+	private static var overlayCache: [TileOverlay: SKTileGroup] = [:]
+	private static let overlayOpacity: CGFloat = 0.5
 
-	static func base(surface: TileSurface, fog: Bool = false, variant: Tiles.Variant = .first) -> SKTileGroup {
-		let key = BaseKey(surface: surface, fog: fog, variant: variant)
-		if let group = baseCache[key] { return group }
-		let group = make(
-			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(surface.image(variant: variant))
-				ctx.drawTile(.frame)
-				if fog { ctx.dim() }
-			}
-		)
-		baseCache[key] = group
+	static func terrain(surface: TileSurface, variant: Tiles.Variant) -> SKTileGroup {
+		let key = TerrainKey(surface: surface, variant: variant)
+		if let group = terrainCache[key] { return group }
+		let group = make(image: surface.image(variant: variant)!)
+		terrainCache[key] = group
 		return group
 	}
 
-	static func base(terrain: Terrain, fog: Bool, at xy: XY) -> SKTileGroup {
-		base(surface: terrain.tileSurface, fog: fog, variant: xy.tileVariant)
+	static func terrain(_ terrain: Terrain, at xy: XY) -> SKTileGroup {
+		self.terrain(surface: terrain.tileSurface, variant: xy.tileVariant)
 	}
 
-	private struct DecorationKey: Hashable {
-		let decoration: CGImage.Decoration
-		let fog: Bool
-	}
-	private static var decorationCache: [DecorationKey: SKTileGroup] = [:]
-
-	static func decoration(_ terrain: Terrain, fog: Bool, at xy: XY) -> SKTileGroup? {
+	static func decoration(_ terrain: Terrain, at xy: XY) -> SKTileGroup? {
 		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
-		return self.decoration(decoration, fog: fog)
+		return self.decoration(decoration)
 	}
 
-	static func decoration(_ decoration: CGImage.Decoration, fog: Bool) -> SKTileGroup {
-		let key = DecorationKey(decoration: decoration, fog: fog)
-		if let group = decorationCache[key] { return group }
-		let group = make(
-			image: ImageBuffer.tile.draw { ctx in
-				ctx.drawTile(.decoration(decoration))
-				if fog { ctx.dim() }
-			}
-		)
-		decorationCache[key] = group
+	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
+		if let group = decorationCache[decoration] { return group }
+		let group = make(image: .decoration(decoration))
+		decorationCache[decoration] = group
 		return group
+	}
+
+	static func overlay(_ overlay: TileOverlay) -> SKTileGroup {
+		if let group = overlayCache[overlay] { return group }
+		let group = self.overlay(color: overlay.color)
+		overlayCache[overlay] = group
+		return group
+	}
+
+	private static func overlay(color: SKColor) -> SKTileGroup {
+		make(image: ImageBuffer.tile.draw { ctx in
+			ctx.drawTile(.surface)
+			ctx.setBlendMode(.sourceIn)
+			ctx.setFillColor(color.withAlphaComponent(overlayOpacity).cgColor)
+			ctx.fill(CGRect(origin: .zero, size: .tile3D))
+			ctx.setBlendMode(.normal)
+		})
 	}
 
 	private static func make(image: CGImage) -> SKTileGroup {
@@ -212,14 +220,6 @@ private extension CGContext {
 		guard let image else { return }
 		draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
 	}
-
-	/// Halves RGB while keeping alpha: 50 % black over premultiplied pixels.
-	func dim() {
-		setBlendMode(.sourceAtop)
-		setFillColor(UIColor.black.withAlphaComponent(0.5).cgColor)
-		fill(CGRect(origin: .zero, size: .tile3D))
-		setBlendMode(.normal)
-	}
 }
 
 @MainActor
@@ -232,22 +232,9 @@ extension SKTileSet {
 	]
 
 	static let terrain = SKTileSet(
-		tileGroups: .make { ts in
-			for fog in [false, true] {
-				for surface in [TileSurface.field, .forest, .rough, .mountain, .water, .sea] {
-					for variant in Tiles.Variant.allCases {
-						ts.append(.base(surface: surface, fog: fog, variant: variant))
-					}
-				}
-				for team in Team.allCases {
-					ts.append(.base(surface: .team(team), fog: fog))
-				}
-				for level in 0 ... 7 as ClosedRange<UInt8> {
-					ts.append(.base(surface: .supply(level), fog: fog))
-				}
-				for country in Country.allCases {
-					ts.append(.base(surface: .country(country), fog: fog))
-				}
+		tileGroups: TileSurface.allCases.flatMap { surface in
+			Tiles.Variant.allCases.map { variant in
+				.terrain(surface: surface, variant: variant)
 			}
 		},
 		tileSetType: .isometric
@@ -259,18 +246,25 @@ extension SKTileSet {
 				let variants = terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first]
 				for variant in variants {
 					guard let decoration = terrain.decoration(variant: variant) else { continue }
-					ts.append(.decoration(decoration, fog: false))
-					ts.append(.decoration(decoration, fog: true))
+					ts.append(.decoration(decoration))
 				}
 			}
 		},
 		tileSetType: .isometric
 	)
 
-	static let colors = SKTileSet(
-		tileGroups: [.gray, .blue, .yellow, .red],
+	static let overlay = SKTileSet(
+		tileGroups: Team.allCases.map { .overlay(.team($0)) }
+			+ Country.allCases.map { .overlay(.country($0)) }
+			+ (0 ... 7 as ClosedRange<UInt8>).map { .overlay(.level($0)) },
 		tileSetType: .isometric
 	)
+
+	static let fog = SKTileSet(tileGroups: [.fog], tileSetType: .isometric)
+
+	static let grid = SKTileSet(tileGroups: [.grid, .foggedGrid], tileSetType: .isometric)
+
+	static let hq = SKTileSet(tileGroups: [.gray], tileSetType: .isometric)
 }
 
 extension SKTileMapNode {
@@ -294,7 +288,7 @@ extension SKTexture {
 
 	private static var tileCache: [Terrain: SKTexture] = [:]
 
-	/// `SKTileGroup.base` flattened into one texture, for the palette's icons.
+	/// The terrain and decoration drawn into one texture for the editor palette.
 	static func tile(_ terrain: Terrain) -> SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in

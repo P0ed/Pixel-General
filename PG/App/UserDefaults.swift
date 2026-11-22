@@ -1,6 +1,11 @@
 import Foundation
 import COR
 
+private struct LegacySettings {
+	var soundLevel: UInt8
+	var animationSpeed: UInt8
+}
+
 extension UserDefaults {
 
 	var slot: Int {
@@ -25,7 +30,14 @@ extension UserDefaults {
 	}
 
 	var settings: Settings {
-		get { data(forKey: "settings").flatMap(decode) ?? Settings() }
+		get {
+			guard let data = data(forKey: "settings") else { return Settings() }
+			if let stored: Settings = decode(data) { return stored }
+			if let legacy: LegacySettings = decode(data) {
+				return Settings(soundLevel: legacy.soundLevel, animationSpeed: legacy.animationSpeed)
+			}
+			return Settings()
+		}
 		set { set(encode(newValue), forKey: "settings") }
 	}
 }
