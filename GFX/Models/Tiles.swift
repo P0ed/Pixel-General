@@ -18,6 +18,7 @@ public enum Tiles {
 		return Model(.box(from: .zero, to: V3(side, side, 0)))
 	}
 
+	public static let surface = Renderer.tile.fill(base(elevation: 0))
 	public static let grid = Renderer.tile.edges(base(elevation: 0))
 
 	public static let gridHighlight: Bitmap = {

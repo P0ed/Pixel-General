@@ -145,16 +145,7 @@ extension TacticalNodes {
 			let value: Int8 = air
 				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
 				: supply.level(at: xy, terrain: state.sim.map[xy])
-			let level: UInt8 = switch value {
-			case ..<(-2): 0
-			case -2: 1
-			case -1: 2
-			case 0: 3
-			case 1: 4
-			case 2: 5
-			case 3: 6
-			default: 7
-			}
+			let level = UInt8(min(7, max(0, value + 3)))
 			return .level(level)
 		case .defense(let defense):
 			let terrain = state.sim.map[xy]

@@ -19,7 +19,7 @@ struct RendererTests {
 	}
 
 	@Test func baseDiamondFillsItsCellTheWayTheHandDrawnFrameDid() {
-		let bitmap = Renderer(canvas: .tile, outline: .none).render(Tiles.base(elevation: 0))
+		let bitmap = Tiles.surface
 		let rows = (0 ..< bitmap.height).map { y in
 			(0 ..< bitmap.width).filter { bitmap.alpha[bitmap.index(x: $0, y: y)] > 0 }
 		}

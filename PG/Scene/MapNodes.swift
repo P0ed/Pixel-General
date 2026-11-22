@@ -16,10 +16,10 @@ struct MapNodes {
 /// Units are ordered by diagonal above the map layers.
 private enum TileZ {
 	static let decoration: CGFloat = 0.2
-	static let overlay: CGFloat = 0.3
-	static let fog: CGFloat = 0.4
-	static let grid: CGFloat = 0.25
-	static let unit: CGFloat = 0.6
+	static let grid: CGFloat = 0.3
+	static let overlay: CGFloat = 0.4
+	static let fog: CGFloat = 0.5
+	static let top: CGFloat = 0.6
 }
 
 extension MapNodes {
@@ -44,11 +44,11 @@ extension MapNodes {
 	func setShading(_ tint: TileOverlay?, fogged: Bool, at xy: XY) {
 		overlay.setTileGroup(tint.map { .overlay($0) }, at: xy)
 		fog.setTileGroup(fogged ? .fog : nil, at: xy)
-		grid.setTileGroup(.grid(overlay: tint, fogged: fogged), at: xy)
+//		grid.setTileGroup(.grid(overlay: tint, fogged: fogged), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
-		CGFloat(xy.x + size - 1 - xy.y) + TileZ.unit
+		CGFloat(xy.x + size - 1 - xy.y) + TileZ.top
 	}
 
 	static func make(

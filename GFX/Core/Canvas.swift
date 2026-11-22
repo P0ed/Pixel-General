@@ -9,7 +9,7 @@ public struct Canvas: Hashable, Sendable {
 	}
 
 	/// Flat tile diamond, without headroom.
-	public static var base: Canvas { Canvas(width: tile.width, height: tile.baseHeight) }
+	public static var base: Canvas { Canvas(width: 96, height: 48) }
 
 	/// Unit sprite: 96 x 72, 24 px of headroom.
 	public static var unit: Canvas { Canvas(width: 96, height: 72) }
@@ -19,7 +19,7 @@ public struct Canvas: Hashable, Sendable {
 
 	public var count: Int { width * height }
 
-	public var baseHeight: Int { Int(Volume.footprint) }
+	public var baseHeight: Int { Self.base.height }
 
 	/// Row the base diamond's top corner falls on.
 	public var baseTop: Int { height - baseHeight }

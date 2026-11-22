@@ -6,28 +6,18 @@ import SpriteKit
 @MainActor
 extension CGImage {
 
-	private static let slab: (surface: CGImage, frame: CGImage) = {
-		return (
-			surface: Renderer.tile.fill(Tiles.footprint).cgImage!,
-			frame: Tiles.grid.cgImage!
-		)
-	}()
-
 	/// The tinted part of a base tile: top face and walls, no outline.
-	static var surface: CGImage {
-		slab.surface
-	}
+	static let surface = Tiles.surface.cgImage!
 
 	/// The neutral grid lines drawn over the tinted surface.
-	static var frame: CGImage {
-		slab.frame
-	}
+	static let frame = Tiles.grid.cgImage!
 
 	private static var decorations: [Decoration: CGImage] = [:]
 
 	/// Everything a tile carries on top of its surface, all of it modelled in GFX.
 	enum Decoration: Hashable {
-		case city(Tiles.Variant), fort(Tiles.Variant)
+		case city(Tiles.Variant)
+		case fort(Tiles.Variant)
 		case airfield
 		case road([GFX.Direction])
 		case bridge(GFX.Axis)

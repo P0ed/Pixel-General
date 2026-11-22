@@ -53,9 +53,8 @@ enum TileOverlay: Hashable {
 private extension XY {
 
 	var tileVariant: Tiles.Variant {
-		var d20 = D20(seed: x * 64 + y)
 		let variants = Tiles.Variant.allCases
-		return variants[Int(d20.next() % UInt64(variants.count))]
+		return variants[(x * 64 + y) % variants.count]
 	}
 }
 
@@ -131,8 +130,7 @@ extension SKTileGroup {
 	}
 
 	static func decoration(_ terrain: Terrain, at xy: XY) -> SKTileGroup? {
-		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
-		return self.decoration(decoration)
+		terrain.decoration(variant: xy.tileVariant).map { decoration in self.decoration(decoration) }
 	}
 
 	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
