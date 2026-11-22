@@ -11,13 +11,9 @@ public enum Roads {
 	/// Width of the carriageway, in footprint units.
 	public static let width: Float = 7
 
-	public static func road(_ directions: [Direction]) -> Model {
-		road(directions, tileEdges: .framed)
-	}
-
-	private static func road(_ directions: [Direction], tileEdges: Outline.TileEdges) -> Model {
+	public static func road(_ directions: [Direction], framed: Bool = true) -> Model {
 		var outline = Outline.decal
-		outline.tileEdges = tileEdges
+		outline.tileEdges = framed ? .framed : .open
 
 		func pavement(from: V3, to: V3) -> Solid {
 			var solid = Solid.box(from: from, to: to, tone: Tone.bed)
@@ -62,7 +58,7 @@ public enum Roads {
 		}
 
 		// The asphalt reaches the ends of the deck and wins the coplanar tie.
-		let model = road([.xMinus, .xPlus], tileEdges: .open) + Model([deck], lines: lines)
+		let model = road([.xMinus, .xPlus], framed: false) + Model([deck], lines: lines)
 		return axis == .x ? model : model.rotated(.right)
 	}
 }

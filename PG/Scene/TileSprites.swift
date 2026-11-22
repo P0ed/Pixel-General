@@ -124,9 +124,9 @@ extension SKTileGroup {
 		self.terrain(surface: terrain.tileSurface, variant: xy.tileVariant)
 	}
 
-	static func decoration(_ terrain: Terrain, at xy: XY) -> SKTileGroup? {
+	static func decoration(_ terrain: Terrain, at xy: XY, framed: Bool) -> SKTileGroup? {
 		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
-		return self.decoration(decoration)
+		return self.decoration(framed ? decoration : (decoration.withOpenRoads ?? decoration))
 	}
 
 	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
@@ -237,18 +237,24 @@ extension SKTileSet {
 		tileSetType: .isometric
 	)
 
+	private static let decorationStyles: [CGImage.Decoration] = decorated.flatMap { terrain in
+		let variants = terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first]
+		return variants.compactMap { terrain.decoration(variant: $0) }
+	}
+
+	private static let roadVariants: [(framed: SKTileGroup, open: SKTileGroup)] = decorationStyles.compactMap { decoration in
+		guard let open = decoration.withOpenRoads else { return nil }
+		return (.decoration(decoration), .decoration(open))
+	}
+
 	static let decorations = SKTileSet(
-		tileGroups: .make { ts in
-			for terrain in decorated {
-				let variants = terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first]
-				for variant in variants {
-					guard let decoration = terrain.decoration(variant: variant) else { continue }
-					ts.append(.decoration(decoration))
-				}
-			}
-		},
+		tileGroups: decorationStyles.map { .decoration($0) } + roadVariants.map(\.open),
 		tileSetType: .isometric
 	)
+
+	static func roadReplacements(framed: Bool) -> [SKTileGroup: SKTileGroup] {
+		Dictionary(uniqueKeysWithValues: roadVariants.map { framed ? ($0.open, $0.framed) : ($0.framed, $0.open) })
+	}
 
 	static let overlay = SKTileSet(
 		tileGroups: Team.allCases.map { .overlay(.team($0)) }

@@ -62,6 +62,7 @@ extension Renderer {
 		var faces: [Int32]
 		var outlined: [Bool]
 		let tileInterior: [Bool]?
+		let tileFootprint: [Bool]?
 	}
 
 	func raster(_ model: Model) -> Raster {
@@ -71,8 +72,10 @@ extension Renderer {
 			ids: [Int32](repeating: -1, count: canvas.count),
 			faces: [Int32](repeating: -1, count: canvas.count),
 			outlined: [Bool](repeating: false, count: canvas.count),
-			tileInterior: model.solids.contains { $0.outline?.tileEdges != nil }
-				? Tiles.interior(on: canvas) : nil
+			tileInterior: model.solids.contains { $0.outline?.tileEdges == .framed }
+				? Tiles.interior(on: canvas) : nil,
+			tileFootprint: model.solids.contains { $0.outline?.tileEdges == .open }
+				? Tiles.footprintMask(on: canvas) : nil
 		)
 
 		for (id, solid) in model.solids.enumerated() {

@@ -46,7 +46,11 @@ extension Outline {
 				guard source.alpha[i] > 0 else { continue }
 				let id = raster.ids[i]
 				let outline = solids[Int(id)].outline ?? self
-				let interior = outline.tileEdges != nil ? raster.tileInterior : nil
+				let interior: [Bool]? = switch outline.tileEdges {
+				case .framed: raster.tileInterior
+				case .open: raster.tileFootprint
+				case nil: nil
+				}
 
 				var rim = false
 				var seam = false
@@ -61,11 +65,11 @@ extension Outline {
 					}
 					let n = source.index(x: nx, y: ny)
 					if source.alpha[n] == 0 {
-						// The tile frame itself borders the open ends of a road.
+						// A road exit stays open where it meets the tile boundary or frame.
 						rim = rim || interior?[n] != false
 					} else if raster.ids[n] != id {
 						let neighbor = solids[Int(raster.ids[n])]
-						if outline.tileEdges == nil && neighbor.outline?.tileEdges == .framed {
+						if outline.tileEdges == nil && neighbor.outline?.tileEdges != nil {
 							// Ground pavement is the backdrop for a building's silhouette.
 							rim = true
 						} else {

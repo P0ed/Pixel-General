@@ -32,6 +32,37 @@ struct RoadTests {
 		}
 	}
 
+	@Test(arguments: Axis.allCases)
+	func gridlessRoadExitsMatchContinuousPavement(axis: Axis) {
+		let side = Volume.footprint
+		let half = side / 2
+		let near = half - Roads.width / 2
+		let far = half + Roads.width / 2
+		let from = axis == .x ? V3(-3, near, 0) : V3(near, -3, 0)
+		let to = axis == .x ? V3(side + 3, far, 0) : V3(far, side + 3, 0)
+		let reference = Renderer.decal.render(Model(.box(from: from, to: to, tone: Roads.Tone.bed)))
+		let roads = [Renderer.decal.render(Roads.road(Direction.allCases, framed: false))]
+			+ Tiles.Variant.allCases.map { variant in
+				Renderer.building.render(Settlements.city(variant: variant, framed: false))
+			}
+
+		for y in 0 ..< reference.height {
+			for x in 0 ..< reference.width where reference[x, y].alpha > 0 {
+				let ray = Canvas.tile.origin(x: x, y: y)
+				let along = (axis == .x ? ray.x : ray.y) - ray.z
+				let fromEnd = min(along, side - along)
+				guard abs(fromEnd) < 2 else { continue }
+				for road in roads {
+					if fromEnd >= 0 {
+						#expect(road[x, y] == reference[x, y], "the pavement and its side outlines reach the join")
+					} else {
+						#expect(road[x, y].alpha == 0, "each tile draws its own half of the join")
+					}
+				}
+			}
+		}
+	}
+
 	@Test(arguments: [nil] + Direction.allCases.map(Optional.some))
 	func junctionsAreFlatAndReachTheirConnectedEdges(missingArm: Direction?) throws {
 		let name = missingArm.map { "Road-T-\($0)" } ?? "Road-X"
@@ -75,8 +106,9 @@ struct RoadTests {
 		}
 	}
 
-	@Test func cityBuildingsKeepTheirOutlinesOverPavement() {
-		let city = Settlements.city
+	@Test(arguments: [true, false])
+	func cityBuildingsKeepTheirOutlinesOverPavement(framed: Bool) {
+		let city = Settlements.city(variant: .first, framed: framed)
 		let buildings = Model(city.solids.filter { $0.to.z > 0 })
 		let expected = Renderer.building.edges(buildings)
 		let actual = Renderer.building.render(city)
@@ -87,10 +119,10 @@ struct RoadTests {
 		}
 	}
 
-	@Test(arguments: Axis.allCases)
-	func bridgeContinuesThePavementOfAdjoiningRoads(axis: Axis) {
+	@Test(arguments: Axis.allCases, [true, false])
+	func bridgeContinuesThePavementOfAdjoiningRoads(axis: Axis, framed: Bool) {
 		let directions: [Direction] = axis == .x ? [.xMinus, .xPlus] : [.yMinus, .yPlus]
-		let road = Renderer.decal.render(Roads.road(directions))
+		let road = Renderer.decal.render(Roads.road(directions, framed: framed))
 		let bridge = Renderer.decal.render(Roads.bridge(along: axis))
 		let expected = joined([road, road, road], along: axis)
 		let actual = joined([road, bridge, road], along: axis)

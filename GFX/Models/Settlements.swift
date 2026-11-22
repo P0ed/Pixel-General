@@ -8,7 +8,7 @@ public enum Settlements {
 
 	public static var city: Model { city(variant: .first) }
 
-	public static func city(variant: Tiles.Variant) -> Model {
+	public static func city(variant: Tiles.Variant, framed: Bool = true) -> Model {
 		let blocks: [CityBlock] = switch variant {
 		case .first: [.houses, .houses, .houses, .houses]
 		case .second: [.apartments, .apartments, .market, .apartments]
@@ -22,7 +22,7 @@ public enum Settlements {
 		let solids = zip(blocks, centers).flatMap { block, center in
 			buildings(block, x: center.0, y: center.1)
 		}
-		return Roads.road(Direction.allCases) + Model(solids)
+		return Roads.road(Direction.allCases, framed: framed) + Model(solids)
 	}
 
 	/// Runway with dashed centreline, a control tower and two hangars set back from it.

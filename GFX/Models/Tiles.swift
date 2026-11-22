@@ -11,6 +11,7 @@ public enum Tiles {
 	private static let near: Float = -0.5
 	private static let far = Volume.footprint - near
 	private static let tileInterior = interiorPixels(on: .tile)
+	private static let tileFootprint = footprintPixels(on: .tile)
 
 	/// A flat tile diamond. Adjacent footprints meet without overlapping.
 	public static var footprint: Model {
@@ -36,6 +37,14 @@ public enum Tiles {
 
 	static func interior(on canvas: Canvas) -> [Bool] {
 		canvas == .tile ? tileInterior : interiorPixels(on: canvas)
+	}
+
+	static func footprintMask(on canvas: Canvas) -> [Bool] {
+		canvas == .tile ? tileFootprint : footprintPixels(on: canvas)
+	}
+
+	private static func footprintPixels(on canvas: Canvas) -> [Bool] {
+		Renderer(canvas: canvas, outline: .none).fill(footprint).alpha.map { $0 > 0 }
 	}
 
 	private static func interiorPixels(on canvas: Canvas) -> [Bool] {

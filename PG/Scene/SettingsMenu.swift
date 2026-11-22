@@ -3,7 +3,7 @@ import COR
 
 extension MenuItem {
 
-	static func prefs(grid: SKTileMapNode) -> MenuItem {
+	static func prefs(map: MapNodes) -> MenuItem {
 		.push(icon: .settings, status: "Settings", menu: {
 			MenuState(
 				items: [
@@ -15,7 +15,7 @@ extension MenuItem {
 					},
 					.toggle(icon: .toggle(settings.gridLines), status: settings.gridLines ? "Grid Lines On" : "Grid Lines Off") {
 						settings.gridLines.toggle()
-						grid.isHidden = !settings.gridLines
+						map.setGridLines(settings.gridLines)
 					},
 				],
 				leftButtons: [.back, .space, .space, .space]

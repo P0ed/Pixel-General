@@ -37,7 +37,20 @@ extension MapNodes {
 	func setTile(_ tile: Terrain, at xy: XY) {
 		terrain.setTileGroup(.terrain(tile, at: xy), at: xy)
 		if decorations.parent != nil {
-			decorations.setTileGroup(.decoration(tile, at: xy), at: xy)
+			decorations.setTileGroup(.decoration(tile, at: xy, framed: !grid.isHidden), at: xy)
+		}
+	}
+
+	func setGridLines(_ visible: Bool) {
+		grid.isHidden = !visible
+		guard decorations.parent != nil else { return }
+		let replacements = SKTileSet.roadReplacements(framed: visible)
+		for row in 0 ..< size {
+			for column in 0 ..< size {
+				guard let current = decorations.tileGroup(atColumn: column, row: row),
+					let replacement = replacements[current] else { continue }
+				decorations.setTileGroup(replacement, forColumn: column, row: row)
+			}
 		}
 	}
 
