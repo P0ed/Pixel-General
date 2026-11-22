@@ -159,7 +159,7 @@ extension SKTileGroup {
 		return SKTileGroup(
 			tileDefinition: SKTileDefinition(
 				texture: texture,
-				size: .tile3D
+				size: texture.size()
 			)
 		)
 	}

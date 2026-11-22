@@ -67,6 +67,7 @@ extension MapNodes {
 			return map
 		}
 		let grid = addTiles(.grid, z: TileZ.grid)
+		grid.position.x -= 1 // SpriteKit places the padded texture at the tile's left edge.
 		grid.fill(with: .grid)
 		let last = size - 1
 		for i in 0 ..< last {
@@ -75,6 +76,8 @@ extension MapNodes {
 		}
 		grid.setTileGroup(.gridTopCorner, at: XY(0, last))
 		grid.isHidden = !settings.gridLines
+		let selection = addCursor(.selection, to: root)
+		selection.isHidden = true
 		return MapNodes(
 			terrain: addTiles(terrain, z: 0.0),
 			grid: grid,
@@ -82,29 +85,24 @@ extension MapNodes {
 			overlay: addTiles(overlay, z: TileZ.overlay),
 			fog: addTiles(fog, z: TileZ.fog),
 			size: size,
-			cursor: addCursor(root: root),
-			selection: addCursor(root: root)
+			cursor: addCursor(.cursor, to: root),
+			selection: selection
 		)
 	}
 
 	func update(cursor: XY, selected: XY?) {
-		update(self.cursor, at: cursor, selected: false)
+		update(self.cursor, at: cursor, zOffset: 0.1)
 		selection.isHidden = selected == nil
-		if let selected { update(selection, at: selected, selected: true) }
+		if let selected { update(selection, at: selected, zOffset: 0.15) }
 	}
 
-	private func update(_ sprite: SKSpriteNode, at xy: XY, selected: Bool) {
-		let position = xy.point
-		guard sprite.texture == nil || sprite.position != position else { return }
-		let texture = SKTexture.gridHighlight(topLeft: xy.x == 0, topRight: xy.y == size - 1, selected: selected)
-		sprite.texture = texture
-		sprite.size = texture.size()
-		sprite.position = position
-		sprite.zPosition = zPosition(at: xy) + (selected ? 0.15 : 0.1)
+	private func update(_ sprite: SKSpriteNode, at xy: XY, zOffset: CGFloat) {
+		sprite.position = xy.point
+		sprite.zPosition = zPosition(at: xy) + zOffset
 	}
 
-	private static func addCursor(root: SKNode) -> SKSpriteNode {
-		let sprite = SKSpriteNode()
+	private static func addCursor(_ texture: SKTexture, to root: SKNode) -> SKSpriteNode {
+		let sprite = SKSpriteNode(texture: texture)
 		sprite.anchorPoint.y = CGSize.tile.height / (2 * CGSize.tile3D.height)
 		root.addChild(sprite)
 		return sprite

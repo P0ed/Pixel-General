@@ -50,8 +50,12 @@ struct RendererTests {
 		let grid = Tiles.grid()
 		let closed = Tiles.grid(topLeft: true, topRight: true)
 		let footprint = Renderer.tile.fill(Tiles.footprint)
-		#expect(zip(closed.alpha, footprint.alpha).allSatisfy { $0 == 0 || $1 > 0 })
-		#expect(closed.alpha == Renderer.tile.edges(Tiles.footprint).alpha)
+		for y in 0 ..< grid.height {
+			for x in 0 ..< grid.width where grid[x, y].alpha > 0 {
+				#expect(footprint.contains(x: x - 1, y: y) && footprint[x - 1, y].alpha > 0)
+			}
+		}
+		#expect(closed.alpha == Tiles.gridHighlight.alpha)
 
 		let middle = Volume.footprint / 2
 		let far = Volume.footprint - 0.5
@@ -61,10 +65,10 @@ struct RendererTests {
 		]
 		for (point, owned) in samples {
 			let pixel = canvas.project(point)
-			let x = Int(pixel.x)
+			let x = Int(pixel.x) + 1
 			let y = Int(pixel.y)
 			#expect((grid[x, y].alpha > 0) == owned)
-			#expect(closed[x, y].alpha > 0)
+			#expect(closed[x, owned ? y : y - 1].alpha > 0)
 		}
 	}
 
@@ -102,13 +106,13 @@ struct RendererTests {
 
 	@Test(arguments: [false, true], [false, true])
 	func cursorColorsTheSharedGridPixels(topLeft: Bool, topRight: Bool) {
-		let highlight = Tiles.gridHighlight(topLeft: topLeft, topRight: topRight)
+		let highlight = Tiles.gridHighlight
 		let grid = Tiles.grid(topLeft: topLeft, topRight: topRight)
 		let neighbor = Tiles.grid()
-		var gridTiles = [(bitmap: grid, x: 1, y: 0)]
-		if !topLeft { gridTiles.append((neighbor, 1 - 48, -24)) }
-		if !topRight { gridTiles.append((neighbor, 1 + 48, -24)) }
-		if !topLeft && !topRight { gridTiles.append((neighbor, 1, -48)) }
+		var gridTiles = [(bitmap: grid, x: 0, y: 0)]
+		if !topLeft { gridTiles.append((neighbor, -48, -24)) }
+		if !topRight { gridTiles.append((neighbor, 48, -24)) }
+		if !topLeft && !topRight { gridTiles.append((neighbor, 0, -48)) }
 
 		for y in 0 ..< highlight.height {
 			for x in 0 ..< highlight.width where highlight[x, y].alpha > 0 {
@@ -123,7 +127,7 @@ struct RendererTests {
 	}
 
 	@Test func cursorPatternMakesAContinuousDiamondOfTwoPixelSteps() {
-		let highlight = Tiles.gridHighlight(topLeft: false, topRight: false)
+		let highlight = Tiles.gridHighlight
 		let pattern: [UInt8] = [255, 255, 0, 0]
 		#expect(highlight.occupied?.y == 11 ... 59)
 		for row in 0 ... 48 {

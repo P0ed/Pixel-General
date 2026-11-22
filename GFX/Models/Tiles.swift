@@ -18,82 +18,36 @@ public enum Tiles {
 		return Model(.box(from: .zero, to: V3(side, side, 0)))
 	}
 
-	private enum GridEdge: CaseIterable {
-		case topLeft, topRight, bottomLeft, bottomRight
-
-		var isUpper: Bool { self == .topLeft || self == .topRight }
-
-		func contains(_ point: V3) -> Bool {
-			let x = point.x - point.z
-			let y = point.y - point.z
-			return switch self {
-			case .topLeft: x < 1
-			case .topRight: y < 1
-			case .bottomLeft: y > Volume.footprint - 1
-			case .bottomRight: x > Volume.footprint - 1
-			}
-		}
-	}
-
-	private static let gridOutline = Renderer.tile.edges(footprint)
-	private static let gridPixels = Dictionary(uniqueKeysWithValues: GridEdge.allCases.map { edge in
-		let canvas = Canvas.tile
-		let pixels = gridOutline.alpha.indices.filter { i in
-			gridOutline.alpha[i] > 0 && edge.contains(canvas.origin(x: i % canvas.width, y: i / canvas.width))
-		}
-		return (edge, pixels)
-	})
-
 	/// Draws the two lower edges inside the tile so each shared line has one owner.
 	/// The upper edges close the grid along the outer boundary of the map.
 	public static func grid(topLeft: Bool = false, topRight: Bool = false) -> Bitmap {
-		var bitmap = Bitmap(canvas: .tile)
-		func draw(_ edge: GridEdge) {
-			for i in gridPixels[edge]! {
-				bitmap.gray[i] = gridOutline.gray[i]
-				bitmap.alpha[i] = gridOutline.alpha[i]
-			}
-		}
-		draw(.bottomLeft)
-		draw(.bottomRight)
-		if topLeft { draw(.topLeft) }
-		if topRight { draw(.topRight) }
-		return bitmap
+		let gray = Outline.tile.silhouette!
+		return gridOutline(topLeft: topLeft, topRight: topRight) { _ in gray }
 	}
 
-	public static func gridHighlight(topLeft: Bool, topRight: Bool) -> Bitmap {
+	public static let gridHighlight = gridOutline(topLeft: true, topRight: true) { step in
+		step % 4 < 2 ? .max : 0
+	}
+
+	private static func gridOutline(topLeft: Bool, topRight: Bool, tone: (Int) -> UInt8) -> Bitmap {
 		let canvas = Canvas.tile
-		let halfWidth = canvas.width / 2
 		let halfHeight = canvas.baseHeight / 2
 		let topRow = canvas.baseTop - 1
 		var bitmap = Bitmap(width: canvas.width + 2, height: canvas.height)
-		func mark(x: Int, y: Int, distanceFromTop: Int) {
-			let step = x < halfWidth ? 4 * halfHeight - distanceFromTop : distanceFromTop
-			bitmap[x + 1, y] = (step % 4 < 2 ? .max : 0, .max)
+		func drawStep(x: Int, y: Int, step: Int) {
+			let gray = tone(step)
+			bitmap[x, y] = (gray, .max)
+			bitmap[x + 1, y] = (gray, .max)
 		}
-		func draw(_ edge: GridEdge, offsetX: Int = 0, offsetY: Int = 0) {
-			for i in gridPixels[edge]! {
-				let x = i % canvas.width + offsetX
-				let y = i / canvas.width + offsetY
-				let distanceFromTop = y - topRow - (edge.isUpper ? 1 : 0)
-				mark(x: x, y: y, distanceFromTop: distanceFromTop)
+		for row in 0 ... canvas.baseHeight {
+			let left = 2 * abs(row - halfHeight)
+			let y = topRow + row
+			if row > halfHeight || topLeft {
+				drawStep(x: left, y: y, step: 2 * canvas.baseHeight - row)
 			}
-		}
-		draw(.bottomLeft)
-		draw(.bottomRight)
-		if topLeft {
-			draw(.topLeft)
-		} else {
-			draw(.bottomRight, offsetX: -halfWidth, offsetY: -halfHeight)
-		}
-		if topRight {
-			draw(.topRight)
-		} else {
-			draw(.bottomLeft, offsetX: halfWidth, offsetY: -halfHeight)
-		}
-		if !topLeft && !topRight {
-			mark(x: halfWidth - 1, y: topRow, distanceFromTop: 0)
-			mark(x: halfWidth, y: topRow, distanceFromTop: 0)
+			if row > halfHeight || topRight {
+				drawStep(x: canvas.width - left, y: y, step: row)
+			}
 		}
 		return bitmap
 	}

@@ -65,23 +65,13 @@ extension CGPoint {
 @MainActor
 extension SKTexture {
 
-	private struct GridHighlightKey: Hashable {
-		let topLeft: Bool
-		let topRight: Bool
-		let selected: Bool
-	}
+	static let cursor = gridHighlight(color: .hex(0xF7EF73))
+	static let selection = gridHighlight(color: .selectedCursor)
 
-	private static var gridHighlights: [GridHighlightKey: SKTexture] = [:]
-
-	static func gridHighlight(topLeft: Bool, topRight: Bool, selected: Bool) -> SKTexture {
-		let key = GridHighlightKey(topLeft: topLeft, topRight: topRight, selected: selected)
-		if let texture = gridHighlights[key] { return texture }
-		let color: SKColor = selected ? .selectedCursor : .hex(0xF7EF73)
-		let outline = Tiles.gridHighlight(topLeft: topLeft, topRight: topRight)
-		let image = outline.cgImage!.tinted(color.cgColor)!
+	private static func gridHighlight(color: SKColor) -> SKTexture {
+		let image = Tiles.gridHighlight.cgImage!.tinted(color.cgColor)!
 		let texture = SKTexture(cgImage: image)
 		texture.filteringMode = .nearest
-		gridHighlights[key] = texture
 		return texture
 	}
 
