@@ -20,7 +20,6 @@ public struct Renderer: Sendable {
 	public static var tile: Renderer { Renderer(canvas: .tile, outline: .tile) }
 	public static var building: Renderer { Renderer(canvas: .tile, outline: .building) }
 	public static var decal: Renderer { Renderer(canvas: .tile, outline: .decal) }
-	public static var cursor: Renderer { Renderer(canvas: .base, outline: .none) }
 }
 
 public extension Renderer {

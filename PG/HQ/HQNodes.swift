@@ -52,7 +52,6 @@ extension HQNodes {
 
 	func update(_ state: borrowing HQState) {
 		map.update(
-			map: state.sim.map,
 			cursor: state.ui.cursor,
 			selected: state.ui.selected != .none
 				? XY(state.ui.selected.index % 4, state.ui.selected.index / 4)

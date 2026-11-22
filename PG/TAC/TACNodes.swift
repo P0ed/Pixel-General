@@ -92,7 +92,6 @@ extension TacticalNodes {
 			camera.run(.scale(to: cameraScale, duration: 0.15))
 		}
 		map.update(
-			map: state.sim.map,
 			cursor: state.ui.cursor,
 			selected: state.ui.selectedUnit == .none ? nil : state.sim.position[state.ui.selectedUnit]
 		)

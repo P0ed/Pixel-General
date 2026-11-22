@@ -45,7 +45,7 @@ extension EditorNodes {
 				withKey: SKAction.cameraPositionKey
 			)
 		}
-		map.update(map: state.map, cursor: state.cursor, selected: nil)
+		map.update(cursor: state.cursor, selected: nil)
 
 		let cameraScale = CGFloat(1 << state.scale) / 2.0
 		if camera.xScale != cameraScale {

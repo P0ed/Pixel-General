@@ -100,24 +100,39 @@ struct RendererTests {
 		}
 	}
 
-	@Test func cursorDrawsADashedDiamondWithoutFillingTheTile() {
-		let bitmap = Renderer.cursor.render(Tiles.cursor)
-		#expect(bitmap.width == 96 && bitmap.height == 48)
-		#expect(bitmap.occupied?.x == 0 ... 95)
-		#expect(bitmap.occupied?.y == 0 ... 47)
-		#expect(bitmap[48, 24].alpha == 0, "the tile centre stays transparent")
-		let tones = Set(bitmap.gray.enumerated().filter { bitmap.alpha[$0.offset] > 0 }.map(\.element))
-		#expect(tones == [0, 255], "the cursor has an unlit stroke and a black pixel shadow")
-		let solid = Renderer.cursor.render(Model(lines: Tiles.cursor.lines.map {
-			var line = $0
-			line.dash = nil
-			return line
-		}))
-		#expect(bitmap.alpha.count(where: { $0 > 0 }) < solid.alpha.count(where: { $0 > 0 }))
-		for y in 0 ..< bitmap.height {
-			for x in 0 ..< bitmap.width where bitmap[x, y].alpha > 0 {
-				#expect(abs(abs(Float(x) - 48) / 2 + abs(Float(y) - 24) - 24) <= 2)
+	@Test(arguments: [false, true], [false, true])
+	func cursorColorsTheSharedGridPixels(topLeft: Bool, topRight: Bool) {
+		let highlight = Tiles.gridHighlight(topLeft: topLeft, topRight: topRight)
+		let grid = Tiles.grid(topLeft: topLeft, topRight: topRight)
+		let neighbor = Tiles.grid()
+		var gridTiles = [(bitmap: grid, x: 1, y: 0)]
+		if !topLeft { gridTiles.append((neighbor, 1 - 48, -24)) }
+		if !topRight { gridTiles.append((neighbor, 1 + 48, -24)) }
+		if !topLeft && !topRight { gridTiles.append((neighbor, 1, -48)) }
+
+		for y in 0 ..< highlight.height {
+			for x in 0 ..< highlight.width where highlight[x, y].alpha > 0 {
+				#expect(highlight[x, y] == highlight[x ^ 1, y])
+				#expect(gridTiles.contains { tile in
+					let tx = x - tile.x
+					let ty = y - tile.y
+					return tile.bitmap.contains(x: tx, y: ty) && tile.bitmap[tx, ty].alpha > 0
+				})
 			}
+		}
+	}
+
+	@Test func cursorPatternMakesAContinuousDiamondOfTwoPixelSteps() {
+		let highlight = Tiles.gridHighlight(topLeft: false, topRight: false)
+		let pattern: [UInt8] = [255, 255, 0, 0]
+		#expect(highlight.occupied?.y == 11 ... 59)
+		for row in 0 ... 48 {
+			let left = 2 * abs(row - 24)
+			let right = 96 - left
+			let steps = (0 ..< highlight.width).filter { highlight[$0, row + 11].alpha > 0 }
+			#expect(steps == (left == right ? [left, left + 1] : [left, left + 1, right, right + 1]))
+			#expect(highlight[left, row + 11].gray == pattern[(96 - row) % 4])
+			#expect(highlight[right, row + 11].gray == pattern[row % 4])
 		}
 	}
 

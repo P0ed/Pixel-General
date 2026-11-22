@@ -9,8 +9,8 @@ struct MapNodes {
 	var overlay: SKTileMapNode
 	var fog: SKTileMapNode
 	var size: Int
-	var cursor: SKNode
-	var selection: SKNode
+	var cursor: SKSpriteNode
+	var selection: SKSpriteNode
 }
 
 /// Units are ordered by diagonal above the map layers.
@@ -83,41 +83,31 @@ extension MapNodes {
 			fog: addTiles(fog, z: TileZ.fog),
 			size: size,
 			cursor: addCursor(root: root),
-			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)
+			selection: addCursor(root: root)
 		)
 	}
 
-	func update<let size: Int>(map: borrowing Map<size, Terrain>, cursor: XY, selected: XY?) {
-		let cursorCG = map.point(at: cursor)
-		if self.cursor.position != cursorCG {
-			self.cursor.position = cursorCG
-			self.cursor.zPosition = zPosition(at: cursor)
-		}
-		selection.isHidden = selected == .none
-		let selected = selected ?? .zero
-		let selectedCG = map.point(at: selected)
-		if selection.position != selectedCG {
-			selection.position = selectedCG
-			selection.zPosition = zPosition(at: selected)
-		}
+	func update(cursor: XY, selected: XY?) {
+		update(self.cursor, at: cursor, selected: false)
+		selection.isHidden = selected == nil
+		if let selected { update(selection, at: selected, selected: true) }
 	}
 
-	static func addCursor(root: SKNode, z: CGFloat = 0.0, color: SKColor? = nil) -> SKNode {
-		let node = SKNode()
-		node.position = .init(x: -1.0, y: -1.0)
+	private func update(_ sprite: SKSpriteNode, at xy: XY, selected: Bool) {
+		let position = xy.point
+		guard sprite.texture == nil || sprite.position != position else { return }
+		let texture = SKTexture.gridHighlight(topLeft: xy.x == 0, topRight: xy.y == size - 1, selected: selected)
+		sprite.texture = texture
+		sprite.size = texture.size()
+		sprite.position = position
+		sprite.zPosition = zPosition(at: xy) + (selected ? 0.15 : 0.1)
+	}
 
-		let cursor = SKSpriteNode(texture: .cursor)
-		if let color {
-			cursor.color = color
-			cursor.colorBlendFactor = 0.68
-			cursor.blendMode = .alpha
-		}
-		cursor.zPosition = 0.1 + z
-
-		node.addChild(cursor)
-		root.addChild(node)
-
-		return node
+	private static func addCursor(root: SKNode) -> SKSpriteNode {
+		let sprite = SKSpriteNode()
+		sprite.anchorPoint.y = CGSize.tile.height / (2 * CGSize.tile3D.height)
+		root.addChild(sprite)
+		return sprite
 	}
 }
 

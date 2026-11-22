@@ -25,7 +25,6 @@ public enum Catalog {
 		}
 		+ [
 			CatalogEntry(name: "Slope", model: Tiles.slope(elevation: 0, rising: .xPlus), renderer: .tile),
-			CatalogEntry(name: "Cursor", model: Tiles.cursor, renderer: .cursor),
 		]
 	}
 
