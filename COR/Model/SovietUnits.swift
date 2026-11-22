@@ -12,7 +12,7 @@ extension UnitStats {
 		navAtk: 1,
 		groundDef: 5,
 		airDef: 3,
-		cost: 70
+		cost: 40
 	)
 	static let speznas = UnitStats(
 		type: .inf,
@@ -28,7 +28,7 @@ extension UnitStats {
 		groundDef: 8,
 		airDef: 7,
 		traits: .elite,
-		cost: 207
+		cost: 180
 	)
 
 	// MARK: IFV
@@ -171,7 +171,7 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 8,
 		airDef: 8,
-		cost: 283
+		cost: 263
 	)
 
 	// MARK: Air
@@ -188,7 +188,7 @@ extension UnitStats {
 		groundDef: 6,
 		airDef: 6,
 		traits: .transport,
-		cost: 215
+		cost: 205
 	)
 	static let mi24 = UnitStats(
 		type: .heli,
@@ -204,7 +204,7 @@ extension UnitStats {
 		groundDef: 8,
 		airDef: 7,
 		traits: .transport,
-		cost: 315
+		cost: 305
 	)
 	static let orlan = UnitStats(
 		type: .heli,
@@ -214,7 +214,7 @@ extension UnitStats {
 		groundDef: 7,
 		airDef: 5,
 		traits: [.optics],
-		cost: 154
+		cost: 104
 	)
 	static let mig29 = UnitStats(
 		type: .fighter,
