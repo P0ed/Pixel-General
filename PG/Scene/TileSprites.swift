@@ -98,13 +98,10 @@ extension SKTileGroup {
 
 	static let gray = make(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
 	static let fog = overlay(color: .black)
-	static let grid = make(image: .frame)
-	static let foggedGrid = make(image: CGImage.draw(size: .tile3D) { ctx in
-		ctx.drawTile(.frame)
-		ctx.setBlendMode(.sourceAtop)
-		ctx.setFillColor(SKColor.black.withAlphaComponent(overlayOpacity).cgColor)
-		ctx.fill(CGRect(origin: .zero, size: .tile3D))
-	})
+	static let grid = make(image: Tiles.grid().cgImage!)
+	static let gridTopLeft = make(image: Tiles.grid(topLeft: true).cgImage!)
+	static let gridTopRight = make(image: Tiles.grid(topRight: true).cgImage!)
+	static let gridTopCorner = make(image: Tiles.grid(topLeft: true, topRight: true).cgImage!)
 
 	private struct TerrainKey: Hashable {
 		let surface: TileSurface
@@ -262,7 +259,10 @@ extension SKTileSet {
 
 	static let fog = SKTileSet(tileGroups: [.fog], tileSetType: .isometric)
 
-	static let grid = SKTileSet(tileGroups: [.grid, .foggedGrid], tileSetType: .isometric)
+	static let grid = SKTileSet(
+		tileGroups: [.grid, .gridTopLeft, .gridTopRight, .gridTopCorner],
+		tileSetType: .isometric
+	)
 
 	static let hq = SKTileSet(tileGroups: [.gray], tileSetType: .isometric)
 }

@@ -45,6 +45,29 @@ struct RendererTests {
 		}
 	}
 
+	@Test func sharedGridEdgesStayWithinTheOwningTile() {
+		let canvas = Canvas.tile
+		let grid = Tiles.grid()
+		let closed = Tiles.grid(topLeft: true, topRight: true)
+		let footprint = Renderer.tile.fill(Tiles.footprint)
+		#expect(zip(closed.alpha, footprint.alpha).allSatisfy { $0 == 0 || $1 > 0 })
+		#expect(closed.alpha == Renderer.tile.edges(Tiles.footprint).alpha)
+
+		let middle = Volume.footprint / 2
+		let far = Volume.footprint - 0.5
+		let samples: [(V3, Bool)] = [
+			(V3(0.5, middle, 0), false), (V3(middle, 0.5, 0), false),
+			(V3(far, middle, 0), true), (V3(middle, far, 0), true),
+		]
+		for (point, owned) in samples {
+			let pixel = canvas.project(point)
+			let x = Int(pixel.x)
+			let y = Int(pixel.y)
+			#expect((grid[x, y].alpha > 0) == owned)
+			#expect(closed[x, y].alpha > 0)
+		}
+	}
+
 	@Test func elevationRaisesTheTopFaceBySixPixelsPerLevel() {
 		let renderer = Renderer(canvas: .tile, outline: .none)
 		for elevation in 0 ... 2 {

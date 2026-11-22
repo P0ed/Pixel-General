@@ -18,6 +18,22 @@ public enum Tiles {
 		return Model(.box(from: .zero, to: V3(side, side, 0)))
 	}
 
+	/// Draws the two lower edges inside the tile so each shared line has one owner.
+	/// The upper edges close the grid along the outer boundary of the map.
+	public static func grid(topLeft: Bool = false, topRight: Bool = false) -> Bitmap {
+		let canvas = Canvas.tile
+		var outline = Renderer.tile.edges(footprint)
+		for i in outline.alpha.indices where outline.alpha[i] > 0 {
+			let origin = canvas.origin(x: i % canvas.width, y: i / canvas.width)
+			let x = origin.x - origin.z
+			let y = origin.y - origin.z
+			if x > Volume.footprint - 1 || y > Volume.footprint - 1 { continue }
+			if (topLeft && x < 1) || (topRight && y < 1) { continue }
+			outline.alpha[i] = 0
+		}
+		return outline
+	}
+
 	static func interior(on canvas: Canvas) -> [Bool] {
 		canvas == .tile ? tileInterior : interiorPixels(on: canvas)
 	}

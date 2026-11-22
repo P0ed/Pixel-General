@@ -4,10 +4,10 @@ import COR
 @MainActor
 struct MapNodes {
 	var terrain: SKTileMapNode
+	var grid: SKTileMapNode
 	var decorations: SKTileMapNode
 	var overlay: SKTileMapNode
 	var fog: SKTileMapNode
-	var grid: SKTileMapNode
 	var size: Int
 	var cursor: SKNode
 	var selection: SKNode
@@ -15,10 +15,10 @@ struct MapNodes {
 
 /// Units are ordered by diagonal above the map layers.
 private enum TileZ {
-	static let decoration: CGFloat = 0.4
-	static let overlay: CGFloat = 0.45
+	static let grid: CGFloat = 0.2
+	static let decoration: CGFloat = 0.3
+	static let overlay: CGFloat = 0.4
 	static let fog: CGFloat = 0.5
-	static let grid: CGFloat = 0.55
 	static let unit: CGFloat = 0.6
 }
 
@@ -43,7 +43,6 @@ extension MapNodes {
 
 	func setFog(_ fogged: Bool, at xy: XY) {
 		fog.setTileGroup(fogged ? .fog : nil, at: xy)
-		grid.setTileGroup(fogged ? .foggedGrid : .grid, at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
@@ -69,13 +68,19 @@ extension MapNodes {
 		}
 		let grid = addTiles(.grid, z: TileZ.grid)
 		grid.fill(with: .grid)
+		let last = size - 1
+		for i in 0 ..< last {
+			grid.setTileGroup(.gridTopLeft, at: XY(0, i))
+			grid.setTileGroup(.gridTopRight, at: XY(i + 1, last))
+		}
+		grid.setTileGroup(.gridTopCorner, at: XY(0, last))
 		grid.isHidden = !settings.gridLines
 		return MapNodes(
 			terrain: addTiles(terrain, z: 0.0),
+			grid: grid,
 			decorations: addTiles(decorations, z: TileZ.decoration),
 			overlay: addTiles(overlay, z: TileZ.overlay),
 			fog: addTiles(fog, z: TileZ.fog),
-			grid: grid,
 			size: size,
 			cursor: addCursor(root: root),
 			selection: addCursor(root: root, z: 0.05, color: .selectedCursor)
