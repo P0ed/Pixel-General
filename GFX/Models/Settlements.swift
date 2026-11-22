@@ -42,11 +42,11 @@ public enum Settlements {
 
 	public static var fort: Model { fort(variant: .first) }
 
-	public static func fort(variant: Tiles.Variant) -> Model {
+	public static func fort(variant: Tiles.Variant, framed: Bool = true) -> Model {
 		let layout = switch variant {
 		case .first:
 			"""
-			.........
+			....#....
 			.#######.
 			..#...#..
 			..#...#..
@@ -54,15 +54,15 @@ public enum Settlements {
 			....#....
 			....#....
 			..######.
-			.........
+			....#....
 			"""
 		case .second:
 			"""
 			.........
-			####.....
+			.###.....
 			...#####.
 			....#..#.
-			....#..#.
+			#####..##
 			.#######.
 			.#.......
 			.###.....
@@ -70,11 +70,11 @@ public enum Settlements {
 			"""
 		case .third:
 			"""
-			.........
+			....#....
 			.#..#.#..
 			.#..#.#..
 			.####.#..
-			.#..###..
+			##..###..
 			.#..#.#..
 			.####.#..
 			....#.#..
@@ -86,43 +86,51 @@ public enum Settlements {
 			..####...
 			..#..###.
 			..#....#.
-			####.###.
+			.###.####
 			...#...#.
 			...##..#.
 			....####.
-			.........
+			....#....
 			"""
 		}
 		let cells = layout.split(separator: "\n").map(Array.init)
 		let cellSize: Float = 4
-		let half = cellSize / 2
-		let firstCenter = (Volume.footprint - Float(cells.count - 1) * cellSize) / 2
-		let corner = V3(half, half, 0)
+		let margin = (Volume.footprint - Float(cells.count) * cellSize) / 2
+		let boundaries = [0] + (1 ..< cells.count).map { margin + Float($0) * cellSize } + [Volume.footprint]
+		var outline = Outline.decal
+		outline.tileEdges = framed ? .framed : .open
 		var solids: [Solid] = []
 
 		for (row, cellsInRow) in cells.enumerated() {
 			for column in cellsInRow.indices where cellsInRow[column] == "#" {
-				let center = V3(firstCenter + Float(column) * cellSize, firstCenter + Float(row) * cellSize, 0)
-				solids.append(.box(from: center - corner, to: center + corner, tone: 99))
+				let from = V3(boundaries[column], boundaries[row], 0)
+				let to = V3(boundaries[column + 1], boundaries[row + 1], 0)
+				let center = (from + to) * 0.5
+				let halfSize = (to - from) * 0.5
+				solids.append(.box(from: from, to: to, tone: 99))
 
 				// The earth slopes up toward the cut and leaves the passage open at joins.
-				let bank = Solid.wedge(
-					from: center + V3(-half, -half - 1.5, 0),
-					to: center + V3(half, -half, 1.5),
-					rising: .yPlus,
-					tone: 180
-				)
 				for turn in Turn.allCases {
 					let offset = turn.apply(V3(0, -1, 0))
 					let neighborRow = row + Int(offset.y)
 					let neighborColumn = column + Int(offset.x)
-					if cells.indices.contains(neighborRow), cells[neighborRow].indices.contains(neighborColumn),
-						cells[neighborRow][neighborColumn] == "#" { continue }
+					guard cells.indices.contains(neighborRow), cells[neighborRow].indices.contains(neighborColumn),
+						cells[neighborRow][neighborColumn] != "#" else { continue }
+					let half = turn.apply(halfSize)
+					let width = abs(half.x)
+					let depth = abs(half.y)
+					let bank = Solid.wedge(
+						from: center + V3(-width, -depth - 1.5, 0),
+						to: center + V3(width, -depth, 1.5),
+						rising: .yPlus,
+						tone: 180
+					)
 					solids.append(bank.rotated(turn, about: center))
 				}
 			}
 		}
 
+		for i in solids.indices { solids[i].outline = outline }
 		return Model(solids)
 	}
 }

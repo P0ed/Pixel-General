@@ -80,4 +80,10 @@ struct UnitTests {
 		#expect(Terrain.fort.moveCost(Unit(model: .truck, country: .ger)) == 3)
 		#expect(Terrain.fort.moveCost(Unit(model: .leo1, country: .ger)) == 2)
 	}
+
+	@Test func groundUnitsCanEnterAirfields() {
+		#expect(Terrain.airfield.moveCost(Unit(model: .regular, country: .ger)) == 1)
+		#expect(Terrain.airfield.moveCost(Unit(model: .truck, country: .ger)) == 1)
+		#expect(Terrain.airfield.moveCost(Unit(model: .leo1, country: .ger)) == 1)
+	}
 }

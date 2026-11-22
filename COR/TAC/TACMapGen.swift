@@ -536,7 +536,7 @@ public extension Map<64, Terrain> {
 	/// city without redundant spaghetti, short links carve first so longer
 	/// routes reuse them as trunks, and a few extra edges then close the
 	/// worst detours into loops.
-	private mutating func connectCities(cities: [XY]) {
+	internal mutating func connectCities(cities: [XY]) {
 		guard cities.count > 1 else { return }
 
 		let costs = travelCosts(between: cities)
@@ -739,7 +739,7 @@ public extension Map<64, Terrain> {
 	}
 
 	/// Cost of stepping onto `to` from `l`, or `nil` if impassable. Roads and
-	/// buildings are nearly free, open ground is cheap, and forest/hills cost
+	/// cities are nearly free, open ground is cheap, and forest/hills cost
 	/// progressively more so a route only carves through them when there's no
 	/// gentler way around. Rivers are passable solely where a bridge fits.
 	private func stepCost(to: XY, from l: XY) -> UInt32? {

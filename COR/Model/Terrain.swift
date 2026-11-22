@@ -14,7 +14,7 @@ public extension Terrain {
 
 	var isBridgable: Bool {
 		switch self {
-		case .field, .forest, .city, .airfield: true
+		case .field, .forest, .city: true
 		default: isRoad
 		}
 	}
@@ -37,7 +37,7 @@ public extension Terrain {
 	}
 
 	var hasRoad: Bool {
-		isRoad || isBridge || isSettlement
+		isRoad || isBridge || self == .city
 	}
 
 	var isBridge: Bool {
@@ -63,7 +63,7 @@ public extension Terrain {
 		case .leg:
 			switch self {
 			case _ where hasRoad: 1
-			case .field, .fort: 1
+			case .field, .fort, .airfield: 1
 			case .forest, .rough: min(stats.mov, 2)
 			case .mountain: stats.mov
 			case _ where isRiver: stats.mov
@@ -72,6 +72,7 @@ public extension Terrain {
 		case .wheel:
 			switch self {
 			case _ where hasRoad: 1
+			case .airfield: 1
 			case .field: 2
 			case .forest, .rough, .fort: 3
 			case _ where isRiver: stats.mov
@@ -80,7 +81,7 @@ public extension Terrain {
 		case .track:
 			switch self {
 			case _ where hasRoad: 1
-			case .field: 1
+			case .field, .airfield: 1
 			case .forest, .rough, .fort: 2
 			case _ where isRiver: stats.mov
 			default: 0x10

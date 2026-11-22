@@ -27,14 +27,16 @@ extension CGImage {
 
 	/// Everything a tile carries on top of its surface, all of it modelled in GFX.
 	enum Decoration: Hashable {
-		case city(Tiles.Variant, framed: Bool = true), fort(Tiles.Variant)
+		case city(Tiles.Variant, framed: Bool = true)
+		case fort(Tiles.Variant, framed: Bool = true)
 		case airfield
 		case road([GFX.Direction], framed: Bool = true)
 		case bridge(GFX.Axis)
 
-		var withOpenRoads: Self? {
+		var unframed: Self? {
 			switch self {
 			case .city(let variant, _): .city(variant, framed: false)
+			case .fort(let variant, _): .fort(variant, framed: false)
 			case .road(let directions, _): .road(directions, framed: false)
 			default: nil
 			}
@@ -43,7 +45,7 @@ extension CGImage {
 		var image: CGImage? {
 			switch self {
 			case .city(let variant, let framed): Renderer.building.image(Settlements.city(variant: variant, framed: framed))
-			case .fort(let variant): Renderer.decal.image(Settlements.fort(variant: variant))?
+			case .fort(let variant, let framed): Renderer.decal.image(Settlements.fort(variant: variant, framed: framed))?
 				.tinted(SKColor.hex(0x5A564F).cgColor, blendMode: .screen)
 			case .airfield: Renderer.building.image(Settlements.airfield)
 			case .road(let directions, let framed): Renderer.decal.image(Roads.road(directions, framed: framed))

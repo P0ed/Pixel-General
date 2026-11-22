@@ -126,7 +126,7 @@ extension SKTileGroup {
 
 	static func decoration(_ terrain: Terrain, at xy: XY, framed: Bool) -> SKTileGroup? {
 		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
-		return self.decoration(framed ? decoration : (decoration.withOpenRoads ?? decoration))
+		return self.decoration(framed ? decoration : (decoration.unframed ?? decoration))
 	}
 
 	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
@@ -242,18 +242,18 @@ extension SKTileSet {
 		return variants.compactMap { terrain.decoration(variant: $0) }
 	}
 
-	private static let roadVariants: [(framed: SKTileGroup, open: SKTileGroup)] = decorationStyles.compactMap { decoration in
-		guard let open = decoration.withOpenRoads else { return nil }
+	private static let decorationVariants: [(framed: SKTileGroup, open: SKTileGroup)] = decorationStyles.compactMap { decoration in
+		guard let open = decoration.unframed else { return nil }
 		return (.decoration(decoration), .decoration(open))
 	}
 
 	static let decorations = SKTileSet(
-		tileGroups: decorationStyles.map { .decoration($0) } + roadVariants.map(\.open),
+		tileGroups: decorationStyles.map { .decoration($0) } + decorationVariants.map(\.open),
 		tileSetType: .isometric
 	)
 
-	static func roadReplacements(framed: Bool) -> [SKTileGroup: SKTileGroup] {
-		Dictionary(uniqueKeysWithValues: roadVariants.map { framed ? ($0.open, $0.framed) : ($0.framed, $0.open) })
+	static func decorationReplacements(framed: Bool) -> [SKTileGroup: SKTileGroup] {
+		Dictionary(uniqueKeysWithValues: decorationVariants.map { framed ? ($0.open, $0.framed) : ($0.framed, $0.open) })
 	}
 
 	static let overlay = SKTileSet(

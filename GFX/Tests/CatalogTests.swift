@@ -86,6 +86,38 @@ struct CatalogTests {
 		}
 	}
 
+	@Test(arguments: Tiles.Variant.allCases)
+	func gridlessTrenchExitsReachTheEdgeMidpoints(variant: Tiles.Variant) {
+		let exits: Set<Direction> = switch variant {
+		case .first: [.yMinus, .yPlus]
+		case .second: [.xMinus, .xPlus]
+		case .third: [.xMinus, .yMinus]
+		case .fourth: [.xPlus, .yPlus]
+		}
+		let model = Settlements.fort(variant: variant, framed: false)
+		let bitmap = Renderer.decal.render(model)
+		let canvas = Canvas.tile
+		let side = Volume.footprint
+		for direction in Direction.allCases {
+			let alongX = direction.axis == .x
+			var edgePixels = 0
+			for y in 0 ..< canvas.height {
+				for x in 0 ..< canvas.width {
+					let ray = canvas.origin(x: x, y: y)
+					let along = (alongX ? ray.x : ray.y) - ray.z
+					let across = (alongX ? ray.y : ray.x) - ray.z
+					let fromEnd = direction == .xPlus || direction == .yPlus ? side - along : along
+					guard (0 ..< 1).contains(fromEnd), abs(across - side / 2) < 0.5 else { continue }
+					let pixel = bitmap[x, y]
+					#expect(pixel.alpha == (exits.contains(direction) ? 255 : 0))
+					if exits.contains(direction) { #expect(pixel.gray == 99) }
+					edgePixels += 1
+				}
+			}
+			#expect(edgePixels > 0)
+		}
+	}
+
 	private func expectVisibleRoad(_ model: Model, along axis: Axis) {
 		let raster = Renderer.building.raster(model)
 		let roadIDs = model.solids.indices.filter { model.solids[$0].to.z == 0 }.map { Int32($0) }

@@ -73,6 +73,9 @@ struct MapGenerationTests {
 		let (settlements, airfields, pairs, triples) = targets[density]
 		#expect(map.indices.count { map[$0].isSettlement } == settlements)
 		#expect(map.indices.count { map[$0] == .airfield } == airfields)
+		for xy in map.indices where map[xy] == .airfield {
+			#expect(xy.n4.contains { map[$0].hasRoad })
+		}
 
 		let footprints = map.cityFootprints
 		#expect(footprints.count { $0.count == 2 } == pairs)
@@ -323,6 +326,25 @@ struct MapGenerationTests {
 		for city in cities where !seen.contains(city) {
 			Issue.record("City tile \(city) off the road network")
 		}
+	}
+
+	@Test func roadsRouteAroundAirfields() {
+		let start = XY(10, 10)
+		let end = XY(12, 10)
+		let airfield = XY(11, 10)
+		let bypass = [XY(10, 11), XY(11, 11), XY(12, 11)]
+		var map = Map<64, Terrain>(zero: .mountain)
+		map[start] = .city
+		map[end] = .city
+		map[airfield] = .airfield
+		for xy in bypass { map[xy] = .field }
+
+		map.connectCities(cities: [start, end])
+		map.shapeRoads()
+
+		#expect(map[airfield] == .airfield)
+		#expect(map[bypass[1]] == .roadWE)
+		#expect(bypass.allSatisfy { map[$0].isRoad })
 	}
 
 	@Test func roadShapingCreatesJunctionsWithOrdinaryRoadRules() {

@@ -44,7 +44,7 @@ extension MapNodes {
 	func setGridLines(_ visible: Bool) {
 		grid.isHidden = !visible
 		guard decorations.parent != nil else { return }
-		let replacements = SKTileSet.roadReplacements(framed: visible)
+		let replacements = SKTileSet.decorationReplacements(framed: visible)
 		for row in 0 ..< size {
 			for column in 0 ..< size {
 				guard let current = decorations.tileGroup(atColumn: column, row: row),
