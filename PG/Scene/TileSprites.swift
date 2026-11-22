@@ -124,9 +124,9 @@ extension SKTileGroup {
 		self.terrain(surface: terrain.tileSurface, variant: xy.tileVariant)
 	}
 
-	static func decoration(_ terrain: Terrain, at xy: XY, framed: Bool) -> SKTileGroup? {
+	static func decoration(_ terrain: Terrain, at xy: XY) -> SKTileGroup? {
 		guard let decoration = terrain.decoration(variant: xy.tileVariant) else { return nil }
-		return self.decoration(framed ? decoration : (decoration.unframed ?? decoration))
+		return self.decoration(decoration)
 	}
 
 	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
@@ -237,24 +237,16 @@ extension SKTileSet {
 		tileSetType: .isometric
 	)
 
-	private static let decorationStyles: [CGImage.Decoration] = decorated.flatMap { terrain in
-		let variants = terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first]
-		return variants.compactMap { terrain.decoration(variant: $0) }
-	}
-
-	private static let decorationVariants: [(framed: SKTileGroup, open: SKTileGroup)] = decorationStyles.compactMap { decoration in
-		guard let open = decoration.unframed else { return nil }
-		return (.decoration(decoration), .decoration(open))
-	}
-
 	static let decorations = SKTileSet(
-		tileGroups: decorationStyles.map { .decoration($0) } + decorationVariants.map(\.open),
+		tileGroups: decorated.flatMap { terrain in
+			(terrain == .city || terrain == .fort ? Tiles.Variant.allCases : [.first])
+				.compactMap { variant in
+					terrain.decoration(variant: variant)
+						.map { decoration in .decoration(decoration) }
+				}
+		},
 		tileSetType: .isometric
 	)
-
-	static func decorationReplacements(framed: Bool) -> [SKTileGroup: SKTileGroup] {
-		Dictionary(uniqueKeysWithValues: decorationVariants.map { framed ? ($0.open, $0.framed) : ($0.framed, $0.open) })
-	}
 
 	static let overlay = SKTileSet(
 		tileGroups: Team.allCases.map { .overlay(.team($0)) }
@@ -299,8 +291,8 @@ extension SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
 			ctx.drawTile(terrain.tileSurface.image())
-			ctx.drawTile(.frame)
 			ctx.drawTile(terrain.decoration().map(CGImage.decoration))
+			ctx.drawTile(.frame)
 		})
 		texture.filteringMode = .nearest
 		tileCache[terrain] = texture

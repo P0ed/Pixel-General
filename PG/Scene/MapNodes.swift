@@ -15,8 +15,8 @@ struct MapNodes {
 
 /// Units are ordered by diagonal above the map layers.
 private enum TileZ {
-	static let grid: CGFloat = 0.2
-	static let decoration: CGFloat = 0.3
+	static let decoration: CGFloat = 0.2
+	static let grid: CGFloat = 0.3
 	static let overlay: CGFloat = 0.4
 	static let fog: CGFloat = 0.5
 	static let unit: CGFloat = 0.6
@@ -37,20 +37,7 @@ extension MapNodes {
 	func setTile(_ tile: Terrain, at xy: XY) {
 		terrain.setTileGroup(.terrain(tile, at: xy), at: xy)
 		if decorations.parent != nil {
-			decorations.setTileGroup(.decoration(tile, at: xy, framed: !grid.isHidden), at: xy)
-		}
-	}
-
-	func setGridLines(_ visible: Bool) {
-		grid.isHidden = !visible
-		guard decorations.parent != nil else { return }
-		let replacements = SKTileSet.decorationReplacements(framed: visible)
-		for row in 0 ..< size {
-			for column in 0 ..< size {
-				guard let current = decorations.tileGroup(atColumn: column, row: row),
-					let replacement = replacements[current] else { continue }
-				decorations.setTileGroup(replacement, forColumn: column, row: row)
-			}
+			decorations.setTileGroup(.decoration(tile, at: xy), at: xy)
 		}
 	}
 

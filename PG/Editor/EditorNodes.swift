@@ -87,7 +87,7 @@ private extension EditorNodes {
 			},
 			leftButtons: [
 				.back,
-				.prefs(map: map),
+				.prefs(grid: map.grid),
 				.space,
 				.close(icon: .HQ, status: "HQ", action: .hq),
 			],

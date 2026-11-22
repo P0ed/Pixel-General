@@ -8,7 +8,7 @@ public enum Settlements {
 
 	public static var city: Model { city(variant: .first) }
 
-	public static func city(variant: Tiles.Variant, framed: Bool = true) -> Model {
+	public static func city(variant: Tiles.Variant) -> Model {
 		let blocks: [CityBlock] = switch variant {
 		case .first: [.houses, .houses, .houses, .houses]
 		case .second: [.apartments, .apartments, .market, .apartments]
@@ -22,7 +22,7 @@ public enum Settlements {
 		let solids = zip(blocks, centers).flatMap { block, center in
 			buildings(block, x: center.0, y: center.1)
 		}
-		return Roads.road(Direction.allCases, framed: framed) + Model(solids)
+		return Roads.road(Direction.allCases) + Model(solids)
 	}
 
 	/// Runway with dashed centreline, a control tower and two hangars set back from it.
@@ -42,7 +42,7 @@ public enum Settlements {
 
 	public static var fort: Model { fort(variant: .first) }
 
-	public static func fort(variant: Tiles.Variant, framed: Bool = true) -> Model {
+	public static func fort(variant: Tiles.Variant) -> Model {
 		let layout = switch variant {
 		case .first:
 			"""
@@ -97,8 +97,6 @@ public enum Settlements {
 		let cellSize: Float = 4
 		let margin = (Volume.footprint - Float(cells.count) * cellSize) / 2
 		let boundaries = [0] + (1 ..< cells.count).map { margin + Float($0) * cellSize } + [Volume.footprint]
-		var outline = Outline.decal
-		outline.tileEdges = framed ? .framed : .open
 		var solids: [Solid] = []
 
 		for (row, cellsInRow) in cells.enumerated() {
@@ -130,7 +128,7 @@ public enum Settlements {
 			}
 		}
 
-		for i in solids.indices { solids[i].outline = outline }
+		for i in solids.indices { solids[i].outline = .connectedDecal }
 		return Model(solids)
 	}
 }

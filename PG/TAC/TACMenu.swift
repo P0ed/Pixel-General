@@ -17,7 +17,7 @@ extension TacticalNodes {
 			rightButtons: [
 				.space,
 				.load { [weak scene] in scene?.saveState() },
-				.prefs(map: map),
+				.prefs(grid: map.grid),
 				.close(icon: .HQ, status: "Abandon") { [weak scene] in
 					if let scene { endGame(scene.state) }
 				}

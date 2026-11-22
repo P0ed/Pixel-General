@@ -5,11 +5,7 @@ public struct Outline: Hashable, Sendable {
 	public var creases: UInt8?
 	public var faces: UInt8?
 	public var depth: Float
-	var tileEdges: TileEdges?
-
-	enum TileEdges: Hashable, Sendable {
-		case open, framed
-	}
+	var openTileEdges = false
 
 	public init(silhouette: UInt8? = nil, creases: UInt8? = nil, faces: UInt8? = nil, depth: Float = 0.75) {
 		self.silhouette = silhouette
@@ -31,6 +27,12 @@ public struct Outline: Hashable, Sendable {
 
 	/// Flat tile art: a rim only a little darker than the paint it edges.
 	public static var decal: Outline { Outline(silhouette: 132) }
+
+	static var connectedDecal: Outline {
+		var outline = decal
+		outline.openTileEdges = true
+		return outline
+	}
 }
 
 extension Outline {
@@ -46,11 +48,7 @@ extension Outline {
 				guard source.alpha[i] > 0 else { continue }
 				let id = raster.ids[i]
 				let outline = solids[Int(id)].outline ?? self
-				let interior: [Bool]? = switch outline.tileEdges {
-				case .framed: raster.tileInterior
-				case .open: raster.tileFootprint
-				case nil: nil
-				}
+				let footprint = outline.openTileEdges ? raster.tileFootprint : nil
 
 				var rim = false
 				var seam = false
@@ -65,11 +63,11 @@ extension Outline {
 					}
 					let n = source.index(x: nx, y: ny)
 					if source.alpha[n] == 0 {
-						// A road exit stays open where it meets the tile boundary or frame.
-						rim = rim || interior?[n] != false
+						// Omit end caps where a connection meets the tile boundary.
+						rim = rim || footprint?[n] != false
 					} else if raster.ids[n] != id {
 						let neighbor = solids[Int(raster.ids[n])]
-						if outline.tileEdges == nil && neighbor.outline?.tileEdges != nil {
+						if !outline.openTileEdges && neighbor.outline?.openTileEdges == true {
 							// Ground pavement is the backdrop for a building's silhouette.
 							rim = true
 						} else {

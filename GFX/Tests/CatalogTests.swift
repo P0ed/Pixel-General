@@ -53,11 +53,11 @@ struct CatalogTests {
 		}
 	}
 
-	@Test func citiesAndAirfieldsStayInsideTheTileFrame() {
-		let interior = Tiles.interior(on: .tile)
+	@Test func citiesAndAirfieldsStayInsideTheTileFootprint() {
+		let footprint = Tiles.footprintMask(on: .tile)
 		for entry in Catalog.settlements where entry.renderer.outline == .building {
 			let bitmap = entry.renderer.render(entry.model)
-			#expect(zip(bitmap.alpha, interior).allSatisfy { $0 == 0 || $1 }, "\(entry.name) fits inside the tile frame")
+			#expect(zip(bitmap.alpha, footprint).allSatisfy { $0 == 0 || $1 }, "\(entry.name) fits inside the tile footprint")
 		}
 	}
 
@@ -77,24 +77,20 @@ struct CatalogTests {
 		})
 	}
 
-	@Test func fortVariantsStayInsideTheTileFrame() {
-		let interior = Tiles.interior(on: .tile)
+	@Test func fortVariantsHaveDistinctArtwork() {
 		let trenches = Tiles.Variant.allCases.map { Renderer.decal.render(Settlements.fort(variant: $0)) }
 		#expect(Set(trenches.map(\.rgba)).count == trenches.count)
-		for trench in trenches {
-			#expect(zip(trench.alpha, interior).allSatisfy { $0 == 0 || $1 })
-		}
 	}
 
 	@Test(arguments: Tiles.Variant.allCases)
-	func gridlessTrenchExitsReachTheEdgeMidpoints(variant: Tiles.Variant) {
+	func trenchExitsReachTheEdgeMidpoints(variant: Tiles.Variant) {
 		let exits: Set<Direction> = switch variant {
 		case .first: [.yMinus, .yPlus]
 		case .second: [.xMinus, .xPlus]
 		case .third: [.xMinus, .yMinus]
 		case .fourth: [.xPlus, .yPlus]
 		}
-		let model = Settlements.fort(variant: variant, framed: false)
+		let model = Settlements.fort(variant: variant)
 		let bitmap = Renderer.decal.render(model)
 		let canvas = Canvas.tile
 		let side = Volume.footprint
