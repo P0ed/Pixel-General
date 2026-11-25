@@ -22,15 +22,25 @@ struct HQTests {
 		let models = shop.upgrades(for: Unit(model: .leo1, country: .ger)).map(\.model)
 
 		#expect(!models.contains(.leo1), "a unit cannot upgrade into itself")
+		#expect(models.contains(.leo2a4))
+		#expect(models.contains(.leo2a7))
 		#expect(models.contains(.kf51), "the Leopard 1 should upgrade into the KF51")
 		#expect(!models.contains(.regular), "tanks and infantry are different families")
 	}
 
 	@Test func tierLocksUpgradeOptions() {
-		// The KF51 is tier 2, so at tier 0 the Leopard 1 has nowhere to go.
 		let shop = Shop(country: .ger, tier: 0)
 		let models = shop.upgrades(for: Unit(model: .leo1, country: .ger)).map(\.model)
 		#expect(models.isEmpty)
+	}
+
+	@Test func leopardVariantsAppearInTheTierOneShop() {
+		for country in [Country.ger, .ned] {
+			let tanks = Shop(country: country, tier: 1, air: false).units.filter { $0.type == .heavyTrack }
+			#expect(tanks.map(\.model) == [.leo1, .leo2a4, .leo2a7])
+		}
+		let swedishTanks = Shop(country: .swe, tier: 1, air: false).units.filter { $0.type == .heavyTrack }
+		#expect(swedishTanks.map(\.model) == [.strv103, .strv122])
 	}
 
 	@Test func supplyHasNoUpgrades() {

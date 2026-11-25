@@ -193,7 +193,8 @@ public extension UnitStats {
 		case .pzh: .pzh
 		case .mars: .mars
 		case .leo1: .leo1
-		case .leo2a6: .leo2a6
+		case .leo2a4: .leo2a4
+		case .leo2a7: .leo2a7
 		case .strv103: .strv103
 		case .strv122: .strv122
 		case .kf51: .kf51

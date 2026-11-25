@@ -26,7 +26,7 @@ extension Shop {
 public extension Shop {
 
 	var units: [Unit] {
-		[
+		let offers: [Unit?] = [
 			Unit(model: .truck, country: country),
 
 			inf1,
@@ -43,6 +43,7 @@ public extension Shop {
 			tank1,
 			tank2,
 			tank3,
+			tank4,
 
 			art1,
 			art2,
@@ -57,7 +58,7 @@ public extension Shop {
 			air3,
 			air4,
 		]
-		.compactMap { (u: Unit?) -> Unit? in
+		return offers.compactMap { (u: Unit?) -> Unit? in
 			u.flatMap {
 				!filter($0) ? nil : modifying($0) { u in u.ammo = u.maxAmmo }
 			}
@@ -72,7 +73,7 @@ public extension Shop {
 			[inf1, inf2, inf3],
 			[fpv1, fpv2],
 			[recon1, ifv1, ifv2, ifv3],
-			[tank1, tank2, tank3],
+			[tank1, tank2, tank3, tank4],
 			[art1, art2],
 			[aa1, aa2, aa3],
 			[air1, air2, air3, air4],

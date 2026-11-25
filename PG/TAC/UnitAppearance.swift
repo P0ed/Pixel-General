@@ -51,7 +51,8 @@ extension Unit {
 		case .m1A1: .m1A1
 		case .m1A2: .m1A2
 		case .kf51: .kf51
-		case .leo2a6: .leo2a6
+		case .leo2a4: .leo2a4
+		case .leo2a7: .leo2a7
 		case .strv122: .strv122
 		case .leo1: .leo1
 		case .strv103: .strv103

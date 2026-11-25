@@ -143,7 +143,7 @@ extension UnitStats {
 		groundDef: 5,
 		airDef: 4,
 		traits: [.elite, .noRetaliation],
-		cost: 437
+		cost: 470
 	)
 
 	// MARK: Tanks
@@ -160,7 +160,21 @@ extension UnitStats {
 		airDef: 7,
 		cost: 216
 	)
-	static let leo2a6 = UnitStats(
+	static let leo2a4 = UnitStats(
+		type: .heavyTrack,
+		tier: 1,
+		mov: 6,
+		rng: 1,
+		ammo: 6,
+		ini: 8,
+		softAtk: 9,
+		hardAtk: 14,
+		navAtk: 5,
+		groundDef: 12,
+		airDef: 7,
+		cost: 310
+	)
+	static let leo2a7 = UnitStats(
 		type: .heavyTrack,
 		tier: 1,
 		mov: 6,

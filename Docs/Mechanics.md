@@ -45,7 +45,7 @@ public struct Unit: Equatable {
 ```
 
 `unit.stats` is `UnitStats.table[model.rawValue]`, a 256-entry table built once
-at load. Each `UnitModel` names a real platform (`.ranger`, `.leo2a6`, `.t90m`,
+at load. Each `UnitModel` names a real platform (`.ranger`, `.leo2a7`, `.t90m`,
 `.f35`, …) and maps to one `UnitStats` row; the stat accessors on `Unit`
 (`type`, `tier`, `mov`, `rng`, `ini`, `softAtk`, `hardAtk`, `airAtk`,
 `groundDef`, `airDef`, `traits`) just forward to that row. So all units of a

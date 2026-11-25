@@ -46,25 +46,6 @@ public extension Units {
 		+ tankRoof(x: -2.7, z: 13.05)
 	}
 
-	/// Leopard 2: long hull, a wide turret bustle and pointed, sloping frontal armour.
-	static var leo2a6: Model {
-		tankChassis(length: 39, width: 22.5, wheels: 7, deck: 9.9)
-		+ Model([
-			tankPlate(length: 37.5, width: 21, z: 6.15 ... 9.9,
-				front: 7.5, rear: 1.5, side: 0.75, corner: 1.5),
-			tankPlate(length: 4.5, width: 4.8, z: 11.25 ... 14.7, x: 7.5,
-				front: 0.75, rear: 0, side: 0.45, corner: 0.75, tone: Tone.turret),
-		] + sides(5.4) {
-			tankPlate(length: 7.5, width: 6, z: 10.5 ... 15.45, x: 7.8, y: $0,
-				front: 4.8, rear: 0, side: 0.45, corner: 1.05, tone: Tone.turret)
-		})
-		+ tankTurret(length: 18.75, width: 17.25, z: 10.2 ... 15.45, x: -1.2,
-			front: 1.2, rear: 1.2, side: 0.75, corner: 2.7)
-		+ tankSkirts(length: 34.5, width: 22.5, z: 4.5 ... 8.85)
-		+ tankGun(from: 8.25, length: 24, z: 13.35, caliber: 2.4)
-		+ tankRoof(x: -2.7, z: 15.45)
-	}
-
 	/// The T-72 chassis with reactive armour cheeks, a rear bustle and a raised sight.
 	static var t90m: Model {
 		t72 + Model([
@@ -86,17 +67,6 @@ public extension Units {
 		], lines: [-6, -3, 0, 3, 6].map {
 			Line(from: at(-16.2, $0, 14.7), to: at(-12.45, $0, 14.7), tone: Tone.turret)
 		})
-	}
-
-	/// Swedish Leopard with an armoured roof and reinforced frontal cheek modules.
-	static var strv122: Model {
-		leo2a6 + Model([
-			tankPlate(length: 10.5, width: 10.5, z: 15.45 ... 16.5, x: -1.5,
-				front: 0.45, rear: 0.45, side: 0.45, corner: 1.2, tone: Tone.cargo),
-		] + sides(5.7) {
-			tankPlate(length: 8.25, width: 6.3, z: 10.5 ... 15.9, x: 7.8, y: $0,
-				front: 5.25, rear: 0, side: 0.45, corner: 1.2, tone: Tone.turret)
-		}) + tankRoof(x: -2.7, z: 16.5)
 	}
 }
 

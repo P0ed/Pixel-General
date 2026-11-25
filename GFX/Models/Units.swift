@@ -53,7 +53,7 @@ public enum Units {
 
 		public var variants: [Shape] {
 			switch self {
-			case .tank: [.leo2a6, .m1A2, .t72, .leo1, .strv103, .strv122, .kf51, .m48, .m1A1, .t55, .t90m]
+			case .tank: [.leo2a7, .m1A2, .t72, .leo1, .leo2a4, .strv103, .strv122, .kf51, .m48, .m1A1, .t55, .t90m]
 			case .scoutCar: [.fennek, .m1117, .brdm2]
 			case .wheeledCarrier: [.boxer, .stryker, .btr80]
 			case .trackedCarrier: [.fv432, .m113, .mtLb]
@@ -87,7 +87,7 @@ public enum Units {
 	}
 
 	public enum Shape: UInt8, Sendable, CaseIterable {
-		case leo1, leo2a6, strv103, strv122, kf51, m48, m1A1, m1A2, t55, t72, t90m
+		case leo1, leo2a4, leo2a7, strv103, strv122, kf51, m48, m1A1, m1A2, t55, t72, t90m
 		case fennek, m1117, brdm2
 		case boxer, stryker, btr80
 		case fv432, m113, mtLb
@@ -112,7 +112,8 @@ public enum Units {
 		public var name: String {
 			switch self {
 			case .leo1: "Leopard 1A5"
-			case .leo2a6: "Leopard 2A6"
+			case .leo2a4: "Leopard 2A4"
+			case .leo2a7: "Leopard 2A7"
 			case .strv103: "Strv 103"
 			case .strv122: "Strv 122"
 			case .kf51: "KF51 Panther"
@@ -201,7 +202,8 @@ public enum Units {
 		public var model: Model {
 			switch self {
 			case .leo1: Units.leo1
-			case .leo2a6: Units.leo2a6
+			case .leo2a4: Units.leo2a4
+			case .leo2a7: Units.leo2a7
 			case .strv103: Units.strv103
 			case .strv122: Units.strv122
 			case .kf51: Units.kf51

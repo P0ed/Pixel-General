@@ -187,21 +187,71 @@ public extension Units {
 		]) + rocketPod(from: at(-15, 0, 9.75), to: at(2.25, 0, 21.75), rows: 2, columns: 3, spacing: 3.6)
 	}
 
-	/// Self-propelled howitzer: seven wheels, angular fighting compartment and a raised gun tube.
 	static var pzh2000: Model {
-		tracked(length: 37.5, width: 19.5, count: 7)
+		let deck: Float = 10.35
+		let roof: Float = 20.4
+		var bow = box(length: 38.1, width: 14.1, z: 3.6 ... 7.65, tone: Tone.turret)
+		bow.planes.append(Plane(normal: V3(1, 0, -1.05), through: at(19.05, 0, 7.65)))
+		var turret = armour(length: 23.7, width: 19.2, z: 10.8 ... roof, x: -5.1,
+			front: 3.3, rear: 0.9, side: 1.2, corner: 1.5, tone: Tone.turret)
+		turret.planes += sides(1) { side in
+			Plane(normal: V3(0, side, 0.86), through: at(0, side * 8.8, 16.95))
+		}
+
+		let skirts = sides(10.8) { y in
+			let panelCenters: [Float] = [-14.4, -5.4, 3.6, 12.6]
+			return panelCenters.map { x in
+				var panel = box(length: 9, width: 0.9, z: 5.85 ... 8.7, x: x, y: y, tone: Tone.turret)
+				panel.planes += sides(1) { side in
+					Plane(normal: V3(side, 0, -1), through: at(x + side * 4.5, y, 7.35))
+				}
+				return panel
+			}
+		}.flatMap { $0 }
+		let lamps = sides(8.25) { y in
+			[
+				box(length: 2.1, width: 2.7, z: 7.95 ... 9.45, x: 15.45, y: y, tone: Tone.body),
+				cylinder(at: at(16.5, y, 9.15), radius: 0.93, length: 0.9, axis: .x, tone: 245),
+			]
+		}.flatMap { $0 }
+
+		let gunBase = at(5.4, 0, 17.1)
+		let muzzle = at(33, 0, 28.5)
+		let gunAxis = (muzzle - gunBase).normalized
+		let brakeStart = muzzle - gunAxis * 3.6
+		let ventSlats: [Float] = [13.5, 14.85, 16.2]
+
+		return tracked(length: 39, width: 21, count: 7)
 		+ Model([
-			armour(length: 36, width: 17.25, z: 5.7 ... 9.75,
-				front: 6, rear: 0.9, side: 0.75, corner: 1.35, tone: Tone.body),
-			hatch(x: 9, y: -3, z: 9.75),
-		], lines: grille(x: 7.5, y: 3.3, z: 9.825, length: 4.5, width: 4.5))
-		+ turret(length: 19.5, width: 15, z: 10.05 ... 18, x: -5.25,
-			front: 2.7, rear: 0.75, side: 0.9, corner: 2.1)
+			bow,
+			armour(length: 38.4, width: 21, z: 7.65 ... deck,
+				front: 6.75, rear: 0.75, side: 0.45, corner: 0.75, tone: Tone.body),
+			box(length: 1.35, width: 21, z: 6.6 ... 8.25, x: 18.825, tone: Tone.body),
+			hatch(x: 9.9, y: 3.3, z: deck, radius: 2.1),
+			cylinder(at: at(-4.5, 0, 10.575), radius: 7.5, length: 0.45, axis: .z, tone: Tone.running),
+		] + skirts + lamps, lines: grille(x: 9.15, y: -3.9, z: deck + 0.075, length: 5.1, width: 5.7))
 		+ Model([
-			hatch(x: -6.75, y: 2.7, z: 18, radius: 2.1),
-			armour(length: 4.5, width: 6, z: 12 ... 16.5, x: 3.75, front: 0.75, corner: 0.75, tone: Tone.turret),
-		], lines: [Line(from: at(-9, -4.5, 17.7), to: at(-10.5, -4.5, 23.25), tone: Tone.antenna)])
-		+ cannon(from: at(4.5, 0, 14.4), to: at(30, 0, 29.25), caliber: 2.4, muzzle: true)
+			turret,
+			armour(length: 4.5, width: 5.7, z: 13.35 ... 19.05, x: 4.95,
+				front: 1.05, side: 0.45, corner: 0.6, tone: Tone.cargo),
+			armour(length: 2.55, width: 3.75, z: 12.75 ... 17.55, x: 5.25, y: 4.65,
+				front: 1.8, side: 0.3, corner: 0.3, tone: 88),
+			hatch(x: -5.4, y: 3, z: roof, radius: 2.1),
+			hatch(x: -9.75, y: -2.7, z: roof, radius: 1.8),
+			box(length: 2.4, width: 3.3, z: 19.8 ... 22.05, x: 3.3, y: -1.65, tone: Tone.turret),
+			box(length: 0.45, width: 2.4, z: 20.55 ... 21.6, x: 4.575, y: -1.65, tone: Tone.glass),
+		], lines: ventSlats.map { z in
+			let x = 6.525 - (z - 12.75) * 0.375
+			return Line(from: at(x, 3.3, z), to: at(x, 6, z), tone: 92)
+		} + [
+			Line(from: at(-12.9, -4.2, roof), to: at(-14.1, -4.2, 26.4), tone: Tone.antenna),
+			Line(from: at(-11.4, 4.2, roof), to: at(-12.15, 4.2, 25.5), tone: Tone.antenna),
+		])
+		+ cannon(from: gunBase, to: brakeStart + gunAxis * 0.3, caliber: 2.25)
+		+ Model(
+			barrel(from: brakeStart, to: muzzle, caliber: 3.3, tone: 115),
+			barrel(from: muzzle - gunAxis * 0.4, to: muzzle + gunAxis * 0.025, caliber: 1.8, tone: 45)
+		)
 	}
 
 	/// Towed howitzer: two round wheels, split trails, breech and an elevated barrel with muzzle brake.
