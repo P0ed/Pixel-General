@@ -255,8 +255,8 @@ extension TacticalSim {
 
 	private var strategicStance: AI.Plan.Stance {
 		switch objective {
+		case .none: .balanced
 		case .survive(let team, _): country.team == team ? .defendSurvival : .attackSurvival
-		default: .balanced
 		}
 	}
 

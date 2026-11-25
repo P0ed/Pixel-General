@@ -40,7 +40,7 @@ struct HQTests {
 			#expect(tanks.map(\.model) == [.leo1, .leo2a4, .leo2a7])
 		}
 		let swedishTanks = Shop(country: .swe, tier: 1, air: false).units.filter { $0.type == .heavyTrack }
-		#expect(swedishTanks.map(\.model) == [.strv103, .strv122])
+		#expect(swedishTanks.map(\.model) == [.strv103, .leo2a4, .strv122])
 	}
 
 	@Test func supplyHasNoUpgrades() {

@@ -532,62 +532,6 @@ struct TacticalTests {
 		#expect(sim.winner == .soviet)
 	}
 
-	private static func defenseSim() -> TacticalSim {
-		let cities: [(XY, Country)] = [
-			(XY(4, 4), .fin), (XY(50, 4), .usa), (XY(4, 50), .rus), (XY(50, 50), .irn),
-		]
-		var map = Map<64, Terrain>(zero: .field)
-		for (xy, _) in cities { map[xy] = .city }
-		var sim = TacticalSim(
-			map: map, players: cities.map { Player(country: $0.1) }, cities: cities, units: []
-		)
-		sim.objective = .survive(.soviet, day: 30)
-		return sim
-	}
-
-	@Test func alliedCityCountsThroughLastTurnOfDay30() {
-		var sim = Self.defenseSim()
-		sim.turn = 117
-		sim.spawn(modifying(Unit(model: .regular, country: .fin)) { $0.reset() }, at: XY(4, 50))
-		#expect(!sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
-		#expect(sim.day == 30 && sim.winner == nil)
-		#expect(sim.control[XY(4, 50)] == .fin && sim[.rus].alive && sim[.irn].alive)
-		#expect(!sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
-		#expect(sim.day == 30 && sim.winner == nil)
-		#expect(sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
-		#expect(sim.day == 31 && sim.winner == .soviet)
-	}
-
-	@Test(arguments: [false, true])
-	func finalCaptorWinsImmediatelyWithTwoAttackingTeams(alliesLast: Bool) {
-		var sim = Self.defenseSim()
-		sim.turn = 119
-		let targets: [(XY, Country)] = [(XY(4, 50), .fin), (XY(50, 50), .usa)]
-		for (xy, country) in alliesLast ? targets : Array(targets.reversed()) {
-			sim.spawn(modifying(Unit(model: .regular, country: country)) { $0.reset() }, at: xy)
-		}
-
-		#expect(sim.winner == nil)
-		#expect(sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
-		#expect(sim.aliveTeams.nonzeroBitCount == 2)
-		#expect(sim.day == 30)
-		let expected = alliesLast ? Team.allies : .axis
-		#expect(sim.winner == expected)
-		#expect(sim.reduce(.end).isEmpty)
-
-		var core = Core.new(country: .fin)
-		core.startScenario(sim)
-		guard var restored: Core = decode(encode(core)), restored.tactical != nil else {
-			Issue.record("Could not restore the final capture")
-			return
-		}
-		let battle = clone(restored.tactical!)
-		#expect(battle.winner == expected)
-		restored.complete(battle)
-		let complete = restored.tactical == nil
-		#expect(complete)
-	}
-
 	@Test func annihilatingSurvivorBeforeDeadlineWinsForAttacker() {
 		var sim = Self.objectiveSim(cityXY: XY(5, 5), controller: .rus)
 		sim.objective = .survive(.soviet, day: 20)

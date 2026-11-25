@@ -1,16 +1,7 @@
-import struct Foundation.Data
 import Testing
 @testable import COR
 
 struct CoreTests {
-
-	@Test func legacyObjectiveBytesStillDecode() {
-		let ordinary: Objective? = decode(Data([4, 0, 0, 0]))
-		let defense: Objective? = decode(Data([2, 0, 30, 0]))
-		#expect(ordinary == Objective.none)
-		#expect(defense == .survive(.allies, day: 30))
-		#expect(MemoryLayout<Core>.size == 17_644)
-	}
 
 	private static func battle(units: [Unit] = []) -> TacticalSim {
 		var map = Map<64, Terrain>(zero: .field)

@@ -20,30 +20,9 @@ public struct TacticalSim: ~Copyable {
 @frozen public enum Objective: Equatable, BitwiseCopyable {
 	case none
 	case survive(Team, day: UInt16)
-	case capturedByAxis
-	case capturedByAllies
-	case capturedBySoviet
 
 	public var defender: Team? {
 		if case .survive(let team, _) = self { team } else { nil }
-	}
-
-	var captureWinner: Team? {
-		switch self {
-		case .capturedByAxis: .axis
-		case .capturedByAllies: .allies
-		case .capturedBySoviet: .soviet
-		default: nil
-		}
-	}
-
-	init(capturedBy team: Team) {
-		self = switch team {
-		case .axis: .capturedByAxis
-		case .allies: .capturedByAllies
-		case .soviet: .capturedBySoviet
-		case .none: .none
-		}
 	}
 }
 
