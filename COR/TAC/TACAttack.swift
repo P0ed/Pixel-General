@@ -40,11 +40,9 @@ extension TacticalSim {
 
 		units[si].ap.decrement()
 
-		if !su.isAir, !du.isAir, !su.isArt, let art = artSupport(defender: dst, attacker: src) {
-			fire(src: art, dst: src, defMod: 0, into: &events)
-		}
-		if su.isAir, !du.isAA, let aa = aaSupport(defender: dst, attacker: src) {
-			fire(src: aa, dst: src, defMod: 0, into: &events)
+		let support = defensiveSupport(defender: dst, attacker: src)
+		if support != .none {
+			fire(src: support, dst: src, defMod: 0, into: &events)
 		}
 		if !ruggedDefence, units[si].alive {
 			fire(src: src, dst: dst, defMod: dstDef, into: &events)
@@ -139,14 +137,21 @@ extension TacticalSim {
 			&& (su.isAir ? su.ammo > 0 : true)
 	}
 
-	func artSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {
-		position[defender].n8.firstMap { hx in
-			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isArt && u.ammo > 0
-				&& (!visibleOnly || isVisible(unitsMap[hx]))
-				? unitsMap[hx] : nil
+	func defensiveSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID {
+		let source = units[attacker]
+		let target = units[defender]
+		guard source.isAir ? !target.isAA : !source.isArt && !target.isAir else { return .none }
+
+		for xy in position[defender].n8 {
+			let uid = uidAt(xy)
+			guard uid != .none, !visibleOnly || isVisible(uid) else { continue }
+			let unit = units[uid]
+			if unit.country.team == target.country.team, unit.ammo > 0,
+			   source.isAir ? unit.isAA : unit.isArt {
+				return uid
 			}
 		}
+		return .none
 	}
 
 	/// The armed enemy AA covering the earliest tile of `route`, and that index.
@@ -169,16 +174,6 @@ extension TacticalSim {
 		return uid == .none ? nil : (k, uid)
 	}
 
-	func aaSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID? {
-		position[defender].n8.firstMap { hx in
-			unitAt(hx).flatMap { u in
-				u.country.team == units[defender].country.team && u.isAA && u.ammo > 0
-				&& (!visibleOnly || isVisible(unitsMap[hx]))
-				? unitsMap[hx] : nil
-			}
-		}
-	}
-
 	private func aura(_ skills: Skills, country: Country, at xy: XY, visibleOnly: Bool) -> Bool {
 		aura(country: country, at: xy, visibleOnly: visibleOnly) { $0[skills] }
 	}
@@ -188,7 +183,8 @@ extension TacticalSim {
 	}
 
 	private func aura(country: Country, at xy: XY, visibleOnly: Bool, has: (Unit) -> Bool) -> Bool {
-		if let id = uidAt(xy), !visibleOnly || isVisible(id), units[id].country == country, has(units[id]) {
+		let id = uidAt(xy)
+		if id != .none, !visibleOnly || isVisible(id), units[id].country == country, has(units[id]) {
 			return true
 		}
 		return neighbors(at: xy).contains { id in
@@ -199,7 +195,8 @@ extension TacticalSim {
 	private func encirclement(id: UID, visibleOnly: Bool) -> Int8 {
 		let team = units[id].country.team
 		let enemies = position[id.index].n4.reduce(into: 0 as Int8) { r, xy in
-			guard let other = uidAt(xy), !visibleOnly || isVisible(other) else { return }
+			let other = uidAt(xy)
+			guard other != .none, !visibleOnly || isVisible(other) else { return }
 			r += units[other].country.team != team ? 1 : 0
 		}
 		return max(0, enemies - 1)

@@ -3,39 +3,68 @@ import SpriteKit
 
 extension MenuState {
 
-	static func shop(units: [Unit], prestige: UInt16, purchase: (Int) -> Action) -> Self? {
-		guard !units.isEmpty else { return nil }
+	static func shop(
+		units: [Unit],
+		auxiliary: [Unit]? = nil,
+		prestige: UInt16,
+		purchase: (Int, Bool) -> Action
+	) -> Self? {
+		guard !units.isEmpty || auxiliary?.isEmpty == false else { return nil }
 
-		let entries = units.enumerated().map { index, unit in
-			let item = MenuItem<Action>.close(
-				icon: unit.image,
-				status: .init(text: "\(unit.stats.cost) / \(prestige)\n" + unit.status()),
-				action: purchase(index)
-			)
-			return (moveType: unit.type.moveType, item: item)
-		}
-
-		func button(_ title: String, icon: SKTexture, moveType: MoveType) -> MenuItem<Action> {
-			.init(icon: icon, status: .init(text: title)) { stack, slot in
-				let index = stack.count - 1
-				let selection = stack[index].selectedSideButton == slot ? nil : slot
-				stack[index].selectedSideButton = selection
-				stack[index].items = entries.compactMap { entry in
-					selection == nil || entry.moveType == moveType ? entry.item : nil
-				}
-				stack[index].cursor = 0
+		func entries(_ units: [Unit], aux: Bool) -> [(moveType: MoveType, item: MenuItem<Action>)] {
+			units.enumerated().map { index, unit in
+				let item = MenuItem<Action>.close(
+					icon: unit.image,
+					status: .init(text: "\(unit.stats.cost) / \(prestige)\n" + unit.status()),
+					action: purchase(index, aux)
+				)
+				return (unit.type.moveType, item)
 			}
 		}
 
-		return Self(
-			items: entries.map(\.item),
-			leftButtons: [.back, .space, .space, .space],
-			rightButtons: [
-				button("Infantry", icon: .shopInfantry, moveType: .leg),
-				button("Trucks", icon: .shopWheels, moveType: .wheel),
-				button("Armor", icon: .shopTracked, moveType: .track),
-				button("Air", icon: .shopAir, moveType: .air),
-			]
-		)
+		let core = entries(units, aux: false)
+		let aux = auxiliary.map { entries($0, aux: true) }
+		let categories: [4 of (title: String, icon: SKTexture, moveType: MoveType)] = [
+			("Infantry", .shopInfantry, .leg),
+			("Trucks", .shopWheels, .wheel),
+			("Armor", .shopTracked, .track),
+			("Air", .shopAir, .air),
+		]
+
+		func menu(showAux: Bool, filter: MenuSlot?) -> Self {
+			let offers = showAux ? (aux ?? []) : core
+			let moveType = if case .right(let index) = filter { categories[index].moveType } else { nil as MoveType? }
+			var items = offers.compactMap { moveType == nil || $0.moveType == moveType ? $0.item : nil }
+			if items.isEmpty, aux != nil {
+				let status = offers.isEmpty ? "Core unit limit reached" : "No units match this filter"
+				items = [.apply(icon: .clear, status: status)]
+			}
+
+			let toggle: MenuItem<Action> = if aux != nil {
+				.init(icon: showAux ? .plus : .HQ, status: .init(
+					text: showAux ? "Auxiliary units · Switch to Core" : "Core units · Switch to Aux"
+				)) { stack, _ in
+					let index = stack.count - 1
+					stack[index] = menu(showAux: !showAux, filter: filter)
+				}
+			} else {
+				.space
+			}
+
+			return Self(
+				items: items,
+				leftButtons: [.back, toggle, .space, .space],
+				rightButtons: .init { index in
+					let category = categories[index]
+					return .init(icon: category.icon, status: .init(text: category.title)) { stack, slot in
+						let index = stack.count - 1
+						stack[index] = menu(showAux: showAux, filter: filter == slot ? nil : slot)
+					}
+				},
+				selectedSideButton: filter
+			)
+		}
+
+		return menu(showAux: core.isEmpty, filter: nil)
 	}
 }

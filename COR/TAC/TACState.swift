@@ -7,9 +7,9 @@ public struct TacticalSim: ~Copyable {
 	public var players: CArray<4, Player>
 	public var vision: [4 of SetXY]
 
-	public var units: Speicher<128, Unit>
-	public var position: [128 of XY]
-	public var cargo: [128 of UID]
+	public var units: Speicher<192, Unit>
+	public var position: [192 of XY]
+	public var cargo: [192 of UID]
 
 	public var turn: UInt32 = 0
 	public var d20: D20 = D20()
@@ -135,8 +135,7 @@ public extension TacticalSim {
 
 	subscript(_ xy: XY) -> Unit? {
 		get {
-			let idx = unitsMap[xy].index
-			return if idx < 0 { nil } else { units[idx] }
+			unitAt(xy)
 		}
 	}
 

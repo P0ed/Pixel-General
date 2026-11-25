@@ -1,12 +1,10 @@
 public extension TacticalSim {
 
-	func uidAt(_ xy: XY) -> UID? {
-		let id = unitsMap[xy]
-		return id == .none ? nil : id
-	}
+	func uidAt(_ xy: XY) -> UID { unitsMap[xy] }
 
 	func unitAt(_ xy: XY) -> Unit? {
-		uidAt(xy).map { uid in units[uid] }
+		let uid = uidAt(xy)
+		return uid == .none ? nil : units[uid]
 	}
 
 	func moves(for uid: UID, target: XY? = nil) -> Moves {
@@ -38,7 +36,7 @@ public extension TacticalSim {
 			} ?? false
 		}
 		func canStop(at xy: XY) -> Bool {
-			!(visible[xy] && uidAt(xy) != nil)
+			!(visible[xy] && uidAt(xy) != .none)
 		}
 
 		let r = unit.mov
@@ -117,10 +115,11 @@ public extension TacticalSim {
 		var overwatcher: UID = .none
 		for k in route.indices.reversed() {
 			let xy = route[k]
-			if let tid = uidAt(xy) {
+			let tid = uidAt(xy)
+			if tid != .none {
 				let u = units[tid]
 				if u.country.team != team, !vision[playerIndex][position[tid.index]] {
-					interruptor = unitsMap[xy]
+					interruptor = tid
 					break
 				}
 			} else {

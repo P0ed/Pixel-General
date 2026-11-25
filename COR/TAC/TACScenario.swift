@@ -61,16 +61,24 @@ public struct Scenario {
 	var startingUnits: [Unit] {
 		let active = players.filter { $0.alive }
 		let countries = Set(active.map(\.country))
-		let roster = units.filter { countries.contains($0.country) }
-		return continents ? Self.addingNavalAux(to: roster, for: active) : roster
+		var coreCounts: [Country: Int] = [:]
+		let roster = units.filter { unit in
+			guard countries.contains(unit.country) else { return false }
+			if unit[.aux] { return true }
+			guard coreCounts[unit.country, default: 0] < TacticalSim.coreUnitLimit else { return false }
+			coreCounts[unit.country, default: 0] += 1
+			return true
+		}
+		let fleet: [UnitModel] = continents ? [.cruiser, .destroyer, .destroyer, .cargo, .cargo] : []
+		return Self.fittingAux(to: roster, for: active, fleet: fleet)
 	}
 
-	private static func addingNavalAux(
+	private static func fittingAux(
 		to units: [Unit],
-		for players: [Player]
+		for players: [Player],
+		fleet: [UnitModel]
 	) -> [Unit] {
 		var result = units
-		let fleet: [UnitModel] = [.cruiser, .destroyer, .destroyer, .cargo, .cargo]
 		let desiredCounts = Dictionary(fleet.map { ($0, 1) }, uniquingKeysWith: +)
 		for player in players {
 			let isAux = { (unit: Unit) in
@@ -90,7 +98,8 @@ public struct Scenario {
 				return model
 			}
 
-			var overflow = max(0, result.count(where: isAux) + additions.count - 16)
+			let total = result.count { $0.country == player.country } + additions.count
+			var overflow = max(0, total - TacticalSim.totalUnitLimit)
 			while overflow > 0, let last = result.lastIndex(where: { unit in
 				isAux(unit) && currentCounts[unit.model, default: 0] > desiredCounts[unit.model, default: 0]
 			}) {
@@ -153,6 +162,6 @@ public extension TacticalSim {
 				unit.reset()
 			}
 		}
-		return [16 of Unit](head: Array(survivors.prefix(16)), tail: .empty)
+		return [16 of Unit](head: Array(survivors.prefix(Self.coreUnitLimit)), tail: .empty)
 	}
 }

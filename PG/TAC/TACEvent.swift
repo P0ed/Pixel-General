@@ -132,8 +132,9 @@ private extension TacticalNodes {
 		let xy = state.ui.cursor
 		scene?.showMenu(.shop(
 			units: state.sim.shopUnits(at: xy),
+			auxiliary: state.sim.shopUnits(at: xy, aux: true),
 			prestige: state.sim.player.prestige,
-			purchase: { .purchase($0, xy) }
+			purchase: { index, aux in .purchase(index, xy, aux: aux) }
 		))
 	}
 }

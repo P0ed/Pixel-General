@@ -6,7 +6,7 @@ struct TacticalNodes {
 	weak var scene: TacticalScene?
 	var camera: SKCameraNode
 	var map: MapNodes
-	@IO var units: [128 of SKNode?] = .init(repeating: nil)
+	@IO var units: [192 of SKNode?] = .init(repeating: nil)
 	@IO var lit: SetXY = .empty
 	@IO var overlayKey: OverlayKey = .terrain
 

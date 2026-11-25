@@ -213,6 +213,8 @@ private enum Help {
 	    you control.
 	  • Spend prestige at an owned, enemy-free settlement to buy units.
 	    Cities sell ground units and airfields sell aircraft.
+	  • Use the shop's left-side Core/Aux button to choose what to buy.
+	    Each player can field up to 16 core units and 48 units total.
 
 	MOVEMENT & TERRAIN
 

@@ -37,7 +37,7 @@ extension HQNodes {
 		scene?.showMenu(.shop(
 			units: Shop(country: state.sim.country, tier: state.sim.player.tier).units,
 			prestige: state.sim.player.prestige,
-			purchase: { .purchase($0, slot) }
+			purchase: { index, _ in .purchase(index, slot) }
 		))
 	}
 

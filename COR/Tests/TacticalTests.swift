@@ -185,14 +185,31 @@ struct TacticalTests {
 		let players = countries.map { Player(country: $0, type: .ai) }
 		let roster = countries.flatMap { [Unit].base($0) + .aux($0) }
 		let units = Scenario(players: players, units: roster, continents: true).startingUnits
-		#expect(units.count == 128)
+		#expect(units.count == roster.count + players.count * 5)
 		#expect(units.count(where: { $0.model == .cruiser }) == players.count)
 		#expect(units.count(where: { $0.model == .destroyer }) == players.count * 2)
 		#expect(units.count(where: { $0.model == .cargo }) == players.count * 2)
 		for country in countries {
 			let aux = units.count(where: { $0.country == country && $0[.aux] })
-			#expect(aux == 16, "\(country) has \(aux) aux units")
+			#expect(aux == [Unit].aux(country).count + 5, "\(country) has \(aux) aux units")
 		}
+	}
+
+	@Test func scenarioCapsFullRostersAndKeepsExistingShips() {
+		let country = Country.swe
+		let core = Unit(model: .regular, country: country)
+		let cruiser = Unit(model: .cruiser, country: country).aux.veteran
+		let players = [Player(country: country)]
+		let roster = [Unit](repeating: core, count: 17)
+			+ [Unit](repeating: core.aux, count: 35) + [cruiser]
+		let starting = Scenario(players: players, units: roster, continents: true).startingUnits
+		#expect(starting.count == 48)
+		#expect(starting.count(where: { !$0[.aux] }) == 16)
+		#expect(starting.count(where: { $0.type.isNaval }) == 5)
+		#expect(starting.contains(cruiser))
+		let inland = Scenario(players: players, units: Array(roster.dropLast())).startingUnits
+		#expect(inland.count == 48)
+		#expect(inland.count(where: { !$0[.aux] }) == 16)
 	}
 
 	@Test func seaIsImpassableOnlyToLandUnits() {
@@ -206,7 +223,7 @@ struct TacticalTests {
 		#expect(Terrain.river.moveCost(infantry) < 0x10, "River crossing must remain possible")
 	}
 
-	@Test func auxDeploysAtStartAndLeavesTheShop() {
+	@Test func auxDeploysAtStartAndHasItsOwnShopMode() {
 		let players = Self.players()
 		let sim = TacticalSim(
 			players: players,
@@ -235,12 +252,14 @@ struct TacticalTests {
 		}
 		#expect(sim.players[0].prestige == 0xF00, "predeploy charged prestige")
 
-		// The shop sells only the core catalogue.
-		var auxRows = 0
-		for xy in sim.map.indices {
-			for u in sim.shopUnits(at: xy) where u[.aux] { auxRows += 1 }
+		guard let settlement = sim.map.indices.first(where: { !sim.shopUnits(at: $0).isEmpty }) else {
+			Issue.record("No eligible settlement")
+			return
 		}
-		#expect(auxRows == 0, "shop still sells aux units")
+		let core = sim.shopUnits(at: settlement)
+		let aux = sim.shopUnits(at: settlement, aux: true)
+		#expect(core.allSatisfy { !$0[.aux] })
+		#expect(aux == core.map(\.aux))
 	}
 
 	@Test func aiCanRunAndEndTurnWithoutCrash() {

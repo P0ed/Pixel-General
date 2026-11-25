@@ -21,6 +21,7 @@ struct TacticalSimTests {
 
 	private func gameStateEqual(_ a: borrowing TacticalSim, _ b: borrowing TacticalSim) -> Bool {
 		guard a.turn == b.turn, a.d20 == b.d20, a.players.count == b.players.count,
+			  a.units.count == b.units.count,
 			  a.objective == b.objective, a.settlements == b.settlements
 		else { return false }
 		for i in 0 ..< 4 {
@@ -33,7 +34,7 @@ struct TacticalSimTests {
 				  a.vision[i] == b.vision[i]
 			else { return false }
 		}
-		for i in 0 ..< 128 {
+		for i in a.position.indices {
 			guard a.units[i] == b.units[i],
 				  a.position[i] == b.position[i],
 				  a.cargo[i] == b.cargo[i]
@@ -46,6 +47,110 @@ struct TacticalSimTests {
 			else { return false }
 		}
 		return true
+	}
+
+	@Test func unitSetAddressesAllSixWords() {
+		var set = UnitSet()
+		let boundaries = [0, 31, 32, 63, 64, 95, 96, 127, 128, 159, 160, 191]
+		for i in boundaries { set[i.uid] = true }
+		set[.none] = true
+		set[192.uid] = true
+		#expect(UID.none.rawValue == 255)
+		#expect(!set[.none])
+		#expect(!set[192.uid])
+		for i in 0 ..< 192 { #expect(set[i.uid] == boundaries.contains(i)) }
+		set[127.uid] = false
+		set[191.uid] = false
+		#expect(!set[127.uid])
+		#expect(!set[191.uid])
+		#expect(set[128.uid])
+		#expect(set[159.uid])
+	}
+
+	private static func fullRoster(shop: XY) -> TacticalSim {
+		let players = Self.players()
+		let locations = [XY(8, 8), XY(55, 8), XY(8, 55), shop]
+		let cities = Array(zip(locations, players.map(\.country)))
+		var map = Map<64, Terrain>(zero: .field)
+		for xy in locations { map[xy] = .city }
+		let roster = players.flatMap { player in
+			var unit = Unit(model: .regular, country: player.country)
+			unit.reset()
+			return Array(repeating: unit, count: 16) + Array(repeating: unit.aux, count: 32)
+		}
+		var sim = TacticalSim(map: map, players: players, cities: cities, units: roster)
+		sim.turn = 3
+		let occupant = sim.uidAt(shop)
+		if occupant != .none { sim.place(occupant, at: XY(63, 63)) }
+		for i in 144 ..< 192 {
+			sim.units[i].mp = 0
+			sim.units[i].ap = 0
+		}
+		return sim
+	}
+
+	@Test func fullRosterReusesHighestSlotForAuxiliaryPurchase() {
+		let shop = XY(55, 55)
+		var sim = Self.fullRoster(shop: shop)
+		let uid = 191.uid
+		let prestige = sim.player.prestige
+		var ai = AI.Plan()
+		let storageIsFull = sim.units.isFull
+		let auxBlocked = sim.shopUnits(at: shop, aux: true).isEmpty
+		let rejectedAtCap = sim.reduce(.purchase(0, shop, aux: true)).isEmpty
+		let actionAtCap = sim.run(ai: &ai)
+		let prestigeAtCap = sim.player.prestige
+		#expect(storageIsFull)
+		#expect(auxBlocked)
+		#expect(rejectedAtCap)
+		#expect(actionAtCap == .end)
+		#expect(prestigeAtCap == prestige)
+
+		sim.vacate(uid)
+		sim.units[uid].hp = 0
+		let coreBlocked = sim.shopUnits(at: shop).isEmpty
+		let rejectedCore = sim.reduce(.purchase(0, shop)).isEmpty
+		#expect(coreBlocked)
+		#expect(rejectedCore)
+		guard case .purchase(let slot, let xy, true) = sim.run(ai: &ai) else {
+			Issue.record("AI did not buy an auxiliary with sixteen living core units")
+			return
+		}
+		#expect(xy == shop)
+		let offer = sim.shopUnits(at: xy, aux: true)[slot]
+		let events = sim.reduce(.purchase(slot, xy, aux: true))
+		let purchasedID = sim.uidAt(xy)
+		let purchased = sim.units[uid]
+		let remainingPrestige = sim.player.prestige
+		let auxBlockedAgain = sim.shopUnits(at: shop, aux: true).isEmpty
+		#expect(events.contains { if case .spawn(let spawned) = $0 { spawned == uid } else { false } })
+		#expect(purchasedID == uid)
+		#expect(purchased[.aux])
+		#expect(purchased.mp == 0)
+		#expect(purchased.ap == 0)
+		#expect(remainingPrestige == prestige - offer.stats.cost)
+		#expect(auxBlockedAgain)
+		let survivors = sim.survivingRoster(for: sim.country).compactMap { $0.alive ? $0 : nil }
+		#expect(survivors.count == 16)
+
+		checkFullRosterRoundTrip(sim, shop: shop, uid: uid)
+	}
+
+	private func checkFullRosterRoundTrip(_ sim: borrowing TacticalSim, shop: XY, uid: UID) {
+		guard let decoded: TacticalSim = decode(encode(sim)) else {
+			Issue.record("Full tactical roster failed to decode")
+			return
+		}
+		let sameUnit = decoded.units[uid] == sim.units[uid] && decoded.position[uid] == shop
+		let shopOccupant = decoded.uidAt(shop)
+		let outOfBounds = decoded.uidAt(XY(64, 64))
+		let emptyTile = decoded[XY(0, 0)]
+		let cargo = decoded.cargo[uid]
+		#expect(sameUnit)
+		#expect(shopOccupant == uid)
+		#expect(outOfBounds == .none)
+		#expect(emptyTile == nil)
+		#expect(cargo == .none)
 	}
 
 	@Test func sameSeedAndActionsProduceIdenticalStates() {

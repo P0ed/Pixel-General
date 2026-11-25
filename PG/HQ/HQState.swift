@@ -62,7 +62,7 @@ extension HQState {
 
 	private mutating func mainAction() -> HQInputReaction {
 		if ui.selected != .none {
-			if ui.selected == sim.units[ui.cursor]?.0 {
+			if let (uid, _) = sim.units[ui.cursor], ui.selected == uid {
 				ui.selected = .none
 			} else {
 				defer { ui.selected = .none }

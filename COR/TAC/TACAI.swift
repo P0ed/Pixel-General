@@ -7,19 +7,19 @@ public enum AI {
 	public struct Plan: ~Copyable {
 		public var turn: UInt32?
 		public var country: Country = .none
-		public var rosterSignature: UInt128 = 0
+		public var rosterSignature: UInt64 = 0
 		public var stance: Stance = .balanced
 		public var focusTarget: XY?
 		public var actionsThisTurn: UInt16 = 0
 
-		public var role: [128 of Role] = .init(repeating: .idle)
-		public var target: [128 of XY] = .init(repeating: .zero)
-		public var movePriority: [128 of Int16] = .init(repeating: 0)
-		public var order: CArray<128, UID> = .init(tail: .none)
-		public var skippedMoves: UInt128 = 0
+		public var role: [192 of Role] = .init(repeating: .idle)
+		public var target: [192 of XY] = .init(repeating: .zero)
+		public var movePriority: [192 of Int16] = .init(repeating: 0)
+		public var order: CArray<192, UID> = .init(tail: .none)
+		public var skippedMoves = UnitSet()
 
-		public var roster: CArray<128, UID> = .init(tail: .none)
-		public var enemies: CArray<128, UID> = .init(tail: .none)
+		public var roster: CArray<192, UID> = .init(tail: .none)
+		public var enemies: CArray<192, UID> = .init(tail: .none)
 
 		public var ownSettlements: CArray<64, XY> = .init(tail: .zero)
 		public var alliedSettlements: CArray<64, XY> = .init(tail: .zero)
@@ -100,11 +100,10 @@ extension TacticalSim {
 	// MARK: - Strategic plan
 
 	/// Refresh all information that can change during a turn. Enemy entries are
-	/// strictly visible; settlement control is public game state. The returned
-	/// bit set is the acting country's current roster membership signature.
-	private func refresh(_ ai: inout AI.Plan) -> UInt128 {
+	/// strictly visible; settlement control is public game state.
+	private func refresh(_ ai: inout AI.Plan) -> UInt64 {
 		let acting = country
-		var signature: UInt128 = 0xcbf29ce484222325
+		var signature: UInt64 = 0xcbf29ce484222325
 		ai.roster.erase()
 		ai.enemies.erase()
 		ai.ownSettlements.erase()
@@ -114,9 +113,9 @@ extension TacticalSim {
 		units.forEachAlive { i, u in
 			if u.country == acting {
 				ai.roster.add(i.uid)
-				let identity = UInt128(i + 1)
-					| UInt128(u.model.rawValue) << 8
-					| UInt128(u.bits.intersection(.aux).rawValue) << 16
+				let identity = UInt64(i)
+					| UInt64(u.model.rawValue) << 8
+					| UInt64(u.bits.intersection(.aux).rawValue) << 16
 				signature = (signature ^ identity) &* 0x100000001b3
 			} else if !offMap(unit: i.uid), isVisible(i.uid), u.country.team != acting.team {
 				ai.enemies.add(i.uid)
@@ -136,7 +135,7 @@ extension TacticalSim {
 		return signature
 	}
 
-	private func buildPlan(_ ai: inout AI.Plan, signature: UInt128) {
+	private func buildPlan(_ ai: inout AI.Plan, signature: UInt64) {
 		ai.turn = turn
 		ai.country = country
 		ai.rosterSignature = signature
@@ -146,7 +145,7 @@ extension TacticalSim {
 		ai.target = .init(repeating: .zero)
 		ai.movePriority = .init(repeating: 0)
 		ai.order.erase()
-		ai.skippedMoves = 0
+		ai.skippedMoves = UnitSet()
 
 		guard !ai.roster.isEmpty else { return }
 
@@ -158,7 +157,7 @@ extension TacticalSim {
 		}
 		ai.focusTarget = strategicFocus(ai, pressures: pressures)
 
-		var claimed: UInt128 = 0
+		var claimed = UnitSet()
 
 		// Broken units get a supply-compatible haven. Air can repair only at
 		// an owned airfield; ground can use any owned settlement, including one.
@@ -171,7 +170,7 @@ extension TacticalSim {
 			ai.role[uid.index] = .retreat
 			ai.target[uid.index] = haven
 			ai.movePriority[uid.index] = 5_000
-			claimed |= bit(uid)
+			claimed[uid] = true
 		}
 
 		// Assign garrisons by visible pressure, highest pressure first. A
@@ -200,7 +199,7 @@ extension TacticalSim {
 				var defender: UID = .none
 				var best = Int.max
 				ai.roster.forEach { _, uid in
-					guard claimed & bit(uid) == 0 else { return }
+					guard !claimed[uid] else { return }
 					let u = units[uid]
 					guard canGarrison(u), !offMap(unit: uid) else { return }
 					let d = position[uid].stepDistance(to: city)
@@ -211,7 +210,7 @@ extension TacticalSim {
 				ai.role[defender.index] = .defend
 				ai.target[defender.index] = city
 				ai.movePriority[defender.index] = Int16(clamping: 4_000 + pressure)
-				claimed |= bit(defender)
+				claimed[defender] = true
 			}
 		}
 
@@ -219,31 +218,28 @@ extension TacticalSim {
 		// spreads the force without losing concentration on the main focus.
 		var loads: [64 of UInt8] = .init(repeating: 0)
 		ai.roster.forEach { _, uid in
-			guard claimed & bit(uid) == 0, units[uid].type != .supply else { return }
+			guard !claimed[uid], units[uid].type != .supply else { return }
 			let u = units[uid]
-			let objective = offensiveObjective(for: uid, loads: loads, ai: ai)
-			if let objective {
+			if let objective = offensiveObjective(for: uid, loads: loads, ai: ai) {
 				ai.target[uid.index] = ai.enemySettlements[objective]
 				loads[objective].increment(by: 1)
-			} else if let enemy = nearestVisibleEnemy(to: position[uid], ai) {
-				ai.target[uid.index] = position[enemy]
 			} else {
-				ai.target[uid.index] = position[uid]
+				let enemy = nearestVisibleEnemy(to: position[uid], ai)
+				ai.target[uid.index] = enemy == .none ? position[uid] : position[enemy]
 			}
 			ai.role[uid.index] = u.isArt || u.isAA || u.isAir ? .hunt : .attack
 			let base = ai.role[uid.index] == .hunt ? 3_000 : 2_500
 			let urgency = ai.stance == .attackSurvival ? deadlineUrgency * 120 : 0
 			ai.movePriority[uid.index] = Int16(clamping: base + urgency)
-			claimed |= bit(uid)
+			claimed[uid] = true
 		}
 
 		// Supply units trail a real combat anchor, never an arbitrary city.
 		ai.roster.forEach { _, uid in
-			guard claimed & bit(uid) == 0 else { return }
+			guard !claimed[uid] else { return }
 			let anchor = nearestCombatAnchor(to: position[uid], excluding: uid, ai: ai)
 			ai.role[uid.index] = .support
-			ai.target[uid.index] = anchor.map { position[$0] }
-				?? ai.focusTarget ?? position[uid]
+			ai.target[uid.index] = anchor == .none ? (ai.focusTarget ?? position[uid]) : position[anchor]
 			ai.movePriority[uid.index] = 1_500
 		}
 
@@ -265,8 +261,6 @@ extension TacticalSim {
 		let remaining = max(0, Int(deadline) - day)
 		return remaining <= 3 ? 4 : remaining <= 7 ? 3 : remaining <= 14 ? 2 : 1
 	}
-
-	private func bit(_ uid: UID) -> UInt128 { UInt128(1) << uid.rawValue }
 
 	private func canGarrison(_ u: Unit) -> Bool {
 		!u.isAir && (u.type == .inf || u.isArmor || u.isAA)
@@ -349,7 +343,7 @@ extension TacticalSim {
 		}
 	}
 
-	private func threat(at xy: XY, from enemies: borrowing CArray<128, UID>) -> Int {
+	private func threat(at xy: XY, from enemies: borrowing CArray<192, UID>) -> Int {
 		var result = 0
 		enemies.forEach { _, uid in
 			let e = units[uid]
@@ -362,16 +356,22 @@ extension TacticalSim {
 		return result
 	}
 
-	private func nearestVisibleEnemy(to p: XY, _ ai: borrowing AI.Plan) -> UID? {
-		ai.enemies.min { p.stepDistance(to: position[$0]) < p.stepDistance(to: position[$1]) }
+	private func nearestVisibleEnemy(to p: XY, _ ai: borrowing AI.Plan) -> UID {
+		var best = UID.none
+		var distance = Int.max
+		ai.enemies.forEach { _, uid in
+			let d = p.stepDistance(to: position[uid])
+			if d < distance { distance = d; best = uid }
+		}
+		return best
 	}
 
 	private func nearestCombatAnchor(
 		to p: XY,
 		excluding excluded: UID,
 		ai: borrowing AI.Plan
-	) -> UID? {
-		var best: UID?
+	) -> UID {
+		var best = UID.none
 		var distance = Int.max
 		ai.roster.forEach { _, uid in
 			guard uid != excluded, !offMap(unit: uid), units[uid].type != .supply,
@@ -454,16 +454,9 @@ extension TacticalSim {
 			counterDamage = estimateDamage(attacker: tid, defender: uid, visibleOnly: true)
 		}
 
-		var supportDamage: UInt8 = 0
-		if !u.isAir, !target.isAir, !u.isArt,
-		   let support = artSupport(defender: tid, attacker: uid, visibleOnly: true)
-		{
-			supportDamage = estimateDamage(attacker: support, defender: uid, defMod: 0, visibleOnly: true)
-		} else if u.isAir, !target.isAA,
-				  let support = aaSupport(defender: tid, attacker: uid, visibleOnly: true)
-		{
-			supportDamage = estimateDamage(attacker: support, defender: uid, defMod: 0, visibleOnly: true)
-		}
+		let support = defensiveSupport(defender: tid, attacker: uid, visibleOnly: true)
+		let supportDamage = support == .none
+			? 0 : estimateDamage(attacker: support, defender: uid, defMod: 0, visibleOnly: true)
 
 		let ownDamage = min(Int(u.hp), Int(counterDamage) + Int(supportDamage))
 		let ownLoss = ownDamage * ownCost / Int(u.maxHP)
@@ -552,17 +545,19 @@ extension TacticalSim {
 	private func bestMove(_ ai: inout AI.Plan) -> TacticalAction? {
 		for i in ai.order.indices {
 			let uid = ai.order[i]
-			guard ai.skippedMoves & bit(uid) == 0, units[uid].canMove, !offMap(unit: uid) else { continue }
+			guard !ai.skippedMoves[uid], units[uid].canMove, !offMap(unit: uid) else { continue }
 			let p = position[uid]
 			if !units[uid].isAir, map[p] == .city, control[p].team != country.team { continue }
 			let role = ai.role[uid.index]
-			if role == .support, let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai),
-			   p.stepDistance(to: position[anchor]) <= 3 { continue }
+			if role == .support {
+				let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai)
+				if anchor != .none, p.stepDistance(to: position[anchor]) <= 3 { continue }
+			}
 			let target = movementTarget(for: uid, ai)
 			if (role == .retreat || role == .defend) && p == target { continue }
 
 			if let action = pickMove(uid, toward: target, ai: ai) { return action }
-			ai.skippedMoves |= bit(uid)
+			ai.skippedMoves[uid] = true
 			return nil
 		}
 		return nil
@@ -574,10 +569,9 @@ extension TacticalSim {
 		if u.isAir, u.ammo == 0, let airfield = nearestOwnAirfield(to: p, ai) {
 			return airfield
 		}
-		if ai.role[uid.index] == .support,
-		   let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai)
-		{
-			return position[anchor]
+		if ai.role[uid.index] == .support {
+			let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai)
+			if anchor != .none { return position[anchor] }
 		}
 		return ai.target[uid.index]
 	}
@@ -683,7 +677,7 @@ extension TacticalSim {
 
 	private func purchase(_ ai: borrowing AI.Plan) -> TacticalAction? {
 		let reserve: UInt16 = ai.stance == .attackSurvival && deadlineUrgency >= 3 ? 0 : 0x100
-		guard player.prestige > reserve else { return nil }
+		guard player.prestige > reserve, ai.roster.count < Self.totalUnitLimit else { return nil }
 
 		var core = 0
 		var ground = 0
@@ -706,14 +700,14 @@ extension TacticalSim {
 			enemyAir += units[uid].isAir ? 1 : 0
 			enemyArmor += units[uid].isArmor ? 1 : 0
 		}
-		guard core < 16 else { return nil }
+		let aux = core >= Self.coreUnitLimit
 
 		var bestSpot = XY.zero
 		var bestSlot = -1
 		var bestScore = Int.min
 		settlements.forEach { xy in
 			guard control[xy] == country, unitsMap[xy] == .none else { return }
-			let shop = shopUnits(at: xy)
+			let shop = purchaseCatalog(at: xy)
 			guard !shop.isEmpty else { return }
 			var locationScore = threat(at: xy, from: ai.enemies) * (ai.stance == .defendSurvival ? 5 : 2)
 			if let focus = ai.focusTarget { locationScore -= xy.stepDistance(to: focus) * 5 }
@@ -733,7 +727,7 @@ extension TacticalSim {
 				}
 			}
 		}
-		return bestSlot < 0 ? nil : .purchase(bestSlot, bestSpot)
+		return bestSlot < 0 ? nil : .purchase(bestSlot, bestSpot, aux: aux)
 	}
 
 	private func purchaseScore(

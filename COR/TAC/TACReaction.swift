@@ -4,7 +4,7 @@
 	case disembark(UID, XY)
 	case attack(UID, UID)
 	case resupply(UID)
-	case purchase(Int, XY)
+	case purchase(Int, XY, aux: Bool = false)
 	case end
 }
 
@@ -31,7 +31,7 @@ extension TacticalSim {
 		case .embark(let u, let t): embark(unit: u, transport: t, into: &events)
 		case .disembark(let t, let xy): disembark(unit: t, to: xy, into: &events)
 		case .resupply(let u): resupply(unit: u, into: &events)
-		case .purchase(let idx, let xy): buy(idx, at: xy, into: &events)
+		case .purchase(let idx, let xy, let aux): buy(idx, at: xy, aux: aux, into: &events)
 		case .end: endTurn(into: &events)
 		}
 		return events

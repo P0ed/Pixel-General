@@ -1,6 +1,22 @@
 extension TacticalSim {
 
-	public func shopUnits(at xy: XY) -> [Unit] {
+	static let coreUnitLimit = 16
+	static let totalUnitLimit = 48
+
+	public func shopUnits(at xy: XY, aux: Bool = false) -> [Unit] {
+		let country = country
+		let counts = units.reduceAlive(into: (core: 0, total: 0)) { counts, _, unit in
+			guard unit.country == country else { return }
+			counts.total += 1
+			if !unit[.aux] { counts.core += 1 }
+		}
+		guard counts.total < Self.totalUnitLimit, aux || counts.core < Self.coreUnitLimit else { return [] }
+
+		let offers = purchaseCatalog(at: xy)
+		return aux ? offers.map(\.aux) : offers
+	}
+
+	func purchaseCatalog(at xy: XY) -> [Unit] {
 		let country = country
 		guard map[xy].isSettlement, control[xy] == country else { return [] }
 
@@ -9,11 +25,6 @@ extension TacticalSim {
 		}
 		if enemyAdjacent { return [] }
 
-		let coreSlots = units.reduceAlive(into: 0) { c, i, u in
-			if u.country == country, !u[.aux] { c += 1 }
-		}
-		guard coreSlots < 16 else { return [] }
-
 		return Shop(
 			country: country,
 			tier: player.tier,
@@ -21,25 +32,24 @@ extension TacticalSim {
 		).units
 	}
 
-	/// Mirror of the `.purchase` reducer guard for one shop slot — shared by
-	/// `buy` and `slotMask`. `shopUnits` itself owns the tile half of the rule
-	/// (settlement, ownership, enemy contact, roster slots).
-	func canBuy(slot idx: Int, at pos: XY) -> Bool {
-		guard unitsMap[pos] == .none else { return false }
-		let shop = shopUnits(at: pos)
-		return idx >= 0 && idx < shop.count && player.prestige >= shop[idx].stats.cost
+	func canBuy(slot idx: Int, at pos: XY, aux: Bool = false) -> Bool {
+		purchasableUnit(slot: idx, at: pos, aux: aux) != nil
 	}
 
-	/// `canBuy(slot:at:)` for any slot — the purchase actor mask.
 	func canBuy(at xy: XY) -> Bool {
 		unitsMap[xy] == .none
-		&& shopUnits(at: xy).contains { u in player.prestige >= u.stats.cost }
+		&& shopUnits(at: xy, aux: true).contains { u in player.prestige >= u.stats.cost }
 	}
 
-	mutating func buy(_ idx: Int, at pos: XY, into events: inout [TacticalEvent]) {
-		guard canBuy(slot: idx, at: pos) else { return }
-		let template = shopUnits(at: pos)[idx]
+	private func purchasableUnit(slot idx: Int, at pos: XY, aux: Bool) -> Unit? {
+		guard unitsMap[pos] == .none else { return nil }
+		let shop = shopUnits(at: pos, aux: aux)
+		guard shop.indices.contains(idx), player.prestige >= shop[idx].stats.cost else { return nil }
+		return shop[idx]
+	}
 
+	mutating func buy(_ idx: Int, at pos: XY, aux: Bool, into events: inout [TacticalEvent]) {
+		guard let template = purchasableUnit(slot: idx, at: pos, aux: aux) else { return }
 		let unit = modifying(template) { u in
 			u.reset()
 			u.mp = 0
