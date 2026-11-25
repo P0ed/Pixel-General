@@ -109,7 +109,7 @@ extension SKTileGroup {
 	private static var terrainCache: [TerrainKey: SKTileGroup] = [:]
 	private static var decorationCache: [CGImage.Decoration: SKTileGroup] = [:]
 	private static var overlayCache: [TileOverlay: SKTileGroup] = [:]
-	private static let overlayMask = Renderer.tile.fill(Tiles.footprint).cgImage!
+	private static let overlayMask = Tiles.shadingMask.cgImage!
 	private static let overlayOpacity: CGFloat = 0.5
 
 	static func terrain(surface: TileSurface, variant: Tiles.Variant) -> SKTileGroup {

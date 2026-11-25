@@ -31,8 +31,9 @@ struct RendererTests {
 		#expect(rows[13].count == 8, "each row towards the corners is 4 px wider")
 	}
 
-	@Test func flatTileFootprintsMeetWithoutGapsOrOverlaps() {
-		let footprint = Renderer.tile.fill(Tiles.footprint)
+	@Test(arguments: [false, true])
+	func flatTileFootprintsMeetWithoutGapsOrOverlaps(shading: Bool) {
+		let footprint = shading ? Tiles.shadingMask : Renderer.tile.fill(Tiles.footprint)
 		let halfWidth = footprint.width / 2
 		let halfHeight = Canvas.tile.baseHeight / 2
 		for y in 0 ..< halfHeight {
@@ -41,6 +42,17 @@ struct RendererTests {
 				let foreground = footprint[x, row].alpha > 0
 				let background = footprint[x + halfWidth, row + halfHeight].alpha > 0
 				#expect(foreground != background, "one tile covers each pixel at the join")
+				#expect((footprint[x + halfWidth, row].alpha > 0) != (footprint[x, row + halfHeight].alpha > 0))
+			}
+		}
+	}
+
+	@Test func shadingKeepsEachGridStepInsideOneTile() {
+		let mask = Tiles.shadingMask
+		let grid = Tiles.grid
+		for y in Canvas.tile.baseTop ..< mask.height {
+			for x in stride(from: 0, to: mask.width, by: 2) where grid[x, y].alpha > 0 {
+				#expect(mask[x, y].alpha == mask[x + 1, y].alpha)
 			}
 		}
 	}

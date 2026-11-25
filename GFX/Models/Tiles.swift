@@ -20,6 +20,7 @@ public enum Tiles {
 
 	public static let surface = Renderer.tile.fill(base(elevation: 0))
 	public static let grid = Renderer.tile.edges(base(elevation: 0))
+	public static let shadingMask = Renderer.tile.fill(footprint.translated(by: V3(0, 0, 0.5)))
 
 	public static let gridHighlight: Bitmap = {
 		let canvas = Canvas.tile
