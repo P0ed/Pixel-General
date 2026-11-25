@@ -127,12 +127,8 @@ extension Shop {
 
 	var tank2: Unit? {
 		switch country {
-		case .swe: Unit(model: .strv122, country: country)
-		case .ger: Unit(model: .leo2a4, country: country)
 		case .usa, .isr: Unit(model: .m1A1, country: country)
 		case .pak: Unit(model: .m1A1, country: country)
-		case .rus: Unit(model: .t72, country: country)
-		case .irn, .ind: Unit(model: .t72, country: country)
 		default: switch country.team {
 		case .axis: Unit(model: .leo2a4, country: country)
 		case .allies: Unit(model: .m1A1, country: country)
@@ -147,7 +143,6 @@ extension Shop {
 		case .swe: Unit(model: .strv122, country: country)
 		case .usa, .isr: Unit(model: .m1A2, country: country)
 		case .pak: nil
-		case .rus: Unit(model: .t90m, country: country)
 		case .irn, .ind: nil
 		default: switch country.team {
 		case .axis: Unit(model: .leo2a7, country: country)
