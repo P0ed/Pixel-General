@@ -47,7 +47,8 @@ extension Outline {
 				let i = source.index(x: x, y: y)
 				guard source.alpha[i] > 0 else { continue }
 				let id = raster.ids[i]
-				let outline = solids[Int(id)].outline ?? self
+				let solid = solids[Int(id)]
+				let outline = solid.outline ?? self
 				let footprint = outline.openTileEdges ? raster.tileFootprint : nil
 
 				var rim = false
@@ -62,11 +63,14 @@ extension Outline {
 						continue
 					}
 					let n = source.index(x: nx, y: ny)
-					if source.alpha[n] == 0 {
+					let neighborID = raster.ids[n]
+					let belowDecal = outline.openTileEdges && neighborID >= 0
+						&& solids[Int(neighborID)].to.z < solid.from.z
+					if neighborID < 0 || belowDecal {
 						// Omit end caps where a connection meets the tile boundary.
 						rim = rim || footprint?[n] != false
-					} else if raster.ids[n] != id {
-						let neighbor = solids[Int(raster.ids[n])]
+					} else if neighborID != id {
+						let neighbor = solids[Int(neighborID)]
 						if !outline.openTileEdges && neighbor.outline?.openTileEdges == true {
 							// Ground pavement is the backdrop for a building's silhouette.
 							rim = true

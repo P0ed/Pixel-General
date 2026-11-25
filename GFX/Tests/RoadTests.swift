@@ -15,7 +15,7 @@ struct RoadTests {
 		let directions: [Direction] = axis == .x ? [.xMinus, .xPlus] : [.yMinus, .yPlus]
 		let straight = Renderer.decal.render(Roads.road(directions))
 		let midArm = straight.width * 3 / 8
-		#expect((0 ..< straight.height).count { straight[midArm, $0].alpha > 0 } == 7)
+		#expect((0 ..< straight.height).count { straight[midArm, $0].alpha > 0 } == Int(Roads.width))
 
 		let roads = [straight, Renderer.decal.render(Roads.road(Direction.allCases))]
 			+ Tiles.Variant.allCases.map { variant in
@@ -102,9 +102,19 @@ struct RoadTests {
 
 		for i in expected.alpha.indices where expected.alpha[i] > 0 {
 			#expect(actual.alpha[i] == 255, "the road–bridge joins must not expose holes")
-			if expected.gray[i] == Roads.Tone.bed {
-				#expect(actual.gray[i] == expected.gray[i], "the asphalt continues across the span")
-			}
+			#expect(actual.gray[i] == expected.gray[i], "the pavement and its outline continue across the span")
+		}
+	}
+
+	@Test(arguments: Axis.allCases)
+	func bridgePilesAreVisibleBelowThePavement(axis: Axis) {
+		let model = Roads.bridge(along: axis)
+		let raster = Renderer.decal.raster(model)
+		let piles = model.solids.indices.filter { model.solids[$0].tone == Roads.Tone.pile }
+		#expect(piles.count == 5)
+		for id in piles {
+			#expect(model.solids[id].to.z < 0)
+			#expect(raster.ids.contains(Int32(id)))
 		}
 	}
 

@@ -99,28 +99,22 @@ extension Terrain {
 @MainActor
 extension SKTileGroup {
 
-	static let gray = make(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
-	static let grid = make(image: .frame)
+	static let gray = makeTerrain(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
 	static let fog = overlay(color: .black)
 
 	private struct TerrainKey: Hashable {
 		let surface: TileSurface
 		let variant: Tiles.Variant
 	}
-	private struct GridTint: Hashable {
-		let overlay: TileOverlay?
-		let fogged: Bool
-	}
 	private static var terrainCache: [TerrainKey: SKTileGroup] = [:]
 	private static var decorationCache: [CGImage.Decoration: SKTileGroup] = [:]
 	private static var overlayCache: [TileOverlay: SKTileGroup] = [:]
-	private static var gridCache: [GridTint: SKTileGroup] = [:]
 	private static let overlayOpacity: CGFloat = 0.5
 
 	static func terrain(surface: TileSurface, variant: Tiles.Variant) -> SKTileGroup {
 		let key = TerrainKey(surface: surface, variant: variant)
 		if let group = terrainCache[key] { return group }
-		let group = make(image: surface.image(variant: variant)!)
+		let group = makeTerrain(image: surface.image(variant: variant)!)
 		terrainCache[key] = group
 		return group
 	}
@@ -147,25 +141,11 @@ extension SKTileGroup {
 		return group
 	}
 
-	static func grid(overlay: TileOverlay?, fogged: Bool) -> SKTileGroup {
-		if overlay == nil && !fogged { return .grid }
-		let key = GridTint(overlay: overlay, fogged: fogged)
-		if let group = gridCache[key] { return group }
-		let group = make(image: ImageBuffer.tile.draw { ctx in
+	private static func makeTerrain(image: CGImage) -> SKTileGroup {
+		make(image: ImageBuffer.tile.draw { ctx in
+			ctx.drawTile(image)
 			ctx.drawTile(.frame)
-			ctx.setBlendMode(.sourceAtop)
-			if let overlay {
-				ctx.setFillColor(overlay.color.withAlphaComponent(overlayOpacity).cgColor)
-				ctx.fill(CGRect(origin: .zero, size: .tile3D))
-			}
-			if fogged {
-				ctx.setFillColor(SKColor.black.withAlphaComponent(overlayOpacity).cgColor)
-				ctx.fill(CGRect(origin: .zero, size: .tile3D))
-			}
-			ctx.setBlendMode(.normal)
 		})
-		gridCache[key] = group
-		return group
 	}
 
 	private static func overlay(color: SKColor) -> SKTileGroup {
@@ -279,13 +259,6 @@ extension SKTileSet {
 	)
 
 	static let fog = SKTileSet(tileGroups: [.fog], tileSetType: .isometric)
-
-	static let grid = SKTileSet(
-		tileGroups: [.grid, .grid(overlay: nil, fogged: true)] + TileOverlay.palette.flatMap { overlay in
-			[.grid(overlay: overlay, fogged: false), .grid(overlay: overlay, fogged: true)]
-		},
-		tileSetType: .isometric
-	)
 
 	static let hq = SKTileSet(tileGroups: [.gray], tileSetType: .isometric)
 }

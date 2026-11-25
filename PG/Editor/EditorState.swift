@@ -84,8 +84,8 @@ private extension EditorState {
 	) -> EditorAction? {
 		if modifiers.contains(.right) {
 			switch direction {
-			case .up: scale = max(1, scale / 2)
-			case .down: scale = min(4, scale * 2)
+			case .up: scale = max(0, scale - 1)
+			case .down: scale = min(3, scale + 1)
 			case .left, .right: break
 			}
 			return nil

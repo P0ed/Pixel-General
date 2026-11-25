@@ -2,14 +2,12 @@
 public enum Roads {
 
 	public enum Tone {
-		public static let bed: UInt8 = 176
-		public static let deck: UInt8 = 214
-		public static let rail: UInt8 = 96
-		public static let pile: UInt8 = 84
+		public static let bed: UInt8 = 172
+		public static let pile: UInt8 = 96
 	}
 
 	/// Width of the carriageway, in footprint units.
-	public static let width: Float = 7
+	public static let width: Float = 6
 
 	public static func road(_ directions: [Direction]) -> Model {
 		func pavement(from: V3, to: V3) -> Solid {
@@ -38,24 +36,16 @@ public enum Roads {
 		return Model(solids)
 	}
 
-	/// The same carriageway as a road, with a wider deck beneath it.
-	/// Paving stays at z = 0 so both approaches meet neighbouring road tiles exactly.
 	public static func bridge(along axis: Axis) -> Model {
 		let side = Volume.footprint
-		let near = side / 2 - 6.75
-		let far = side / 2 + 6.75
-		let deck = Solid.box(from: V3(0, near, -1.5), to: V3(side, far, 0), tone: Tone.deck)
+		let near = side / 2 - width / 2
+		let far = side / 2 + width / 2
 
-		var lines: [Line] = [
-			Line(from: V3(0, near + 0.75, 0.75), to: V3(side, near + 0.75, 0.75), tone: Tone.rail),
-			Line(from: V3(0, far - 0.75, 0.75), to: V3(side, far - 0.75, 0.75), tone: Tone.rail),
-		]
-		for x in stride(from: Float(7.5), through: side - 7.5, by: (side - 15) / 3) {
-			lines.append(Line(from: V3(x, far, -1.5), to: V3(x, far, -6), tone: Tone.pile))
+		let piles: [Solid] = stride(from: Float(8), through: side - 8, by: 8).map { x in
+			.box(from: V3(x, near, -3), to: V3(x, far, -1), tone: Tone.pile)
 		}
 
-		// The asphalt reaches the ends of the deck and wins the coplanar tie.
-		let model = road([.xMinus, .xPlus]) + Model([deck], lines: lines)
+		let model = Model(piles) + road([.xMinus, .xPlus])
 		return axis == .x ? model : model.rotated(.right)
 	}
 }

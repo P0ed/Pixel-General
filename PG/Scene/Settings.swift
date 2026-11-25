@@ -4,7 +4,6 @@ import COR
 struct Settings {
 	var soundLevel: UInt8 = 1
 	var animationSpeed: UInt8 = 1
-	var gridLines = true
 }
 
 extension Settings {

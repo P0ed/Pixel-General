@@ -101,10 +101,6 @@ extension SKTexture {
 @MainActor
 extension SKTexture {
 
-	static func toggle(_ value: Bool) -> SKTexture {
-		value ? .plus : .minus
-	}
-
 	static func toggle4(_ value: UInt8) -> SKTexture {
 		switch value {
 		case 0: .value0

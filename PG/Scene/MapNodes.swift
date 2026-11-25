@@ -4,7 +4,6 @@ import COR
 @MainActor
 struct MapNodes {
 	var terrain: SKTileMapNode
-	var grid: SKTileMapNode
 	var decorations: SKTileMapNode
 	var overlay: SKTileMapNode
 	var fog: SKTileMapNode
@@ -16,7 +15,6 @@ struct MapNodes {
 /// Units are ordered by diagonal above the map layers.
 private enum TileZ {
 	static let decoration: CGFloat = 0.2
-	static let grid: CGFloat = 0.3
 	static let overlay: CGFloat = 0.4
 	static let fog: CGFloat = 0.5
 	static let top: CGFloat = 0.6
@@ -44,7 +42,6 @@ extension MapNodes {
 	func setShading(_ tint: TileOverlay?, fogged: Bool, at xy: XY) {
 		overlay.setTileGroup(tint.map { .overlay($0) }, at: xy)
 		fog.setTileGroup(fogged ? .fog : nil, at: xy)
-//		grid.setTileGroup(.grid(overlay: tint, fogged: fogged), at: xy)
 	}
 
 	func zPosition(at xy: XY) -> CGFloat {
@@ -68,15 +65,11 @@ extension MapNodes {
 			root.addChild(map)
 			return map
 		}
-		let grid = addTiles(.grid, z: TileZ.grid)
-		grid.fill(with: .grid)
-		grid.isHidden = !settings.gridLines
 		let selection = addCursor(.selection, to: root)
 		selection.isHidden = true
 
 		return MapNodes(
 			terrain: addTiles(terrain, z: 0.0),
-			grid: grid,
 			decorations: addTiles(decorations, z: TileZ.decoration),
 			overlay: addTiles(overlay, z: TileZ.overlay),
 			fog: addTiles(fog, z: TileZ.fog),

@@ -386,9 +386,9 @@ country/team, Right+C selects supply, and Right+D selects defense.
 
 Map modes use a translucent color overlay so the terrain and its decorations
 remain visible. Half-opacity black tiles above the color overlay dim areas
-under fog or outside the selected unit's movement range. The grid has its own
-tilemap just above the terrain, so color and fog also shade its lines. Grid
-Lines in Settings turns the grid on or off (`PG/Scene/MapNodes.swift`).
+under fog or outside the selected unit's movement range. The grid frame is
+baked into each terrain tile beneath the decorations, color overlay, and fog
+(`PG/Scene/TileSprites.swift`).
 
 ### Skills:
 

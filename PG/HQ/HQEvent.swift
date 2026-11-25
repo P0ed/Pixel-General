@@ -74,7 +74,7 @@ extension HQNodes {
 					return newGameMenu(scene.state)
 				}),
 				.load { scene?.saveState() },
-				.prefs(grid: map.grid),
+				.prefs,
 				.close(icon: .chess, status: "Editor") {
 					guard let scene else { return }
 					core.store(scene.state.sim)
