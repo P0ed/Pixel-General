@@ -109,6 +109,7 @@ extension SKTileGroup {
 	private static var terrainCache: [TerrainKey: SKTileGroup] = [:]
 	private static var decorationCache: [CGImage.Decoration: SKTileGroup] = [:]
 	private static var overlayCache: [TileOverlay: SKTileGroup] = [:]
+	private static let overlayMask = Renderer.tile.fill(Tiles.footprint).cgImage!
 	private static let overlayOpacity: CGFloat = 0.5
 
 	static func terrain(surface: TileSurface, variant: Tiles.Variant) -> SKTileGroup {
@@ -150,7 +151,7 @@ extension SKTileGroup {
 
 	private static func overlay(color: SKColor) -> SKTileGroup {
 		make(image: ImageBuffer.tile.draw { ctx in
-			ctx.drawTile(.surface)
+			ctx.drawTile(overlayMask)
 			ctx.setBlendMode(.sourceIn)
 			ctx.setFillColor(color.withAlphaComponent(overlayOpacity).cgColor)
 			ctx.fill(CGRect(origin: .zero, size: .tile3D))
