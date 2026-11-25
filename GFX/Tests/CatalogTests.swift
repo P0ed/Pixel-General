@@ -54,10 +54,10 @@ struct CatalogTests {
 	}
 
 	@Test func citiesAndAirfieldsStayInsideTheTileFootprint() {
-		let footprint = Tiles.footprintMask(on: .tile)
+		let footprint = Renderer.tile.fill(Tiles.footprint)
 		for entry in Catalog.settlements where entry.renderer.outline == .building {
 			let bitmap = entry.renderer.render(entry.model)
-			#expect(zip(bitmap.alpha, footprint).allSatisfy { $0 == 0 || $1 }, "\(entry.name) fits inside the tile footprint")
+			#expect(zip(bitmap.alpha, footprint.alpha).allSatisfy { $0 == 0 || $1 > 0 }, "\(entry.name) fits inside the tile footprint")
 		}
 	}
 

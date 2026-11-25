@@ -128,7 +128,7 @@ public enum Settlements {
 			}
 		}
 
-		for i in solids.indices { solids[i].outline = .connectedDecal }
+		for i in solids.indices { solids[i].outline = .connectedDecal() }
 		return Model(solids)
 	}
 }

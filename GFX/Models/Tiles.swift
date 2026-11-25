@@ -10,7 +10,6 @@ public enum Tiles {
 	/// keeps the full 96 x 48 cell covered, including its four tips.
 	private static let near: Float = -0.5
 	private static let far = Volume.footprint - near
-	private static let tileFootprint = footprintPixels(on: .tile)
 
 	/// A flat tile diamond. Adjacent footprints meet without overlapping.
 	public static var footprint: Model {
@@ -39,14 +38,6 @@ public enum Tiles {
 		}
 		return bitmap
 	}()
-
-	static func footprintMask(on canvas: Canvas) -> [Bool] {
-		canvas == .tile ? tileFootprint : footprintPixels(on: canvas)
-	}
-
-	private static func footprintPixels(on canvas: Canvas) -> [Bool] {
-		Renderer(canvas: canvas, outline: .none).fill(footprint).alpha.map { $0 > 0 }
-	}
 
 	public static func base(elevation: Int) -> Model {
 		Model(.box(

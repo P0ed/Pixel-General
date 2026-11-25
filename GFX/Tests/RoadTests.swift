@@ -4,7 +4,7 @@ import Testing
 struct RoadTests {
 
 	@Test(arguments: Axis.allCases)
-	func roadExitsMatchContinuousPavement(axis: Axis) {
+	func roadExitsRevealTheGrid(axis: Axis) {
 		let side = Volume.footprint
 		let half = side / 2
 		let near = half - Roads.width / 2
@@ -17,10 +17,15 @@ struct RoadTests {
 		let midArm = straight.width * 3 / 8
 		#expect((0 ..< straight.height).count { straight[midArm, $0].alpha > 0 } == Int(Roads.width))
 
-		let roads = [straight, Renderer.decal.render(Roads.road(Direction.allCases))]
+		let roads = [
+			straight,
+			Renderer.decal.render(Roads.road(Direction.allCases)),
+			Renderer.decal.render(Roads.bridge(along: axis)),
+		]
 			+ Tiles.Variant.allCases.map { variant in
 				Renderer.building.render(Settlements.city(variant: variant))
 			}
+		let grid = Tiles.grid
 
 		for y in 0 ..< reference.height {
 			for x in 0 ..< reference.width where reference[x, y].alpha > 0 {
@@ -29,10 +34,10 @@ struct RoadTests {
 				let fromEnd = min(along, side - along)
 				guard abs(fromEnd) < 2 else { continue }
 				for road in roads {
-					if fromEnd >= 0 {
-						#expect(road[x, y] == reference[x, y], "the pavement and its side outlines reach the join")
+					if fromEnd >= 0 && grid[x, y].alpha == 0 {
+						#expect(road[x, y] == reference[x, y], "pavement meets the grid with its side outlines intact")
 					} else {
-						#expect(road[x, y].alpha == 0, "each tile draws its own half of the join")
+						#expect(road[x, y].alpha == 0, "pavement leaves the grid visible at the join")
 					}
 				}
 			}
@@ -40,7 +45,7 @@ struct RoadTests {
 	}
 
 	@Test(arguments: [nil] + Direction.allCases.map(Optional.some))
-	func junctionsAreFlatAndReachTheirConnectedEdges(missingArm: Direction?) throws {
+	func junctionsAreFlatAndEndBeforeTheGrid(missingArm: Direction?) throws {
 		let name = missingArm.map { "Road-T-\($0)" } ?? "Road-X"
 		let entry = try #require(Catalog.roads.first { $0.name == name })
 		let road = entry.model.solids
@@ -54,11 +59,13 @@ struct RoadTests {
 			(.yPlus, V3(half, side, 0)), (.yMinus, V3(half, 0, 0)),
 		]
 		for (direction, edge) in exits {
-			#expect(road.contains { $0.contains(edge) } == (direction != missingArm))
+			#expect(!road.contains { $0.contains(edge) })
+			let end = edge + (Volume.center - edge) * (0.5 / half)
+			#expect(road.contains { $0.contains(end) } == (direction != missingArm))
 			guard direction != missingArm else { continue }
 			for step in 0 ... 16 {
-				let point = Volume.center + (edge - Volume.center) * (Float(step) / 16)
-				#expect(road.contains { $0.contains(point) }, "the road stays continuous from the junction to the tile edge")
+				let point = Volume.center + (end - Volume.center) * (Float(step) / 16)
+				#expect(road.contains { $0.contains(point) })
 			}
 		}
 	}

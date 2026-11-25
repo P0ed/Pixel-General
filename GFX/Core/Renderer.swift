@@ -26,7 +26,7 @@ public extension Renderer {
 
 	func render(_ model: Model) -> Bitmap {
 		var raster = raster(model)
-		outline.apply(to: &raster, solids: model.solids)
+		outline.apply(to: &raster, solids: model.solids, canvas: canvas)
 		draw(model.lines, into: &raster)
 		return raster.bitmap
 	}
@@ -41,7 +41,7 @@ public extension Renderer {
 	/// The outline alone, for drawing over an independently tinted fill.
 	func edges(_ model: Model) -> Bitmap {
 		var raster = raster(model)
-		outline.apply(to: &raster, solids: model.solids)
+		outline.apply(to: &raster, solids: model.solids, canvas: canvas)
 
 		var edges = Bitmap(canvas: canvas)
 		for i in 0 ..< canvas.count where raster.outlined[i] {
@@ -60,7 +60,6 @@ extension Renderer {
 		var ids: [Int32]
 		var faces: [Int32]
 		var outlined: [Bool]
-		let tileFootprint: [Bool]?
 	}
 
 	func raster(_ model: Model) -> Raster {
@@ -69,9 +68,7 @@ extension Renderer {
 			depths: [Float](repeating: -.greatestFiniteMagnitude, count: canvas.count),
 			ids: [Int32](repeating: -1, count: canvas.count),
 			faces: [Int32](repeating: -1, count: canvas.count),
-			outlined: [Bool](repeating: false, count: canvas.count),
-			tileFootprint: model.solids.contains { $0.outline?.openTileEdges == true }
-				? Tiles.footprintMask(on: canvas) : nil
+			outlined: [Bool](repeating: false, count: canvas.count)
 		)
 
 		for (id, solid) in model.solids.enumerated() {

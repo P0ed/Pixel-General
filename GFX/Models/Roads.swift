@@ -1,18 +1,21 @@
-/// Flat art laid over the tile base. Paving extends to each connected edge, and bridges add a deck on piles.
+/// Flat art laid over the tile base.
 public enum Roads {
 
 	public enum Tone {
 		public static let bed: UInt8 = 172
-		public static let pile: UInt8 = 96
+		public static let pile: UInt8 = 106
 	}
 
 	/// Width of the carriageway, in footprint units.
 	public static let width: Float = 6
 
 	public static func road(_ directions: [Direction]) -> Model {
+		let nearEnd: Float = 0.5
+		let farEnd = Volume.footprint - nearEnd
+
 		func pavement(from: V3, to: V3) -> Solid {
 			var solid = Solid.box(from: from, to: to, tone: Tone.bed)
-			solid.outline = .connectedDecal
+			solid.outline = .connectedDecal(inset: nearEnd)
 			return solid
 		}
 
@@ -25,10 +28,10 @@ public enum Roads {
 			let from: V3
 			let to: V3
 			switch direction {
-			case .xPlus: (from, to) = (V3(half, near, 0), V3(Volume.footprint, far, 0))
-			case .xMinus: (from, to) = (V3(0, near, 0), V3(half, far, 0))
-			case .yPlus: (from, to) = (V3(near, half, 0), V3(far, Volume.footprint, 0))
-			case .yMinus: (from, to) = (V3(near, 0, 0), V3(far, half, 0))
+			case .xPlus: (from, to) = (V3(half, near, 0), V3(farEnd, far, 0))
+			case .xMinus: (from, to) = (V3(nearEnd, near, 0), V3(half, far, 0))
+			case .yPlus: (from, to) = (V3(near, half, 0), V3(far, farEnd, 0))
+			case .yMinus: (from, to) = (V3(near, nearEnd, 0), V3(far, half, 0))
 			}
 			solids.append(pavement(from: from, to: to))
 		}
@@ -42,7 +45,7 @@ public enum Roads {
 		let far = side / 2 + width / 2
 
 		let piles: [Solid] = stride(from: Float(8), through: side - 8, by: 8).map { x in
-			.box(from: V3(x, near, -3), to: V3(x, far, -1), tone: Tone.pile)
+			.box(from: V3(x, near, -4), to: V3(x, far, -1), tone: Tone.pile)
 		}
 
 		let model = Model(piles) + road([.xMinus, .xPlus])

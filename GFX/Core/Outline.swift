@@ -5,7 +5,7 @@ public struct Outline: Hashable, Sendable {
 	public var creases: UInt8?
 	public var faces: UInt8?
 	public var depth: Float
-	var openTileEdges = false
+	var tileEdgeInset: Float?
 
 	public init(silhouette: UInt8? = nil, creases: UInt8? = nil, faces: UInt8? = nil, depth: Float = 0.75) {
 		self.silhouette = silhouette
@@ -28,16 +28,16 @@ public struct Outline: Hashable, Sendable {
 	/// Flat tile art: a rim only a little darker than the paint it edges.
 	public static var decal: Outline { Outline(silhouette: 132) }
 
-	static var connectedDecal: Outline {
+	static func connectedDecal(inset: Float = 0) -> Outline {
 		var outline = decal
-		outline.openTileEdges = true
+		outline.tileEdgeInset = inset
 		return outline
 	}
 }
 
 extension Outline {
 
-	func apply(to raster: inout Renderer.Raster, solids: [Solid]) {
+	func apply(to raster: inout Renderer.Raster, solids: [Solid], canvas: Canvas) {
 		guard silhouette != nil || creases != nil || faces != nil
 			|| solids.contains(where: { $0.outline != nil }) else { return }
 		let source = raster.bitmap
@@ -49,7 +49,6 @@ extension Outline {
 				let id = raster.ids[i]
 				let solid = solids[Int(id)]
 				let outline = solid.outline ?? self
-				let footprint = outline.openTileEdges ? raster.tileFootprint : nil
 
 				var rim = false
 				var seam = false
@@ -64,15 +63,13 @@ extension Outline {
 					}
 					let n = source.index(x: nx, y: ny)
 					let neighborID = raster.ids[n]
-					let belowDecal = outline.openTileEdges && neighborID >= 0
+					let belowDecal = outline.tileEdgeInset != nil && neighborID >= 0
 						&& solids[Int(neighborID)].to.z < solid.from.z
 					if neighborID < 0 || belowDecal {
-						// Omit end caps where a connection meets the tile boundary.
-						rim = rim || footprint?[n] != false
+						rim = rim || outline.keepsRim(of: solid, atX: nx, y: ny, on: canvas)
 					} else if neighborID != id {
 						let neighbor = solids[Int(neighborID)]
-						if !outline.openTileEdges && neighbor.outline?.openTileEdges == true {
-							// Ground pavement is the backdrop for a building's silhouette.
+						if outline.tileEdgeInset == nil && neighbor.outline?.tileEdgeInset != nil {
 							rim = true
 						} else {
 							seam = seam || raster.depths[n] > raster.depths[i] + outline.depth
@@ -91,5 +88,17 @@ extension Outline {
 				}
 			}
 		}
+	}
+
+	private func keepsRim(of solid: Solid, atX x: Int, y: Int, on canvas: Canvas) -> Bool {
+		guard let inset = tileEdgeInset else { return true }
+		let ray = canvas.origin(x: x, y: y)
+		let point = V3(ray.x - ray.z, ray.y - ray.z, 0)
+		let edge = 0 ... Volume.footprint
+		guard edge.contains(point.x), edge.contains(point.y) else { return false }
+
+		let far = Volume.footprint - inset
+		let clamped = point.max(V3(inset, inset, 0)).min(V3(far, far, 0))
+		return point == clamped || !solid.contains(clamped)
 	}
 }
