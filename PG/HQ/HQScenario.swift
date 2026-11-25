@@ -4,115 +4,195 @@ import COR
 extension HQNodes {
 
 	func scenarioMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
-		var players: [4 of Player] = [
-			state.sim.player,
-			Player(country: .isr, type: .ai, prestige: .rich),
-			Player(country: .usa, type: .ai, prestige: .rich),
-			Player(country: .irn, type: .ai, prestige: .rich),
-		]
-		var countriesLeft: [Country] {
-			Country.playable.filter { c in
-				!players.contains { $0.alive && $0.country == c }
-			}
-		}
+		let primary = state.sim.player
+		let opponents: [Country] = [.isr, .usa, .irn, .rus]
+		var setup = Scenario(
+			players: [primary] + opponents.filter { $0 != primary.country }.prefix(3).map {
+				Player(country: $0, type: .ai, prestige: .rich)
+			},
+			units: []
+		)
 		var forts: UInt8 = 0
-		var sea: UInt8 = 0
 		var density: UInt8 = 0
-		var spawns: [4 of UInt8] = .init(repeating: 5)
+		var defenseSeat: Int?
 
-		let countries = (0..<4).map { idx in
-			MenuItem<HQAction>(
-				icon: players[idx].country.flag,
-				status: .init(text: "Player \(idx)"),
-				update: { stk, _ in
-					guard idx > 0 else { return }
-					stk.append(MenuState<HQAction>(
-						items: countriesLeft.map { c in
-							.pop(icon: c.flag, status: "\(c)") { menu in
-								players[idx].alive = true
-								players[idx].country = c
-								menu.items[idx].icon = c.flag
-								menu.cursor = idx
-							}
-						} + [
-							.pop(icon: .neutral, status: "Open") { menu in
-								players[idx].alive = false
-								menu.items[idx].icon = .neutral
-								menu.cursor = idx
-							}
-						],
-						leftButtons: [.back, .space, .space, .space]
-					))
-				}
-			)
+		var seats: [Int] { setup.players.indices.filter { setup.players[$0].alive } }
+		var defendingTeam: Team? { defenseSeat.map { setup.players[$0].country.team } }
+		var canStart: Bool {
+			guard let defendingTeam else { return true }
+			return seats.contains { setup.players[$0].country.team != defendingTeam }
 		}
-		let types = (0..<4).map { idx in
-			MenuItem<HQAction>.toggle(icon: players[idx].type.icon, status: "Player \(idx)") {
-				guard idx > 0 else { return }
-				players[idx].type.toggle()
+
+		let corners = Array(Scenario.spawnOptions)
+		let cornerNames = ["Northwest", "Northeast", "Southwest", "Southeast"]
+
+		func spawnStatus(_ seat: Int) -> String {
+			guard setup.players[seat].alive else { return "Spawn · Open seat" }
+			let corner = setup.spawns[seat].flatMap { corners.firstIndex(of: $0) }
+			return "Spawn · " + (corner.map { cornerNames[$0] } ?? "Random")
+		}
+
+		func spawnIcon(_ seat: Int) -> SKTexture {
+			guard setup.players[seat].alive else { return .clear }
+			let corner = setup.spawns[seat].flatMap { corners.firstIndex(of: $0) }
+			return corner.flatMap { .number(UInt8($0)) } ?? .rnd
+		}
+
+		var symmetryIcon: SKTexture {
+			setup.symmetryAvailable ? (setup.symmetry ? .plus : .minus) : .clear
+		}
+		var symmetryStatus: String {
+			setup.symmetryAvailable
+				? "Symmetry · \(setup.symmetry ? "On" : "Off")"
+				: "Symmetry unavailable with three players"
+		}
+		var defenseIcon: SKTexture {
+			defenseSeat.map { setup.players[$0].country.flag } ?? .minus
+		}
+		var defenseStatus: String {
+			defenseSeat.map { "Defense · Player \($0 + 1) · \(setup.players[$0].country)" } ?? "Defense · Off"
+		}
+
+		func updateControls(_ menu: inout MenuState<HQAction>) {
+			for seat in setup.players.indices {
+				menu.items[20 + seat].icon = spawnIcon(seat)
+				menu.items[20 + seat].status.text = spawnStatus(seat)
+			}
+			menu.rightButtons[2].icon = symmetryIcon
+			menu.rightButtons[2].status.text = symmetryStatus
+			menu.leftButtons[2].icon = defenseIcon
+			menu.leftButtons[2].status.text = defenseStatus
+			menu.rightButtons[3].icon = canStart ? .arrowRight : .clear
+			menu.rightButtons[3].status.text = canStart ? "Start" : "Defense requires an opposing team"
+		}
+
+		let countries = setup.players.indices.map { idx in
+			MenuItem<HQAction>.push(icon: setup.players[idx].country.flag, status: "Player \(idx + 1)") {
+				guard idx > 0 else { return nil }
+				let countriesLeft = Country.playable.filter { country in
+					!seats.contains { setup.players[$0].country == country }
+				}
+				return MenuState(
+					items: countriesLeft.map { country in
+						.pop(icon: country.flag, status: "\(country)") { menu in
+							setup.players[idx].country = country
+							setup.players[idx].alive = true
+							menu.items[idx].icon = country.flag
+							menu.cursor = idx
+							updateControls(&menu)
+						}
+					} + [
+						.pop(icon: .neutral, status: "Open") { menu in
+							setup.players[idx].alive = false
+							if defenseSeat == idx { defenseSeat = nil }
+							menu.items[idx].icon = .neutral
+							menu.cursor = idx
+							updateControls(&menu)
+						}
+					],
+					leftButtons: [.back, .space, .space, .space]
+				)
 			}
 		}
-		let prestige = (0..<4).map { idx in
+		let types = setup.players.indices.map { idx in
+			MenuItem<HQAction>.toggle(icon: setup.players[idx].type.icon, status: "Player \(idx + 1)") {
+				guard idx > 0 else { return }
+				setup.players[idx].type.toggle()
+			}
+		}
+		let prestige = setup.players.indices.map { idx in
 			MenuItem<HQAction>.toggle(
-				icon: players[idx].prestige < .rich ? .prestige1 : .prestige2,
+				icon: setup.players[idx].prestige < .rich ? .prestige1 : .prestige2,
 				status: "Prestige"
 			) {
-				players[idx].prestige = players[idx].prestige < .rich ? .rich : .poor
+				setup.players[idx].prestige = setup.players[idx].prestige < .rich ? .rich : .poor
 			}
 		}
-		let exp = (0..<4).map { idx in
-			MenuItem<HQAction>.toggle(icon: .toggle4(players[idx].baseLevel), status: "Experience") {
+		let exp = setup.players.indices.map { idx in
+			MenuItem<HQAction>.toggle(icon: .toggle4(setup.players[idx].baseLevel), status: "Experience") {
 				guard idx > 0 else { return }
-				players[idx].baseLevel.toggle4()
+				setup.players[idx].baseLevel.toggle4()
 			}
 		}
-		let tier = (0..<4).map { idx in
-			MenuItem<HQAction>.toggle(icon: .toggle4(players[idx].tier), status: "Tier") {
+		let tier = setup.players.indices.map { idx in
+			MenuItem<HQAction>.toggle(icon: .toggle4(setup.players[idx].tier), status: "Tier") {
 				guard idx > 0 else { return }
-				players[idx].tier.toggle4()
+				setup.players[idx].tier.toggle4()
 			}
 		}
-		let spawn = (0..<4).map { idx in
-			MenuItem<HQAction>.toggle(icon: .spawn(spawns[idx]), status: "Spawn") {
-				spawns[idx].toggle6()
+		let spawn = setup.players.indices.map { seat in
+			MenuItem<HQAction>.push(icon: spawnIcon(seat), status: spawnStatus(seat)) {
+				guard setup.players[seat].alive else { return nil }
+				let available = setup.availableSpawns(for: seat)
+				let choices = corners.enumerated().compactMap { index, corner -> MenuItem<HQAction>? in
+					guard available.contains(corner), let icon = SKTexture.number(UInt8(index)) else { return nil }
+					return .pop(icon: icon, status: cornerNames[index]) { menu in
+						setup.spawns[seat] = corner
+						updateControls(&menu)
+					}
+				}
+				return MenuState(
+					items: choices + [
+						.pop(icon: .rnd, status: "Random") { menu in
+							setup.spawns[seat] = nil
+							updateControls(&menu)
+						}
+					],
+					leftButtons: [.back, .space, .space, .space]
+				)
 			}
 		}
+		let defense = MenuItem<HQAction>.push(icon: defenseIcon, status: defenseStatus) {
+			MenuState(
+				items: [.pop(icon: .minus, status: "Off") { menu in
+					defenseSeat = nil
+					updateControls(&menu)
+				}] + seats.map { seat in
+					let country = setup.players[seat].country
+					return .pop(icon: country.flag, status: "Player \(seat + 1) · \(country)") { menu in
+						defenseSeat = seat
+						updateControls(&menu)
+					}
+				},
+				leftButtons: [.back, .space, .space, .space]
+			)
+		}
+		let start = MenuItem<HQAction>(icon: .arrowRight, status: .init(text: "Start"), update: { [weak scene] stack, _ in
+			guard canStart, let scene else { return }
+			let active = seats.map { setup.players[$0] }
+			setup.units = scene.state.sim.units.compactMap { $0.alive ? $0 : nil }
+				+ active.dropFirst().flatMap { [Unit].base($0.country, lvl: $0.baseLevel) }
+				+ active.flatMap { [Unit].aux($0.country, lvl: $0.baseLevel) }
+			setup.cityLevel = Int(density)
+			setup.fortLevel = Int(forts)
+			setup.seed = Int.random(in: 0 ..< 1024)
+			setup.objective = defendingTeam.map { .survive($0, day: 30) } ?? .none
+			core.startScenario(setup.makeSim())
+			core.save()
+			stack = []
+			view.present(.auto)
+		})
 
 		return MenuState(
 			items: countries + types + prestige + exp + tier + spawn,
-			leftButtons: [.back, .space, .space, .space],
+			leftButtons: [
+				.back,
+				.toggle(
+					icon: setup.continents ? .plus : .minus,
+					status: "Continents · \(setup.continents ? "On" : "Off")"
+				) {
+					setup.continents.toggle()
+				},
+				defense,
+				.space,
+			],
 			rightButtons: [
 				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
 				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
-				.toggle(icon: .toggle4(sea), status: "Sea: \(sea)") { sea.toggle4() },
-				.close(icon: .arrowRight, status: "Start", update: { [weak scene] in
-					guard let scene else { return }
-
-					let units: [Unit] = scene.state.sim.units.compactMap { u in u.alive ? u : nil }
-					+ (players[1].alive ? .base(players[1].country, lvl: players[1].baseLevel) : [])
-					+ (players[2].alive ? .base(players[2].country, lvl: players[2].baseLevel) : [])
-					+ (players[3].alive ? .base(players[3].country, lvl: players[3].baseLevel) : [])
-					+ players.flatMap { p in p.alive ? [Unit].aux(p.country, lvl: p.baseLevel) : [] }
-					let seed = Int.random(in: 0 ..< 1024)
-					let seats = players.indices.filter { players[$0].alive }
-					let options = Scenario.spawnOptions
-					let spawnCells = seats.map { seat -> XY? in
-						let choice = Int(spawns[seat])
-						return options.indices.contains(choice) ? options[choice] : nil
-					}
-
-					core.startScenario(.init(new: Scenario(
-						players: seats.map { players[$0] },
-						units: units,
-						terrain: Scenario.cornerTerrain(seaLevel: sea, seed: seed),
-						spawns: .init(head: spawnCells, tail: nil),
-						cityLevel: Int(density),
-						fortLevel: Int(forts),
-						seed: seed
-					)))
-					core.save()
-					view.present(.auto)
-				})
+				.toggle(icon: symmetryIcon, status: symmetryStatus) {
+					if setup.symmetryAvailable { setup.symmetry.toggle() }
+				},
+				start,
 			]
 		)
 	}

@@ -4,7 +4,7 @@ extension TacticalState {
 
 	@MainActor
 	var status: Status {
-		if sim.player.type == .ai {
+		var status = if sim.player.type == .ai {
 			Status(text: "\(sim.player.country) turn")
 		} else if ui.selectedUnit != .none {
 			Status(
@@ -22,5 +22,9 @@ extension TacticalState {
 				flag: sim.control[ui.cursor].flag
 			)
 		}
+		if case let .survive(team, day: deadline) = sim.objective {
+			status.text = "Defense · \(team) through day \(deadline)\n" + status.text
+		}
+		return status
 	}
 }

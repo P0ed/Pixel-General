@@ -124,37 +124,13 @@ struct TacticalTests {
 		#expect(cityBadCountry.isEmpty, "Cities with unexpected country: \(cityBadCountry)")
 	}
 
-	@Test func scenarioBuildsFromTerrainNeighborhood() {
-		var terrain = [16 of Terrain](repeating: .field)
-		terrain[3] = .sea
-		let objective = Objective.survive(.soviet, day: 12)
-		let scenario = Scenario(
-			players: [
-				Player(country: .fin, type: .human),
-				Player(country: .rus, type: .ai),
-			],
-			units: [],
-			terrain: terrain,
-			fortLevel: 2,
-			seed: 9,
-			objective: objective
-		)
-		let sim = scenario.makeSim()
-
-		var seaTiles = 0
-		for xy in sim.map.indices where sim.map[xy].isSea { seaTiles += 1 }
-		#expect(seaTiles > 0)
-		#expect(sim.objective == objective)
-		#expect(sim.players.count == 2)
-	}
-
 	@Test func spawnsClusterSettlementsAndKeepDefenderWeight() {
 		let players = [
 			Player(country: .fin, type: .human),
 			Player(country: .rus, type: .ai),
 		]
 		for seed in 0 ..< 8 {
-			let spawns: [4 of XY?] = [XY(0, 1), XY(3, 1), nil, nil]
+			let spawns: [4 of XY?] = [XY(0, 3), XY(3, 0), nil, nil]
 			let sim = Scenario(
 				players: players,
 				units: [],
@@ -178,7 +154,7 @@ struct TacticalTests {
 				}
 				for i in spawns.indices where spawns[i] != nil {
 					let spawn = spawns[i]!
-					let d = xy.manhattanDistance(to: spawn.cellCenter(size: sim.map.size))
+					let d = xy.manhattanDistance(to: Scenario.inCorner(spawn, tile: Scenario.quarterCity))
 					if d < nearestDistance[i] {
 						nearestDistance[i] = d
 						nearestOwner[i] = owner
@@ -204,122 +180,19 @@ struct TacticalTests {
 		}
 	}
 
-	@Test func scenarioAddsNavalAuxAtThreeSeaTiles() {
-		let players = [
-			Player(country: .fin, type: .human, baseLevel: 2),
-			Player(country: .rus, type: .ai),
-		]
-		var terrain = [16 of Terrain](repeating: .field)
-		terrain[0] = .sea
-		terrain[1] = .sea
-
-		let belowThreshold = Scenario(players: players, units: [], terrain: terrain)
-		#expect(!belowThreshold.units.contains { $0.type.isNaval })
-
-		terrain[2] = .sea
-		let scenario = Scenario(players: players, units: [], terrain: terrain, seed: 7)
-		for player in players {
-			let fleet = scenario.units.filter { $0.country == player.country }
-			#expect(fleet.count(where: { $0.model == .cruiser }) == 1)
-			#expect(fleet.count(where: { $0.model == .destroyer }) == 2)
-			#expect(fleet.count(where: { $0.model == .cargo }) == 2)
-			#expect(fleet.allSatisfy { $0[.aux] })
-		}
-		#expect(scenario.units.first(where: { $0.country == .fin })?.lvl == 2)
-
-		let sim = scenario.makeSim()
-		var misplaced: [XY] = []
-		sim.units.forEachAlive { i, u in
-			if u.type.isNaval, !sim.map[sim.position[i]].isSea {
-				misplaced.append(sim.position[i])
-			}
-		}
-		#expect(misplaced.isEmpty, "Ships deployed off sea at: \(misplaced)")
-	}
-
 	@Test func navalAuxKeepsFourFullRostersWithinUnitCapacity() {
 		let countries: [Country] = [.swe, .den, .ned, .nor]
 		let players = countries.map { Player(country: $0, type: .ai) }
-		let units = countries.flatMap { [Unit].base($0) + .aux($0) }
-		var terrain = [16 of Terrain](repeating: .field)
-		terrain[0] = .sea
-		terrain[1] = .sea
-		terrain[2] = .sea
-
-		let scenario = Scenario(players: players, units: units, terrain: terrain)
-		#expect(scenario.units.count == 128)
-		#expect(scenario.units.count(where: { $0.model == .cruiser }) == players.count)
-		#expect(scenario.units.count(where: { $0.model == .destroyer }) == players.count * 2)
-		#expect(scenario.units.count(where: { $0.model == .cargo }) == players.count * 2)
+		let roster = countries.flatMap { [Unit].base($0) + .aux($0) }
+		let units = Scenario(players: players, units: roster, continents: true).startingUnits
+		#expect(units.count == 128)
+		#expect(units.count(where: { $0.model == .cruiser }) == players.count)
+		#expect(units.count(where: { $0.model == .destroyer }) == players.count * 2)
+		#expect(units.count(where: { $0.model == .cargo }) == players.count * 2)
 		for country in countries {
-			let aux = scenario.units.count(where: { $0.country == country && $0[.aux] })
+			let aux = units.count(where: { $0.country == country && $0[.aux] })
 			#expect(aux == 16, "\(country) has \(aux) aux units")
 		}
-	}
-
-	@Test func navalDeploymentSeparatesShipsAndTeamsAcrossSeeds() {
-		let players = [
-			Player(country: .fin, type: .human),
-			Player(country: .rus, type: .ai),
-			Player(country: .usa, type: .ai),
-			Player(country: .swe, type: .ai),
-		]
-		let teams = Set(players.map { $0.country.team })
-		for seed in 0 ..< 32 {
-			let terrain = Scenario.cornerTerrain(seaLevel: 2, seed: seed)
-			let sim = Scenario(players: players, units: [], terrain: terrain, seed: seed).makeSim()
-			var cellsByTeam: [Team: Set<Int>] = [:]
-			var adjacent: [(XY, XY)] = []
-
-			sim.units.forEachAlive { i, unit in
-				guard unit.type.isNaval else { return }
-				let xy = sim.position[i]
-				let cell = XY(xy.x / 16, xy.y / 16)
-				cellsByTeam[unit.country.team, default: []].insert(cell.terrainIndex)
-				let neighbors = xy.n4
-				for j in neighbors.indices {
-					let p = neighbors[j]
-					guard sim.map.contains(p), let other = sim[p], other.type.isNaval else { continue }
-					adjacent.append((xy, p))
-				}
-			}
-
-			#expect(adjacent.isEmpty, "Adjacent ships for seed \(seed): \(adjacent)")
-			#expect(cellsByTeam.count == teams.count)
-			#expect(cellsByTeam.values.allSatisfy { $0.count == 1 })
-			let occupiedCells = Set(cellsByTeam.values.compactMap { $0.first })
-			#expect(occupiedCells.count == teams.count)
-			#expect(occupiedCells.allSatisfy { terrain[$0].isSea })
-		}
-	}
-
-	@Test func navalDeploymentChoosesSeaCellsNearTeamCenterOfMass() {
-		let players = [
-			Player(country: .fin, type: .human),
-			Player(country: .rus, type: .ai),
-			Player(country: .usa, type: .ai),
-			Player(country: .swe, type: .ai),
-		]
-		var terrain = [16 of Terrain](repeating: .field)
-		terrain[0] = .sea
-		terrain[3] = .sea
-		terrain[12] = .sea
-		terrain[15] = .sea
-		let centers = TacticalSim.navalCenters(
-			players: players,
-			terrain: terrain,
-			cities: [
-				(XY(6, 6), .fin),
-				(XY(14, 6), .swe),
-				(XY(56, 56), .rus),
-				(XY(56, 6), .usa),
-			],
-			size: 64
-		)
-
-		#expect(centers[.axis] == XY(8, 8))
-		#expect(centers[.soviet] == XY(56, 56))
-		#expect(centers[.allies] == XY(56, 8))
 	}
 
 	@Test func seaIsImpassableOnlyToLandUnits() {
@@ -657,6 +530,62 @@ struct TacticalTests {
 
 		sim.turn = 6
 		#expect(sim.winner == .soviet)
+	}
+
+	private static func defenseSim() -> TacticalSim {
+		let cities: [(XY, Country)] = [
+			(XY(4, 4), .fin), (XY(50, 4), .usa), (XY(4, 50), .rus), (XY(50, 50), .irn),
+		]
+		var map = Map<64, Terrain>(zero: .field)
+		for (xy, _) in cities { map[xy] = .city }
+		var sim = TacticalSim(
+			map: map, players: cities.map { Player(country: $0.1) }, cities: cities, units: []
+		)
+		sim.objective = .survive(.soviet, day: 30)
+		return sim
+	}
+
+	@Test func alliedCityCountsThroughLastTurnOfDay30() {
+		var sim = Self.defenseSim()
+		sim.turn = 117
+		sim.spawn(modifying(Unit(model: .regular, country: .fin)) { $0.reset() }, at: XY(4, 50))
+		#expect(!sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
+		#expect(sim.day == 30 && sim.winner == nil)
+		#expect(sim.control[XY(4, 50)] == .fin && sim[.rus].alive && sim[.irn].alive)
+		#expect(!sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
+		#expect(sim.day == 30 && sim.winner == nil)
+		#expect(sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
+		#expect(sim.day == 31 && sim.winner == .soviet)
+	}
+
+	@Test(arguments: [false, true])
+	func finalCaptorWinsImmediatelyWithTwoAttackingTeams(alliesLast: Bool) {
+		var sim = Self.defenseSim()
+		sim.turn = 119
+		let targets: [(XY, Country)] = [(XY(4, 50), .fin), (XY(50, 50), .usa)]
+		for (xy, country) in alliesLast ? targets : Array(targets.reversed()) {
+			sim.spawn(modifying(Unit(model: .regular, country: country)) { $0.reset() }, at: xy)
+		}
+
+		#expect(sim.winner == nil)
+		#expect(sim.reduce(.end).contains { if case .end = $0 { true } else { false } })
+		#expect(sim.aliveTeams.nonzeroBitCount == 2)
+		#expect(sim.day == 30)
+		let expected = alliesLast ? Team.allies : .axis
+		#expect(sim.winner == expected)
+		#expect(sim.reduce(.end).isEmpty)
+
+		var core = Core.new(country: .fin)
+		core.startScenario(sim)
+		guard var restored: Core = decode(encode(core)), restored.tactical != nil else {
+			Issue.record("Could not restore the final capture")
+			return
+		}
+		let battle = clone(restored.tactical!)
+		#expect(battle.winner == expected)
+		restored.complete(battle)
+		let complete = restored.tactical == nil
+		#expect(complete)
 	}
 
 	@Test func annihilatingSurvivorBeforeDeadlineWinsForAttacker() {

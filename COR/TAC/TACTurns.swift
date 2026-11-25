@@ -15,7 +15,7 @@ extension TacticalSim {
 	}
 
 	mutating func endTurn(into events: inout [TacticalEvent]) {
-		captureCities()
+		let captor = captureCities()
 		assignControl()
 		updateSurvivingTeams()
 		refreshVision()
@@ -28,6 +28,10 @@ extension TacticalSim {
 			resupply(unit: i.uid, sources: sources, endOfTurn: true, into: &events)
 		}
 
+		if let defender = objective.defender, let captor, !hasCity(for: defender) {
+			objective = Objective(capturedBy: captor)
+			return events.append(.end)
+		}
 		guard nextTurn() else { return events.append(.end) }
 	}
 
@@ -45,21 +49,18 @@ extension TacticalSim {
 	}
 
 	public var winner: Team? {
+		if let winner = objective.captureWinner { return winner }
 		let teams = aliveTeams
-		return switch objective {
-		case .none:
-			teams.nonzeroBitCount == 1
-			? Team(rawValue: UInt8(teams.trailingZeroBitCount))
-			: nil
-		case let .survive(team, day: deadline):
-			if teams.nonzeroBitCount == 1 {
-				Team(rawValue: UInt8(teams.trailingZeroBitCount))
-			} else if !teamAlive(team) {
-				nil
-			} else {
-				day > deadline ? team : nil
-			}
+		if teams.nonzeroBitCount == 1 {
+			return Team(rawValue: UInt8(teams.trailingZeroBitCount))
 		}
+		guard case let .survive(team, day: deadline) = objective, day > deadline,
+			teamAlive(team), hasCity(for: team) else { return nil }
+		return team
+	}
+
+	private func hasCity(for team: Team) -> Bool {
+		settlements.firstMap { xy in map[xy] == .city && control[xy].team == team ? xy : nil } != nil
 	}
 
 	private func income(for country: Country) -> UInt16 {
@@ -68,14 +69,18 @@ extension TacticalSim {
 		}
 	}
 
-	private mutating func captureCities() {
+	private mutating func captureCities() -> Team? {
+		let defender = objective.defender
+		var captor: Team?
 		units.forEachAlive { i, u in
 			guard !u.isAir, !u.type.isNaval, !offMap(unit: i.uid) else { return }
 			let xy = position[i]
 			if map[xy] == .city, control[xy].team != u.country.team {
+				if control[xy].team == defender { captor = u.country.team }
 				control[xy] = u.country
 			}
 		}
+		return captor
 	}
 
 	private mutating func updateSurvivingTeams() {

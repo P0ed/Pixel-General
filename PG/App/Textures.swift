@@ -121,10 +121,6 @@ extension SKTexture {
 		}
 	}
 
-	static func spawn(_ value: UInt8) -> SKTexture {
-		number(value) ?? .rnd
-	}
-
 	static func sound(_ level: UInt8) -> SKTexture {
 		switch level {
 		case 0: .sound0

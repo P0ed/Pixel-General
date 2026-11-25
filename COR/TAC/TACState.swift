@@ -20,9 +20,30 @@ public struct TacticalSim: ~Copyable {
 @frozen public enum Objective: Equatable, BitwiseCopyable {
 	case none
 	case survive(Team, day: UInt16)
+	case capturedByAxis
+	case capturedByAllies
+	case capturedBySoviet
 
 	public var defender: Team? {
 		if case .survive(let team, _) = self { team } else { nil }
+	}
+
+	var captureWinner: Team? {
+		switch self {
+		case .capturedByAxis: .axis
+		case .capturedByAllies: .allies
+		case .capturedBySoviet: .soviet
+		default: nil
+		}
+	}
+
+	init(capturedBy team: Team) {
+		self = switch team {
+		case .axis: .capturedByAxis
+		case .allies: .capturedByAllies
+		case .soviet: .capturedBySoviet
+		case .none: .none
+		}
 	}
 }
 
@@ -33,6 +54,7 @@ public extension TacticalSim {
 		players: [Player],
 		cities: [(XY, Country)],
 		units: [Unit],
+		homes: [Country: XY] = [:],
 		navalCenters: [Team: XY] = [:]
 	) {
 		self.map = map
@@ -48,23 +70,18 @@ public extension TacticalSim {
 		cities.forEach { xy, c in control[xy] = c }
 		assignControl()
 
-		let placements = [4 of CArray<4096, XY>].init { i in
-			guard i < players.count else { return .init(tail: .zero) }
-
+		let tileCount = self.map.count
+		let placements: [[XY]] = players.map { player in
+			guard homes[player.country] == nil else { return [] }
 			let cityXYs = cities
-				.filter { _, c in c == players[i].country }
+				.filter { _, c in c == player.country }
 				.map { xy, _ in xy }
-			let squares = (cityXYs.isEmpty ? [.zero] : cityXYs).map { $0.s49.map { $0 } }
-			var out = CArray<4096, XY>(tail: .zero)
-			var cursors = [Int](repeating: 0, count: squares.count)
-			var progressed = true
-			while progressed {
-				progressed = false
-				for k in squares.indices where cursors[k] < squares[k].count {
-					if out.isFull { return out }
-					out.add(squares[k][cursors[k]])
-					cursors[k] += 1
-					progressed = true
+			let squares = (cityXYs.isEmpty ? [.zero] : cityXYs).map(\.s49)
+			var out: [XY] = []
+			for i in 0..<49 {
+				for square in squares {
+					if out.count == tileCount { return out }
+					out.append(square[i])
 				}
 			}
 			return out
@@ -75,8 +92,14 @@ public extension TacticalSim {
 			let u = self.units[i]
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { continue }
+			if let home = homes[u.country] {
+				let nearby = u.type.isNaval ? nil : home.s49.firstMap { canDeploy(u, at: $0) ? $0 : nil }
+				guard let xy = nearby ?? nearestPlacement(for: u, near: home) else { fatalError() }
+				place(i.uid, at: xy)
+				continue
+			}
 			if u.type.isNaval, let center = navalCenters[u.country.team],
-			   let xy = navalPlacement(for: u, near: center) {
+			   let xy = nearestPlacement(for: u, near: center) {
 				place(i.uid, at: xy)
 				continue
 			}
@@ -110,7 +133,7 @@ public extension TacticalSim {
 			: u.isAir ? !map[xy].isNoFlyZone : !map[xy].isSea && !map[xy].isRiver
 	}
 
-	private func navalPlacement(for unit: Unit, near center: XY) -> XY? {
+	private func nearestPlacement(for unit: Unit, near center: XY) -> XY? {
 		var result: XY?
 		var bestDistance = Int.max
 		for xy in map.indices where canDeploy(unit, at: xy) {

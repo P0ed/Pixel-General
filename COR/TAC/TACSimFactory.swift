@@ -1,102 +1,28 @@
 public extension TacticalSim {
 
 	init(new scenario: Scenario) {
-		let spawns = scenario.resolvedSpawnPoints
-		var map = Map<64, Terrain>(
-			seed: scenario.seed,
-			players: scenario.players.count,
-			terrain: scenario.terrain,
-			density: scenario.cityLevel,
-			spawns: spawns
-		)
-		let defending: Team? = scenario.objective.defender
-		let cities = Self.cities(
-			countries: scenario.players.filter { $0.alive }.map { $0.country },
-			defending: defending,
-			spawns: spawns,
-			map: map
-		)
-		map.placeForts(
-			around: cities.compactMap { xy, c in
-				defending.map { team in c.team == team } ?? true ? xy : nil
-			},
-			level: scenario.fortLevel
-		)
-		let units = scenario.units.mapInPlace { u in u.reset() }
-		let navalCenters = Self.navalCenters(
-			players: scenario.players,
-			terrain: scenario.terrain,
-			cities: cities,
-			size: map.size
-		)
+		let players = scenario.players.filter { $0.alive }
+		let countries = players.map(\.country)
+		let homes = scenario.resolvedSpawnPoints.map { Scenario.inCorner($0, tile: Scenario.quarterCity) }
+		var map = Map<64, Terrain>(scenario: scenario)
+		let defending = scenario.objective.defender
+		let cities = Self.cities(countries: countries, defending: defending, centers: homes, reserveStarts: true, map: map)
+		if let defending {
+			map.placeForts(
+				around: cities.compactMap { xy, country in country.team == defending ? xy : nil },
+				level: scenario.fortLevel
+			)
+		}
+		let units = scenario.startingUnits.mapInPlace { $0.reset() }
 
 		self.init(
 			map: map,
-			players: scenario.players,
+			players: players,
 			cities: cities,
 			units: units,
-			navalCenters: navalCenters
+			homes: Dictionary(zip(countries, homes), uniquingKeysWith: { first, _ in first })
 		)
 		self.objective = scenario.objective
-	}
-
-	/// Assign each participating team a distinct terrain sea cell near the
-	/// center of mass of its cities, which are also the anchors for its land
-	/// deployment. The small exhaustive matching avoids player-order bias when
-	/// multiple teams prefer the same sea cell. Returned points are tactical-map
-	/// cell centers.
-	static func navalCenters(
-		players: [Player],
-		terrain: [16 of Terrain],
-		cities: [(XY, Country)],
-		size: Int
-	) -> [Team: XY] {
-		var teams: [Team] = []
-		for player in players where player.alive && player.country.team != .none {
-			let team = player.country.team
-			if !teams.contains(team) { teams.append(team) }
-		}
-		let sea = terrain.indices.filter { terrain[$0].isSea }
-		guard !teams.isEmpty, !sea.isEmpty else { return [:] }
-
-		func cellCenter(_ index: Int) -> XY {
-			XY(terrainIndex: index).cellCenter(size: size)
-		}
-
-		let teamCenters = teams.map { team in
-			let anchors = cities.compactMap { xy, country in
-				country.team == team ? xy : nil
-			}
-			guard !anchors.isEmpty else { return XY(size / 2, size / 2) }
-			return XY(
-				anchors.reduce(0) { $0 + $1.x } / anchors.count,
-				anchors.reduce(0) { $0 + $1.y } / anchors.count
-			)
-		}
-
-		let assignmentCount = min(teams.count, sea.count)
-		var bestCost = Int.max
-		var best: [Int] = []
-		func match(_ teamIndex: Int, _ selected: [Int], _ cost: Int) {
-			guard teamIndex < assignmentCount else {
-				if cost < bestCost {
-					bestCost = cost
-					best = selected
-				}
-				return
-			}
-			for index in sea where !selected.contains(index) {
-				let nextCost = cost
-					+ cellCenter(index).manhattanDistance(to: teamCenters[teamIndex])
-				guard nextCost < bestCost else { continue }
-				match(teamIndex + 1, selected + [index], nextCost)
-			}
-		}
-		match(0, [], 0)
-
-		return Dictionary(uniqueKeysWithValues: zip(teams, best).map { team, index in
-			(team, cellCenter(index))
-		})
 	}
 
 	/// Compatibility factory for standalone battles with one dominant terrain.
@@ -108,14 +34,26 @@ public extension TacticalSim {
 		objective: Objective = .none,
 		forts: Int = 0
 	) {
-		self.init(new: Scenario(
-			players: players,
-			units: units,
-			terrain: [16 of Terrain](repeating: terrain),
-			fortLevel: forts,
-			seed: seed,
-			objective: objective
-		))
+		let active = players.filter { $0.alive }
+		var d20 = D20(seed: seed)
+		let sites = [XY(1, 0), XY(1, 3), XY(3, 1), XY(0, 1), XY(1, 1)]
+		let spawns = Array(sites.shuffled(using: &d20).prefix(active.count))
+		var map = Map<64, Terrain>(
+			seed: seed, terrain: .init(repeating: terrain), density: 0, spawns: spawns
+		)
+		let cities = Self.cities(
+			countries: active.map(\.country), defending: objective.defender,
+			centers: spawns.map { $0.cellCenter(size: map.size) }, reserveStarts: false, map: map
+		)
+		map.placeForts(
+			around: cities.compactMap { xy, country in
+				objective.defender == nil || country.team == objective.defender ? xy : nil
+			},
+			level: forts
+		)
+		let roster = Scenario(players: active, units: units, continents: terrain.isSea).startingUnits
+		self.init(map: map, players: active, cities: cities, units: roster.mapInPlace { $0.reset() })
+		self.objective = objective
 	}
 
 	/// Assign whole city footprints by spawn distance under per-seat quotas
@@ -123,7 +61,8 @@ public extension TacticalSim {
 	private static func cities(
 		countries: [Country],
 		defending: Team?,
-		spawns: [XY],
+		centers: [XY],
+		reserveStarts: Bool,
 		map: borrowing Map<64, Terrain>
 	) -> [(XY, Country)] {
 		guard !countries.isEmpty else { return [] }
@@ -138,7 +77,6 @@ public extension TacticalSim {
 			return assignedWeight * tileCount / total - previousWeight * tileCount / total
 		}
 
-		let centers = spawns.map { $0.cellCenter(size: map.size) }
 		let distances = footprints.map { city in
 			centers.map { center in
 				city.map { $0.manhattanDistance(to: center) }.min()!
@@ -153,6 +91,14 @@ public extension TacticalSim {
 		pairs.sort { a, b in (a.d, a.p, a.c) < (b.d, b.p, b.c) }
 
 		var owners = [Int?](repeating: nil, count: footprints.count)
+		if reserveStarts {
+			for (p, home) in centers.enumerated() {
+				if let c = footprints.firstIndex(where: { $0.contains(home) }) {
+					owners[c] = p
+					quotas[p] -= footprints[c].count
+				}
+			}
+		}
 		for (_, p, c) in pairs where owners[c] == nil && quotas[p] >= footprints[c].count {
 			owners[c] = p
 			quotas[p] -= footprints[c].count

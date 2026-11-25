@@ -1,32 +1,49 @@
 /// Complete, reusable recipe for a tactical battle.
 public struct Scenario {
-	public static var spawnOptions: [5 of XY] {
-		[XY(1, 0), XY(1, 3), XY(3, 1), XY(0, 1), XY(1, 1)]
+	public static var spawnOptions: [4 of XY] {
+		[XY(0, 3), XY(3, 3), XY(0, 0), XY(3, 0)]
 	}
 
-	public var players: [Player]
+	public var players: [Player] {
+		didSet {
+			if !symmetryAvailable { symmetry = false }
+			for i in spawns.indices where !players.indices.contains(i) || !players[i].alive {
+				spawns[i] = nil
+			}
+		}
+	}
 	public var units: [Unit]
-	public var terrain: [16 of Terrain]
+	public var terrain: Terrain
+	public var symmetry: Bool {
+		didSet { if !symmetryAvailable { symmetry = false } }
+	}
+	public var continents: Bool
 	public var spawns: [4 of XY?]
 	public var cityLevel: Int
 	public var fortLevel: Int
 	public var seed: Int
 	public var objective: Objective
 
+	public var symmetryAvailable: Bool { players.count(where: { $0.alive }) != 3 }
+
 	public init(
 		players: [Player],
 		units: [Unit],
-		terrain: [16 of Terrain] = .init(repeating: .field),
+		terrain: Terrain = .field,
 		spawns: [4 of XY?] = .init(repeating: nil),
 		cityLevel: Int = 0,
 		fortLevel: Int = 0,
 		seed: Int = 0,
-		objective: Objective = .none
+		objective: Objective = .none,
+		symmetry: Bool = false,
+		continents: Bool = false
 	) {
 		self.players = players
-		self.units = Self.addingNavalAux(to: units, for: players, terrain: terrain)
+		self.units = units
 		self.terrain = terrain
-		self.spawns = spawns
+		self.symmetry = symmetry && players.count(where: { $0.alive }) != 3
+		self.continents = continents
+		self.spawns = .init { players.indices.contains($0) && players[$0].alive ? spawns[$0] : nil }
 		self.cityLevel = cityLevel
 		self.fortLevel = fortLevel
 		self.seed = seed
@@ -35,18 +52,27 @@ public struct Scenario {
 
 	public func makeSim() -> TacticalSim { TacticalSim(new: self) }
 
+	public func availableSpawns(for seat: Int) -> [XY] {
+		Array(Self.spawnOptions).filter { option in
+			!players.indices.contains { i in i != seat && players[i].alive && spawns[i] == option }
+		}
+	}
+
+	var startingUnits: [Unit] {
+		let active = players.filter { $0.alive }
+		let countries = Set(active.map(\.country))
+		let roster = units.filter { countries.contains($0.country) }
+		return continents ? Self.addingNavalAux(to: roster, for: active) : roster
+	}
+
 	private static func addingNavalAux(
 		to units: [Unit],
-		for players: [Player],
-		terrain: [16 of Terrain]
+		for players: [Player]
 	) -> [Unit] {
-		let seaTiles = terrain.reduce(into: 0) { r, t in r += t == .sea ? 1 : 0 }
-		guard seaTiles >= 3 else { return units }
-
 		var result = units
 		let fleet: [UnitModel] = [.cruiser, .destroyer, .destroyer, .cargo, .cargo]
 		let desiredCounts = Dictionary(fleet.map { ($0, 1) }, uniquingKeysWith: +)
-		for player in players where player.alive {
+		for player in players {
 			let isAux = { (unit: Unit) in
 				unit.country == player.country && unit[.aux]
 			}
@@ -79,41 +105,22 @@ public struct Scenario {
 		return result
 	}
 
-	public static func cornerTerrain(seaLevel: UInt8, seed: Int) -> [16 of Terrain] {
-		var terrain = [16 of Terrain](repeating: .field)
-		guard seaLevel > 0 else { return terrain }
-
-		var d20 = D20(seed: seed)
-		let tiles: [Int] = switch d20() {
-		case ..<5: [3, 2, 7, 1, 0] // north-east
-		case ..<10: [0, 1, 4, 2, 3] // north-west
-		case ..<15: [12, 13, 8, 14, 15] // south-west
-		default: [15, 14, 11, 13, 12] // south-east
-		}
-		let count = [0, 2, 3, 5][Int(min(seaLevel, 3))]
-		for index in tiles.prefix(count) {
-			terrain[index] = .sea
-		}
-		return terrain
-	}
-
 	var resolvedSpawnPoints: [XY] {
 		var d20 = D20(seed: seed)
-		var pool = Array(Self.spawnOptions).filter { option in
-			!players.indices.contains { i in players[i].alive && spawns[i] == option }
+		var pool = Array(Self.spawnOptions)
+		let selected: [XY?] = players.indices.filter { players[$0].alive }.map { i in
+			guard let pick = spawns[i], let index = pool.firstIndex(of: pick) else { return nil }
+			return pool.remove(at: index)
 		}
-		.shuffled(using: &d20)
+		pool.shuffle(using: &d20)
+		return selected.map { $0 ?? pool.removeFirst() }
+	}
 
-		var resolved: [XY] = []
-		for idx in players.indices where players[idx].alive {
-			if let xy = spawns[idx] {
-				resolved.append(xy)
-			} else {
-				resolved.append(pool.removeFirst())
-			}
-		}
+	static var quarterCity: XY { XY(8, 8) }
+	static var quarterAirfield: XY { XY(8, 9) }
 
-		return resolved
+	static func inCorner(_ corner: XY, tile: XY) -> XY {
+		XY(corner.x == 0 ? tile.x : 63 - tile.x, corner.y == 0 ? tile.y : 63 - tile.y)
 	}
 }
 

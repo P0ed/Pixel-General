@@ -12,7 +12,7 @@ extension TacticalMode {
 		return .init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			next: { state in state.auto ? heuristic(state.sim) : nil },
+			next: { state in state.auto && state.sim.winner == nil ? heuristic(state.sim) : nil },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			present: { intent, nodes, state in await nodes.present(intent, state) },

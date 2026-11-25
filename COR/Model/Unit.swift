@@ -322,14 +322,13 @@ public extension UnitType {
 		 m777, m109, m147, patriot, mh6, f16, f35, mq9
 
 	// Axis
-	case ksk, p1sun, fennek, boxer, marder, cv9035, strf90, kf41, pzh, mars, leo1, leo2a7, strv103, strv122,
-		 kf51, bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
+	case ksk, p1sun, fennek, boxer, marder, cv9035, strf90, kf41, pzh, mars,
+		 leo1, leo2a4, leo2a7, strv103, strv122, kf51,
+		 bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet
 	case militia, speznas, brdm2, bmp, t55, t72, t90m, art105, sp105, neva, s300,
 		 tunguska, mi8, mi24, orlan, mig29, su57, su25, su27
-
-	case leo2a4
 }
 
 extension Unit: DeadOrAlive {

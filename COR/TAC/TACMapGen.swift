@@ -22,32 +22,122 @@ public extension Map<64, Terrain> {
 	/// are placed near their nearest cities first, where terrain permits.
 	init(seed: Int, players _: Int = 4, terrain: [16 of Terrain], density: Int = 1, spawns: [XY] = []) {
 		self = Map(zero: .none)
+		generate(seed: seed, terrain: terrain, targets: SettlementTargets(density), spawns: spawns)
+		shapeRoads()
+	}
 
+	mutating func placeForts(around centers: [XY], level: Int) {
+		placeForts(around: centers, budget: 48 * level)
+	}
+
+	internal init(scenario: Scenario) {
+		self = Map(zero: .none)
+		let terrain = [16 of Terrain](repeating: scenario.terrain.isSea ? .field : scenario.terrain)
+		let targets = SettlementTargets(scenario.cityLevel)
+		let forts = scenario.objective.defender == nil ? scenario.fortLevel : 0
+		if scenario.symmetry || scenario.continents {
+			var d20 = D20(seed: scenario.seed)
+			let corners = Array(Scenario.spawnOptions)
+			for i in corners.indices {
+				var quarter = Map<32, Terrain>(zero: .none)
+				let seed = i == 0 ? scenario.seed : Int(truncatingIfNeeded: d20.next())
+				quarter.generate(
+					seed: seed, terrain: terrain, targets: targets.quarter,
+					starts: [(Scenario.quarterCity, Scenario.quarterAirfield)],
+					continents: scenario.continents, joinSeams: !scenario.continents
+				)
+				if scenario.symmetry {
+					quarter.placeForts(around: quarter.cityFootprints.flatMap { $0 }, budget: 12 * forts)
+					for corner in corners { copyQuarter(quarter, to: corner) }
+					break
+				}
+				copyQuarter(quarter, to: corners[i])
+			}
+		} else {
+			let starts = Scenario.spawnOptions.map { corner in
+				(Scenario.inCorner(corner, tile: Scenario.quarterCity),
+				 Scenario.inCorner(corner, tile: Scenario.quarterAirfield))
+			}
+			generate(seed: scenario.seed, terrain: terrain, targets: targets, starts: starts)
+		}
+		if !scenario.symmetry {
+			placeForts(around: cityFootprints.flatMap { $0 }, level: forts)
+		}
+		shapeRoads()
+	}
+
+	private mutating func copyQuarter(_ quarter: borrowing Map<32, Terrain>, to corner: XY) {
+		for xy in quarter.indices {
+			self[Scenario.inCorner(corner, tile: xy)] = quarter[xy]
+		}
+	}
+}
+
+private struct SettlementTargets {
+	var settlements: Int
+	var airfields: Int
+	var pairs: Int
+	var triples: Int
+
+	init(_ density: Int) {
+		(settlements, airfields, pairs, triples) = [
+			(20, 4, 2, 1), (32, 6, 3, 2), (48, 9, 4, 3), (64, 12, 5, 4),
+		][min(3, max(0, density))]
+	}
+
+	var quarter: Self {
+		var result = self
+		result.settlements /= 4
+		result.airfields = (airfields + 2) / 4
+		result.pairs = (pairs + 2) / 4
+		result.triples = (triples + 2) / 4
+		return result
+	}
+}
+
+extension Map where Element == Terrain {
+
+	fileprivate mutating func generate(
+		seed: Int,
+		terrain: [16 of Terrain],
+		targets: SettlementTargets,
+		spawns: [XY] = [],
+		starts: [(city: XY, airfield: XY)] = [],
+		continents: Bool = false,
+		joinSeams: Bool = false
+	) {
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
-		let seed = Int32(bitPattern: UInt32(seed & Int(UInt32.max)))
+		let seed = Int32(truncatingIfNeeded: seed)
 		let height = GKNoiseMap.height(size: noiseSize, seed: seed)
-		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed + 1)
+		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed &+ 1)
 		var d20 = D20(seed: Int(seed))
 
-		let mainland = generateTerrain(
-			height: height,
-			humidity: humidity,
-			terrain: terrain
-		)
+		var mainland = continents
+			? generateContinent(height: height, humidity: humidity, terrain: terrain)
+			: generateTerrain(height: height, humidity: humidity, terrain: terrain)
+		if joinSeams {
+			for edge in [Edge.right, .top] {
+				forEachEdge(edge) { xy in mainland[xy] = false }
+			}
+		}
+		for (city, airfield) in starts {
+			self[city] = .city
+			self[airfield] = .airfield
+			airfield.n4.forEach { mainland[$0] = false }
+		}
 		placeRivers(height: height, d20: &d20)
-		let targets = [
-			(settlements: 20, airfields: 4, pairs: 2, triples: 1),
-			(settlements: 32, airfields: 6, pairs: 3, triples: 2),
-			(settlements: 48, airfields: 9, pairs: 4, triples: 3),
-			(settlements: 64, airfields: 12, pairs: 5, triples: 4),
-		][min(3, max(0, density))]
 		let cities = placeCities(
 			d20: &d20, mainland: mainland, tiles: targets.settlements - targets.airfields,
-			pairs: targets.pairs, triples: targets.triples
+			pairs: targets.pairs, triples: targets.triples, reserved: starts.map(\.city)
 		)
-		placeAirfields(near: cities, spawns: spawns, target: targets.airfields, d20: &d20)
+		placeAirfields(
+			near: cities, spawns: spawns, target: targets.airfields - starts.count, d20: &d20
+		)
 		connectCities(cities: cities.map { $0[0] })
-		shapeRoads()
+		if joinSeams {
+			extendRoads(to: .right)
+			extendRoads(to: .top)
+		}
 	}
 
 	internal var cityFootprints: [[XY]] {
@@ -71,6 +161,29 @@ public extension Map<64, Terrain> {
 		}
 		removeDisconnectedSea(height: height, humidity: humidity, terrain: terrain)
 		return reduceIslands()
+	}
+
+	private mutating func generateContinent(
+		height: GKNoiseMap, humidity: GKNoiseMap, terrain: [16 of Terrain]
+	) -> SetXY {
+		for xy in indices {
+			let radius = Float(size - 5) + 8 * lowpass(height, at: xy)
+			let inside = xy.x < size - 2 && xy.y < size - 2
+			let protected = xy.x < 16 && xy.y < 16
+			let land = inside && (protected || Float(xy.x * xy.x + xy.y * xy.y) < radius * radius)
+			self[xy] = land ? landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain) : .sea
+		}
+		var land = SetXY.empty
+		_ = flood(from: [Scenario.quarterCity], visited: &land) { !self[$0].isSea }
+		for xy in indices where !land[xy] { self[xy] = .sea }
+
+		var ocean = SetXY.empty
+		_ = flood(from: [XY(size - 1, size - 1)], visited: &ocean) { self[$0].isSea }
+		for xy in indices where !land[xy] && !ocean[xy] {
+			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain)
+			land[xy] = true
+		}
+		return land
 	}
 
 	private func landTerrain(
@@ -242,7 +355,7 @@ public extension Map<64, Terrain> {
 			}
 
 			let path = shortestPath(
-				from: source,
+				from: [source],
 				reached: { xy in mouth.map { m in xy == m } ?? self[xy].isRiver },
 				cost: { _, xy in riverStep(to: xy, mouth: mouth, height: height, meander: meander, salt: salt) }
 			)
@@ -287,7 +400,7 @@ public extension Map<64, Terrain> {
 			let t = Int.random(in: size / 6 ... size - 1 - size / 6, using: &d20)
 			let p = onEdge(edge, t)
 			guard
-				!self[p].isSea,
+				!self[p].isSea, !self[p].isSettlement,
 				hasNoSeaNeighbors(at: p),
 				hasNoRivers(at: p),
 				mouths.allSatisfy({ xy in xy.stepDistance(to: p) >= size / 2 }),
@@ -311,7 +424,7 @@ public extension Map<64, Terrain> {
 		var best = nil as XY?
 		for p in indices {
 			guard
-				!self[p].isSea,
+				!self[p].isSea, !self[p].isSettlement,
 				touchesSea(at: p),
 				p.n4.contains({ q in contains(q) && !self[q].isSea && hasNoSeaNeighbors(at: q) }),
 				hasNoRivers(at: p),
@@ -343,7 +456,7 @@ public extension Map<64, Terrain> {
 	/// (`mouth == nil`) instead pays a penalty there and terminates on the
 	/// first river tile it touches.
 	private func riverStep(to xy: XY, mouth: XY?, height: GKNoiseMap, meander: GKNoiseMap, salt: UInt64) -> UInt32? {
-		guard contains(xy), !self[xy].isSea else { return nil }
+		guard contains(xy), !self[xy].isSea, !self[xy].isSettlement else { return nil }
 		if !hasNoSeaNeighbors(at: xy), mouth.map({ $0 == xy }) != true { return nil }
 		if self[xy].isRiver { return mouth == nil ? 1 : nil }
 		let near = !hasNoRivers(at: xy)
@@ -389,7 +502,8 @@ public extension Map<64, Terrain> {
 		mainland: SetXY,
 		tiles: Int,
 		pairs: Int,
-		triples: Int
+		triples: Int,
+		reserved: [XY] = []
 	) -> [[XY]] {
 		let centerTarget = tiles - pairs - 2 * triples
 
@@ -423,9 +537,9 @@ public extension Map<64, Terrain> {
 			}
 		}
 
-		var cities: [[XY]] = []
+		var cities = reserved.map { [$0] }
 
-		for i in 0 ..< centerTarget {
+		for i in 0 ..< centerTarget where cities.count < centerTarget {
 			let gx = i % cols
 			let gy = i / cols
 			let center = XY(
@@ -446,7 +560,7 @@ public extension Map<64, Terrain> {
 		var remaining = tiles - cities.count
 		for (districts, target) in [(3, triples), (2, pairs)] {
 			var grown = 0
-			for i in cities.indices where grown < target && cities[i].count == 1 {
+			for i in cities.indices.dropFirst(reserved.count) where grown < target && cities[i].count == 1 {
 				var footprint = cities[i]
 				var head = 0
 				while head < footprint.count && footprint.count < districts {
@@ -504,7 +618,7 @@ public extension Map<64, Terrain> {
 			}
 		}
 		// If few footprints have clear ground, use other open sites nearby.
-		while remaining > 0, districts.contains(where: { placeAirfield(near: $0, d20: &d20) }) {
+		while remaining > 0, districts.contains(where: { placeAirfield(near: $0, d20: &d20, clearing: true) }) {
 			remaining -= 1
 		}
 	}
@@ -656,7 +770,7 @@ public extension Map<64, Terrain> {
 		return extras
 	}
 
-	mutating func shapeRoads() {
+	public mutating func shapeRoads() {
 		var neighbors = [false, false, false, false] as [4 of Bool]
 		for xy in indices {
 			if self[xy].isRoad {
@@ -668,9 +782,11 @@ public extension Map<64, Terrain> {
 				if r != .none { self[xy] = r }
 			} else if self[xy].isBridge {
 				let n4 = xy.n4
-				if self[n4[0]].isRiver, self[n4[2]].isRiver {
+				let westEast = [n4[0], n4[2]].allSatisfy { self[$0].isRiver || self[$0] == .bridgeSN }
+				let southNorth = [n4[1], n4[3]].allSatisfy { self[$0].isRiver || self[$0] == .bridgeWE }
+				if westEast, !southNorth {
 					self[xy] = .bridgeSN
-				} else if self[n4[1]].isRiver, self[n4[3]].isRiver {
+				} else if southNorth, !westEast {
 					self[xy] = .bridgeWE
 				}
 			}
@@ -681,11 +797,11 @@ public extension Map<64, Terrain> {
 	/// `centers` — the defending side's cities.
 	/// Only open ground (field/forest/hill) turns into fort, so roads keep
 	/// their gaps through the ring and rivers/settlements stay untouched.
-	/// At most `3 * level * size / 4` tiles land in total, one per center
+	/// At most `48 * level` tiles land across the full map, one per center
 	/// per round-robin pass so the budget spreads evenly across cities.
 	/// No RNG — placement is a pure function of the map and inputs.
-	mutating func placeForts(around centers: [XY], level: Int) {
-		var budget = 3 * level * size / 4
+	fileprivate mutating func placeForts(around centers: [XY], budget: Int) {
+		var budget = budget
 		var cursors = [Int](repeating: 0, count: centers.count)
 		var placed = true
 		while budget > 0, placed {
@@ -712,8 +828,8 @@ public extension Map<64, Terrain> {
 	private static func road(_ neighbors: [4 of Bool]) -> Terrain {
 		// East, North, West, South
 		switch (neighbors[0], neighbors[1], neighbors[2], neighbors[3]) {
-		case (false, true, false, true): .roadSN
-		case (true, false, true, false): .roadWE
+		case (false, true, false, _), (false, false, false, true): .roadSN
+		case (true, false, _, false), (false, false, true, false): .roadWE
 		case (true, true, false, false): .roadNE
 		case (true, false, false, true): .roadSE
 		case (false, true, true, false): .roadNW
@@ -731,11 +847,10 @@ public extension Map<64, Terrain> {
 		guard self[r].isRiver, self[l].isBridgable else { return false }
 		let step = r - l
 		let n4 = r.n4
-		return self[r + step + step].isBridgable
-		&& (
-			self[n4[0]].isRiver && self[n4[2]].isRiver
-			|| self[n4[1]].isRiver && self[n4[3]].isRiver
-		)
+		guard self[r + step].isBridgable else { return false }
+		return step.x == 0
+			? self[n4[0]].isRiver && self[n4[2]].isRiver
+			: self[n4[1]].isRiver && self[n4[3]].isRiver
 	}
 
 	/// Cost of stepping onto `to` from `l`, or `nil` if impassable. Roads and
@@ -743,7 +858,10 @@ public extension Map<64, Terrain> {
 	/// progressively more so a route only carves through them when there's no
 	/// gentler way around. Rivers are passable solely where a bridge fits.
 	private func stepCost(to: XY, from l: XY) -> UInt32? {
+		let crossing = to.x == l.x ? Terrain.bridgeSN : .bridgeWE
+		if self[l].isBridge, self[l] != crossing { return nil }
 		let t = self[to]
+		if t.isBridge { return t == crossing ? 1 : nil }
 		if t.hasRoad { return 1 }
 		switch t {
 		case .field: return 4
@@ -754,38 +872,55 @@ public extension Map<64, Terrain> {
 	}
 
 	private mutating func connect(_ start: XY, _ end: XY) -> Bool {
-		let path = shortestPath(
-			from: start,
+		guard let path = shortestPath(
+			from: [start],
 			reached: { xy in xy == end },
 			cost: { from, to in stepCost(to: to, from: from) }
-		)
-		guard let path else { return false }
-		path.forEach { xy in
-			if !self[xy].isSettlement {
-				self[xy] = self[xy].isRiver || self[xy].isBridge ? .bridgeWE : .roadX
-			}
-		}
+		) else { return false }
+		carveRoad(path)
 		return true
 	}
 
-	/// Dijkstra over 4-neighbors from `start` until a tile satisfying
+	private mutating func extendRoads(to edge: Edge) {
+		let roads = indices.filter { self[$0].isRoad || self[$0] == .city }
+		if let path = shortestPath(
+			from: roads,
+			reached: { xy in
+				(edge == .right ? xy.x : xy.y) == size - 1 && !self[xy].isRiver && !self[xy].isBridge
+			},
+			cost: { from, to in stepCost(to: to, from: from) }
+		) {
+			carveRoad(path)
+		}
+	}
+
+	private mutating func carveRoad(_ path: [XY]) {
+		for (i, xy) in path.enumerated() where !self[xy].isSettlement && !self[xy].isBridge {
+			if self[xy].isRiver {
+				self[xy] = path[i + 1].x == xy.x ? .bridgeSN : .bridgeWE
+			} else {
+				self[xy] = .roadX
+			}
+		}
+	}
+
+	/// Dijkstra over 4-neighbors from `starts` until a tile satisfying
 	/// `reached` is finalized, following `cost(from, to)` (`nil` =
 	/// impassable). Returns the path including both endpoints.
 	private func shortestPath(
-		from start: XY,
+		from starts: [XY],
 		reached: (XY) -> Bool,
 		cost: (XY, XY) -> UInt32?
 	) -> [XY]? {
-		var dist = Map<64, UInt32>(zero: .max)
-		var prev = Map<64, UInt16>(zero: 0)
-		guard let goal = dijkstra(from: start, reached: reached, cost: cost, dist: &dist, prev: &prev)
+		var dist = Map<size, UInt32>(zero: .max)
+		var prev = Map<size, UInt16>(zero: 0)
+		guard let goal = dijkstra(from: starts, reached: reached, cost: cost, dist: &dist, prev: &prev)
 		else { return nil }
 
 		var path = [goal]
 		var head = goal
-		while head != start {
+		while prev[head] != 0 {
 			let packed = prev[head]
-			guard packed != 0 else { break }
 			let idx = Int(packed) - 1
 			head = XY(idx % size, idx / size)
 			path.append(head)
@@ -795,11 +930,11 @@ public extension Map<64, Terrain> {
 
 	/// Travel cost from `start` to every tile over `stepCost` terrain,
 	/// flooded to exhaustion; `.max` = unreachable.
-	private func distances(from start: XY) -> Map<64, UInt32> {
-		var dist = Map<64, UInt32>(zero: .max)
-		var prev = Map<64, UInt16>(zero: 0)
+	private func distances(from start: XY) -> Map<size, UInt32> {
+		var dist = Map<size, UInt32>(zero: .max)
+		var prev = Map<size, UInt16>(zero: 0)
 		_ = dijkstra(
-			from: start,
+			from: [start],
 			reached: { _ in false },
 			cost: { from, to in stepCost(to: to, from: from) },
 			dist: &dist,
@@ -810,28 +945,23 @@ public extension Map<64, Terrain> {
 
 	/// Core of `shortestPath`/`distances`: relaxes `dist`/`prev` outward
 	/// from `start` and returns the first finalized tile satisfying
-	/// `reached`, or `nil` once the flood exhausts. Lazy deletion pushes one
-	/// heap entry per relaxation. The 64×64 grid has 16,128 directed edges,
-	/// so 16,384 entries cover every possible relaxation plus the start.
+	/// `reached`, or `nil` once the flood exhausts.
 	private func dijkstra(
-		from start: XY,
+		from starts: [XY],
 		reached: (XY) -> Bool,
 		cost: (XY, XY) -> UInt32?,
-		dist: inout Map<64, UInt32>,
-		prev: inout Map<64, UInt16>
+		dist: inout Map<size, UInt32>,
+		prev: inout Map<size, UInt16>
 	) -> XY? {
-		dist[start] = 0
-
-		var heapD = CArray<16384, UInt32>(head: 0, tail: 0)
-		var heapL = CArray<16384, XY>(head: start, tail: .zero)
+		var heap = starts.map { (distance: UInt32(0), point: $0) }
+		for start in starts { dist[start] = 0 }
 
 		func siftUp(_ from: Int) {
 			var i = from
 			while i > 0 {
 				let parent = (i - 1) / 2
-				if heapD[parent] <= heapD[i] { break }
-				heapD.swapAt(parent, i)
-				heapL.swapAt(parent, i)
+				if heap[parent].distance <= heap[i].distance { break }
+				heap.swapAt(parent, i)
 				i = parent
 			}
 		}
@@ -840,39 +970,33 @@ public extension Map<64, Terrain> {
 			while true {
 				let l = 2 * i + 1, r = 2 * i + 2
 				var m = i
-				if l < heapD.count, heapD[l] < heapD[m] { m = l }
-				if r < heapD.count, heapD[r] < heapD[m] { m = r }
+				if l < heap.count, heap[l].distance < heap[m].distance { m = l }
+				if r < heap.count, heap[r].distance < heap[m].distance { m = r }
 				if m == i { break }
-				heapD.swapAt(m, i)
-				heapL.swapAt(m, i)
+				heap.swapAt(m, i)
 				i = m
 			}
 		}
 
-		while !heapD.isEmpty {
-			let topD = heapD[0]
-			let topL = heapL[0]
-			let lastD = heapD.removeLast()
-			let lastL = heapL.removeLast()
-			if !heapD.isEmpty {
-				heapD[0] = lastD
-				heapL[0] = lastL
+		while let (distance, point) = heap.first {
+			let last = heap.removeLast()
+			if !heap.isEmpty {
+				heap[0] = last
 				siftDown(0)
 			}
-			if topD != dist[topL] { continue }
-			if reached(topL) { return topL }
+			if distance != dist[point] { continue }
+			if reached(point) { return point }
 
-			let n4 = topL.n4
+			let n4 = point.n4
 			for i in n4.indices {
 				let nb = n4[i]
-				guard contains(nb), let w = cost(topL, nb) else { continue }
-				let nd = topD + w
+				guard contains(nb), let w = cost(point, nb) else { continue }
+				let nd = distance + w
 				if nd < dist[nb] {
 					dist[nb] = nd
-					prev[nb] = UInt16(topL.y * size + topL.x + 1)
-					heapD.add(nd)
-					heapL.add(nb)
-					siftUp(heapD.count - 1)
+					prev[nb] = UInt16(point.y * size + point.x + 1)
+					heap.append((nd, nb))
+					siftUp(heap.count - 1)
 				}
 			}
 		}

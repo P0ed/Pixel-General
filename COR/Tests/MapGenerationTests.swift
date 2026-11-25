@@ -195,41 +195,6 @@ struct MapGenerationTests {
 		)
 	}
 
-	@Test func scenarioSeaLevelsAreCumulativeAndSeededByCorner() {
-		let validPairs: Set<Set<Int>> = [
-			[3, 2], [0, 1], [12, 13], [15, 14],
-		]
-		let validCorners: Set<Set<Int>> = [
-			[3, 2, 7], [0, 1, 4], [12, 13, 8], [15, 14, 11],
-		]
-		let validCoasts: Set<Set<Int>> = [
-			[0, 1, 2, 3, 7], [0, 1, 2, 3, 4], [8, 12, 13, 14, 15], [11, 12, 13, 14, 15],
-		]
-		var observedPairs = Set<Set<Int>>()
-		for seed in 0 ..< 64 {
-			var previous = Set<Int>()
-			for level: UInt8 in 0 ... 3 {
-				let terrain = Scenario.cornerTerrain(seaLevel: level, seed: seed)
-				let sea = Set(terrain.indices.filter { terrain[$0].isSea })
-				let expected = [0, 2, 3, 5][Int(level)]
-				#expect(sea.count == expected, "Sea level \(level) produced \(sea.count) squares for seed \(seed)")
-				#expect(previous.isSubset(of: sea), "Sea level \(level) was not cumulative for seed \(seed)")
-				previous = sea
-				switch level {
-				case 1:
-					observedPairs.insert(sea)
-					#expect(validPairs.contains(sea), "Sea squares \(sea) do not form a corner pair for seed \(seed)")
-				case 2:
-					#expect(validCorners.contains(sea), "Sea squares \(sea) do not form a corner for seed \(seed)")
-				case 3:
-					#expect(validCoasts.contains(sea), "Sea squares \(sea) do not form a coast for seed \(seed)")
-				default: break
-				}
-			}
-		}
-		#expect(observedPairs == validPairs, "Seeded sea did not use all four corners")
-	}
-
 	@Test func riversOnlyTouchSeaAtTerminalMouths() {
 		var terrain = [16 of Terrain](repeating: .field)
 		terrain[0] = .sea
