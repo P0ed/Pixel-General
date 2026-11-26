@@ -96,9 +96,12 @@ private struct SettlementTargets {
 	var portsPerPlayer: Int
 
 	init(_ density: Int) {
-		(settlements, airfields, pairs, triples, portsPerPlayer) = [
-			(20, 4, 2, 1, 1), (32, 6, 3, 2, 1), (48, 9, 4, 3, 2), (64, 12, 5, 4, 3),
-		][min(3, max(0, density))]
+		(settlements, airfields, pairs, triples, portsPerPlayer) = ([
+			(24, 4, 4, 0, 1),
+			(32, 6, 6, 2, 2),
+			(48, 8, 8, 3, 3),
+			(64, 10, 10, 4, 4)
+		] as [4 of (Int, Int, Int, Int, Int)]) [min(3, max(0, density))]
 	}
 
 	var quarter: Self {
