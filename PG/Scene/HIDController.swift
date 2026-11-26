@@ -1,15 +1,12 @@
 import GameController
 import COR
 
+@MainActor
 extension InputModifiers {
 
 	private static let altKeys: [GCKeyCode] = [.leftAlt, .rightAlt]
 	private static let shiftKeys: [GCKeyCode] = [.leftShift, .rightShift]
 
-	/// Whether a key standing for this modifier is physically down, read from
-	/// the HID keyboard: UIKit never delivers the key-up of a bare modifier on
-	/// Mac Catalyst, so a held chord has to watch the key itself.
-	@MainActor
 	var isKeyDown: Bool {
 		guard let keyboard = GCKeyboard.coalesced?.keyboardInput else { return false }
 		return (contains(.left) ? Self.altKeys : Self.shiftKeys)
@@ -21,7 +18,6 @@ extension InputModifiers {
 struct HIDController {
 	@IO private var lifetime: Any?
 	@IO var send: (Input) -> Void = ø
-	/// Button and shoulder releases, which only a held menu side button reads.
 	@IO var up: (Input) -> Void = ø
 	@IO private var modifiers: InputModifiers = []
 	@IO private var usedModifiers: InputModifiers = []
