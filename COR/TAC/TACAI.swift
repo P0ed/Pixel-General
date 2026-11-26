@@ -63,7 +63,7 @@ public enum AI {
 		public init() {}
 	}
 
-	public static var heuristic: (borrowing TacticalSim) -> TacticalAction? {
+	public static var heuristic: (borrowing TacticalSim) -> Action? {
 		var plan = Plan()
 		return { sim in sim.run(ai: &plan) }
 	}
@@ -78,7 +78,7 @@ extension TacticalSim {
 	/// unit while it is still untouched, take the best shot on the whole board,
 	/// handle transport, execute the highest-priority move, then buy only after
 	/// deployment tiles have cleared.
-	public func run(ai: inout AI.Plan) -> TacticalAction {
+	public func run(ai: inout AI.Plan) -> Action {
 		let signature = refresh(&ai)
 		let turnChanged = ai.turn != turn
 		if turnChanged { ai.actionsThisTurn = 0 }
@@ -386,7 +386,7 @@ extension TacticalSim {
 
 	// MARK: - Critical resupply
 
-	private func criticalResupply(_ ai: borrowing AI.Plan) -> TacticalAction? {
+	private func criticalResupply(_ ai: borrowing AI.Plan) -> Action? {
 		var best: UID = .none
 		var bestScore = 0
 		let resupplyHP = ai.stance.resupplyHP
@@ -408,7 +408,7 @@ extension TacticalSim {
 	/// One global own-unit × visible-enemy scan. The score prices expected value
 	/// removed and expected losses, then adds objective, focus-fire, and danger
 	/// terms. Strict `>` preserves ascending UID order as the final tie-break.
-	private func bestAttack(_ ai: borrowing AI.Plan) -> TacticalAction? {
+	private func bestAttack(_ ai: borrowing AI.Plan) -> Action? {
 		var bestSource: UID = .none
 		var bestTarget: UID = .none
 		var bestScore = Int.min
@@ -493,7 +493,7 @@ extension TacticalSim {
 
 	// MARK: - Transport
 
-	private func disembark(_ ai: borrowing AI.Plan) -> TacticalAction? {
+	private func disembark(_ ai: borrowing AI.Plan) -> Action? {
 		var bestTransport: UID = .none
 		var bestTile = XY.zero
 		var bestScore = Int.min
@@ -521,7 +521,7 @@ extension TacticalSim {
 		return bestTransport == .none ? nil : .disembark(bestTransport, bestTile)
 	}
 
-	private func embark(_ ai: borrowing AI.Plan) -> TacticalAction? {
+	private func embark(_ ai: borrowing AI.Plan) -> Action? {
 		for i in ai.order.indices {
 			let uid = ai.order[i]
 			let u = units[uid]
@@ -543,7 +543,7 @@ extension TacticalSim {
 
 	/// Selects from the cached order before doing pathfinding, so an action pays
 	/// for one BFS: the one mover it actually considers.
-	private func bestMove(_ ai: inout AI.Plan) -> TacticalAction? {
+	private func bestMove(_ ai: inout AI.Plan) -> Action? {
 		for i in ai.order.indices {
 			let uid = ai.order[i]
 			guard !ai.skippedMoves[uid], units[uid].canMove, !offMap(unit: uid) else { continue }
@@ -583,7 +583,7 @@ extension TacticalSim {
 		return ai.target[uid.index]
 	}
 
-	private func pickMove(_ uid: UID, toward target: XY, ai: borrowing AI.Plan) -> TacticalAction? {
+	private func pickMove(_ uid: UID, toward target: XY, ai: borrowing AI.Plan) -> Action? {
 		let moves = moves(for: uid)
 		let here = position[uid]
 		var best: XY?
@@ -671,7 +671,7 @@ extension TacticalSim {
 
 	// MARK: - Purchasing
 
-	private func purchase(_ ai: borrowing AI.Plan) -> TacticalAction? {
+	private func purchase(_ ai: borrowing AI.Plan) -> Action? {
 		let reserve: UInt16 = ai.stance == .attackSurvival && deadlineUrgency >= 3 ? 0 : 0x100
 		guard player.prestige > reserve, ai.roster.count < Self.totalUnitLimit else { return nil }
 

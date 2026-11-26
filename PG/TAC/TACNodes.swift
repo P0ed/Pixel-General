@@ -3,7 +3,7 @@ import COR
 
 @MainActor
 struct TacticalNodes {
-	weak var scene: TacticalScene?
+	weak var scene: Scene?
 	var camera: SKCameraNode
 	var map: MapNodes
 	@IO var units: [192 of SKNode?] = .init(repeating: nil)
@@ -21,7 +21,7 @@ struct TacticalNodes {
 
 extension TacticalNodes {
 
-	init(scene: TacticalScene) {
+	init(scene: Scene) {
 		let lit = scene.state.litTiles
 		self = TacticalNodes(
 			scene: scene,

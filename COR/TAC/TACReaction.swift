@@ -1,4 +1,4 @@
-@frozen public enum TacticalAction: Equatable {
+@frozen public enum Action: Equatable {
 	case move(UID, XY)
 	case embark(UID, UID)
 	case disembark(UID, XY)
@@ -23,7 +23,7 @@ extension TacticalSim {
 	///
 	/// An illegal action leaves the sim bitwise-unchanged and emits no events.
 	/// The tactical AI checks the same legality predicates as the reducers.
-	public mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
+	public mutating func reduce(_ action: Action) -> [TacticalEvent] {
 		var events: [TacticalEvent] = []
 		switch action {
 		case .attack(let src, let dst): attack(src: src, dst: dst, into: &events)

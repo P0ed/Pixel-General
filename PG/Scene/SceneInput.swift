@@ -2,7 +2,7 @@ import SpriteKit
 import UIKit
 import COR
 
-extension Scene where State: ~Copyable {
+extension Scene {
 
 	@discardableResult
 	func handle(key: UIKey) -> Bool {

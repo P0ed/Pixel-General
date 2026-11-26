@@ -2,8 +2,8 @@ import SpriteKit
 import UIKit
 import COR
 
-final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: SKScene {
-	let mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>
+final class Scene: SKScene {
+	let mode: SceneMode<TacticalState, Action, TacticalEvent, PresentationIntent, TacticalNodes> = .tactical
 	private let hid = HIDController()
 
 	private var isPresented = false
@@ -18,20 +18,15 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
-	var state: State { didSet { didSetState() } }
+	var state: TacticalState { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
-	private(set) var nodes: Nodes?
+	private(set) var nodes: TacticalNodes?
 	private var enterBackground: Any?
 	private var panRecognizer: UIPanGestureRecognizer?
 	private var hoverRecognizer: UIHoverGestureRecognizer?
 
-	init(
-		mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>,
-		state: consuming State,
-		size: CGSize = .scene
-	) {
+	init(state: consuming TacticalState, size: CGSize = .scene) {
 		self.state = state
-		self.mode = mode
 		super.init(size: size)
 	}
 

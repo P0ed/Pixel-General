@@ -20,7 +20,7 @@ private enum OverlayZ {
 	static let menu = status + 1.0
 }
 
-extension Scene where State: ~Copyable {
+extension Scene {
 
 	func makeBaseNodes() -> BaseNodes {
 		BaseNodes(

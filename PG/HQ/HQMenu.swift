@@ -3,8 +3,8 @@ import COR
 
 @MainActor
 final class HQMenu {
-	typealias Menu = MenuState<TacticalAction>
-	typealias Item = MenuItem<TacticalAction>
+	typealias Menu = MenuState<Action>
+	typealias Item = MenuItem<Action>
 
 	private(set) var hq = clone(core.hq)
 

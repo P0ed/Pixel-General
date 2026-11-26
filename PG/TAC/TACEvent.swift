@@ -14,7 +14,7 @@ extension TacticalNodes {
 		}
 	}
 
-	func present(_ intent: TacticalPresentationIntent, _ state: borrowing TacticalState) async {
+	func present(_ intent: PresentationIntent, _ state: borrowing TacticalState) async {
 		switch intent {
 		case .shop: processShop(state)
 		case .menu: processMenu(state)

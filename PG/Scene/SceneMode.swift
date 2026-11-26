@@ -3,7 +3,7 @@ import COR
 
 @MainActor
 struct SceneMode<State: ~Copyable, Action, Event, PresentationIntent, Nodes> {
-	var make: @MainActor (Scene<State, Action, Event, PresentationIntent, Nodes>) -> Nodes
+	var make: @MainActor (Scene) -> Nodes
 	var initialMenu: @MainActor (Nodes, borrowing State) -> MenuState<Action>? = { _, _ in nil }
 	var input: @MainActor (inout State, Input) -> InputReaction<Action, PresentationIntent>
 	var next: @MainActor (borrowing State) -> Action? = { _ in nil }

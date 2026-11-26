@@ -2,8 +2,7 @@ import COR
 
 typealias Unit = COR.Unit
 
-typealias TacticalMode = SceneMode<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
-typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, TacticalPresentationIntent, TacticalNodes>
+typealias TacticalMode = SceneMode<TacticalState, Action, TacticalEvent, PresentationIntent, TacticalNodes>
 
 extension TacticalMode {
 

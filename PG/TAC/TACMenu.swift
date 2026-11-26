@@ -15,11 +15,16 @@ extension TacticalNodes {
 				.close(icon: .arrowRight, status: "End turn", action: .end),
 				.apply(icon: .prestige1, status: "Prestige: \(state.sim.player.prestige)"),
 			],
-			leftButtons: [.back, .space, .space, .space],
-			rightButtons: [
+			leftButtons: [
+				.back,
 				.space,
-				.load { [weak scene] in scene?.saveState() },
+				.space,
 				.prefs,
+			],
+			rightButtons: [
+				.load { [weak scene] in scene?.saveState() },
+				.space,
+				.space,
 				.init(icon: .HQ, status: Status(text: "Abandon scenario")) { [weak scene] stack, _ in
 					guard let scene else { return }
 					scene.state.abandon()

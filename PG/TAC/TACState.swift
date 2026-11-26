@@ -33,7 +33,7 @@ struct TacticalState: ~Copyable {
 		core.save()
 	}
 
-	mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
+	mutating func reduce(_ action: Action) -> [TacticalEvent] {
 		if sim.isFinished { return [] }
 
 		let events = sim.reduce(action)
@@ -71,7 +71,7 @@ struct TacticalState: ~Copyable {
 	}
 }
 
-private extension TacticalAction {
+private extension Action {
 
 	func cameraFocus(in sim: borrowing TacticalSim) -> XY? {
 		switch self {
@@ -89,12 +89,12 @@ private extension TacticalAction {
 	}
 }
 
-enum TacticalPresentationIntent {
+enum PresentationIntent {
 	case shop
 	case menu
 }
 
-typealias TacticalInputReaction = InputReaction<TacticalAction, TacticalPresentationIntent>
+typealias TacticalInputReaction = InputReaction<COR.Action, PresentationIntent>
 
 extension TacticalState {
 
