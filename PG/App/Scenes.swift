@@ -14,8 +14,4 @@ extension SKScene {
 	static var tactical: SKScene {
 		Scene(mode: .tactical, state: TacticalState(sim: clone(core.tactical!)))
 	}
-
-	static var editor: SKScene {
-		Scene(mode: .editor, state: EditorState())
-	}
 }

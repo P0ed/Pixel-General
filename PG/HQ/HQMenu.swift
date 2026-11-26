@@ -22,11 +22,7 @@ extension HQNodes {
 				}),
 				.space,
 				.space,
-				.close(icon: .chess, status: "Editor") {
-					guard let scene else { return }
-					core.store(scene.state.sim)
-					view.present(.editor)
-				},
+				.space,
 			]
 		))
 	}

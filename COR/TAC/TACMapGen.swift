@@ -101,7 +101,7 @@ private struct SettlementTargets {
 			(32, 6, 6, 2, 2),
 			(48, 8, 8, 3, 3),
 			(64, 10, 10, 4, 4)
-		] as [4 of (Int, Int, Int, Int, Int)]) [min(3, max(0, density))]
+		] as [4 of _]) [min(3, max(0, density))]
 	}
 
 	var quarter: Self {
