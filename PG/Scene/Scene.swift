@@ -174,7 +174,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 
 	private func setMenu(_ stack: [MenuState<Action>]) {
 		menuStack = stack.compactMap { m in
-			m.items.isEmpty ? nil : modifying(m) { m in m.padItems() }
+			modifying(m) { m in m.padItems() }
 		}
 	}
 

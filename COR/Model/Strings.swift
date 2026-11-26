@@ -14,7 +14,6 @@ public extension Unit {
 			if self[.mountaineer] { s += "[MTN]" }
 			if self[.mhtn] { s += "[+++]" }
 			if self[.diag] { s += "[×××]" }
-			if kills != 0 { s += "[\(kills)]" }
 			if !s.isEmpty { s += "\n" }
 
 			s += .padding(8, [
@@ -178,6 +177,7 @@ extension Terrain: CustomStringConvertible {
 		case .mountain: "mountain"
 		case .city: "city"
 		case .airfield: "airfield"
+		case .port: "port"
 		case .fort: "trenches"
 		case _ where isRoad: "road"
 		default: ""

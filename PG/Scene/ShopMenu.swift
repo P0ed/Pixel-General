@@ -6,6 +6,7 @@ extension MenuState {
 	static func shop(
 		units: [Unit],
 		auxiliary: [Unit]? = nil,
+		auxiliaryOnly: Bool = false,
 		prestige: UInt16,
 		purchase: (Int, Bool) -> Action
 	) -> Self? {
@@ -24,6 +25,10 @@ extension MenuState {
 
 		let core = entries(units, aux: false)
 		let aux = auxiliary.map { entries($0, aux: true) }
+		if auxiliaryOnly {
+			guard let aux, !aux.isEmpty else { return nil }
+			return Self(items: aux.map(\.item), leftButtons: [.back, .space, .space, .space])
+		}
 		let categories: [4 of (title: String, icon: SKTexture, moveType: MoveType)] = [
 			("Infantry", .shopInfantry, .leg),
 			("Trucks", .shopWheels, .wheel),

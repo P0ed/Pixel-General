@@ -58,29 +58,4 @@ extension HQNodes {
 			leftButtons: [.back, .space, .space, .space]
 		))
 	}
-
-	private func processMenu() {
-		scene?.showMenu(MenuState(
-			items: [
-				.push(icon: .arrowRight, status: "Scenario", menu: {
-					guard let scene else { return nil }
-					return scenarioMenu(scene.state)
-				}),
-			],
-			leftButtons: [.back, .space, .space, .space],
-			rightButtons: [
-				.push(icon: .plus, status: "New", menu: {
-					guard let scene else { return nil }
-					return newGameMenu(scene.state)
-				}),
-				.load { scene?.saveState() },
-				.prefs,
-				.close(icon: .chess, status: "Editor") {
-					guard let scene else { return }
-					core.store(scene.state.sim)
-					view.present(.editor)
-				},
-			]
-		))
-	}
 }

@@ -133,6 +133,7 @@ private extension TacticalNodes {
 		scene?.showMenu(.shop(
 			units: state.sim.shopUnits(at: xy),
 			auxiliary: state.sim.shopUnits(at: xy, aux: true),
+			auxiliaryOnly: state.sim.map[xy] == .port,
 			prestige: state.sim.player.prestige,
 			purchase: { index, aux in .purchase(index, xy, aux: aux) }
 		))

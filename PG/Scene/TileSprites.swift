@@ -66,7 +66,7 @@ extension Terrain {
 		case .rough: .rough
 		case .mountain: .mountain
 		case .river, .bridgeWE, .bridgeSN: .water
-		case .sea: .sea
+		case .sea, .port: .sea
 		default: .field
 		}
 	}
@@ -79,6 +79,7 @@ extension Terrain {
 		case .city: .city(variant)
 		case .fort: .fort(variant)
 		case .airfield: .airfield
+		case .port: .port
 		case .bridgeWE: .bridge(.x)
 		case .bridgeSN: .bridge(.y)
 		case .roadNW: .road([.yMinus, .xMinus])
@@ -229,7 +230,7 @@ private extension CGContext {
 extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
-		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
+		.city, .airfield, .port, .bridgeWE, .bridgeSN, .fort,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
 		.roadTE, .roadTN, .roadTW, .roadTS, .roadX,
 	]

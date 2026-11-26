@@ -4,6 +4,7 @@ extension TacticalSim {
 	static let totalUnitLimit = 48
 
 	public func shopUnits(at xy: XY, aux: Bool = false) -> [Unit] {
+		guard aux || map[xy] != .port else { return [] }
 		let country = country
 		let counts = units.reduceAlive(into: (core: 0, total: 0)) { counts, _, unit in
 			guard unit.country == country else { return }
@@ -25,6 +26,7 @@ extension TacticalSim {
 		}
 		if enemyAdjacent { return [] }
 
+		if map[xy] == .port { return Shop(country: country, tier: player.tier).navalUnits }
 		return Shop(
 			country: country,
 			tier: player.tier,

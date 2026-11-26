@@ -21,9 +21,9 @@ public enum AI {
 		public var roster: CArray<192, UID> = .init(tail: .none)
 		public var enemies: CArray<192, UID> = .init(tail: .none)
 
-		public var ownSettlements: CArray<64, XY> = .init(tail: .zero)
-		public var alliedSettlements: CArray<64, XY> = .init(tail: .zero)
-		public var enemySettlements: CArray<64, XY> = .init(tail: .zero)
+		public var ownSettlements: CArray<128, XY> = .init(tail: .zero)
+		public var alliedSettlements: CArray<128, XY> = .init(tail: .zero)
+		public var enemySettlements: CArray<128, XY> = .init(tail: .zero)
 
 		@frozen public enum Stance: UInt8 {
 			case balanced
@@ -151,7 +151,7 @@ extension TacticalSim {
 
 		// Visible pressure per owned city, computed once for the whole
 		// rebuild — the survival focus and the garrison assignment both read it.
-		var pressures: [64 of Int] = .init(repeating: 0)
+		var pressures: [128 of Int] = .init(repeating: 0)
 		for i in ai.ownSettlements.indices where map[ai.ownSettlements[i]] == .city {
 			pressures[i] = threat(at: ai.ownSettlements[i], from: ai.enemies)
 		}
@@ -159,8 +159,6 @@ extension TacticalSim {
 
 		var claimed = UnitSet()
 
-		// Broken units get a supply-compatible haven. Air can repair only at
-		// an owned airfield; ground can use any owned settlement, including one.
 		let retreatHP = ai.stance.retreatHP
 		ai.roster.forEach { _, uid in
 			let u = units[uid]
@@ -175,11 +173,11 @@ extension TacticalSim {
 
 		// Assign garrisons by visible pressure, highest pressure first. A
 		// survival defender also screens its strategic focus in a quiet sector.
-		var visited: UInt64 = 0
+		var visited: UInt128 = 0
 		while true {
 			var pick = -1
 			var pickScore = Int.min
-			for i in ai.ownSettlements.indices where visited & (UInt64(1) << i) == 0 {
+			for i in ai.ownSettlements.indices where visited & (UInt128(1) << i) == 0 {
 				let xy = ai.ownSettlements[i]
 				guard map[xy] == .city else { continue }
 				var score = pressures[i] * 100 + Int(map[xy].income) * 8
@@ -187,7 +185,7 @@ extension TacticalSim {
 				if score > pickScore { pickScore = score; pick = i }
 			}
 			guard pick >= 0 else { break }
-			visited |= UInt64(1) << pick
+			visited |= UInt128(1) << pick
 
 			let city = ai.ownSettlements[pick]
 			let pressure = pressures[pick]
@@ -216,7 +214,7 @@ extension TacticalSim {
 
 		// Allocate combat units across scored hostile objectives. A load penalty
 		// spreads the force without losing concentration on the main focus.
-		var loads: [64 of UInt8] = .init(repeating: 0)
+		var loads: [128 of UInt8] = .init(repeating: 0)
 		ai.roster.forEach { _, uid in
 			guard !claimed[uid], units[uid].type != .supply else { return }
 			let u = units[uid]
@@ -263,7 +261,7 @@ extension TacticalSim {
 	}
 
 	private func canGarrison(_ u: Unit) -> Bool {
-		!u.isAir && (u.type == .inf || u.isArmor || u.isAA)
+		u.isLand && (u.type == .inf || u.isArmor || u.isAA)
 	}
 
 	private func garrisonPriority(_ u: Unit) -> Int {
@@ -277,13 +275,16 @@ extension TacticalSim {
 		var distance = Int.max
 		ai.ownSettlements.forEach { _, xy in
 			guard !u.isAir || map[xy] == .airfield else { return }
+			if u.type.isNaval {
+				guard map[xy] == .port, unitsMap[xy] == .none || unitsMap[xy] == uid else { return }
+			}
 			let d = p.stepDistance(to: xy)
 			if d < distance { distance = d; haven = xy }
 		}
 		return haven
 	}
 
-	private func strategicFocus(_ ai: borrowing AI.Plan, pressures: borrowing [64 of Int]) -> XY? {
+	private func strategicFocus(_ ai: borrowing AI.Plan, pressures: borrowing [128 of Int]) -> XY? {
 		if ai.stance == .defendSurvival {
 			var focus: XY?
 			var score = Int.min
@@ -313,7 +314,7 @@ extension TacticalSim {
 
 	private func offensiveObjective(
 		for uid: UID,
-		loads: borrowing [64 of UInt8],
+		loads: borrowing [128 of UInt8],
 		ai: borrowing AI.Plan
 	) -> Int? {
 		let p = position[uid]
@@ -554,7 +555,11 @@ extension TacticalSim {
 				if anchor != .none, p.stepDistance(to: position[anchor]) <= 3 { continue }
 			}
 			let target = movementTarget(for: uid, ai)
-			if (role == .retreat || role == .defend) && p == target { continue }
+			if p == target {
+				let unit = units[uid]
+				let waitingForAmmo = unit.type.isNaval && unit.maxAmmo > 0 && unit.ammo == 0 && map[p] == .port
+				if role == .retreat || role == .defend || waitingForAmmo { continue }
+			}
 
 			if let action = pickMove(uid, toward: target, ai: ai) { return action }
 			ai.skippedMoves[uid] = true
@@ -566,25 +571,16 @@ extension TacticalSim {
 	private func movementTarget(for uid: UID, _ ai: borrowing AI.Plan) -> XY {
 		let u = units[uid]
 		let p = position[uid]
-		if u.isAir, u.ammo == 0, let airfield = nearestOwnAirfield(to: p, ai) {
-			return airfield
+		let needsAirfield = u.isAir && u.ammo == 0
+		let needsPort = u.type.isNaval && (ai.role[uid.index] == .retreat || u.maxAmmo > 0 && u.ammo == 0)
+		if (needsAirfield || needsPort), let haven = nearestCompatibleHaven(for: uid, ai) {
+			return haven
 		}
 		if ai.role[uid.index] == .support {
 			let anchor = nearestCombatAnchor(to: p, excluding: uid, ai: ai)
 			if anchor != .none { return position[anchor] }
 		}
 		return ai.target[uid.index]
-	}
-
-	private func nearestOwnAirfield(to p: XY, _ ai: borrowing AI.Plan) -> XY? {
-		var best: XY?
-		var distance = Int.max
-		ai.ownSettlements.forEach { _, xy in
-			guard map[xy] == .airfield else { return }
-			let d = p.stepDistance(to: xy)
-			if d < distance { distance = d; best = xy }
-		}
-		return best
 	}
 
 	private func pickMove(_ uid: UID, toward target: XY, ai: borrowing AI.Plan) -> TacticalAction? {
@@ -700,11 +696,12 @@ extension TacticalSim {
 			enemyAir += units[uid].isAir ? 1 : 0
 			enemyArmor += units[uid].isArmor ? 1 : 0
 		}
-		let aux = core >= Self.coreUnitLimit
+		let coreLimitReached = core >= Self.coreUnitLimit
 
 		var bestSpot = XY.zero
 		var bestSlot = -1
 		var bestScore = Int.min
+		var bestAux = false
 		settlements.forEach { xy in
 			guard control[xy] == country, unitsMap[xy] == .none else { return }
 			let shop = purchaseCatalog(at: xy)
@@ -724,10 +721,11 @@ extension TacticalSim {
 					bestScore = score
 					bestSpot = xy
 					bestSlot = slot
+					bestAux = coreLimitReached || map[xy] == .port
 				}
 			}
 		}
-		return bestSlot < 0 ? nil : .purchase(bestSlot, bestSpot, aux: aux)
+		return bestSlot < 0 ? nil : .purchase(bestSlot, bestSpot, aux: bestAux)
 	}
 
 	private func purchaseScore(

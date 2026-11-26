@@ -212,7 +212,8 @@ private enum Help {
 	  • Each day you earn 24 prestige per city tile and 4 per airfield
 	    you control.
 	  • Spend prestige at an owned, enemy-free settlement to buy units.
-	    Cities sell ground units and airfields sell aircraft.
+	    Cities sell ground units, airfields sell aircraft, and ports sell
+	    auxiliary ships.
 	  • Use the shop's left-side Core/Aux button to choose what to buy.
 	    Each player can field up to 16 core units and 48 units total.
 
@@ -221,6 +222,7 @@ private enum Help {
 	  • Each unit has a limited move each turn. Roads and open ground are
 	    fast; forests and hills are slow; mountains and rivers cost almost
 	    everything — and mountains block wheeled units.
+	  • Ports on Continents maps are open to both ships and ground units.
 	  • Terrain also shields defenders. Sitting still lets ground units
 	    entrench for an ever-growing defensive bonus.
 
@@ -239,13 +241,14 @@ private enum Help {
 	  • Keep units near supply trucks and your own settlements to rearm,
 		repair, and recover. Rough or enemy-held ground throttles resupply.
 	  • Repairs cost prestige and experience (green replacements dilute veterans).
+	  • Ships rearm and repair only while docked at a port they own.
 
 	CAPTURING
 
 	  • Hold an enemy city tile with a ground unit at the end of a turn
 	    to capture it. A city can have up to three districts, and each
 	    district is captured independently.
-	  • Airfields and surrounding tiles follow the nearest city tile.
+	  • Ports, airfields, and surrounding tiles follow the nearest city tile.
 	    Ties go to the first city tile in row-major map order.
 	"""
 }

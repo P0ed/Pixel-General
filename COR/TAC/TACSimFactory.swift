@@ -92,8 +92,12 @@ public extension TacticalSim {
 
 		var owners = [Int?](repeating: nil, count: footprints.count)
 		if reserveStarts {
+			let half = map.size / 2
 			for (p, home) in centers.enumerated() {
-				if let c = footprints.firstIndex(where: { $0.contains(home) }) {
+				for c in footprints.indices where footprints[c].contains(where: { xy in
+					xy == home || (xy.x / half == home.x / half && xy.y / half == home.y / half
+						&& xy.n4.contains { map[$0] == .port })
+				}) {
 					owners[c] = p
 					quotas[p] -= footprints[c].count
 				}

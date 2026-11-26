@@ -225,8 +225,7 @@ extension TacticalState {
 
 	private mutating func triangleAction() -> TacticalInputReaction {
 		guard ui.selectedUnit != .none,
-			  sim.units[ui.selectedUnit].country == sim.country,
-			  sim.units[ui.selectedUnit].untouched,
+			  sim.canResupply(unit: ui.selectedUnit),
 			  sim[sim.country].type == .human
 		else { return .none }
 

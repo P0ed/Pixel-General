@@ -41,7 +41,7 @@ public extension UnitStats {
 		groundDef: 3,
 		airDef: 1,
 		traits: .transport,
-		cost: 94
+		cost: 80
 	)
 	static let regular = UnitStats(
 		type: .inf,
@@ -55,7 +55,7 @@ public extension UnitStats {
 		navAtk: 1,
 		groundDef: 6,
 		airDef: 5,
-		cost: 143
+		cost: 120
 	)
 	static let engineer = UnitStats(
 		type: .inf,
@@ -71,7 +71,7 @@ public extension UnitStats {
 		groundDef: 7,
 		airDef: 6,
 		traits: .engineer,
-		cost: 223
+		cost: 220
 	)
 	static let fpv = UnitStats(
 		type: .art,
@@ -86,7 +86,7 @@ public extension UnitStats {
 		groundDef: 6,
 		airDef: 5,
 		traits: [.noRetaliation],
-		cost: 243
+		cost: 249
 	)
 	static let art155 = UnitStats(
 		type: .art,
@@ -100,7 +100,7 @@ public extension UnitStats {
 		navAtk: 5,
 		groundDef: 5,
 		airDef: 4,
-		cost: 178
+		cost: 150
 	)
 	static let cargo = UnitStats(
 		type: .cargo,
@@ -110,7 +110,7 @@ public extension UnitStats {
 		groundDef: 5,
 		airDef: 3,
 		traits: .transport,
-		cost: 190
+		cost: 270
 	)
 	static let destroyer = UnitStats(
 		type: .destroyer,
@@ -126,7 +126,7 @@ public extension UnitStats {
 		groundDef: 8,
 		airDef: 9,
 		traits: [.radar, .optics],
-		cost: 541
+		cost: 680
 	)
 	static let cruiser = UnitStats(
 		type: .cruiser,
@@ -142,7 +142,7 @@ public extension UnitStats {
 		groundDef: 10,
 		airDef: 8,
 		traits: [.optics],
-		cost: 543
+		cost: 910
 	)
 }
 

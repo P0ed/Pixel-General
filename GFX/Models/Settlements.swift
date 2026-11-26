@@ -42,6 +42,19 @@ public enum Settlements {
 
 	public static var fort: Model { fort(variant: .first) }
 
+	public static var port: Model {
+		Model([
+			.box(from: V3(7.5, 10.5, 0), to: V3(40.5, 25.5, 1.5), tone: Roads.Tone.bed),
+			.box(from: V3(9, 25.5, 0), to: V3(16.5, 39, 1.5), tone: Roads.Tone.bed),
+			.box(from: V3(31.5, 25.5, 0), to: V3(39, 39, 1.5), tone: Roads.Tone.bed),
+			.box(from: V3(10.5, 12, 1.5), to: V3(25.5, 21, 6), tone: Tone.wall),
+			.gable(from: V3(9.75, 11.25, 6), to: V3(26.25, 21.75, 9), ridge: .x, tone: Tone.roof),
+			.box(from: V3(30, 13.5, 1.5), to: V3(37.5, 19.5, 4.5), tone: Tone.roof),
+			.box(from: V3(12, 34.5, 1.5), to: V3(13.5, 36, 3.75), tone: 130),
+			.box(from: V3(34.5, 34.5, 1.5), to: V3(36, 36, 3.75), tone: 130),
+		])
+	}
+
 	public static func fort(variant: Tiles.Variant) -> Model {
 		let layout = switch variant {
 		case .first:

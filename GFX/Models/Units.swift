@@ -87,11 +87,12 @@ public enum Units {
 	}
 
 	public enum Shape: UInt8, Sendable, CaseIterable {
-		case leo1, leo2a4, leo2a7, strv103, strv122, kf51, m48, m1A1, m1A2, t55, t72, t90m
+		case leo1, leo2a4, leo2a7, strv103, strv122, kf51,
+			 m48, m1A1, m1A2, t55, t72, t90m
 		case fennek, m1117, brdm2
-		case boxer, stryker, btr80
-		case fv432, m113, mtLb
-		case marder, strf90, cv9035, kf41, m2A2, bmp2
+		case boxer, stryker, fv432, marder, strf90, cv9035, kf41,
+			 m113, m2A2,
+			 btr80, bmp2, mtLb
 		case manKat1, m35, ural4320
 		case fh70, m777, d30, m198, d20
 		case pzh2000, m109, akatsiya

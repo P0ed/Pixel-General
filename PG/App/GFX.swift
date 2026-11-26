@@ -19,6 +19,7 @@ extension CGImage {
 		case city(Tiles.Variant)
 		case fort(Tiles.Variant)
 		case airfield
+		case port
 		case road([GFX.Direction])
 		case bridge(GFX.Axis)
 
@@ -28,6 +29,7 @@ extension CGImage {
 			case .fort(let variant): Renderer.decal.image(Settlements.fort(variant: variant))?
 				.tinted(SKColor.hex(0x5A564F).cgColor, blendMode: .screen)
 			case .airfield: Renderer.building.image(Settlements.airfield)
+			case .port: Renderer.building.image(Settlements.port)
 			case .road(let directions): Renderer.decal.image(Roads.road(directions))
 			case .bridge(let axis): Renderer.decal.image(Roads.bridge(along: axis))
 			}

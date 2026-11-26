@@ -14,7 +14,7 @@ struct TacticalNodes {
 		case terrain
 		case team(UInt32)
 		case country(UInt32)
-		case supply(SupplySources, air: Bool)
+		case supply(SupplySources, MoveType)
 		case defense(UnitType)
 	}
 }
@@ -97,12 +97,18 @@ extension TacticalNodes {
 	}
 
 	private func updateShadingIfNeeded(state: borrowing TacticalState) {
+		let type = Self.selectedType(state)
 		let key: OverlayKey = switch state.ui.mapMode {
 		case .terrain: .terrain
 		case .team: .team(state.sim.turn)
 		case .country: .country(state.sim.turn)
-		case .supply: .supply(state.sim.humanSupply, air: Self.selectedType(state).isAir)
-		case .defense: .defense(Self.selectedType(state))
+		case .supply:
+			.supply(
+				type.isNaval && state.sim.player.type == .human
+					? state.sim.supplySources(for: state.sim.country) : state.sim.humanSupply,
+				type.isNaval ? .naval : type.isAir ? .air : .leg
+			)
+		case .defense: .defense(type)
 		}
 
 		let lit = state.ui.selectable ?? state.sim.visibleToHuman
@@ -141,10 +147,12 @@ extension TacticalNodes {
 			return .team(state.sim.control[xy].team)
 		case .country:
 			return .country(state.sim.control[xy])
-		case .supply(let supply, let air):
-			let value: Int8 = air
-				? (supply.airfields[xy] ? supply.airLevel(at: xy) : .min)
-				: supply.level(at: xy, terrain: state.sim.map[xy])
+		case .supply(let supply, let moveType):
+			let value: Int8 = switch moveType {
+			case .air: supply.airfields[xy] ? supply.airLevel(at: xy) : .min
+			case .naval: supply.ports[xy] ? supply.navalLevel(at: xy) : .min
+			default: supply.level(at: xy, terrain: state.sim.map[xy])
+			}
 			let level = UInt8(min(7, max(0, value + 3)))
 			return .level(level)
 		case .defense(let defense):

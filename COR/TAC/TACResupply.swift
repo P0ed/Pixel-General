@@ -2,6 +2,7 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	public var trucks: SetXY
 	public var buildings: SetXY
 	public var airfields: SetXY
+	public var ports: SetXY
 	public var roads: SetXY
 	public var hostile: SetXY
 	public var enemies: SetXY
@@ -11,6 +12,7 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 			trucks: .empty,
 			buildings: .empty,
 			airfields: .empty,
+			ports: .empty,
 			roads: .empty,
 			hostile: .empty,
 			enemies: .empty
@@ -21,6 +23,7 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 		trucks.formUnion(other.trucks)
 		buildings.formUnion(other.buildings)
 		airfields.formUnion(other.airfields)
+		ports.formUnion(other.ports)
 		roads.formUnion(other.roads)
 		hostile.formUnion(other.hostile)
 		enemies.formUnion(other.enemies)
@@ -35,9 +38,15 @@ public struct SupplySources: Equatable, BitwiseCopyable, Monoid {
 	}
 
 	public func airLevel(at xy: XY) -> Int8 {
-		airfields[xy]
-		? 2 + Int8(trucks[xy] ? 2 : 0) - Int8(enemies[xy] ? 2 : 0)
-		: 0
+		airfields[xy] ? serviceLevel(at: xy) : 0
+	}
+
+	public func navalLevel(at xy: XY) -> Int8 {
+		ports[xy] ? serviceLevel(at: xy) : 0
+	}
+
+	private func serviceLevel(at xy: XY) -> Int8 {
+		2 + Int8(trucks[xy] ? 2 : 0) - Int8(enemies[xy] ? 2 : 0)
 	}
 }
 
@@ -63,6 +72,7 @@ public extension TacticalSim {
 			if map[xy] == .airfield {
 				xy.c5.forEach { n in sources.airfields[n] = true }
 			}
+			if map[xy] == .port { sources.ports[xy] = true }
 		}
 		for xy in map.indices where xy.c5.contains({ xy in map[xy].hasRoad }) {
 			sources.roads[xy] = true
@@ -92,11 +102,14 @@ public extension TacticalSim {
 
 extension TacticalSim {
 
-	func canResupply(unit id: UID) -> Bool {
+	public func canResupply(unit id: UID) -> Bool {
 		let unit = units[id]
-		return unit.country == country && unit.untouched
-			&& !offMap(unit: id)
-			&& (!unit.isAir || hasBuildings(near: id))
+		guard unit.country == country, unit.untouched, !offMap(unit: id) else { return false }
+		if unit.type.isNaval {
+			let xy = position[id]
+			return map[xy] == .port && control[xy] == unit.country
+		}
+		return !unit.isAir || hasBuildings(near: id)
 	}
 
 	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
@@ -117,13 +130,11 @@ extension TacticalSim {
 		else { return }
 
 		let xy = position[id.index]
-		let serviced = !unit.isAir || sources.airfields[xy]
-		let fed = unit.isAir
-			? sources.airfields[xy]
-			: sources.trucks[xy] || sources.buildings[xy]
-		let level = unit.isAir
-			? sources.airLevel(at: xy)
-			: sources.level(at: xy, terrain: map[xy])
+		let (serviced, fed, level) = switch unit.type.moveType {
+		case .air: (sources.airfields[xy], sources.airfields[xy], sources.airLevel(at: xy))
+		case .naval: (sources.ports[xy], sources.ports[xy], sources.navalLevel(at: xy))
+		default: (true, sources.trucks[xy] || sources.buildings[xy], sources.level(at: xy, terrain: map[xy]))
+		}
 
 		if unit.maxAmmo > 0, serviced {
 			if unit.untouched {

@@ -58,9 +58,17 @@ public extension Shop {
 			air3,
 			air4,
 		]
-		return offers.compactMap { (u: Unit?) -> Unit? in
-			u.flatMap {
-				!filter($0) ? nil : modifying($0) { u in u.ammo = u.maxAmmo }
+		return stocked(offers)
+	}
+
+	internal var navalUnits: [Unit] {
+		stocked([nav1, nav2, nav3])
+	}
+
+	private func stocked(_ offers: [Unit?]) -> [Unit] {
+		offers.compactMap { offer in
+			offer.flatMap { unit in
+				filter(unit) ? modifying(unit) { $0.ammo = $0.maxAmmo } : nil
 			}
 		}
 	}

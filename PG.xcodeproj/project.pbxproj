@@ -57,11 +57,6 @@
 			path = PG;
 			sourceTree = "<group>";
 		};
-		5FD7B4182FE7356A00CA6557 /* Docs */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Docs;
-			sourceTree = "<group>";
-		};
 		C0B000000000000000000003 /* Tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = Tests;
@@ -102,7 +97,6 @@
 		5FCB86272E77041300C2C69E = {
 			isa = PBXGroup;
 			children = (
-				5FD7B4182FE7356A00CA6557 /* Docs */,
 				5FD7B3DE2FE7356600CA6557 /* PG */,
 				C0B000000000000000000003 /* Tests */,
 				5F10D2282FCEDF0500E6B598 /* Frameworks */,

@@ -8,11 +8,10 @@ typealias TacticalScene = Scene<TacticalState, TacticalAction, TacticalEvent, Ta
 extension TacticalMode {
 
 	static var tactical: Self {
-		let heuristic = AI.heuristic
-		return .init(
+		.init(
 			make: TacticalNodes.init,
 			input: { state, input in state.apply(input) },
-			next: { state in state.auto ? heuristic(state.sim) : nil },
+			next: { [ai = AI.heuristic] state in state.auto ? ai(state.sim) : nil },
 			reduce: { state, action in state.reduce(action) },
 			process: { event, nodes, state in await nodes.process(event, state) },
 			present: { intent, nodes, state in await nodes.present(intent, state) },

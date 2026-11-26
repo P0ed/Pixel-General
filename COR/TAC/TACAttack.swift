@@ -89,7 +89,6 @@ extension TacticalSim {
 		source.exp.increment(by: UInt16(dmg) * destination.value / (destination.alive ? 32 : 24))
 		if !destination.alive {
 			vacate(dst)
-			source.kills.increment(by: 1)
 			source.promote(using: &d20)
 			self[source.country].prestige.increment(by: destination.stats.cost / 16)
 		}

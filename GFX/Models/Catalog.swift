@@ -39,6 +39,7 @@ public enum Catalog {
 		}
 		+ [
 			CatalogEntry(name: "Airfield", model: Settlements.airfield, renderer: .building),
+			CatalogEntry(name: "Port", model: Settlements.port, renderer: .building),
 		]
 	}
 

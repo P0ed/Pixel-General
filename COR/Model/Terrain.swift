@@ -8,6 +8,7 @@
 	case roadNW, roadNE, roadWE, roadSN, roadSW, roadSE, roadX
 	case fort
 	case sea
+	case port
 }
 
 public extension Terrain {
@@ -21,7 +22,7 @@ public extension Terrain {
 
 	var isSettlement: Bool {
 		switch self {
-		case .city, .airfield: true
+		case .city, .airfield, .port: true
 		default: false
 		}
 	}
@@ -63,7 +64,7 @@ public extension Terrain {
 		case .leg:
 			switch self {
 			case _ where hasRoad: 1
-			case .field, .fort, .airfield: 1
+			case .field, .fort, .airfield, .port: 1
 			case .forest, .rough: min(stats.mov, 2)
 			case .mountain: stats.mov
 			case _ where isRiver: stats.mov
@@ -72,7 +73,7 @@ public extension Terrain {
 		case .wheel:
 			switch self {
 			case _ where hasRoad: 1
-			case .airfield: 1
+			case .airfield, .port: 1
 			case .field: 2
 			case .forest, .rough, .fort: 3
 			case _ where isRiver: stats.mov
@@ -81,7 +82,7 @@ public extension Terrain {
 		case .track:
 			switch self {
 			case _ where hasRoad: 1
-			case .field, .airfield: 1
+			case .field, .airfield, .port: 1
 			case .forest, .rough, .fort: 2
 			case _ where isRiver: stats.mov
 			default: 0x10
@@ -89,7 +90,7 @@ public extension Terrain {
 		case .air:
 			self.isNoFlyZone ? 0x10 : 1
 		case .naval:
-			self == .sea ? 1 : 0x10
+			self == .sea || self == .port ? 1 : 0x10
 		}
 	}
 

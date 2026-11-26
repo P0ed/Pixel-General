@@ -46,8 +46,8 @@ extension HQNodes {
 				menu.items[20 + seat].icon = spawnIcon(seat)
 				menu.items[20 + seat].status.text = spawnStatus(seat)
 			}
-			menu.rightButtons[2].icon = symmetryIcon
-			menu.rightButtons[2].status.text = symmetryStatus
+			menu.leftButtons[3].icon = symmetryIcon
+			menu.leftButtons[3].status.text = symmetryStatus
 		}
 
 		let countries = setup.players.indices.map { idx in
@@ -143,22 +143,22 @@ extension HQNodes {
 			items: countries + types + prestige + exp + tier + spawn,
 			leftButtons: [
 				.back,
+				.space,
 				.toggle(
 					icon: setup.continents ? .plus : .minus,
 					status: "Continents · \(setup.continents ? "On" : "Off")"
 				) {
 					setup.continents.toggle()
 				},
-				.space,
-				.space,
-			],
-			rightButtons: [
-				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
-				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
 				.toggle(icon: symmetryIcon, status: symmetryStatus) {
 					if setup.symmetryAvailable { setup.symmetry.toggle() }
 				},
+			],
+			rightButtons: [
 				start,
+				.space,
+				.toggle(icon: .toggle4(density), status: "Density: \(density)") { density.toggle4() },
+				.toggle(icon: .toggle4(forts), status: "Forts: \(forts)") { forts.toggle4() },
 			]
 		)
 	}

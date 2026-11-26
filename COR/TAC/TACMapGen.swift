@@ -38,20 +38,24 @@ public extension Map<64, Terrain> {
 		if scenario.symmetry || scenario.continents {
 			var d20 = D20(seed: scenario.seed)
 			let corners = Array(Scenario.spawnOptions)
+			let occupied = Set(scenario.resolvedSpawnPoints)
 			for i in corners.indices {
 				var quarter = Map<32, Terrain>(zero: .none)
 				let seed = i == 0 ? scenario.seed : Int(truncatingIfNeeded: d20.next())
-				quarter.generate(
+				let ports = quarter.generate(
 					seed: seed, terrain: terrain, targets: targets.quarter,
 					starts: [(Scenario.quarterCity, Scenario.quarterAirfield)],
 					continents: scenario.continents, joinSeams: !scenario.continents
 				)
 				if scenario.symmetry {
 					quarter.placeForts(around: quarter.cityFootprints.flatMap { $0 }, budget: 12 * forts)
-					for corner in corners { copyQuarter(quarter, to: corner) }
+					for corner in corners {
+						copyQuarter(quarter, to: corner, restoring: occupied.contains(corner) ? [] : ports)
+					}
 					break
 				}
-				copyQuarter(quarter, to: corners[i])
+				let corner = corners[i]
+				copyQuarter(quarter, to: corner, restoring: occupied.contains(corner) ? [] : ports)
 			}
 		} else {
 			let starts = Scenario.spawnOptions.map { corner in
@@ -66,11 +70,22 @@ public extension Map<64, Terrain> {
 		shapeRoads()
 	}
 
-	private mutating func copyQuarter(_ quarter: borrowing Map<32, Terrain>, to corner: XY) {
+	private mutating func copyQuarter(
+		_ quarter: borrowing Map<32, Terrain>, to corner: XY, restoring portGround: [PortSite]
+	) {
 		for xy in quarter.indices {
 			self[Scenario.inCorner(corner, tile: xy)] = quarter[xy]
 		}
+		for site in portGround {
+			self[Scenario.inCorner(corner, tile: site.port)] = site.ground
+		}
 	}
+}
+
+private struct PortSite {
+	var port: XY
+	var city: XY
+	var ground: Terrain
 }
 
 private struct SettlementTargets {
@@ -78,10 +93,11 @@ private struct SettlementTargets {
 	var airfields: Int
 	var pairs: Int
 	var triples: Int
+	var portsPerPlayer: Int
 
 	init(_ density: Int) {
-		(settlements, airfields, pairs, triples) = [
-			(20, 4, 2, 1), (32, 6, 3, 2), (48, 9, 4, 3), (64, 12, 5, 4),
+		(settlements, airfields, pairs, triples, portsPerPlayer) = [
+			(20, 4, 2, 1, 1), (32, 6, 3, 2, 1), (48, 9, 4, 3, 2), (64, 12, 5, 4, 3),
 		][min(3, max(0, density))]
 	}
 
@@ -97,6 +113,7 @@ private struct SettlementTargets {
 
 extension Map where Element == Terrain {
 
+	@discardableResult
 	fileprivate mutating func generate(
 		seed: Int,
 		terrain: [16 of Terrain],
@@ -105,7 +122,7 @@ extension Map where Element == Terrain {
 		starts: [(city: XY, airfield: XY)] = [],
 		continents: Bool = false,
 		joinSeams: Bool = false
-	) {
+	) -> [PortSite] {
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
 		let seed = Int32(truncatingIfNeeded: seed)
 		let height = GKNoiseMap.height(size: noiseSize, seed: seed)
@@ -126,9 +143,14 @@ extension Map where Element == Terrain {
 			airfield.n4.forEach { mainland[$0] = false }
 		}
 		placeRivers(height: height, d20: &d20)
+		let ports = continents ? portSites(mainland: mainland, target: targets.portsPerPlayer) : []
+		for site in ports {
+			self[site.port] = .port
+			site.port.n4.forEach { mainland[$0] = false }
+		}
 		let cities = placeCities(
 			d20: &d20, mainland: mainland, tiles: targets.settlements - targets.airfields,
-			pairs: targets.pairs, triples: targets.triples, reserved: starts.map(\.city)
+			pairs: targets.pairs, triples: targets.triples, reserved: starts.map(\.city) + ports.map(\.city)
 		)
 		placeAirfields(
 			near: cities, spawns: spawns, target: targets.airfields - starts.count, d20: &d20
@@ -138,6 +160,7 @@ extension Map where Element == Terrain {
 			extendRoads(to: .right)
 			extendRoads(to: .top)
 		}
+		return ports
 	}
 
 	internal var cityFootprints: [[XY]] {
@@ -495,6 +518,48 @@ extension Map where Element == Terrain {
 
 	private func touchesSea(at xy: XY) -> Bool {
 		xy.n4.contains { p in self[p].isSea }
+	}
+
+	private func portSites(mainland: SetXY, target: Int) -> [PortSite] {
+		let home = Scenario.quarterCity
+		let spacing = max(2, size / 8)
+		func isOpen(_ xy: XY) -> Bool {
+			mainland[xy] && !self[xy].isWater && !self[xy].isSettlement
+		}
+
+		var candidates: [PortSite] = []
+		for port in indices where isOpen(port) && touchesSea(at: port) {
+			for city in port.n4 where isOpen(city) && city.stepDistance(to: home) >= spacing {
+				guard city.n4.contains({ xy in xy != port && isOpen(xy) && self[xy] != .mountain }) else { continue }
+				candidates.append(PortSite(port: port, city: city, ground: self[port]))
+			}
+		}
+		candidates.sort { a, b in
+			(a.port.manhattanDistance(to: home), a.port.y, a.port.x, a.city.y, a.city.x)
+				< (b.port.manhattanDistance(to: home), b.port.y, b.port.x, b.city.y, b.city.x)
+		}
+
+		func select(from start: Int, sites: inout [PortSite]) -> Bool {
+			if sites.count == target { return true }
+			for index in start..<candidates.count {
+				let site = candidates[index]
+				guard sites.allSatisfy({ other in
+					site.port.manhattanDistance(to: other.port) > 1
+					&& site.port.manhattanDistance(to: other.city) > 1
+					&& site.city.manhattanDistance(to: other.port) > 1
+					&& site.city.stepDistance(to: other.city) >= spacing
+				}) else { continue }
+				sites.append(site)
+				if select(from: index + 1, sites: &sites) { return true }
+				sites.removeLast()
+			}
+			return false
+		}
+
+		var sites: [PortSite] = []
+		let complete = select(from: 0, sites: &sites)
+		precondition(complete)
+		return sites
 	}
 
 	private mutating func placeCities(

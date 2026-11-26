@@ -7,23 +7,23 @@ public struct Unit: Equatable, Sendable {
 	public var ammo: UInt8 = 0
 	public var ent: UInt8 = 0
 	public var exp: UInt16 = 0
-	public var kills: UInt16 = 0
-
 	public var skills: Skills = []
 	public var bits: Bits = []
 }
 
 public struct Bits: OptionSet, Equatable, Sendable {
-	public var rawValue: UInt8
+	public var rawValue: UInt16
 
-	public init(rawValue: UInt8) {
+	public init(rawValue: UInt16) {
 		self.rawValue = rawValue
 	}
 }
 
 public extension Bits {
-	static var aux: Self { .init(rawValue: 1 << 0) }
-	static var overwatch: Self { .init(rawValue: 1 << 1) }
+	static var aux: Self 			{ .init(rawValue: 1 << 0) }
+	static var overwatch: Self 		{ .init(rawValue: 1 << 1) }
+	static var stun: Self 			{ .init(rawValue: 1 << 2) }
+	static var slow: Self 			{ .init(rawValue: 1 << 3) }
 }
 
 public struct Skills: OptionSet, Equatable, Sendable {
@@ -35,14 +35,14 @@ public struct Skills: OptionSet, Equatable, Sendable {
 }
 
 public extension Skills {
-	static var leadership: Self { .init(rawValue: 1 << 0) }
-	static var recon: Self { .init(rawValue: 1 << 1) }
-	static var crit: Self { .init(rawValue: 1 << 2) }
-	static var evasion: Self { .init(rawValue: 1 << 3) }
-	static var regen: Self { .init(rawValue: 1 << 4) }
-	static var mountaineer: Self { .init(rawValue: 1 << 5) }
-	static var mhtn: Self { .init(rawValue: 1 << 6) }
-	static var diag: Self { .init(rawValue: 1 << 7) }
+	static var leadership: Self 	{ .init(rawValue: 1 << 0x0) }
+	static var recon: Self		 	{ .init(rawValue: 1 << 0x1) }
+	static var crit: Self 			{ .init(rawValue: 1 << 0x2) }
+	static var evasion: Self 		{ .init(rawValue: 1 << 0x3) }
+	static var regen: Self 			{ .init(rawValue: 1 << 0x4) }
+	static var mountaineer: Self	{ .init(rawValue: 1 << 0x5) }
+	static var mhtn: Self 			{ .init(rawValue: 1 << 0x6) }
+	static var diag: Self 			{ .init(rawValue: 1 << 0x7) }
 }
 
 public extension Unit {
