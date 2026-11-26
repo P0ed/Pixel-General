@@ -4,7 +4,9 @@ extension TacticalState {
 
 	@MainActor
 	var status: Status {
-		if sim.player.type == .ai {
+		if sim.isFinished {
+			Status(text: "\(sim.map[ui.cursor])\nMenu · Headquarters", flag: core.hq.country.flag)
+		} else if sim.player.type == .ai {
 			Status(text: "\(sim.player.country) turn")
 		} else if ui.selectedUnit != .none {
 			Status(

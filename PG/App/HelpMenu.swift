@@ -173,8 +173,8 @@ private enum Help {
 	  Arrow keys          Move the cursor
 	  A / Space / Return  Confirm — select, move, attack
 	  S / Delete          Cancel — deselect, go back
-	  Q                   Action — shop, upgrade menu
-	  W                   Action — sell, secondary
+	  Q                   Disembark
+	  W                   Resupply
 	  ] / Tab             Select next unit
 	  [ / Shift-Tab       Select previous unit
 	  Esc                 Open the menu
@@ -186,13 +186,21 @@ private enum Help {
 
 	  D-pad               Move the cursor
 	  A / B               Confirm / Cancel (B closes Help)
-	  X / Y               Shop / Sell
+	  X / Y               Disembark / Resupply
 	  Tap L / R shoulder  Previous / Next unit
 	  Hold L + D-pad      Pan the map
 	  Hold R + D-pad ↑/↓  Zoom in / out
 	  Hold R + A / B      Terrain / Country-Team map
 	  Hold R + X / Y      Supply / Defense map
 	  Menu                Open the menu
+
+	HEADQUARTERS
+
+	  Abandon a scenario from the tactical menu to bring survivors and
+	  prestige back to HQ. Select an empty slot to buy a unit, or select
+	  a unit to move, swap, upgrade, or sell it. The upper-right button
+	  starts scenario setup. Back closes HQ so you can view the map.
+	  Press Menu or click the cursor tile to reopen HQ.
 
 	POINTER
 

@@ -6,6 +6,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	let mode: SceneMode<State, Action, Event, PresentationIntent, Nodes>
 	private let hid = HIDController()
 
+	private var isPresented = false
 	private var processing = false
 	private var pending: Input?
 	private(set) var pan: CGPoint = .zero
@@ -17,7 +18,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
-	private(set) var state: State { didSet { didSetState() } }
+	var state: State { didSet { didSetState() } }
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: Nodes?
 	private var enterBackground: Any?
@@ -43,7 +44,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		enterBackground = NotificationCenter.default.addMainActorObserver(
 			forName: UIApplication.didEnterBackgroundNotification,
 			using: { [weak self] _ in
-				self?.saveState()
+				if let self, isPresented { saveState() }
 			}
 		)
 
@@ -58,7 +59,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		hid.up = { [weak self] input in self?.releaseInput(input) }
 
 		didSetState()
-		advance()
+		showMenu(mode.initialMenu(nodes, state))
 	}
 
 	isolated deinit {
@@ -66,6 +67,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	override func didMove(to view: SKView) {
+		isPresented = true
 		controller.keyHandler = { [weak self] key in self?.handle(key: key) ?? false }
 		controller.keyUpHandler = { [weak self] key, cancelled in
 			self?.handle(keyUp: key, cancelled: cancelled) ?? false
@@ -81,9 +83,11 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 		let hover = UIHoverGestureRecognizer(target: self, action: #selector(handleHover(_:)))
 		view.addGestureRecognizer(hover)
 		hoverRecognizer = hover
+		advance()
 	}
 
 	override func willMove(from view: SKView) {
+		isPresented = false
 		if let panRecognizer { view.removeGestureRecognizer(panRecognizer) }
 		if let hoverRecognizer { view.removeGestureRecognizer(hoverRecognizer) }
 		panRecognizer = nil
@@ -159,7 +163,7 @@ final class Scene<State: ~Copyable, Action, Event, PresentationIntent, Nodes>: S
 	}
 
 	private func advance() {
-		guard !processing, menuState == nil else { return }
+		guard isPresented, !processing, menuState == nil else { return }
 		if let input = pending {
 			pending = nil
 			apply(input)

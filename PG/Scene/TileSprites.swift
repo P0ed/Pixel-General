@@ -100,7 +100,6 @@ extension Terrain {
 @MainActor
 extension SKTileGroup {
 
-	static let gray = makeTerrain(image: CGImage.surface.tinted(SKColor.graySurface.cgColor)!)
 	static let fog = overlay(color: .black)
 
 	private struct TerrainKey: Hashable {
@@ -261,8 +260,6 @@ extension SKTileSet {
 	)
 
 	static let fog = SKTileSet(tileGroups: [.fog], tileSetType: .isometric)
-
-	static let hq = SKTileSet(tileGroups: [.gray], tileSetType: .isometric)
 }
 
 extension SKTileMapNode {

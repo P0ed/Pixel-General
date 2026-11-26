@@ -1,10 +1,10 @@
 import SpriteKit
 import COR
 
-extension HQNodes {
+extension HQMenu {
 
-	func scenarioMenu(_ state: borrowing HQState) -> MenuState<HQAction> {
-		let primary = state.sim.player
+	func scenarioMenu() -> Menu {
+		let primary = hq.player
 		let opponents: [Country] = [.isr, .usa, .irn, .rus]
 		var setup = Scenario(
 			players: [primary] + opponents.filter { $0 != primary.country }.prefix(3).map {
@@ -41,7 +41,7 @@ extension HQNodes {
 				: "Symmetry unavailable with three players"
 		}
 
-		func updateControls(_ menu: inout MenuState<HQAction>) {
+		func updateControls(_ menu: inout Menu) {
 			for seat in setup.players.indices {
 				menu.items[20 + seat].icon = spawnIcon(seat)
 				menu.items[20 + seat].status.text = spawnStatus(seat)
@@ -51,7 +51,7 @@ extension HQNodes {
 		}
 
 		let countries = setup.players.indices.map { idx in
-			MenuItem<HQAction>.push(icon: setup.players[idx].country.flag, status: "Player \(idx + 1)") {
+			Item.push(icon: setup.players[idx].country.flag, status: "Player \(idx + 1)") {
 				guard idx > 0 else { return nil }
 				let countriesLeft = Country.playable.filter { country in
 					!seats.contains { setup.players[$0].country == country }
@@ -78,13 +78,13 @@ extension HQNodes {
 			}
 		}
 		let types = setup.players.indices.map { idx in
-			MenuItem<HQAction>.toggle(icon: setup.players[idx].type.icon, status: "Player \(idx + 1)") {
+			Item.toggle(icon: setup.players[idx].type.icon, status: "Player \(idx + 1)") {
 				guard idx > 0 else { return }
 				setup.players[idx].type.toggle()
 			}
 		}
 		let prestige = setup.players.indices.map { idx in
-			MenuItem<HQAction>.toggle(
+			Item.toggle(
 				icon: setup.players[idx].prestige < .rich ? .prestige1 : .prestige2,
 				status: "Prestige"
 			) {
@@ -92,22 +92,22 @@ extension HQNodes {
 			}
 		}
 		let exp = setup.players.indices.map { idx in
-			MenuItem<HQAction>.toggle(icon: .toggle4(setup.players[idx].baseLevel), status: "Experience") {
+			Item.toggle(icon: .toggle4(setup.players[idx].baseLevel), status: "Experience") {
 				guard idx > 0 else { return }
 				setup.players[idx].baseLevel.toggle4()
 			}
 		}
 		let tier = setup.players.indices.map { idx in
-			MenuItem<HQAction>.toggle(icon: .toggle4(setup.players[idx].tier), status: "Tier") {
+			Item.toggle(icon: .toggle4(setup.players[idx].tier), status: "Tier") {
 				guard idx > 0 else { return }
 				setup.players[idx].tier.toggle4()
 			}
 		}
 		let spawn = setup.players.indices.map { seat in
-			MenuItem<HQAction>.push(icon: spawnIcon(seat), status: spawnStatus(seat)) {
+			Item.push(icon: spawnIcon(seat), status: spawnStatus(seat)) {
 				guard setup.players[seat].alive else { return nil }
 				let available = setup.availableSpawns(for: seat)
-				let choices = corners.enumerated().compactMap { index, corner -> MenuItem<HQAction>? in
+				let choices = corners.enumerated().compactMap { index, corner -> Item? in
 					guard available.contains(corner), let icon = SKTexture.number(UInt8(index)) else { return nil }
 					return .pop(icon: icon, status: cornerNames[index]) { menu in
 						setup.spawns[seat] = corner
@@ -125,18 +125,17 @@ extension HQNodes {
 				)
 			}
 		}
-		let start = MenuItem<HQAction>.close(icon: .arrowRight, status: "Start", update: { [weak scene] in
-			guard let scene else { return }
+		let start = Item.close(icon: .arrowRight, status: "Start", update: { [self] in
 			let active = seats.map { setup.players[$0] }
-			setup.units = scene.state.sim.units.compactMap { $0.alive ? $0 : nil }
+			setup.units = hq.units.compactMap { $0.alive ? $0 : nil }
 				+ active.dropFirst().flatMap { [Unit].base($0.country, lvl: $0.baseLevel) }
 				+ active.flatMap { [Unit].aux($0.country, lvl: $0.baseLevel) }
 			setup.cityLevel = Int(density)
 			setup.fortLevel = Int(forts)
 			setup.seed = Int.random(in: 0 ..< 1024)
-			core.startScenario(setup.makeSim())
+			core.store(setup.makeSim())
 			core.save()
-			view.present(.auto)
+			view.present(.tactical)
 		})
 
 		return MenuState(

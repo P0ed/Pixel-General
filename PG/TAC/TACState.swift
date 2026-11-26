@@ -23,7 +23,19 @@ struct TacticalState: ~Copyable {
 		self.ui = ui
 	}
 
+	@MainActor
+	mutating func abandon() {
+		core.complete(sim)
+		sim.isFinished = true
+		ui.selectedUnit = .none
+		ui.selectable = nil
+		ui.autoBattle = false
+		core.save()
+	}
+
 	mutating func reduce(_ action: TacticalAction) -> [TacticalEvent] {
+		if sim.isFinished { return [] }
+
 		let events = sim.reduce(action)
 
 		switch action {
@@ -87,6 +99,17 @@ typealias TacticalInputReaction = InputReaction<TacticalAction, TacticalPresenta
 extension TacticalState {
 
 	mutating func apply(_ input: Input) -> TacticalInputReaction {
+		if sim.isFinished {
+			switch input {
+			case .menu, .action(.a, modifiers: []): return .presentation(.menu)
+			case .tile(let xy):
+				if sim.map.contains(xy) { ui.cursor = xy }
+				return .none
+			case .action(let action?, modifiers: .right): return setMapMode(action)
+			case .pan, .scale, .direction: break
+			default: return .none
+			}
+		}
 		defer { refreshSelectable() }
 
 		return switch input {

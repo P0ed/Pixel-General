@@ -133,6 +133,10 @@ public struct Scenario {
 	}
 }
 
+public enum MapType {
+	case land, twoIslands, fourIslands
+}
+
 extension XY {
 	init(terrainIndex: Int) {
 		self.init(terrainIndex % 4, 3 - terrainIndex / 4)

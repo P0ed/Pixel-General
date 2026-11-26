@@ -6,18 +6,6 @@ import GFX
 extension Unit {
 
 	@MainActor
-	var hqSprite: SKNode {
-		let node = SKNode()
-
-		let sprite = SKSpriteNode(texture: image)
-		sprite.anchorPoint = .vehicle
-		sprite.zPosition = 0.2
-		node.addChild(sprite)
-
-		return node
-	}
-
-	@MainActor
 	var sprite: SKNode {
 		let node = SKNode()
 

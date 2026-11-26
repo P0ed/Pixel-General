@@ -7,19 +7,13 @@ extension MenuState {
 		units: [Unit],
 		auxiliary: [Unit]? = nil,
 		auxiliaryOnly: Bool = false,
-		prestige: UInt16,
-		purchase: (Int, Bool) -> Action
+		offer: (Unit, Int, Bool) -> MenuItem<Action>
 	) -> Self? {
 		guard !units.isEmpty || auxiliary?.isEmpty == false else { return nil }
 
 		func entries(_ units: [Unit], aux: Bool) -> [(moveType: MoveType, item: MenuItem<Action>)] {
 			units.enumerated().map { index, unit in
-				let item = MenuItem<Action>.close(
-					icon: unit.image,
-					status: .init(text: "\(unit.stats.cost) / \(prestige)\n" + unit.status()),
-					action: purchase(index, aux)
-				)
-				return (unit.type.moveType, item)
+				(unit.type.moveType, offer(unit, index, aux))
 			}
 		}
 
@@ -71,5 +65,12 @@ extension MenuState {
 		}
 
 		return menu(showAux: core.isEmpty, filter: nil)
+	}
+}
+
+extension Unit {
+
+	func purchaseStatus(prestige: UInt16) -> String {
+		"\(stats.cost) / \(prestige)\n" + status()
 	}
 }

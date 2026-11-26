@@ -4,8 +4,10 @@ import COR
 extension TacticalNodes {
 
 	func processMenu(_ state: borrowing TacticalState) {
-		guard let scene, case .none = scene.menuState else {
-			return _ = scene?.showMenu(.none)
+		guard let scene else { return }
+		if state.sim.isFinished {
+			scene.showMenu(HQMenu().menu())
+			return
 		}
 
 		scene.showMenu(MenuState(
@@ -18,8 +20,10 @@ extension TacticalNodes {
 				.space,
 				.load { [weak scene] in scene?.saveState() },
 				.prefs,
-				.close(icon: .HQ, status: "Abandon") { [weak scene] in
-					if let scene { endGame(scene.state) }
+				.init(icon: .HQ, status: Status(text: "Abandon scenario")) { [weak scene] stack, _ in
+					guard let scene else { return }
+					scene.state.abandon()
+					stack = [HQMenu().menu()]
 				}
 			]
 		))

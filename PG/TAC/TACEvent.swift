@@ -24,7 +24,7 @@ extension TacticalNodes {
 	func endGame(_ state: borrowing TacticalState) {
 		core.complete(state.sim)
 		core.save()
-		view.present(.auto)
+		view.present(.tactical)
 	}
 }
 
@@ -134,8 +134,12 @@ private extension TacticalNodes {
 			units: state.sim.shopUnits(at: xy),
 			auxiliary: state.sim.shopUnits(at: xy, aux: true),
 			auxiliaryOnly: state.sim.map[xy] == .port,
-			prestige: state.sim.player.prestige,
-			purchase: { index, aux in .purchase(index, xy, aux: aux) }
+			offer: { unit, index, aux in
+				.close(
+					icon: unit.image, status: unit.purchaseStatus(prestige: state.sim.player.prestige),
+					action: .purchase(index, xy, aux: aux)
+				)
+			}
 		))
 	}
 }

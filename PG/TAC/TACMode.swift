@@ -10,6 +10,7 @@ extension TacticalMode {
 	static var tactical: Self {
 		.init(
 			make: TacticalNodes.init,
+			initialMenu: { _, state in state.sim.isFinished ? HQMenu().menu() : nil },
 			input: { state, input in state.apply(input) },
 			next: { [ai = AI.heuristic] state in state.auto ? ai(state.sim) : nil },
 			reduce: { state, action in state.reduce(action) },
@@ -27,6 +28,6 @@ extension TacticalMode {
 private extension TacticalState {
 
 	var auto: Bool {
-		sim.player.type == .ai || ui.autoBattle
+		!sim.isFinished && (sim.player.type == .ai || ui.autoBattle)
 	}
 }

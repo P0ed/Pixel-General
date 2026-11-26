@@ -22,7 +22,7 @@ struct TacticalNodes {
 extension TacticalNodes {
 
 	init(scene: TacticalScene) {
-		let lit = scene.state.ui.selectable ?? scene.state.sim.visibleToHuman
+		let lit = scene.state.litTiles
 		self = TacticalNodes(
 			scene: scene,
 			camera: Self.addCamera(root: scene),
@@ -36,8 +36,7 @@ extension TacticalNodes {
 				let xy = scene.state.sim.position[i]
 				sprite.position = scene.state.sim.map.point(at: xy)
 				sprite.zPosition = map.zPosition(at: xy)
-				sprite.isHidden = !scene.state.sim.isVisibleToHuman(i.uid)
-					|| scene.state.sim.unitsMap[xy] != i.uid
+				sprite.isHidden = !scene.state.showsUnit(i.uid)
 				scene.addChild(sprite)
 				return sprite
 			},
@@ -111,7 +110,7 @@ extension TacticalNodes {
 		case .defense: .defense(type)
 		}
 
-		let lit = state.ui.selectable ?? state.sim.visibleToHuman
+		let lit = state.litTiles
 		let previousLit = self.lit
 		let overlayChanged = key != overlayKey
 		let fogChanged = lit != previousLit
@@ -124,7 +123,7 @@ extension TacticalNodes {
 		}
 		if fogChanged {
 			state.sim.units.forEachAlive { i, u in
-				units[i]?.isHidden = !state.sim.isVisibleToHuman(i.uid)
+				units[i]?.isHidden = !state.showsUnit(i.uid)
 			}
 		}
 	}
@@ -162,9 +161,6 @@ extension TacticalNodes {
 			return .level(UInt8(clamping: (value + 5) * 7 / 11))
 		}
 	}
-}
-
-extension TacticalNodes {
 
 	func addUnit(_ uid: UID, node: SKNode) {
 		scene?.addChild(node)
@@ -174,5 +170,16 @@ extension TacticalNodes {
 	func removeUnit(_ uid: UID) {
 		units[uid]?.removeFromParent()
 		units[uid] = .none
+	}
+}
+
+private extension TacticalState {
+
+	var litTiles: SetXY {
+		sim.isFinished ? .full : ui.selectable ?? sim.visibleToHuman
+	}
+
+	func showsUnit(_ uid: UID) -> Bool {
+		sim.isFinished ? !sim.offMap(unit: uid) : sim.isVisibleToHuman(uid)
 	}
 }

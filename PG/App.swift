@@ -2,7 +2,7 @@ import UIKit
 import SpriteKit
 import COR
 
-@MainActor var core: Core = .load()
+@MainActor var core: Core = .new(country: .swe, )
 @MainActor var settings: Settings = UserDefaults.standard.settings {
 	didSet { UserDefaults.standard.settings = settings }
 }
@@ -43,7 +43,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		win.makeKeyAndVisible()
 		window = win
 
-		view.present(.auto)
+		view.present(.tactical)
 		_ = sounds
 	}
 }

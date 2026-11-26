@@ -15,6 +15,7 @@ public struct TacticalSim: ~Copyable {
 	public var d20: D20 = D20()
 
 	public var objective: Objective = .none
+	public var isFinished = false
 }
 
 @frozen public enum Objective: Equatable, BitwiseCopyable {
@@ -103,6 +104,17 @@ public extension TacticalSim {
 		}
 
 		refreshVision()
+	}
+
+	static var empty: TacticalSim {
+		var state = TacticalSim(
+			map: Map<64, Terrain>(seed: Int.random(in: 0 ..< Int.max)),
+			players: [.none],
+			cities: [],
+			units: []
+		)
+		state.isFinished = true
+		return state
 	}
 
 	private func canDeploy(_ u: Unit, at xy: XY) -> Bool {

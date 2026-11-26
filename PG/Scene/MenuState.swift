@@ -178,7 +178,7 @@ extension MenuItem {
 				.confirm(icon: .number(UInt8(slot)) ?? .clear, status: "Slot \(slot + 1)") {
 					save()
 					core = .load(slot: slot)
-					view.present(.auto)
+					view.present(.tactical)
 				}
 			},
 			leftButtons: [.back, .space, .space, .space]

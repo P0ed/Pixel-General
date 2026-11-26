@@ -31,8 +31,6 @@ extension SKColor {
 	static var waterSurface: SKColor { .hex(0x90C0F0) }
 	static var seaSurface: SKColor { .hex(0x507CA8) }
 
-	static var graySurface: SKColor { Country.none.color }
-
 	static func amberGreen8(_ level: UInt8) -> SKColor {
 		let cl = UInt32(min(level, 7))
 		let r = 0xBF - 9 * cl as UInt32
