@@ -54,7 +54,8 @@ extension XY {
 
 	var tileVariant: Tiles.Variant {
 		let variants = Tiles.Variant.allCases
-		return variants[(x * 64 + y) % variants.count]
+		var d20 = D20(seed: UInt64(x + y * 127))
+		return variants[d20() % variants.count]
 	}
 }
 

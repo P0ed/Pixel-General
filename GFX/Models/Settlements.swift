@@ -66,57 +66,64 @@ public enum Settlements {
 		let layout = switch variant {
 		case .first:
 			"""
-			....#....
-			.#######.
-			..#...#..
-			..#...#..
-			#######..
-			....#....
-			....#....
-			..######.
-			....#....
+			.....#.....
+			.....#.....
+			.#########.
+			..#.....#..
+			..#.....#..		
+			#########..
+			.....#.....
+			.....#.....
+			.....#.....
+			..########.
+			...........
 			"""
 		case .second:
 			"""
-			.........
-			.###.....
-			...#####.
-			....#..#.
-			#####..##
-			.#.#####.
-			.#.......
-			.#####...
-			....#....
+			...........
+			.####......
+			....######.
+			.....#...#.
+			.....#...#.
+			.#####...#.
+			##...######
+			.#.........
+			.########..
+			.....#.....
+			.....#.....
 			"""
 		case .third:
 			"""
-			....#....
-			.#..#.#..
-			.#..#.#..
-			.####.#..
-			##..###..
-			.#..#.#..
-			.####.#..
-			....#.#..
-			.........
+			.....#.....
+			.....#.....
+			.#...#..#..
+			.#...#..#..
+			.#####..#..
+			.#...####..
+			.#...#..#..
+			.#####..#..
+			.....#..#..
+			.....#..#..
+			.....#.....
 			"""
 		case .fourth:
 			"""
-			.........
-			..####...
-			..#..###.
-			..#....#.
-			.###.####
-			...#...#.
-			...##..#.
-			....####.
-			....#....
+			...........
+			...####....
+			...#..####.
+			...#....#..
+			...#....#..
+			#####.#####
+			....#...#..
+			....#...#..
+			....##..#..
+			.....#####.
+			.....#.....
 			"""
 		}
 		let cells = layout.split(separator: "\n").map(Array.init)
-		let cellSize: Float = 4
-		let margin = (Volume.footprint - Float(cells.count) * cellSize) / 2
-		let boundaries = [0] + (1 ..< cells.count).map { margin + Float($0) * cellSize } + [Volume.footprint]
+		let cellSize: Float = Volume.footprint / Float(cells.count)
+		let boundaries = [0.75] + (1 ..< cells.count).map { Float($0) * cellSize } + [Volume.footprint - 0.75]
 		var solids: [Solid] = []
 
 		for (row, cellsInRow) in cells.enumerated() {
@@ -139,7 +146,7 @@ public enum Settlements {
 					let depth = abs(half.y)
 					let bank = Solid.wedge(
 						from: center + V3(-width, -depth - 1.5, 0),
-						to: center + V3(width, -depth, 1.5),
+						to: center + V3(width, -depth, 1),
 						rising: .yPlus,
 						tone: 180
 					)
