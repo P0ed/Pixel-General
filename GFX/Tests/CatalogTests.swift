@@ -69,6 +69,20 @@ struct CatalogTests {
 		expectVisibleRoad(city, along: .y)
 	}
 
+	@Test(arguments: Turn.allCases)
+	func portFacesOpenWater(turn: Turn) {
+		let water = Renderer.tile.fill(Settlements.portWater.rotated(turn))
+		let port = Renderer.building.render(Settlements.port.rotated(turn))
+		let footprint = Renderer.tile.fill(Tiles.footprint)
+		#expect(zip(port.alpha, footprint.alpha).allSatisfy { $0 == 0 || $1 > 0 })
+		for x in 17...31 {
+			let mouth = Volume.center + turn.apply(V3(Float(x) - Volume.center.x, 23, 0))
+			let pixel = Canvas.tile.project(mouth)
+			#expect(water[Int(pixel.x), Int(pixel.y)].alpha == 255)
+			#expect(port[Int(pixel.x), Int(pixel.y)].alpha == 0)
+		}
+	}
+
 	@Test func airfieldKeepsItsDashedRunwayCenterline() {
 		let airfield = Settlements.airfield
 		let bitmap = Renderer.building.render(airfield)

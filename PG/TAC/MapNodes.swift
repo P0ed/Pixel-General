@@ -1,5 +1,6 @@
 import SpriteKit
 import COR
+import GFX
 
 @MainActor
 struct MapNodes {
@@ -20,6 +21,15 @@ private enum TileZ {
 	static let top: CGFloat = 0.6
 }
 
+private extension Map<64, Terrain> {
+	func portTurn(at xy: XY) -> Turn {
+		let neighbors = xy.n4
+		let turns: [4 of Turn] = [.right, .half, .left, .none]
+		for i in neighbors.indices where self[neighbors[i]].isSea { return turns[i] }
+		return .none
+	}
+}
+
 extension MapNodes {
 
 	func tile(at point: CGPoint) -> Input? {
@@ -32,10 +42,14 @@ extension MapNodes {
 		return .tile(XY(x, y))
 	}
 
-	func setTile(_ tile: Terrain, at xy: XY) {
-		terrain.setTileGroup(.terrain(tile, at: xy), at: xy)
+	func setTile(from map: borrowing Map<64, Terrain>, at xy: XY) {
+		let tile = map[xy]
+		let portTurn = tile == .port ? map.portTurn(at: xy) : .none
+		let variant = xy.tileVariant
+		terrain.setTileGroup(.terrain(surface: tile.tileSurface(portTurn: portTurn), variant: variant), at: xy)
 		if decorations.parent != nil {
-			decorations.setTileGroup(.decoration(tile, at: xy), at: xy)
+			let decoration = tile.decoration(variant: variant, portTurn: portTurn)
+			decorations.setTileGroup(decoration.map(SKTileGroup.decoration), at: xy)
 		}
 	}
 

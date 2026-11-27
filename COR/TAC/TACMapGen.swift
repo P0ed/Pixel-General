@@ -543,17 +543,20 @@ extension Map where Element == Terrain {
 		}
 
 		var candidates: [PortSite] = []
-		for port in indices where isOpen(port) && touchesSea(at: port) {
-			for city in port.n4 where isOpen(city) && city.stepDistance(to: home) >= spacing {
+		for port in indices where isOpen(port) {
+			let neighbors = port.n4
+			guard !neighbors.contains({ !contains($0) || self[$0].isRiver }),
+				neighbors.indices.count(where: { self[neighbors[$0]].isSea }) == 1 else { continue }
+			for city in neighbors where isOpen(city) && city.stepDistance(to: home) >= spacing {
 				guard city.n4.contains({ xy in xy != port && isOpen(xy) && self[xy] != .mountain }) else { continue }
 				candidates.append(PortSite(port: port, city: city, ground: self[port]))
 			}
 		}
 		func select(from candidates: [PortSite], sites: inout [PortSite]) -> Bool {
 			if sites.count == target { return true }
-			let centers = [home] + sites.map(\.city)
+			let centers = [home] + sites.map(\.port)
 			let ranked = candidates.map { site in
-				(site: site, distance: centers.map { site.city.stepDistance(to: $0) }.min()!)
+				(site: site, distance: centers.map { site.port.stepDistance(to: $0) }.min()!)
 			}.sorted { $0.distance > $1.distance }.map(\.site)
 			for (index, site) in ranked.enumerated() {
 				let available = ranked.dropFirst(index + 1).filter { other in

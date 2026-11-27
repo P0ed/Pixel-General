@@ -59,7 +59,7 @@ public enum Settlements {
 			portStrip(10..<11, 5..<6, height: 1, tone: Roads.Tone.bed),
 		]
 		let warehouses = house(x: 8, y: 18, length: 4.5, width: 13, walls: 3, roof: 2, ridge: .y)
-			+ house(x: 40, y: 23, length: 6, width: 12, walls: 3, roof: 2, ridge: .y)
+			+ house(x: 39, y: 23, length: 6, width: 12, walls: 3, roof: 2, ridge: .y)
 		return Model(quays + warehouses + buildings(.apartments, x: 38, y: 11))
 	}
 
@@ -161,7 +161,7 @@ private extension Settlements {
 		let depth = Volume.footprint / 6
 		return .box(
 			from: V3(Float(columns.lowerBound) * width, Float(rows.lowerBound) * depth, 0),
-			to: V3(Float(columns.upperBound) * width, Float(rows.upperBound) * depth, height),
+			to: V3(Float(columns.upperBound) * width, min(Float(rows.upperBound) * depth, Volume.footprint - height), height),
 			tone: tone
 		)
 	}

@@ -53,7 +53,7 @@ extension TacticalNodes {
 			fog: .fog
 		)
 		state.sim.map.indices.forEach { xy in
-			map.setTile(state.sim.map[xy], at: xy)
+			map.setTile(from: state.sim.map, at: xy)
 			if !lit[xy] { map.setShading(nil, fogged: true, at: xy) }
 		}
 		return map

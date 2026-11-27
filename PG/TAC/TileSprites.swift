@@ -4,7 +4,10 @@ import COR
 import GFX
 
 enum TileSurface: CaseIterable, Hashable {
-	case field, forest, rough, mountain, water, sea, port
+	case field, forest, rough, mountain, water, sea
+	case port(Turn)
+
+	static let allCases: [Self] = [.field, .forest, .rough, .mountain, .water, .sea] + Turn.allCases.map(Self.port)
 
 	var color: SKColor {
 		switch self {
@@ -26,10 +29,10 @@ enum TileSurface: CaseIterable, Hashable {
 			return image?.noised(with: CGImage.harshNoise[variant.rawValue])
 		case .forest, .rough:
 			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
-		case .port:
+		case .port(let turn):
 			let bay = CGImage.draw(size: .tile3D) { ctx in
 				ctx.drawTile(image)
-				ctx.drawTile(.portWater)
+				ctx.drawTile(CGImage.portWater[Int(turn.rawValue)])
 			}
 			return bay.noised(with: CGImage.noise[variant.rawValue])
 		case .field, .water, .sea:
@@ -56,7 +59,7 @@ enum TileOverlay: Hashable {
 	}
 }
 
-private extension XY {
+extension XY {
 
 	var tileVariant: Tiles.Variant {
 		let variants = Tiles.Variant.allCases
@@ -66,27 +69,27 @@ private extension XY {
 
 extension Terrain {
 
-	var tileSurface: TileSurface {
+	func tileSurface(portTurn: Turn = .none) -> TileSurface {
 		switch self {
 		case .forest: .forest
 		case .rough: .rough
 		case .mountain: .mountain
 		case .river, .bridgeWE, .bridgeSN: .water
 		case .sea: .sea
-		case .port: .port
+		case .port: .port(portTurn)
 		default: .field
 		}
 	}
 
 	/// Compass names map onto GFX axes the way `XY.point` puts them on screen:
 	/// E is `xPlus`, N `yMinus`, W `xMinus`, S `yPlus`.
-	func decoration(variant: Tiles.Variant = .first) -> CGImage.Decoration? {
+	func decoration(variant: Tiles.Variant = .first, portTurn: Turn = .none) -> CGImage.Decoration? {
 		switch self {
 		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
 		case .city: .city(variant)
 		case .fort: .fort(variant)
 		case .airfield: .airfield
-		case .port: .port
+		case .port: .port(portTurn)
 		case .bridgeWE: .bridge(.x)
 		case .bridgeSN: .bridge(.y)
 		case .roadNW: .road([.yMinus, .xMinus])
@@ -125,14 +128,6 @@ extension SKTileGroup {
 		let group = makeTerrain(image: surface.image(variant: variant)!)
 		terrainCache[key] = group
 		return group
-	}
-
-	static func terrain(_ terrain: Terrain, at xy: XY) -> SKTileGroup {
-		self.terrain(surface: terrain.tileSurface, variant: xy.tileVariant)
-	}
-
-	static func decoration(_ terrain: Terrain, at xy: XY) -> SKTileGroup? {
-		terrain.decoration(variant: xy.tileVariant).map { decoration in self.decoration(decoration) }
 	}
 
 	static func decoration(_ decoration: CGImage.Decoration) -> SKTileGroup {
@@ -181,7 +176,9 @@ extension SKTileGroup {
 @MainActor
 private extension CGImage {
 
-	static let portWater = Renderer.tile.fill(Settlements.portWater).cgImage?.tinted(TileSurface.sea.color.cgColor)
+	static let portWater = Turn.allCases.map { turn in
+		Renderer.tile.fill(Settlements.portWater.rotated(turn)).cgImage?.tinted(TileSurface.sea.color.cgColor)
+	}
 
 	/// Stable tile-sized speckle, rendered once — noising a surface is then a
 	/// single masked draw instead of a per-pixel fill on every texture build.
@@ -238,7 +235,7 @@ private extension CGContext {
 extension SKTileSet {
 
 	private static let decorated: [Terrain] = [
-		.city, .airfield, .port, .bridgeWE, .bridgeSN, .fort,
+		.city, .airfield, .bridgeWE, .bridgeSN, .fort,
 		.roadNW, .roadNE, .roadWE, .roadSN, .roadSW, .roadSE,
 		.roadTE, .roadTN, .roadTW, .roadTS, .roadX,
 	]
@@ -259,7 +256,7 @@ extension SKTileSet {
 					terrain.decoration(variant: variant)
 						.map { decoration in .decoration(decoration) }
 				}
-		},
+		} + Turn.allCases.map { .decoration(.port($0)) },
 		tileSetType: .isometric
 	)
 
@@ -296,7 +293,7 @@ extension SKTexture {
 	static func tile(_ terrain: Terrain) -> SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
-			ctx.drawTile(terrain.tileSurface.image())
+			ctx.drawTile(terrain.tileSurface().image())
 			ctx.drawTile(terrain.decoration().map(CGImage.decoration))
 			ctx.drawTile(.frame)
 		})
