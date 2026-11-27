@@ -42,17 +42,25 @@ public enum Settlements {
 
 	public static var fort: Model { fort(variant: .first) }
 
+	public static var portWater: Model {
+		Model(
+			portStrip(6..<8, 0..<1),
+			portStrip(5..<9, 1..<4),
+			portStrip(0..<14, 4..<5),
+			portStrip(4..<10, 5..<6)
+		)
+	}
+
 	public static var port: Model {
-		Model([
-			.box(from: V3(7.5, 10.5, 0), to: V3(40.5, 25.5, 1.5), tone: Roads.Tone.bed),
-			.box(from: V3(9, 25.5, 0), to: V3(16.5, 39, 1.5), tone: Roads.Tone.bed),
-			.box(from: V3(31.5, 25.5, 0), to: V3(39, 39, 1.5), tone: Roads.Tone.bed),
-			.box(from: V3(10.5, 12, 1.5), to: V3(25.5, 21, 6), tone: Tone.wall),
-			.gable(from: V3(9.75, 11.25, 6), to: V3(26.25, 21.75, 9), ridge: .x, tone: Tone.roof),
-			.box(from: V3(30, 13.5, 1.5), to: V3(37.5, 19.5, 4.5), tone: Tone.roof),
-			.box(from: V3(12, 34.5, 1.5), to: V3(13.5, 36, 3.75), tone: 130),
-			.box(from: V3(34.5, 34.5, 1.5), to: V3(36, 36, 3.75), tone: 130),
-		])
+		let quays = [
+			portStrip(3..<5, 1..<4, height: 1, tone: Roads.Tone.bed),
+			portStrip(9..<11, 1..<4, height: 1, tone: Roads.Tone.bed),
+			portStrip(3..<4, 5..<6, height: 1, tone: Roads.Tone.bed),
+			portStrip(10..<11, 5..<6, height: 1, tone: Roads.Tone.bed),
+		]
+		let warehouses = house(x: 8, y: 18, length: 4.5, width: 13, walls: 3, roof: 2, ridge: .y)
+			+ house(x: 40, y: 23, length: 6, width: 12, walls: 3, roof: 2, ridge: .y)
+		return Model(quays + warehouses + buildings(.apartments, x: 38, y: 11))
 	}
 
 	public static func fort(variant: Tiles.Variant) -> Model {
@@ -147,6 +155,16 @@ public enum Settlements {
 }
 
 private extension Settlements {
+
+	static func portStrip(_ columns: Range<Int>, _ rows: Range<Int>, height: Float = 0, tone: UInt8 = .max) -> Solid {
+		let width = Volume.footprint / 14
+		let depth = Volume.footprint / 6
+		return .box(
+			from: V3(Float(columns.lowerBound) * width, Float(rows.lowerBound) * depth, 0),
+			to: V3(Float(columns.upperBound) * width, Float(rows.upperBound) * depth, height),
+			tone: tone
+		)
+	}
 
 	enum CityBlock {
 		case houses, apartments, market

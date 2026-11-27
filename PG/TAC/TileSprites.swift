@@ -4,11 +4,11 @@ import COR
 import GFX
 
 enum TileSurface: CaseIterable, Hashable {
-	case field, forest, rough, mountain, water, sea
+	case field, forest, rough, mountain, water, sea, port
 
 	var color: SKColor {
 		switch self {
-		case .field: .fieldSurface
+		case .field, .port: .fieldSurface
 		case .forest: .forestSurface
 		case .rough: .roughSurface
 		case .mountain: .mountainSurface
@@ -26,6 +26,12 @@ enum TileSurface: CaseIterable, Hashable {
 			return image?.noised(with: CGImage.harshNoise[variant.rawValue])
 		case .forest, .rough:
 			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
+		case .port:
+			let bay = CGImage.draw(size: .tile3D) { ctx in
+				ctx.drawTile(image)
+				ctx.drawTile(.portWater)
+			}
+			return bay.noised(with: CGImage.noise[variant.rawValue])
 		case .field, .water, .sea:
 			return image?.noised(with: CGImage.noise[variant.rawValue])
 		}
@@ -66,7 +72,8 @@ extension Terrain {
 		case .rough: .rough
 		case .mountain: .mountain
 		case .river, .bridgeWE, .bridgeSN: .water
-		case .sea, .port: .sea
+		case .sea: .sea
+		case .port: .port
 		default: .field
 		}
 	}
@@ -173,6 +180,8 @@ extension SKTileGroup {
 
 @MainActor
 private extension CGImage {
+
+	static let portWater = Renderer.tile.fill(Settlements.portWater).cgImage?.tinted(TileSurface.sea.color.cgColor)
 
 	/// Stable tile-sized speckle, rendered once — noising a surface is then a
 	/// single masked draw instead of a per-pixel fill on every texture build.
