@@ -230,7 +230,6 @@ private enum Help {
 	  • Each unit has a limited move each turn. Roads and open ground are
 	    fast; forests and hills are slow; mountains and rivers cost almost
 	    everything — and mountains block wheeled units.
-	  • Ports on island maps are open to both ships and ground units.
 	  • Terrain also shields defenders. Sitting still lets ground units
 	    entrench for an ever-growing defensive bonus.
 
