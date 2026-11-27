@@ -27,8 +27,6 @@ public extension Terrain {
 		}
 	}
 
-	var isNoFlyZone: Bool { self == .city }
-
 	var isRoad: Bool {
 		switch self {
 		case .roadNE, .roadNW, .roadSE, .roadSN, .roadSW, .roadWE,
@@ -87,10 +85,8 @@ public extension Terrain {
 			case _ where isRiver: stats.mov
 			default: 0x10
 			}
-		case .air:
-			self.isNoFlyZone ? 0x10 : 1
-		case .naval:
-			self == .sea || self == .port ? 1 : 0x10
+		case .air: 1
+		case .naval: self == .sea || self == .port ? 1 : 0x10
 		}
 	}
 

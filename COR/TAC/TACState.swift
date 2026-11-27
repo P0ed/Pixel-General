@@ -73,12 +73,12 @@ public extension TacticalSim {
 			guard let player = players.firstIndex(where: { p in p.country == u.country })
 			else { continue }
 			if let home = homes[u.country] {
-				let nearby = u.type.isNaval ? nil : home.s49.firstMap { canDeploy(u, at: $0) ? $0 : nil }
+				let nearby = u.isNaval ? nil : home.s49.firstMap { canDeploy(u, at: $0) ? $0 : nil }
 				guard let xy = nearby ?? nearestPlacement(for: u, near: home) else { fatalError() }
 				place(i.uid, at: xy)
 				continue
 			}
-			if u.type.isNaval, let center = navalCenters[u.country.team],
+			if u.isNaval, let center = navalCenters[u.country.team],
 			   let xy = nearestPlacement(for: u, near: center) {
 				place(i.uid, at: xy)
 				continue
@@ -119,9 +119,9 @@ public extension TacticalSim {
 
 	private func canDeploy(_ u: Unit, at xy: XY) -> Bool {
 		guard map.contains(xy), unitsMap[xy] == .none else { return false }
-		return u.type.isNaval
-			? map[xy].isSea && !hasAdjacentShip(at: xy)
-			: u.isAir ? !map[xy].isNoFlyZone : !map[xy].isSea && !map[xy].isRiver
+		return u.isNaval
+			? map[xy].isSea
+			: u.isAir || !map[xy].isSea && !map[xy].isRiver
 	}
 
 	private func nearestPlacement(for unit: Unit, near center: XY) -> XY? {
@@ -135,14 +135,6 @@ public extension TacticalSim {
 			}
 		}
 		return result
-	}
-
-	private func hasAdjacentShip(at xy: XY) -> Bool {
-		xy.n4.contains { p in
-			guard map.contains(p) else { return false }
-			let uid = unitsMap[p]
-			return uid != .none && units[uid].type.isNaval
-		}
 	}
 
 	subscript(_ xy: XY) -> Unit? {

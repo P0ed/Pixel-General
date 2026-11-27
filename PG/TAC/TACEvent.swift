@@ -3,7 +3,7 @@ import COR
 
 extension TacticalNodes {
 
-	func process(_ event: TacticalEvent, _ state: borrowing TacticalState) async {
+	func process(_ event: Event, _ state: borrowing TacticalState) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
 		case let .move(uid, path): await processMove(uid, path, state)

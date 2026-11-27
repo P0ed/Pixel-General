@@ -275,7 +275,7 @@ extension TacticalSim {
 		var distance = Int.max
 		ai.ownSettlements.forEach { _, xy in
 			guard !u.isAir || map[xy] == .airfield else { return }
-			if u.type.isNaval {
+			if u.isNaval {
 				guard map[xy] == .port, unitsMap[xy] == .none || unitsMap[xy] == uid else { return }
 			}
 			let d = p.stepDistance(to: xy)
@@ -414,7 +414,7 @@ extension TacticalSim {
 		var bestScore = Int.min
 
 		ai.roster.forEach { _, uid in
-			guard !offMap(unit: uid), units[uid].canAttack, units[uid].ammo > 0 else { return }
+			guard !offMap(unit: uid), units[uid].canAttack else { return }
 			ai.enemies.forEach { _, tid in
 				guard canAttack(src: uid, dst: tid) else { return }
 				let damage = estimateDamage(attacker: uid, defender: tid, visibleOnly: true)
@@ -557,7 +557,7 @@ extension TacticalSim {
 			let target = movementTarget(for: uid, ai)
 			if p == target {
 				let unit = units[uid]
-				let waitingForAmmo = unit.type.isNaval && unit.maxAmmo > 0 && unit.ammo == 0 && map[p] == .port
+				let waitingForAmmo = unit.isNaval && unit.maxAmmo > 0 && unit.ammo == 0 && map[p] == .port
 				if role == .retreat || role == .defend || waitingForAmmo { continue }
 			}
 
@@ -572,7 +572,7 @@ extension TacticalSim {
 		let u = units[uid]
 		let p = position[uid]
 		let needsAirfield = u.isAir && u.ammo == 0
-		let needsPort = u.type.isNaval && (ai.role[uid.index] == .retreat || u.maxAmmo > 0 && u.ammo == 0)
+		let needsPort = u.isNaval && (ai.role[uid.index] == .retreat || u.maxAmmo > 0 && u.ammo == 0)
 		if (needsAirfield || needsPort), let haven = nearestCompatibleHaven(for: uid, ai) {
 			return haven
 		}
@@ -620,7 +620,7 @@ extension TacticalSim {
 		// that may fire after moving values actual weapon range, not only
 		// adjacency: killable and dangerous targets pull it into firing
 		// position, while enemy reach onto the tile accumulates danger.
-		let mayFire = u.canAttackAfterMove && u.ap > 0 && u.ammo > 0
+		let mayFire = u.canAttackAfterMove && u.ap > 0
 		let uRange = Int(u.rng) * 2 + 1
 		var danger = 0
 		ai.enemies.forEach { _, enemy in

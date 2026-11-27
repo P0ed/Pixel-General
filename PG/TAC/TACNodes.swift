@@ -3,7 +3,7 @@ import COR
 
 @MainActor
 struct TacticalNodes {
-	weak var scene: Scene?
+	weak var scene: TACScene?
 	var camera: SKCameraNode
 	var map: MapNodes
 	@IO var units: [192 of SKNode?] = .init(repeating: nil)
@@ -21,7 +21,7 @@ struct TacticalNodes {
 
 extension TacticalNodes {
 
-	init(scene: Scene) {
+	init(scene: TACScene) {
 		let lit = scene.state.litTiles
 		self = TacticalNodes(
 			scene: scene,
@@ -173,7 +173,11 @@ extension TacticalNodes {
 	}
 }
 
-private extension TacticalState {
+extension TacticalState {
+
+	var auto: Bool {
+		!sim.isFinished && (sim.player.type == .ai || ui.autoBattle)
+	}
 
 	var litTiles: SetXY {
 		sim.isFinished ? .full : ui.selectable ?? sim.visibleToHuman

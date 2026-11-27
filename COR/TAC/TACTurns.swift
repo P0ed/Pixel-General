@@ -14,7 +14,7 @@ extension TacticalSim {
 		aliveTeams & 1 << team.rawValue != 0
 	}
 
-	mutating func endTurn(into events: inout [TacticalEvent]) {
+	mutating func endTurn(into events: inout [Event]) {
 		captureCities()
 		assignControl()
 		updateSurvivingTeams()
@@ -70,7 +70,7 @@ extension TacticalSim {
 
 	private mutating func captureCities() {
 		units.forEachAlive { i, u in
-			guard !u.isAir, !u.type.isNaval, !offMap(unit: i.uid) else { return }
+			guard u.isLand, !offMap(unit: i.uid) else { return }
 			let xy = position[i]
 			if map[xy] == .city, control[xy].team != u.country.team {
 				control[xy] = u.country

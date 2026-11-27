@@ -134,7 +134,7 @@ public struct Scenario {
 }
 
 public enum MapType {
-	case land, twoIslands, fourIslands
+	case land, island, twoIslands, fourIslands
 }
 
 extension XY {

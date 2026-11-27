@@ -100,7 +100,7 @@ public extension TacticalSim {
 		units[uid].country == country && units[uid].canMove && !offMap(unit: uid)
 	}
 
-	mutating func move(unit uid: UID, to target: XY, into events: inout [TacticalEvent]) {
+	mutating func move(unit uid: UID, to target: XY, into events: inout [Event]) {
 		guard canMove(unit: uid) else { return }
 
 		let moves = moves(for: uid, target: target)

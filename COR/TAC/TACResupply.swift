@@ -105,14 +105,14 @@ extension TacticalSim {
 	public func canResupply(unit id: UID) -> Bool {
 		let unit = units[id]
 		guard unit.country == country, unit.untouched, !offMap(unit: id) else { return false }
-		if unit.type.isNaval {
+		if unit.isNaval {
 			let xy = position[id]
 			return map[xy] == .port && control[xy] == unit.country
 		}
 		return !unit.isAir || hasBuildings(near: id)
 	}
 
-	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [TacticalEvent]) {
+	mutating func resupply(unit id: UID, endOfTurn: Bool = false, into events: inout [Event]) {
 		resupply(unit: id, sources: supplySources(for: units[id].country), endOfTurn: endOfTurn, into: &events)
 	}
 
@@ -120,7 +120,7 @@ extension TacticalSim {
 		unit id: UID,
 		sources: SupplySources,
 		endOfTurn: Bool = false,
-		into events: inout [TacticalEvent]
+		into events: inout [Event]
 	) {
 		var unit = units[id]
 

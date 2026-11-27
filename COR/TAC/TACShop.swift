@@ -22,7 +22,7 @@ extension TacticalSim {
 		guard map[xy].isSettlement, control[xy] == country else { return [] }
 
 		let enemyAdjacent = neighbors(at: xy).contains { id in
-			units[id].country.team != country.team
+			units[id].country.team != country.team && units[id].isLand
 		}
 		if enemyAdjacent { return [] }
 
@@ -50,7 +50,7 @@ extension TacticalSim {
 		return shop[idx]
 	}
 
-	mutating func buy(_ idx: Int, at pos: XY, aux: Bool, into events: inout [TacticalEvent]) {
+	mutating func buy(_ idx: Int, at pos: XY, aux: Bool, into events: inout [Event]) {
 		guard let template = purchasableUnit(slot: idx, at: pos, aux: aux) else { return }
 		let unit = modifying(template) { u in
 			u.reset()

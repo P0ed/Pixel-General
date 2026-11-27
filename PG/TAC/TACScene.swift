@@ -2,8 +2,7 @@ import SpriteKit
 import UIKit
 import COR
 
-final class Scene: SKScene {
-	let mode: SceneMode<TacticalState, Action, TacticalEvent, PresentationIntent, TacticalNodes> = .tactical
+final class TACScene: SKScene {
 	private let hid = HIDController()
 
 	private var isPresented = false
@@ -19,6 +18,7 @@ final class Scene: SKScene {
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
 	var state: TacticalState { didSet { didSetState() } }
+	private let ai = AI.heuristic
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: TacticalNodes?
 	private var enterBackground: Any?
@@ -42,10 +42,7 @@ final class Scene: SKScene {
 				if let self, isPresented { saveState() }
 			}
 		)
-
-		let nodes = mode.make(self)
-		mode.layout(size, nodes)
-		self.nodes = nodes
+		nodes = TacticalNodes(scene: self)
 
 		baseNodes = makeBaseNodes()
 		baseNodes?.layout(size: size)
@@ -54,7 +51,7 @@ final class Scene: SKScene {
 		hid.up = { [weak self] input in self?.releaseInput(input) }
 
 		didSetState()
-		showMenu(mode.initialMenu(nodes, state))
+		showMenu(state.sim.isFinished ? HQMenu().menu() : nil)
 	}
 
 	isolated deinit {
@@ -90,7 +87,6 @@ final class Scene: SKScene {
 	}
 
 	override func didChangeSize(_ oldSize: CGSize) {
-		if let nodes { mode.layout(size, nodes) }
 		baseNodes?.layout(size: size)
 	}
 
@@ -118,11 +114,11 @@ final class Scene: SKScene {
 		if !menuStack.isEmpty {
 			menuStack[menuStack.count - 1].apply(input)
 		} else if processing, case .pan = input {
-			_ = mode.input(&state, input)
+			_ = state.apply(input)
 		} else if processing {
 			pending = input
 		} else {
-			react(mode.input(&state, input))
+			react(state.apply(input))
 		}
 	}
 
@@ -135,17 +131,17 @@ final class Scene: SKScene {
 			advance()
 		case .action(let action):
 			processing = true
-			let events = mode.reduce(&state, action)
+			let events = state.reduce(action)
 			Task {
 				for event in events {
-					await mode.process(event, nodes, state)
+					await nodes.process(event, state)
 				}
 				finishReaction()
 			}
 		case .presentation(let intent):
 			processing = true
 			Task {
-				await mode.present(intent, nodes, state)
+				await nodes.present(intent, state)
 				finishReaction()
 			}
 		}
@@ -162,7 +158,7 @@ final class Scene: SKScene {
 		if let input = pending {
 			pending = nil
 			apply(input)
-		} else if let action = mode.next(state) {
+		} else if let action = state.auto ? ai(state.sim) : nil {
 			react(.action(action))
 		}
 	}
@@ -178,13 +174,14 @@ final class Scene: SKScene {
 	}
 
 	func saveState() {
-		mode.save(state)
+		core.store(state.sim)
+		core.save()
 	}
 
 	private func didSetState() {
 		guard let nodes, !processing else { return }
 		updateStatus()
-		mode.update(nodes, state)
+		nodes.update(state)
 	}
 
 	private func didSetPressedSlot(_ oldValue: MenuSlot?) {
@@ -226,7 +223,7 @@ final class Scene: SKScene {
 
 	private func updateStatus() {
 		baseNodes?.updateStatus(
-			menuState.map { $0.status(hovering: hoveredSlot) } ?? mode.status(state)
+			menuState.map { $0.status(hovering: hoveredSlot) } ?? state.status
 		)
 	}
 
@@ -249,7 +246,6 @@ final class Scene: SKScene {
 		guard let view = gesture.view, let camera else { return }
 		switch gesture.state {
 		case .began:
-			guard mode.cameraPosition(state) != nil else { return }
 			camera.removeAction(forKey: SKAction.cameraPositionKey)
 			panOrigin = camera.position
 			pan = .zero
@@ -273,10 +269,7 @@ final class Scene: SKScene {
 			let speed = cameraOffset(for: velocity, camera: camera).length
 			apply(.pan(dxy))
 
-			guard let target = mode.cameraPosition(state) else {
-				finishCameraPan()
-				return
-			}
+			let target = state.ui.camera.point
 			camera.removeAction(forKey: SKAction.cameraPositionKey)
 			let distance = (target - camera.position).length
 			let duration = min(0.45, max(0.12, distance / max(speed, 200) * 2))
@@ -312,31 +305,5 @@ final class Scene: SKScene {
 		panOrigin = nil
 		panTranslation = nil
 		cameraTracking = false
-	}
-}
-
-extension SKAction {
-	static let cameraPositionKey = "camera.position"
-}
-
-extension MenuState {
-
-	var status: Status {
-		items.indices.contains(cursor) ? items[cursor].status : Status()
-	}
-
-	func status(hovering slot: MenuSlot?) -> Status {
-		guard let slot else { return status }
-		let hovered = self[slot].status
-		return hovered.text.isEmpty ? status : hovered
-	}
-
-	mutating func padItems() {
-		let cnt = items.count
-		if cnt % 4 != 0 {
-			items.append(contentsOf: [MenuItem<Action>](
-				repeatElement(.space, count: 4 - cnt % 4)
-			))
-		}
 	}
 }

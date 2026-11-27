@@ -65,6 +65,7 @@ public extension Unit {
 	var traits: Traits { stats.traits }
 
 	var isAir: Bool { type.isAir }
+	var isNaval: Bool { type.isNaval }
 	var isLand: Bool { !type.isAir && !type.isNaval }
 	var untouched: Bool { fullAP && fullMP }
 	var hasActions: Bool { canMove || canAttack }
@@ -165,7 +166,7 @@ public extension Unit {
 		case .air:
 			airAtk > 0 ? airAtk + (isAA ? lvl : (lvl / 2)) : 0
 		case .naval:
-			navAtk > 0 ? navAtk + (type.isNaval ? lvl : (lvl / 2)) : 0
+			navAtk > 0 ? navAtk + (isNaval ? lvl : (lvl / 2)) : 0
 		}
 	}
 

@@ -84,7 +84,7 @@ private extension MenuNodes {
 	static let showMenuActionKey = "menu.show"
 	static let hideMenuActionKey = "menu.hide"
 
-	static let itemSize = CGSize(width: 64.0, height: 64.0)
+	static let itemSize = CGSize(width: 96.0, height: 72.0)
 	static let gridSize = CGSize(width: itemSize.width * 4, height: itemSize.height * 4)
 	static let buttonSize = CGSize(width: 28.0, height: 30.0)
 	static let buttonIconSize = CGSize(width: 24.0, height: 24.0)
@@ -102,33 +102,24 @@ private extension MenuNodes {
 extension MenuNodes {
 
 	func showMenu<Action>(_ menuState: MenuState<Action>) {
-		let wasHidden = root.isHidden
 		root.removeAction(forKey: Self.hideMenuActionKey)
-		root.removeAction(forKey: Self.showMenuActionKey)
 		root.isHidden = false
 		updateMenu(menuState)
-		if wasHidden { root.position.y = hiddenMenuY }
-		root.run(.moveTo(y: 0.0, duration: 0.22), withKey: Self.showMenuActionKey)
+		root.run(.fadeIn(withDuration: 0.1), withKey: Self.showMenuActionKey)
 	}
 
 	func hideMenu() {
 		root.removeAction(forKey: Self.showMenuActionKey)
 		root.run(
 			.sequence([
-				.moveTo(y: hiddenMenuY, duration: 0.22),
-				.run {
-					root.isHidden = true
-				},
+				.fadeOut(withDuration: 0.1),
+				.run { root.isHidden = true },
 			]),
 			withKey: Self.hideMenuActionKey
 		)
 	}
 
 	var isHiding: Bool { root.action(forKey: Self.hideMenuActionKey) != nil }
-
-	private var hiddenMenuY: CGFloat {
-		((root.scene?.size.height ?? CGSize.scene.height) + Self.menuSize.height) / 2.0
-	}
 
 	func redrawMenu<Action>(_ menuState: MenuState<Action>) {
 		updateMenu(menuState)

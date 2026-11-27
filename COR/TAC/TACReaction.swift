@@ -8,7 +8,7 @@
 	case end
 }
 
-@frozen public enum TacticalEvent {
+@frozen public enum Event {
 	case spawn(UID)
 	case move(UID, Path)
 	case fire(UID, UID, UInt8, UInt8)
@@ -23,8 +23,8 @@ extension TacticalSim {
 	///
 	/// An illegal action leaves the sim bitwise-unchanged and emits no events.
 	/// The tactical AI checks the same legality predicates as the reducers.
-	public mutating func reduce(_ action: Action) -> [TacticalEvent] {
-		var events: [TacticalEvent] = []
+	public mutating func reduce(_ action: Action) -> [Event] {
+		var events: [Event] = []
 		switch action {
 		case .attack(let src, let dst): attack(src: src, dst: dst, into: &events)
 		case .move(let unit, let xy): move(unit: unit, to: xy, into: &events)

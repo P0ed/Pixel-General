@@ -46,3 +46,7 @@ extension CGSize {
 	/// Initial size only — `PixelView` resizes the scene to track its bounds.
 	static var scene: CGSize { .init(width: 640.0, height: 400.0) }
 }
+
+extension SKAction {
+	static let cameraPositionKey = "camera.position"
+}

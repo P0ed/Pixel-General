@@ -2,19 +2,16 @@ extension TacticalSim {
 
 	func canAttack(src: UID, dst: UID) -> Bool {
 		let (su, du) = (units[src], units[dst])
-		return su.country == country
-			&& su.country.team != du.country.team
-			&& su.canAttack && su.ammo > 0
-			&& isVisible(dst) && unitCanHit(src, dst)
+		return su.country == country && su.country.team != du.country.team
+			&& su.canAttack && isVisible(dst) && unitCanHit(src, dst)
 	}
 
-	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [TacticalEvent]) {
+	mutating func attack(src: UID, dst: UID, surprise: Bool = false, into events: inout [Event]) {
 		let (si, di) = (src.index, dst.index)
 		let (su, du) = (units[si], units[di])
 
 		guard surprise
-			? su.country == country && su.country.team != du.country.team
-				&& su.ammo > 0 && unitCanHit(src, dst)
+			? su.country == country && su.country.team != du.country.team && unitCanHit(src, dst)
 			: canAttack(src: src, dst: dst)
 		else { return }
 
@@ -34,7 +31,6 @@ extension TacticalSim {
 
 		let srcDef: Int8 = (ranged ? Int8(su.entDef) + st.def(su.type) : dt.closeCombat(su.type))
 			+ (ruggedDefence ? -3 : 0)
-			+ (du.ammo == 0 ? 5 : 0)
 		let dstDef: Int8 = defenderMod(defender: dst, attacker: src, ranged: ranged)
 			+ (ruggedDefence ? 3 : 0)
 
@@ -60,7 +56,7 @@ extension TacticalSim {
 		}
 	}
 
-	mutating func fire(src: UID, dst: UID, defMod: Int8, into events: inout [TacticalEvent]) {
+	mutating func fire(src: UID, dst: UID, defMod: Int8, into events: inout [Event]) {
 		var (source, destination) = (units[src], units[dst])
 		let (atk, def) = combatStats(src: src, dst: dst, defMod: defMod)
 		let dmg = Duel(
@@ -104,8 +100,9 @@ extension TacticalSim {
 		let dLR: Int8 = aura(.leadership, country: destination.country, at: position[dst], visibleOnly: visibleOnly) ? 1 : 0
 		let dRC: Int8 = aura(.recon, country: destination.country, at: position[dst], visibleOnly: visibleOnly) ? 1 : 0
 		let radar: Int8 = destination.isAir && aura(.radar, country: source.country, at: position[src], visibleOnly: visibleOnly) ? 2 : 0
+		let lowAmmo: Int8 = source.ammo > 0 ? 0 : 6
 		let atk = Int8(source.atk(destination)) + aRC + aLR + radar
-		let def = Int8(destination.def(source)) + defMod + dRC + dLR
+		let def = Int8(destination.def(source)) + defMod + dRC + dLR + lowAmmo
 		return (atk, def)
 	}
 
@@ -131,9 +128,7 @@ extension TacticalSim {
 		let du = units[dst]
 		let sp = position[src]
 		let dp = position[dst]
-		return sp.stepDistance(to: dp) <= su.rng * 2 + 1
-			&& su.atk(du) > 0
-			&& (su.isAir ? su.ammo > 0 : true)
+		return sp.stepDistance(to: dp) <= su.rng * 2 + 1 && su.atk(du) > 0
 	}
 
 	func defensiveSupport(defender: UID, attacker: UID, visibleOnly: Bool = false) -> UID {
@@ -201,7 +196,7 @@ extension TacticalSim {
 		return max(0, enemies - 1)
 	}
 
-	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [TacticalEvent]) {
+	private mutating func retreat(unit id: UID, from xy: XY, into events: inout [Event]) {
 		let p = position[id]
 		let mv = moves(for: id)
 		let anchor = p + p - xy

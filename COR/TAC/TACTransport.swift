@@ -17,7 +17,7 @@ extension TacticalSim {
 		&& up.manhattanDistance(to: tp) == 1
 	}
 
-	mutating func embark(unit: UID, transport: UID, into events: inout [TacticalEvent]) {
+	mutating func embark(unit: UID, transport: UID, into events: inout [Event]) {
 		guard canEmbark(unit: unit, transport: transport) else { return }
 		let p = position[unit.index]
 		let tp = position[transport.index]
@@ -39,7 +39,7 @@ extension TacticalSim {
 		&& !map[xy].isWater
 	}
 
-	mutating func disembark(unit: UID, to xy: XY, into events: inout [TacticalEvent]) {
+	mutating func disembark(unit: UID, to xy: XY, into events: inout [Event]) {
 		guard canDisembark(unit: unit, to: xy) else { return }
 		let idx = cargo[unit.index].index
 		let from = position[idx]

@@ -1,5 +1,6 @@
 import COR
 import SpriteKit
+import Foundation
 
 @MainActor
 struct MenuState<Action> {
@@ -154,9 +155,26 @@ extension MenuState {
 		case .right: (cursor / 4 * 4 + (cursor + 1) % 4) % items.count
 		}
 	}
-}
 
-import Foundation
+	var status: Status {
+		items.indices.contains(cursor) ? items[cursor].status : Status()
+	}
+
+	func status(hovering slot: MenuSlot?) -> Status {
+		guard let slot else { return status }
+		let hovered = self[slot].status
+		return hovered.text.isEmpty ? status : hovered
+	}
+
+	mutating func padItems() {
+		let cnt = items.count
+		if cnt % 4 != 0 {
+			items.append(contentsOf: [MenuItem<Action>](
+				repeatElement(.space, count: 4 - cnt % 4)
+			))
+		}
+	}
+}
 
 extension MenuItem {
 

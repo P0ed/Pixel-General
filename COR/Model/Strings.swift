@@ -33,7 +33,7 @@ public extension Unit {
 				.padding(11, [
 					!friendly ? "" : .padding(5, [
 						 canMove ? "MOV" : "",
-						 canAttack ? (ammo > 0 ? "ATK" : "LOW") : "",
+						 canAttack ? "ATK" : "",
 					]),
 					!friendly ? "" : "AMMO: \(ammo)",
 					.padding(10, [

@@ -33,7 +33,7 @@ struct TacticalState: ~Copyable {
 		core.save()
 	}
 
-	mutating func reduce(_ action: Action) -> [TacticalEvent] {
+	mutating func reduce(_ action: Action) -> [Event] {
 		if sim.isFinished { return [] }
 
 		let events = sim.reduce(action)

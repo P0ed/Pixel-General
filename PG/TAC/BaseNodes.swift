@@ -20,7 +20,7 @@ private enum OverlayZ {
 	static let menu = status + 1.0
 }
 
-extension Scene {
+extension TACScene {
 
 	func makeBaseNodes() -> BaseNodes {
 		BaseNodes(

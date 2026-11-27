@@ -2,11 +2,11 @@ import SpriteKit
 import UIKit
 import COR
 
-extension Scene {
+extension TACScene {
 
 	@discardableResult
 	func handle(key: UIKey) -> Bool {
-		guard let nodes, let input = mode.keyboard(nodes, key) else { return false }
+		guard let input = Input(key: key) else { return false }
 		pressInput(input)
 		return true
 	}
@@ -25,7 +25,7 @@ extension Scene {
 			releaseInput(.action(nil, modifiers: modifiers))
 			return true
 		}
-		guard let nodes, let input = mode.keyboard(nodes, key) else { return false }
+		guard let input = Input(key: key) else { return false }
 		releaseInput(input)
 		return true
 	}
@@ -57,7 +57,7 @@ extension Scene {
 	func processTouch(at scenePoint: CGPoint) {
 		guard let nodes, let baseNodes else { return }
 		if menuState == nil {
-			if let input = mode.mouse(nodes, scenePoint) {
+			if let input = nodes.map.tile(at: scenePoint) {
 				apply(input)
 			}
 		} else {

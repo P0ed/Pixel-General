@@ -90,7 +90,7 @@ struct RNGTests {
 
 		for atkMod in Int8(-15)...24 {
 			sim.d20 = D20()
-			var events: [TacticalEvent] = []
+			var events: [Event] = []
 			var min = UInt8.max, max = UInt8.min
 			let sum: UInt32 = (0 ..< 512).reduce(0) { acc, _ in
 				sim.units[u0id] = u0
