@@ -62,6 +62,9 @@ struct MapGenerationTests {
 		}
 		#expect(landmasses == expected)
 		#expect(map.indices.contains { map[$0].isSea } == (mapType != .land))
+		if mapType != .land {
+			#expect(map.indices.filter { map.edge(at: $0) != nil }.allSatisfy { map[$0].isSea })
+		}
 		let ports = map.indices.count { map[$0] == .port }
 		#expect(ports == (mapType == .land ? 0 : 4 * players.count))
 	}

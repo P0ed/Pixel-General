@@ -202,19 +202,12 @@ extension Map where Element == Terrain {
 	) -> SetXY {
 		for xy in indices {
 			let noise = lowpass(height, at: xy)
-			let land: Bool
-			if mapType == .fourIslands {
-				let radius = Float(size - 5) + 8 * noise
-				let inside = xy.x < size - 2 && xy.y < size - 2
-				let protected = xy.x < 16 && xy.y < 16
-				land = inside && (protected || Float(xy.x * xy.x + xy.y * xy.y) < radius * radius)
-			} else {
-				let y = mapType == .twoIslands ? min(xy.y, size - 1 - xy.y) : xy.y
-				let dx = max(0, size / 2 - xy.x)
-				let dy = max(0, size / 2 - y)
-				let radius = max(12, 13 + 4 * noise)
-				land = xy.x >= 2 && y >= 2 && Float(dx * dx + dy * dy) < radius * radius
-			}
+			let x = mapType == .fourIslands ? min(xy.x, size - 1 - xy.x) : xy.x
+			let y = mapType == .island ? xy.y : min(xy.y, size - 1 - xy.y)
+			let dx = max(0, size / 2 - x)
+			let dy = max(0, size / 2 - y)
+			let radius = max(12, 13 + 4 * noise)
+			let land = x >= 2 && y >= 2 && Float(dx * dx + dy * dy) < radius * radius
 			self[xy] = land ? landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain) : .sea
 		}
 		var land = SetXY.empty
@@ -222,8 +215,7 @@ extension Map where Element == Terrain {
 		for xy in indices where !land[xy] { self[xy] = .sea }
 
 		var ocean = SetXY.empty
-		let seaCorner = mapType == .fourIslands ? XY(size - 1, size - 1) : XY(0, 0)
-		_ = flood(from: [seaCorner], visited: &ocean) { self[$0].isSea }
+		_ = flood(from: [XY(0, 0)], visited: &ocean) { self[$0].isSea }
 		for xy in indices where !land[xy] && !ocean[xy] {
 			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain)
 			land[xy] = true
