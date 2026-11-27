@@ -278,6 +278,7 @@ extension TacticalState {
 			if u.alive, !sim.offMap(unit: i.uid), u.country == country, u.hasActions {
 				ui.selectedUnit = i.uid
 				ui.cursor = sim.position[i]
+				ui.camera = sim.position[i]
 				return .none
 			}
 		}

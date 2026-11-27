@@ -114,9 +114,9 @@ public extension Unit {
 
 	var entRate: UInt8 {
 		let rate: UInt8 = switch type {
-		case .supply, .inf: 4
-		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3
-		case .heavyTrack, .trackAA, .trackArt: 2
+		case .supply, .inf: 4 + lvl
+		case .art, .aa, .wheelArt, .wheelAA, .lightWheel, .lightTrack: 3 + lvl
+		case .heavyTrack, .trackAA, .trackArt: 2 + lvl
 		case .heli, .fighter, .cas, .cargo, .destroyer, .cruiser: 0
 		}
 		return rate * (self[.engineer] ? 2 : 1)
@@ -177,7 +177,7 @@ public extension Unit {
 	}
 
 	func def(_ src: Unit) -> UInt8 {
-		(src.isAir ? airDef : groundDef) + lvl / 2
+		(src.isAir ? airDef : groundDef) + lvl
 	}
 
 	var value: UInt16 {

@@ -132,25 +132,26 @@ final class TACScene: SKScene {
 		case .action(let action):
 			processing = true
 			let events = state.reduce(action)
-			Task {
+			processReaction {
 				for event in events {
-					await nodes.process(event, state)
+					await nodes.process(event, self.state)
 				}
-				finishReaction()
 			}
 		case .presentation(let intent):
 			processing = true
-			Task {
-				await nodes.present(intent, state)
-				finishReaction()
+			processReaction {
+				await nodes.present(intent, self.state)
 			}
 		}
 	}
 
-	private func finishReaction() {
-		processing = false
-		didSetState()
-		advance()
+	private func processReaction(_ body: @escaping () async -> Void) {
+		Task {
+			await body()
+			processing = false
+			didSetState()
+			advance()
+		}
 	}
 
 	private func advance() {
