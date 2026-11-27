@@ -51,7 +51,7 @@ public extension TacticalSim {
 			},
 			level: forts
 		)
-		let roster = Scenario(players: active, units: units, continents: terrain.isSea).startingUnits
+		let roster = Scenario(players: active, units: units, mapType: terrain.isSea ? .fourIslands : .land).startingUnits
 		self.init(map: map, players: active, cities: cities, units: roster.mapInPlace { $0.reset() })
 		self.objective = objective
 	}

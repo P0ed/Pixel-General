@@ -17,7 +17,7 @@ public struct Scenario {
 	public var symmetry: Bool {
 		didSet { if !symmetryAvailable { symmetry = false } }
 	}
-	public var continents: Bool
+	public var mapType: MapType
 	public var spawns: [4 of XY?]
 	public var cityLevel: Int
 	public var fortLevel: Int
@@ -36,13 +36,13 @@ public struct Scenario {
 		seed: Int = 0,
 		objective: Objective = .none,
 		symmetry: Bool = false,
-		continents: Bool = false
+		mapType: MapType = .land
 	) {
 		self.players = players
 		self.units = units
 		self.terrain = terrain
 		self.symmetry = symmetry && players.count(where: { $0.alive }) != 3
-		self.continents = continents
+		self.mapType = mapType
 		self.spawns = .init { players.indices.contains($0) && players[$0].alive ? spawns[$0] : nil }
 		self.cityLevel = cityLevel
 		self.fortLevel = fortLevel
@@ -69,7 +69,7 @@ public struct Scenario {
 			coreCounts[unit.country, default: 0] += 1
 			return true
 		}
-		let fleet: [UnitModel] = continents ? [.cruiser, .destroyer, .destroyer, .cargo, .cargo] : []
+		let fleet: [UnitModel] = mapType != .land ? [.cruiser, .destroyer, .destroyer, .cargo, .cargo] : []
 		return Self.fittingAux(to: roster, for: active, fleet: fleet)
 	}
 
@@ -133,7 +133,7 @@ public struct Scenario {
 	}
 }
 
-public enum MapType {
+public enum MapType: UInt8, CaseIterable, Sendable {
 	case land, island, twoIslands, fourIslands
 }
 

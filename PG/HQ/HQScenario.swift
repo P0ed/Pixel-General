@@ -144,10 +144,10 @@ extension HQMenu {
 				.back,
 				.space,
 				.toggle(
-					icon: setup.continents ? .plus : .minus,
-					status: "Continents · \(setup.continents ? "On" : "Off")"
+					icon: .toggle4(setup.mapType.rawValue),
+					status: "Map · \(setup.mapType.name)"
 				) {
-					setup.continents.toggle()
+					setup.mapType = MapType.allCases[(Int(setup.mapType.rawValue) + 1) % MapType.allCases.count]
 				},
 				.toggle(icon: symmetryIcon, status: symmetryStatus) {
 					if setup.symmetryAvailable { setup.symmetry.toggle() }
@@ -177,6 +177,18 @@ extension PlayerType {
 		switch self {
 		case .human: .human
 		case .ai: .AI
+		}
+	}
+}
+
+private extension MapType {
+
+	var name: String {
+		switch self {
+		case .land: "Land"
+		case .island: "Island"
+		case .twoIslands: "Two islands"
+		case .fourIslands: "Four islands"
 		}
 	}
 }

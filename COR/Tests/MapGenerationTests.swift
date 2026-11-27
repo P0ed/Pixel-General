@@ -3,6 +3,28 @@ import Testing
 
 struct MapGenerationTests {
 
+	@Test(arguments: MapType.allCases, [false, true])
+	func scenarioLandmasses(mapType: MapType, symmetry: Bool) {
+		let players = [Country.ger, .usa, .isr, .rus].map { Player(country: $0) }
+		let scenario = Scenario(players: players, units: [], cityLevel: 3, seed: 7, symmetry: symmetry, mapType: mapType)
+		let map = Map<64, Terrain>(scenario: scenario)
+		var visited = Set<XY>()
+		var landmasses = 0
+		for start in map.indices where !map[start].isSea && !visited.contains(start) {
+			_ = landmass(on: map, from: start, into: &visited)
+			landmasses += 1
+		}
+		let expected = switch mapType {
+		case .land, .island: 1
+		case .twoIslands: 2
+		case .fourIslands: 4
+		}
+		#expect(landmasses == expected)
+		#expect(map.indices.contains { map[$0].isSea } == (mapType != .land))
+		let ports = map.indices.count { map[$0] == .port }
+		#expect(ports == (mapType == .land ? 0 : 4 * players.count))
+	}
+
 	@Test func terminatesAcrossManySeeds() {
 		for seed in 0 ..< 16 {
 			_ = Map<64, Terrain>(seed: seed)
@@ -231,30 +253,13 @@ struct MapGenerationTests {
 		for seed in 0 ..< 16 {
 			let map = Map<64, Terrain>(seed: seed, players: 4, terrain: terrain)
 
-			func landmass(from start: XY, into visited: inout Set<XY>) -> [XY] {
-				var tiles = [start]
-				var head = 0
-				visited.insert(start)
-				while head < tiles.count {
-					let neighbors = tiles[head].n4
-					head += 1
-					for i in neighbors.indices {
-						let p = neighbors[i]
-						guard map.contains(p), !map[p].isSea, !visited.contains(p) else { continue }
-						visited.insert(p)
-						tiles.append(p)
-					}
-				}
-				return tiles
-			}
-
 			var visited = Set<XY>()
-			let mainland = Set(landmass(from: XY(map.size / 2, map.size / 2), into: &visited))
+			let mainland = Set(landmass(on: map, from: XY(map.size / 2, map.size / 2), into: &visited))
 
 			var islands = 0
 			for start in map.indices where !map[start].isSea && !visited.contains(start) {
 				islands += 1
-				let island = landmass(from: start, into: &visited)
+				let island = landmass(on: map, from: start, into: &visited)
 				#expect(island.count >= 6, "Small island of \(island.count) tiles survived for seed \(seed)")
 				#expect(!island.contains(where: { xy in map[xy] == .city }), "City generated on an island for seed \(seed)")
 			}
@@ -273,6 +278,23 @@ struct MapGenerationTests {
 			let map = Map<64, Terrain>(seed: seed)
 			expectRoadNetworkConnectsCities(map)
 		}
+	}
+
+	private func landmass(on map: borrowing Map<64, Terrain>, from start: XY, into visited: inout Set<XY>) -> [XY] {
+		var tiles = [start]
+		var head = 0
+		visited.insert(start)
+		while head < tiles.count {
+			let neighbors = tiles[head].n4
+			head += 1
+			for i in neighbors.indices {
+				let p = neighbors[i]
+				guard map.contains(p), !map[p].isSea, !visited.contains(p) else { continue }
+				visited.insert(p)
+				tiles.append(p)
+			}
+		}
+		return tiles
 	}
 
 	private func expectRoadNetworkConnectsCities(_ map: borrowing Map<64, Terrain>) {
@@ -329,7 +351,8 @@ struct MapGenerationTests {
 			let road = map[center]
 			#expect(road == expected)
 			#expect(road.isRoad && road.isBridgable)
-			#expect(!road.isSettlement && !road.isNoFlyZone)
+			#expect(!road.isSettlement)
+			#expect(road.moveCost(Unit(model: .f16, country: .usa)) == 1)
 			#expect(road.income == 0)
 			#expect(road.baseEntrenchment == 0)
 			#expect(road.def(.inf) == Terrain.roadWE.def(.inf))

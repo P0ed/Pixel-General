@@ -228,20 +228,20 @@ struct TacticalAITests {
 		#expect(sim.control[enemyCity] == .ger)
 	}
 
-	@Test(arguments: [false, true])
-	func aiProcessesMaximumSettlementTiles(continents: Bool) {
+	@Test(arguments: MapType.allCases)
+	func aiProcessesMaximumSettlementTiles(mapType: MapType) {
 		let sim = Scenario(
 			players: [Player(country: .ger, type: .ai)],
 			units: [Unit(model: .regular, country: .ger)],
 			cityLevel: 3,
 			seed: 7,
-			objective: .survive(.axis, day: 12), continents: continents
+			objective: .survive(.axis, day: 12), mapType: mapType
 		).makeSim()
 		var ai = AI.Plan()
 		_ = sim.run(ai: &ai)
-		#expect(ai.ownSettlements.count == (continents ? 67 : 64))
+		#expect(ai.ownSettlements.count == (mapType == .land ? 64 : 68))
 		let airfields = ai.ownSettlements.count { sim.map[$0] == .airfield }
-		#expect(airfields == 12)
+		#expect(airfields == (mapType == .land ? 10 : 12))
 		#expect(ai.focusTarget.map { sim.map[$0] } == .city)
 	}
 

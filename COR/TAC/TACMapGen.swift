@@ -35,7 +35,7 @@ public extension Map<64, Terrain> {
 		let terrain = [16 of Terrain](repeating: scenario.terrain.isSea ? .field : scenario.terrain)
 		let targets = SettlementTargets(scenario.cityLevel)
 		let forts = scenario.objective.defender == nil ? scenario.fortLevel : 0
-		if scenario.symmetry || scenario.continents {
+		if scenario.symmetry || scenario.mapType != .land {
 			var d20 = D20(seed: scenario.seed)
 			let corners = Array(Scenario.spawnOptions)
 			let occupied = Set(scenario.resolvedSpawnPoints)
@@ -45,9 +45,10 @@ public extension Map<64, Terrain> {
 				let ports = quarter.generate(
 					seed: seed, terrain: terrain, targets: targets.quarter,
 					starts: [(Scenario.quarterCity, Scenario.quarterAirfield)],
-					continents: scenario.continents, joinSeams: !scenario.continents
+					mapType: scenario.mapType, reserving: scenario.mapType.joinedEdges
 				)
 				if scenario.symmetry {
+					for edge in scenario.mapType.joinedEdges { quarter.extendRoads(to: edge) }
 					quarter.placeForts(around: quarter.cityFootprints.flatMap { $0 }, budget: 12 * forts)
 					for corner in corners {
 						copyQuarter(quarter, to: corner, restoring: occupied.contains(corner) ? [] : ports)
@@ -56,6 +57,9 @@ public extension Map<64, Terrain> {
 				}
 				let corner = corners[i]
 				copyQuarter(quarter, to: corner, restoring: occupied.contains(corner) ? [] : ports)
+			}
+			if !scenario.symmetry && !scenario.mapType.joinedEdges.isEmpty {
+				connectCities(cities: corners.map { Scenario.inCorner($0, tile: Scenario.quarterCity) })
 			}
 		} else {
 			let starts = Scenario.spawnOptions.map { corner in
@@ -78,6 +82,16 @@ public extension Map<64, Terrain> {
 		}
 		for site in portGround {
 			self[Scenario.inCorner(corner, tile: site.port)] = site.ground
+		}
+	}
+}
+
+private extension MapType {
+	var joinedEdges: [Edge] {
+		switch self {
+		case .land, .island: [.right, .top]
+		case .twoIslands: [.right]
+		case .fourIslands: []
 		}
 	}
 }
@@ -123,8 +137,8 @@ extension Map where Element == Terrain {
 		targets: SettlementTargets,
 		spawns: [XY] = [],
 		starts: [(city: XY, airfield: XY)] = [],
-		continents: Bool = false,
-		joinSeams: Bool = false
+		mapType: MapType = .land,
+		reserving edges: [Edge] = []
 	) -> [PortSite] {
 		let noiseSize = SIMD2<Int32>(Int32(size), Int32(size))
 		let seed = Int32(truncatingIfNeeded: seed)
@@ -132,13 +146,11 @@ extension Map where Element == Terrain {
 		let humidity = GKNoiseMap.humidity(size: noiseSize, seed: seed &+ 1)
 		var d20 = D20(seed: Int(seed))
 
-		var mainland = continents
-			? generateContinent(height: height, humidity: humidity, terrain: terrain)
-			: generateTerrain(height: height, humidity: humidity, terrain: terrain)
-		if joinSeams {
-			for edge in [Edge.right, .top] {
-				forEachEdge(edge) { xy in mainland[xy] = false }
-			}
+		var mainland = mapType == .land
+			? generateTerrain(height: height, humidity: humidity, terrain: terrain)
+			: generateIsland(mapType, height: height, humidity: humidity, terrain: terrain)
+		for edge in edges {
+			forEachEdge(edge) { xy in mainland[xy] = false }
 		}
 		for (city, airfield) in starts {
 			self[city] = .city
@@ -146,7 +158,7 @@ extension Map where Element == Terrain {
 			airfield.n4.forEach { mainland[$0] = false }
 		}
 		placeRivers(height: height, d20: &d20)
-		let ports = continents ? portSites(mainland: mainland, target: targets.portsPerPlayer) : []
+		let ports = mapType == .land ? [] : portSites(mainland: mainland, target: targets.portsPerPlayer)
 		for site in ports {
 			self[site.port] = .port
 			site.port.n4.forEach { mainland[$0] = false }
@@ -159,10 +171,6 @@ extension Map where Element == Terrain {
 			near: cities, spawns: spawns, target: targets.airfields - starts.count, d20: &d20
 		)
 		connectCities(cities: cities.map { $0[0] })
-		if joinSeams {
-			extendRoads(to: .right)
-			extendRoads(to: .top)
-		}
 		return ports
 	}
 
@@ -189,14 +197,24 @@ extension Map where Element == Terrain {
 		return reduceIslands()
 	}
 
-	private mutating func generateContinent(
-		height: GKNoiseMap, humidity: GKNoiseMap, terrain: [16 of Terrain]
+	private mutating func generateIsland(
+		_ mapType: MapType, height: GKNoiseMap, humidity: GKNoiseMap, terrain: [16 of Terrain]
 	) -> SetXY {
 		for xy in indices {
-			let radius = Float(size - 5) + 8 * lowpass(height, at: xy)
-			let inside = xy.x < size - 2 && xy.y < size - 2
-			let protected = xy.x < 16 && xy.y < 16
-			let land = inside && (protected || Float(xy.x * xy.x + xy.y * xy.y) < radius * radius)
+			let noise = lowpass(height, at: xy)
+			let land: Bool
+			if mapType == .fourIslands {
+				let radius = Float(size - 5) + 8 * noise
+				let inside = xy.x < size - 2 && xy.y < size - 2
+				let protected = xy.x < 16 && xy.y < 16
+				land = inside && (protected || Float(xy.x * xy.x + xy.y * xy.y) < radius * radius)
+			} else {
+				let y = mapType == .twoIslands ? min(xy.y, size - 1 - xy.y) : xy.y
+				let dx = max(0, size / 2 - xy.x)
+				let dy = max(0, size / 2 - y)
+				let radius = max(12, 13 + 4 * noise)
+				land = xy.x >= 2 && y >= 2 && Float(dx * dx + dy * dy) < radius * radius
+			}
 			self[xy] = land ? landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain) : .sea
 		}
 		var land = SetXY.empty
@@ -204,7 +222,8 @@ extension Map where Element == Terrain {
 		for xy in indices where !land[xy] { self[xy] = .sea }
 
 		var ocean = SetXY.empty
-		_ = flood(from: [XY(size - 1, size - 1)], visited: &ocean) { self[$0].isSea }
+		let seaCorner = mapType == .fourIslands ? XY(size - 1, size - 1) : XY(0, 0)
+		_ = flood(from: [seaCorner], visited: &ocean) { self[$0].isSea }
 		for xy in indices where !land[xy] && !ocean[xy] {
 			self[xy] = landTerrain(at: xy, height: height, humidity: humidity, terrain: terrain)
 			land[xy] = true
@@ -949,7 +968,7 @@ extension Map where Element == Terrain {
 		return true
 	}
 
-	private mutating func extendRoads(to edge: Edge) {
+	fileprivate mutating func extendRoads(to edge: Edge) {
 		let roads = indices.filter { self[$0].isRoad || self[$0] == .city }
 		if let path = shortestPath(
 			from: roads,
