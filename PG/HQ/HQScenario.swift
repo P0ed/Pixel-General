@@ -51,12 +51,12 @@ extension HQMenu {
 		}
 
 		let countries = setup.players.indices.map { idx in
-			Item.push(icon: setup.players[idx].country.flag, status: "Player \(idx + 1)") {
+			MenuItem.push(icon: setup.players[idx].country.flag, status: "Player \(idx + 1)") {
 				guard idx > 0 else { return nil }
 				let countriesLeft = Country.playable.filter { country in
 					!seats.contains { setup.players[$0].country == country }
 				}
-				return MenuState(
+				return Menu(
 					items: countriesLeft.map { country in
 						.pop(icon: country.flag, status: "\(country)") { menu in
 							setup.players[idx].country = country
@@ -78,13 +78,13 @@ extension HQMenu {
 			}
 		}
 		let types = setup.players.indices.map { idx in
-			Item.toggle(icon: setup.players[idx].type.icon, status: "Player \(idx + 1)") {
+			MenuItem.toggle(icon: setup.players[idx].type.icon, status: "Player \(idx + 1)") {
 				guard idx > 0 else { return }
 				setup.players[idx].type.toggle()
 			}
 		}
 		let prestige = setup.players.indices.map { idx in
-			Item.toggle(
+			MenuItem.toggle(
 				icon: setup.players[idx].prestige < .rich ? .prestige1 : .prestige2,
 				status: "Prestige"
 			) {
@@ -92,29 +92,29 @@ extension HQMenu {
 			}
 		}
 		let exp = setup.players.indices.map { idx in
-			Item.toggle(icon: .toggle4(setup.players[idx].baseLevel), status: "Experience") {
+			MenuItem.toggle(icon: .toggle4(setup.players[idx].baseLevel), status: "Experience") {
 				guard idx > 0 else { return }
 				setup.players[idx].baseLevel.toggle4()
 			}
 		}
 		let tier = setup.players.indices.map { idx in
-			Item.toggle(icon: .toggle4(setup.players[idx].tier), status: "Tier") {
+			MenuItem.toggle(icon: .toggle4(setup.players[idx].tier), status: "Tier") {
 				guard idx > 0 else { return }
 				setup.players[idx].tier.toggle4()
 			}
 		}
 		let spawn = setup.players.indices.map { seat in
-			Item.push(icon: spawnIcon(seat), status: spawnStatus(seat)) {
+			MenuItem.push(icon: spawnIcon(seat), status: spawnStatus(seat)) {
 				guard setup.players[seat].alive else { return nil }
 				let available = setup.availableSpawns(for: seat)
-				let choices = corners.enumerated().compactMap { index, corner -> Item? in
+				let choices = corners.enumerated().compactMap { index, corner -> MenuItem? in
 					guard available.contains(corner), let icon = SKTexture.number(UInt8(index)) else { return nil }
 					return .pop(icon: icon, status: cornerNames[index]) { menu in
 						setup.spawns[seat] = corner
 						updateControls(&menu)
 					}
 				}
-				return MenuState(
+				return Menu(
 					items: choices + [
 						.pop(icon: .rnd, status: "Random") { menu in
 							setup.spawns[seat] = nil
@@ -125,7 +125,7 @@ extension HQMenu {
 				)
 			}
 		}
-		let start = Item.close(icon: .arrowRight, status: "Start", update: { [self] in
+		let start = MenuItem.close(icon: .arrowRight, status: "Start", update: { [self] in
 			let active = seats.map { setup.players[$0] }
 			setup.units = hq.units.compactMap { $0.alive ? $0 : nil }
 				+ active.dropFirst().flatMap { [Unit].base($0.country, lvl: $0.baseLevel) }
@@ -138,7 +138,7 @@ extension HQMenu {
 			view.present(.tactical)
 		})
 
-		return MenuState(
+		return Menu(
 			items: countries + types + prestige + exp + tier + spawn,
 			leftButtons: [
 				.back,

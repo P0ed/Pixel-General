@@ -3,9 +3,6 @@ import COR
 
 @MainActor
 final class HQMenu {
-	typealias Menu = MenuState<Action>
-	typealias Item = MenuItem<Action>
-
 	private(set) var hq = clone(core.hq)
 
 	private func newGameMenu() -> Menu {
@@ -27,7 +24,7 @@ final class HQMenu {
 				let unit = hq.units[slot]
 				let text = unit.alive ? unit.status() : "Purchase unit"
 				let status = Status(text: "Prestige: \(hq.player.prestige)\n" + text)
-				return Item(icon: unit.alive ? unit.image : .plus, status: status) { [self] stack, _ in
+				return MenuItem(icon: unit.alive ? unit.image : .plus, status: status) { [self] stack, _ in
 					if unit.alive {
 						stack.append(unitMenu(slot))
 					} else if let shop = shopMenu(slot) {
@@ -52,30 +49,31 @@ final class HQMenu {
 	private func unitMenu(_ slot: Int) -> Menu {
 		let unit = hq.units[slot]
 		let upgrades = Shop(country: hq.country, tier: hq.player.tier).upgrades(for: unit)
-		var items: [Item] = [
-			.push(icon: .arrowRight, status: "Move or swap \(unit.typeDescription)") {
-				self.moveMenu(slot)
-			}
-		]
-		if !upgrades.isEmpty {
-			items.append(.push(icon: .arrowUp, status: "Upgrade \(unit.typeDescription)") {
-				let offers = upgrades.map { option in
-					let result = unit.upgraded(to: option.model)
-					let cost = unit.upgradeCost(to: option.model)
-					return self.order(
-						.upgrade(slot, option.model), icon: result.image,
-						status: "\(cost) / \(self.hq.player.prestige)\n" + result.status(),
-						cursor: slot
-					)
-				}
-				return Menu(items: offers, leftButtons: [.back, .space, .space, .space])
-			})
-		}
-		items.append(order(
-			.sell(slot), icon: .minus, status: "Sell \(unit.typeDescription) for \(unit.stats.cost / 2)",
-			cursor: slot
-		))
-		return Menu(items: items, leftButtons: [.back, .space, .space, .space])
+		return Menu(
+			leftButtons: [.back, .space, .space, .space],
+			rightButtons: [
+				.push(icon: .arrowRight, status: "Move \(unit.typeDescription)") {
+					self.moveMenu(slot)
+				},
+				upgrades.isEmpty ? .space : .push(icon: .arrowUp, status: "Upgrade \(unit.typeDescription)") {
+					let offers = upgrades.map { option in
+						let result = unit.upgraded(to: option.model)
+						let cost = unit.upgradeCost(to: option.model)
+						return self.order(
+							.upgrade(slot, option.model), icon: result.image,
+							status: "\(cost) / \(self.hq.player.prestige)\n" + result.status(),
+							cursor: slot
+						)
+					}
+					return Menu(items: offers, leftButtons: [.back, .space, .space, .space])
+				},
+				.space,
+				order(
+					.sell(slot), icon: .prestige1, status: "Sell \(unit.typeDescription) for \(unit.stats.cost / 2)",
+					cursor: slot
+				),
+			]
+		)
 	}
 
 	private func moveMenu(_ slot: Int) -> Menu {
@@ -99,8 +97,8 @@ final class HQMenu {
 		}
 	}
 
-	private func order(_ action: HQAction, icon: SKTexture, status: String, cursor: Int) -> Item {
-		Item(icon: icon, status: Status(text: status)) { [self] stack, _ in
+	private func order(_ action: HQAction, icon: SKTexture, status: String, cursor: Int) -> MenuItem {
+		MenuItem(icon: icon, status: Status(text: status)) { [self] stack, _ in
 			guard !hq.reduce(action).isEmpty else { return }
 			core.store(hq)
 			core.save()

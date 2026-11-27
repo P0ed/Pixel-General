@@ -1,17 +1,17 @@
 import COR
 import SpriteKit
 
-extension MenuState {
+extension Menu {
 
 	static func shop(
 		units: [Unit],
 		auxiliary: [Unit]? = nil,
 		auxiliaryOnly: Bool = false,
-		offer: (Unit, Int, Bool) -> MenuItem<Action>
+		offer: (Unit, Int, Bool) -> MenuItem
 	) -> Self? {
 		guard !units.isEmpty || auxiliary?.isEmpty == false else { return nil }
 
-		func entries(_ units: [Unit], aux: Bool) -> [(moveType: MoveType, item: MenuItem<Action>)] {
+		func entries(_ units: [Unit], aux: Bool) -> [(moveType: MoveType, item: MenuItem)] {
 			units.enumerated().map { index, unit in
 				(unit.type.moveType, offer(unit, index, aux))
 			}
@@ -39,7 +39,7 @@ extension MenuState {
 				items = [.apply(icon: .clear, status: status)]
 			}
 
-			let toggle: MenuItem<Action> = if aux != nil {
+			let toggle: MenuItem = if aux != nil {
 				.init(icon: showAux ? .plus : .HQ, status: .init(
 					text: showAux ? "Auxiliary units · Switch to Core" : "Core units · Switch to Aux"
 				)) { stack, _ in

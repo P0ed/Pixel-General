@@ -10,8 +10,7 @@ extension TacticalNodes {
 			return
 		}
 
-		scene.showMenu(MenuState(
-			items: [],
+		scene.showMenu(Menu(
 			leftButtons: [
 				.back,
 				.space,

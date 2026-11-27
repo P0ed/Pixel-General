@@ -5,7 +5,7 @@ extension MenuItem {
 
 	static var prefs: MenuItem {
 		.push(icon: .settings, status: "Settings", menu: {
-			MenuState(
+			Menu(
 				items: [
 					.toggle(icon: .sound(settings.soundLevel), status: "Volume") {
 						settings.toggleSound()

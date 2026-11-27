@@ -101,7 +101,7 @@ private extension MenuNodes {
 
 extension MenuNodes {
 
-	func showMenu<Action>(_ menuState: MenuState<Action>) {
+	func showMenu(_ menuState: Menu) {
 		root.removeAction(forKey: Self.hideMenuActionKey)
 		root.isHidden = false
 		updateMenu(menuState)
@@ -121,7 +121,7 @@ extension MenuNodes {
 
 	var isHiding: Bool { root.action(forKey: Self.hideMenuActionKey) != nil }
 
-	func redrawMenu<Action>(_ menuState: MenuState<Action>) {
+	func redrawMenu(_ menuState: Menu) {
 		updateMenu(menuState)
 	}
 
@@ -151,7 +151,7 @@ extension MenuNodes {
 		}
 	}
 
-	func updateMenu<Action>(_ menuState: MenuState<Action>) {
+	func updateMenu(_ menuState: Menu) {
 		let pageStart = menuState.cursor / 16 * 16
 		for offset in 0 ..< 16 {
 			let frame = items[offset]
@@ -196,9 +196,9 @@ final class MenuSlotNode: SKSpriteNode {
 	var isSelected = false
 }
 
+@MainActor
 extension Input {
 
-	@MainActor
 	var menuSlot: MenuSlot? {
 		guard case .action(let button?, let modifiers) = self else { return nil }
 		if modifiers == .left { return .left(button.index) }
@@ -206,7 +206,6 @@ extension Input {
 		return nil
 	}
 
-	@MainActor
 	init(slot: MenuSlot) {
 		guard let modifier = slot.modifier else {
 			self = .tile(XY(slot.index, 0))

@@ -12,8 +12,8 @@ final class TACScene: SKScene {
 	private(set) var cameraTracking = false
 	private var panOrigin: CGPoint?
 	private var panTranslation: CGPoint?
-	private var menuStack: [MenuState<Action>] = [] { didSet { didSetMenu() } }
-	var menuState: MenuState<Action>? { menuStack.last }
+	private var menuStack: [Menu] = [] { didSet { didSetMenu() } }
+	var menuState: Menu? { menuStack.last }
 	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
@@ -163,11 +163,11 @@ final class TACScene: SKScene {
 		}
 	}
 
-	func showMenu(_ menu: MenuState<Action>?) {
+	func showMenu(_ menu: Menu?) {
 		setMenu(menu.map { m in [m] } ?? [])
 	}
 
-	private func setMenu(_ stack: [MenuState<Action>]) {
+	private func setMenu(_ stack: [Menu]) {
 		menuStack = stack.compactMap { m in
 			modifying(m) { m in m.padItems() }
 		}

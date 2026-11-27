@@ -3,10 +3,10 @@ import SpriteKit
 import Foundation
 
 @MainActor
-struct MenuState<Action> {
-	var items: [MenuItem<Action>]
-	var leftButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
-	var rightButtons: [4 of MenuItem<Action>] = .init(repeating: .space)
+struct Menu {
+	var items: [MenuItem] = []
+	var leftButtons: [4 of MenuItem] = .init(repeating: .space)
+	var rightButtons: [4 of MenuItem] = .init(repeating: .space)
 	var cursor: Int = 0
 	var action: MenuSlot?
 	var selectedSideButton: MenuSlot?
@@ -34,11 +34,11 @@ extension MenuSlot {
 }
 
 @MainActor
-struct MenuItem<Action> {
+struct MenuItem {
 	var icon: SKTexture
 	var status: Status
 	var action: Action?
-	var update: (inout [MenuState<Action>], MenuSlot) -> Void
+	var update: (inout [Menu], MenuSlot) -> Void
 }
 
 extension MenuItem {
@@ -80,7 +80,7 @@ extension MenuItem {
 		})
 	}
 
-	static func push(icon: SKTexture, status: String, action: Action? = nil, menu: MenuState<Action>) -> Self {
+	static func push(icon: SKTexture, status: String, action: Action? = nil, menu: Menu) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in stk.append(menu) })
 	}
 
@@ -88,7 +88,7 @@ extension MenuItem {
 		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
-		menu: @escaping () -> MenuState<Action>?
+		menu: @escaping () -> Menu?
 	) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
 			menu().map { m in stk.append(m) }
@@ -103,7 +103,7 @@ extension MenuItem {
 		icon: SKTexture,
 		status: String,
 		action: Action? = nil,
-		menu: @escaping (inout MenuState<Action>) -> Void
+		menu: @escaping (inout Menu) -> Void
 	) -> Self {
 		.init(icon: icon, status: .init(text: status), action: action, update: { stk, _ in
 			stk.removeLast()
@@ -112,9 +112,9 @@ extension MenuItem {
 	}
 }
 
-extension MenuState {
+extension Menu {
 
-	subscript(slot: MenuSlot) -> MenuItem<Action> {
+	subscript(slot: MenuSlot) -> MenuItem {
 		get {
 			switch slot {
 			case .item(let index): items[index]
@@ -169,7 +169,7 @@ extension MenuState {
 	mutating func padItems() {
 		let cnt = items.count
 		if cnt % 4 != 0 {
-			items.append(contentsOf: [MenuItem<Action>](
+			items.append(contentsOf: [MenuItem](
 				repeatElement(.space, count: 4 - cnt % 4)
 			))
 		}
@@ -179,7 +179,7 @@ extension MenuState {
 extension MenuItem {
 
 	static func confirm(icon: SKTexture, status: String, action: @MainActor @escaping () -> Void) -> MenuItem {
-		.push(icon: icon, status: status, menu: MenuState(
+		.push(icon: icon, status: status, menu: Menu(
 			items: [
 				.pop(icon: .minus, status: "Cancel"),
 				.space,
@@ -191,7 +191,7 @@ extension MenuItem {
 	}
 
 	static func load(save: @escaping () -> Void) -> MenuItem {
-		.push(icon: .arrowUp, status: "Load \(UserDefaults.standard.slot + 1)", menu: MenuState(
+		.push(icon: .arrowUp, status: "Load \(UserDefaults.standard.slot + 1)", menu: Menu(
 			items: (0...3).map { slot in
 				.confirm(icon: .number(UInt8(slot)) ?? .clear, status: "Slot \(slot + 1)") {
 					save()
