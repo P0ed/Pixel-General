@@ -69,6 +69,25 @@ struct MapGenerationTests {
 		#expect(ports == (mapType == .land ? 0 : 4 * players.count))
 	}
 
+	@Test(arguments: [0, 7, 42], [0, 3])
+	func settlementsCoverEachIsland(seed: Int, density: Int) {
+		let players = [Country.ger, .usa, .isr, .rus].map { Player(country: $0) }
+		let scenario = Scenario(players: players, units: [], cityLevel: density, seed: seed, symmetry: false, mapType: .fourIslands)
+		let map = Map<64, Terrain>(scenario: scenario)
+		var visited = Set<XY>()
+		for corner in Scenario.spawnOptions {
+			let home = Scenario.inCorner(corner, tile: Scenario.quarterCity)
+			let island = landmass(on: map, from: home, into: &visited)
+			let cities = island.filter { map[$0] == .city }
+			let ports = island.filter { map[$0] == .port }
+			let reach = island.map { xy in cities.map { xy.manhattanDistance(to: $0) }.min() ?? .max }.max()!
+			#expect(reach <= (density == 0 ? 16 : 12))
+			for (i, port) in ports.enumerated() {
+				#expect(ports.dropFirst(i + 1).allSatisfy { port.manhattanDistance(to: $0) >= 10 })
+			}
+		}
+	}
+
 	@Test func terminatesAcrossManySeeds() {
 		for seed in 0 ..< 16 {
 			_ = Map<64, Terrain>(seed: seed)

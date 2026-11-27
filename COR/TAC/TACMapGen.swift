@@ -165,7 +165,8 @@ extension Map where Element == Terrain {
 		}
 		let cities = placeCities(
 			d20: &d20, mainland: mainland, tiles: targets.settlements - targets.airfields,
-			pairs: targets.pairs, triples: targets.triples, reserved: starts.map(\.city) + ports.map(\.city)
+			pairs: targets.pairs, triples: targets.triples, reserved: starts.map(\.city) + ports.map(\.city),
+			spreadAcrossIsland: mapType != .land
 		)
 		placeAirfields(
 			near: cities, spawns: spawns, target: targets.airfields - starts.count, d20: &d20
@@ -548,30 +549,28 @@ extension Map where Element == Terrain {
 				candidates.append(PortSite(port: port, city: city, ground: self[port]))
 			}
 		}
-		candidates.sort { a, b in
-			(a.port.manhattanDistance(to: home), a.port.y, a.port.x, a.city.y, a.city.x)
-				< (b.port.manhattanDistance(to: home), b.port.y, b.port.x, b.city.y, b.city.x)
-		}
-
-		func select(from start: Int, sites: inout [PortSite]) -> Bool {
+		func select(from candidates: [PortSite], sites: inout [PortSite]) -> Bool {
 			if sites.count == target { return true }
-			for index in start..<candidates.count {
-				let site = candidates[index]
-				guard sites.allSatisfy({ other in
+			let centers = [home] + sites.map(\.city)
+			let ranked = candidates.map { site in
+				(site: site, distance: centers.map { site.city.stepDistance(to: $0) }.min()!)
+			}.sorted { $0.distance > $1.distance }.map(\.site)
+			for (index, site) in ranked.enumerated() {
+				let available = ranked.dropFirst(index + 1).filter { other in
 					site.port.manhattanDistance(to: other.port) > 1
 					&& site.port.manhattanDistance(to: other.city) > 1
 					&& site.city.manhattanDistance(to: other.port) > 1
 					&& site.city.stepDistance(to: other.city) >= spacing
-				}) else { continue }
+				}
 				sites.append(site)
-				if select(from: index + 1, sites: &sites) { return true }
+				if select(from: available, sites: &sites) { return true }
 				sites.removeLast()
 			}
 			return false
 		}
 
 		var sites: [PortSite] = []
-		let complete = select(from: 0, sites: &sites)
+		let complete = select(from: candidates, sites: &sites)
 		precondition(complete)
 		return sites
 	}
@@ -582,7 +581,8 @@ extension Map where Element == Terrain {
 		tiles: Int,
 		pairs: Int,
 		triples: Int,
-		reserved: [XY] = []
+		reserved: [XY] = [],
+		spreadAcrossIsland: Bool = false
 	) -> [[XY]] {
 		let centerTarget = tiles - pairs - 2 * triples
 
@@ -618,7 +618,29 @@ extension Map where Element == Terrain {
 
 		var cities = reserved.map { [$0] }
 
-		for i in 0 ..< centerTarget where cities.count < centerTarget {
+		func fillCitySites(upTo target: Int) {
+			guard cities.count < target else { return }
+			if spreadAcrossIsland {
+				let districts = cities.flatMap { $0 }
+				var sites = indices.filter { isCityLand($0) && hasNoSeaNeighbors(at: $0) }.map { xy in
+					(xy: xy, distance: districts.map { xy.stepDistance(to: $0) }.min() ?? .max)
+				}
+				while cities.count < target, let best = sites.max(by: { $0.distance < $1.distance }),
+					best.distance >= minSpacing {
+					let center = best.xy
+					cities.append([center])
+					for j in sites.indices {
+						sites[j].distance = min(sites[j].distance, sites[j].xy.stepDistance(to: center))
+					}
+				}
+			} else {
+				for xy in indices where cities.count < target && isCitySite(xy, awayFrom: cities) {
+					cities.append([xy])
+				}
+			}
+		}
+
+		for i in 0 ..< centerTarget where !spreadAcrossIsland && cities.count < centerTarget {
 			let gx = i % cols
 			let gy = i / cols
 			let center = XY(
@@ -632,9 +654,7 @@ extension Map where Element == Terrain {
 			}
 		}
 
-		for xy in indices where cities.count < centerTarget && isCitySite(xy, awayFrom: cities) {
-			cities.append([xy])
-		}
+		fillCitySites(upTo: centerTarget)
 
 		var remaining = tiles - cities.count
 		for (districts, target) in [(3, triples), (2, pairs)] {
@@ -657,10 +677,7 @@ extension Map where Element == Terrain {
 			}
 		}
 
-		for xy in indices where remaining > 0 && isCitySite(xy, awayFrom: cities) {
-			cities.append([xy])
-			remaining -= 1
-		}
+		if remaining > 0 { fillCitySites(upTo: cities.count + remaining) }
 		for city in cities {
 			for xy in city { self[xy] = .city }
 		}
