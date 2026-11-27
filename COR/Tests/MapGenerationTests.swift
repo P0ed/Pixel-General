@@ -3,6 +3,47 @@ import Testing
 
 struct MapGenerationTests {
 
+	@Test func startingUnitsDeployByCity() {
+		let spawn = XY(20, 18)
+		let home = [XY(20, 20), XY(21, 20)]
+		let west = [XY(9, 18), XY(10, 18)]
+		let east = XY(40, 20)
+		let sea = XY(41, 20)
+		var map = Map<64, Terrain>(zero: .field)
+		let cities = (home + west + [east]).map { ($0, Country.ger) } + [(spawn, .usa)]
+		for (xy, _) in cities { map[xy] = .city }
+		map[sea] = .sea
+		var core = Unit(model: .regular, country: .ger)
+		core.reset()
+		var ship = Unit(model: .destroyer, country: .ger).aux
+		ship.reset()
+		let sim = TacticalSim(
+			map: map, players: [Player(country: .ger)], cities: cities,
+			units: [core.aux, core, core.aux, core, core.aux, ship, core], homes: [.ger: spawn]
+		)
+		#expect(sim.position[1] == home[0])
+		#expect(sim.position[3] == home[1])
+		#expect(sim.position[6].manhattanDistance(to: home[0]) == 1)
+		#expect(sim.position[0] == west[1])
+		#expect(sim.position[2] == east)
+		#expect(sim.position[4] == west[0])
+		#expect(sim.position[5] == sea)
+	}
+
+	@Test func coreHasPriorityInOnlyCity() {
+		let home = XY(8, 8)
+		var map = Map<64, Terrain>(zero: .field)
+		map[home] = .city
+		var core = Unit(model: .regular, country: .ger)
+		core.reset()
+		let sim = TacticalSim(
+			map: map, players: [Player(country: .ger)], cities: [(home, .ger)],
+			units: [core.aux, core], homes: [.ger: home]
+		)
+		#expect(sim.position[1] == home)
+		#expect(sim.position[0].manhattanDistance(to: home) == 1)
+	}
+
 	@Test(arguments: MapType.allCases, [false, true])
 	func scenarioLandmasses(mapType: MapType, symmetry: Bool) {
 		let players = [Country.ger, .usa, .isr, .rus].map { Player(country: $0) }

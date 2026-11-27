@@ -41,9 +41,10 @@ public extension TacticalSim {
 		var map = Map<64, Terrain>(
 			seed: seed, terrain: .init(repeating: terrain), density: 0, spawns: spawns
 		)
+		let countries = active.map(\.country)
+		let centers = spawns.map { $0.cellCenter(size: map.size) }
 		let cities = Self.cities(
-			countries: active.map(\.country), defending: objective.defender,
-			centers: spawns.map { $0.cellCenter(size: map.size) }, reserveStarts: false, map: map
+			countries: countries, defending: objective.defender, centers: centers, reserveStarts: false, map: map
 		)
 		map.placeForts(
 			around: cities.compactMap { xy, country in
@@ -52,7 +53,10 @@ public extension TacticalSim {
 			level: forts
 		)
 		let roster = Scenario(players: active, units: units, mapType: terrain.isSea ? .fourIslands : .land).startingUnits
-		self.init(map: map, players: active, cities: cities, units: roster.mapInPlace { $0.reset() })
+		self.init(
+			map: map, players: active, cities: cities, units: roster.mapInPlace { $0.reset() },
+			homes: Dictionary(zip(countries, centers), uniquingKeysWith: { first, _ in first })
+		)
 		self.objective = objective
 	}
 

@@ -49,6 +49,7 @@ public extension TacticalSim {
 		let cities = cities.filter { xy, _ in self.map[xy] == .city }
 		cities.forEach { xy, c in control[xy] = c }
 		assignControl()
+		deployStartingUnits(homes: homes)
 
 		let tileCount = self.map.count
 		let placements: [[XY]] = players.map { player in
@@ -70,14 +71,8 @@ public extension TacticalSim {
 
 		for i in self.units.indices where self.units[i].alive {
 			let u = self.units[i]
-			guard let player = players.firstIndex(where: { p in p.country == u.country })
+			guard homes[u.country] == nil, let player = players.firstIndex(where: { p in p.country == u.country })
 			else { continue }
-			if let home = homes[u.country] {
-				let nearby = u.isNaval ? nil : home.s49.firstMap { canDeploy(u, at: $0) ? $0 : nil }
-				guard let xy = nearby ?? nearestPlacement(for: u, near: home) else { fatalError() }
-				place(i.uid, at: xy)
-				continue
-			}
 			if u.isNaval, let center = navalCenters[u.country.team],
 			   let xy = nearestPlacement(for: u, near: center) {
 				place(i.uid, at: xy)
@@ -104,6 +99,40 @@ public extension TacticalSim {
 		}
 
 		refreshVision()
+	}
+
+	private mutating func deployStartingUnits(homes: [Country: XY]) {
+		guard !homes.isEmpty else { return }
+		let footprints = map.cityFootprints
+		for seat in players.indices {
+			let country = players[seat].country
+			guard let spawn = homes[country] else { continue }
+			func closerToSpawn(_ a: XY, _ b: XY) -> Bool {
+				(a.manhattanDistance(to: spawn), a.y, a.x) < (b.manhattanDistance(to: spawn), b.y, b.x)
+			}
+			var cities = footprints.compactMap { footprint -> [XY]? in
+				let owned = footprint.filter { control[$0] == country }
+				return owned.isEmpty ? nil : owned.sorted(by: closerToSpawn)
+			}
+			cities.sort { closerToSpawn($0[0], $1[0]) }
+			let home = cities.first ?? [spawn]
+			let otherCities = cities.count > 1 ? Array(cities.dropFirst()) : [home]
+			let roster = units.indices.filter { units[$0].alive && units[$0].country == country }
+			for i in roster where !units[i][.aux] {
+				deploy(i, at: home)
+			}
+			let auxiliaries = roster.filter { units[$0][.aux] }
+			for (offset, i) in auxiliaries.enumerated() {
+				deploy(i, at: otherCities[offset % otherCities.count])
+			}
+		}
+	}
+
+	private mutating func deploy(_ index: Int, at city: [XY]) {
+		let unit = units[index]
+		let xy = city.first { canDeploy(unit, at: $0) } ?? nearestPlacement(for: unit, near: city[0])
+		guard let xy else { fatalError() }
+		place(index.uid, at: xy)
 	}
 
 	static var empty: TacticalSim {

@@ -94,11 +94,16 @@ enum PresentationIntent {
 	case menu
 }
 
-typealias TacticalInputReaction = InputReaction<COR.Action, PresentationIntent>
+
+enum InputReaction {
+	case action(Action)
+	case presentation(PresentationIntent)
+	case none
+}
 
 extension TacticalState {
 
-	mutating func apply(_ input: Input) -> TacticalInputReaction {
+	mutating func apply(_ input: Input) -> InputReaction {
 		if sim.isFinished {
 			switch input {
 			case .menu, .action(.a, modifiers: []): return .presentation(.menu)
@@ -131,7 +136,7 @@ extension TacticalState {
 	private mutating func directionalAction(
 		_ direction: Direction,
 		modifiers: InputModifiers
-	) -> TacticalInputReaction {
+	) -> InputReaction {
 		if modifiers.contains(.right) { return zoom(direction) }
 		if modifiers.contains(.left) { return moveCamera(direction) }
 		return moveCursor(direction)
@@ -140,7 +145,7 @@ extension TacticalState {
 	private mutating func buttonAction(
 		_ action: InputAction,
 		modifiers: InputModifiers
-	) -> TacticalInputReaction {
+	) -> InputReaction {
 		if modifiers == [.left, .right] { return toggleSettings(action) }
 		if modifiers == .right { return setMapMode(action) }
 		if modifiers == .left { return .none }
@@ -153,7 +158,7 @@ extension TacticalState {
 		}
 	}
 
-	private mutating func setMapMode(_ action: InputAction) -> TacticalInputReaction {
+	private mutating func setMapMode(_ action: InputAction) -> InputReaction {
 		switch action {
 		case .a: ui.mapMode = .terrain
 		case .b: ui.mapMode = ui.mapMode == .country ? .team : .country
@@ -163,7 +168,7 @@ extension TacticalState {
 		return .none
 	}
 
-	private mutating func toggleSettings(_ action: InputAction) -> TacticalInputReaction {
+	private mutating func toggleSettings(_ action: InputAction) -> InputReaction {
 		switch action {
 		case .a: break
 		case .b: break
@@ -173,7 +178,7 @@ extension TacticalState {
 		return .none
 	}
 
-	private mutating func zoom(_ direction: Direction) -> TacticalInputReaction {
+	private mutating func zoom(_ direction: Direction) -> InputReaction {
 		switch direction {
 		case .up: ui.scale = min(3, ui.scale + 1)
 		case .down: ui.scale = max(0, ui.scale - 1)
@@ -182,25 +187,25 @@ extension TacticalState {
 		return .none
 	}
 
-	private mutating func moveCamera(_ direction: Direction) -> TacticalInputReaction {
+	private mutating func moveCamera(_ direction: Direction) -> InputReaction {
 		ui.camera = ui.camera.diagonal(direction).clamped(sim.map.size)
 		return .none
 	}
 
-	private mutating func select(_ xy: XY) -> TacticalInputReaction {
+	private mutating func select(_ xy: XY) -> InputReaction {
 		guard sim.map.contains(xy) else { return .none }
 		ui.cursor = xy
 		if sim.player.type == .human { return primaryAction() }
 		return .none
 	}
 
-	private mutating func moveCursor(_ direction: Direction) -> TacticalInputReaction {
+	private mutating func moveCursor(_ direction: Direction) -> InputReaction {
 		let xy = ui.cursor.neighbor(direction)
 		if sim.map.contains(xy) { ui.cursor = xy }
 		return .none
 	}
 
-	private mutating func primaryAction() -> TacticalInputReaction {
+	private mutating func primaryAction() -> InputReaction {
 		let playerCountry = sim.country
 		let playerType = sim[playerCountry].type
 
@@ -233,12 +238,12 @@ extension TacticalState {
 		return .none
 	}
 
-	private mutating func secondaryAction() -> TacticalInputReaction {
+	private mutating func secondaryAction() -> InputReaction {
 		ui.selectedUnit = .none
 		return .none
 	}
 
-	private mutating func squareAction() -> TacticalInputReaction {
+	private mutating func squareAction() -> InputReaction {
 		guard ui.selectedUnit != .none,
 			  sim.canDisembark(unit: ui.selectedUnit, to: ui.cursor),
 			  sim[sim.country].type == .human
@@ -246,7 +251,7 @@ extension TacticalState {
 		return .action(.disembark(ui.selectedUnit, ui.cursor))
 	}
 
-	private mutating func triangleAction() -> TacticalInputReaction {
+	private mutating func triangleAction() -> InputReaction {
 		guard ui.selectedUnit != .none,
 			  sim.canResupply(unit: ui.selectedUnit),
 			  sim[sim.country].type == .human
@@ -256,11 +261,11 @@ extension TacticalState {
 		return .action(.resupply(ui.selectedUnit))
 	}
 
-	private mutating func prevUnit() -> TacticalInputReaction {
+	private mutating func prevUnit() -> InputReaction {
 		nextUnit(reversed: true)
 	}
 
-	private mutating func nextUnit(reversed: Bool = false) -> TacticalInputReaction {
+	private mutating func nextUnit(reversed: Bool = false) -> InputReaction {
 		let cnt = sim.units.count
 		var idx = ui.selectedUnit != .none ? ui.selectedUnit.index : (reversed ? cnt - 1 : 0)
 		let country = sim.country

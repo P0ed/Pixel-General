@@ -122,7 +122,7 @@ final class TACScene: SKScene {
 		}
 	}
 
-	private func react(_ reaction: InputReaction<Action, PresentationIntent>) {
+	private func react(_ reaction: InputReaction) {
 		guard let nodes, !processing else { return }
 
 		switch reaction {
