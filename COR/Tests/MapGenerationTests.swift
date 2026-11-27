@@ -154,7 +154,7 @@ struct MapGenerationTests {
 	@Test(arguments: [0, 7, 42], [0, 1, 2, 3])
 	func inlandSettlementTargets(seed: Int, density: Int) {
 		let map = Map<64, Terrain>(seed: seed, density: density)
-		let targets = [(20, 4, 2, 1), (32, 6, 3, 2), (48, 9, 4, 3), (64, 12, 5, 4)]
+		let targets = [(24, 4, 4, 0), (32, 6, 6, 2), (48, 8, 8, 3), (64, 10, 10, 4)]
 		let (settlements, airfields, pairs, triples) = targets[density]
 		#expect(map.indices.count { map[$0].isSettlement } == settlements)
 		#expect(map.indices.count { map[$0] == .airfield } == airfields)
