@@ -30,6 +30,9 @@ public extension Traits {
 	static var optics: Self { .init(rawValue: 1 << 3) }
 	static var radar: Self { .init(rawValue: 1 << 4) }
 	static var noRetaliation: Self { .init(rawValue: 1 << 5) }
+	static var pillage: Self { .init(rawValue: 1 << 6) }
+	static var bash: Self { .init(rawValue: 1 << 6) }
+	static var slow: Self { .init(rawValue: 1 << 7) }
 }
 
 public extension UnitStats {

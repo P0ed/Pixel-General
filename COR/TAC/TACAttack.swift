@@ -82,7 +82,8 @@ extension TacticalSim {
 				events.append(.update(cargoId))
 			}
 		}
-		source.exp.increment(by: UInt16(dmg) * destination.value / (destination.alive ? 32 : 24))
+		let earned = UInt16(dmg) * destination.value / (destination.alive ? 512 : 384)
+		source.exp.increment(by: UInt8(clamping: earned))
 		if !destination.alive {
 			vacate(dst)
 			source.promote(using: &d20)

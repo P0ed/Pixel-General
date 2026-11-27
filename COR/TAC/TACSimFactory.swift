@@ -25,41 +25,6 @@ public extension TacticalSim {
 		self.objective = scenario.objective
 	}
 
-	/// Compatibility factory for standalone battles with one dominant terrain.
-	init(
-		players: [Player],
-		units: [Unit],
-		seed: Int,
-		terrain: Terrain = .field,
-		objective: Objective = .none,
-		forts: Int = 0
-	) {
-		let active = players.filter { $0.alive }
-		var d20 = D20(seed: seed)
-		let sites = [XY(1, 0), XY(1, 3), XY(3, 1), XY(0, 1), XY(1, 1)]
-		let spawns = Array(sites.shuffled(using: &d20).prefix(active.count))
-		var map = Map<64, Terrain>(
-			seed: seed, terrain: .init(repeating: terrain), density: 0, spawns: spawns
-		)
-		let countries = active.map(\.country)
-		let centers = spawns.map { $0.cellCenter(size: map.size) }
-		let cities = Self.cities(
-			countries: countries, defending: objective.defender, centers: centers, reserveStarts: false, map: map
-		)
-		map.placeForts(
-			around: cities.compactMap { xy, country in
-				objective.defender == nil || country.team == objective.defender ? xy : nil
-			},
-			level: forts
-		)
-		let roster = Scenario(players: active, units: units, mapType: terrain.isSea ? .fourIslands : .land).startingUnits
-		self.init(
-			map: map, players: active, cities: cities, units: roster.mapInPlace { $0.reset() },
-			homes: Dictionary(zip(countries, centers), uniquingKeysWith: { first, _ in first })
-		)
-		self.objective = objective
-	}
-
 	/// Assign whole city footprints by spawn distance under per-seat quotas
 	/// measured in city tiles. Defending seats get double weight.
 	private static func cities(

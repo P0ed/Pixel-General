@@ -28,21 +28,24 @@ struct TacticalPerformanceTests {
 
 		for seed in 0..<Self.runs {
 			var sim = TacticalSim(
-				players: Self.countries.map { c in
-					Player(
-						country: c,
-						type: .ai,
-						prestige: c == .fin ? .rich : .poor,
-						baseLevel: c == .fin ? 3 : 0
-					)
-				},
-				units: .base(Self.countries[0], lvl: 3)
-				+ .aux(Self.countries[0], lvl: 3)
-				+ .base(Self.countries[1])
-				+ .aux(Self.countries[1]),
-				seed: seed
+				new: Scenario(
+					players: Self.countries.map { c in
+						Player(
+							country: c,
+							type: .ai,
+							prestige: c == .fin ? .rich : .poor,
+							baseLevel: c == .fin ? 3 : 0
+						)
+					},
+					units: .base(Self.countries[0], lvl: 3)
+						+ .aux(Self.countries[0], lvl: 3)
+						+ .base(Self.countries[1])
+						+ .aux(Self.countries[1]),
+					seed: seed,
+					objective: .survive(.axis, day: 40),
+					mapType: .land
+				)
 			)
-
 			var ai = AI.Plan()
 			var actions = 0
 

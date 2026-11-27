@@ -6,7 +6,7 @@ public struct Unit: Equatable, Sendable {
 	public var ap: UInt8 = 0
 	public var ammo: UInt8 = 0
 	public var ent: UInt8 = 0
-	public var exp: UInt16 = 0
+	public var exp: UInt8 = 0
 	public var skills: Skills = []
 	public var bits: Bits = []
 }
@@ -140,21 +140,27 @@ public extension Unit {
 		set { newValue ? skills.formUnion(ss) : skills.subtract(ss) }
 	}
 
+	static let maxLvl: UInt8 = 4
+
+	private static func minimumExp(for lvl: UInt8) -> UInt8 {
+		lvl == 0 ? 0 : 1 << (3 + lvl)
+	}
+
 	var lvl: UInt8 {
 		get {
-			modifying(8) { lvl in lvl.decrement(by: UInt8(exp.leadingZeroBitCount)) }
+			UInt8(clamping: Int(Self.maxLvl) - exp.leadingZeroBitCount)
 		}
 		set {
-			exp = newValue == 0 ? 0 : 1 << (7 + newValue)
+			exp = Self.minimumExp(for: min(newValue, Self.maxLvl))
 		}
 	}
 
 	var subLvl: UInt8 {
 		let lvl = lvl
-		let zero: UInt16 = lvl == 0 ? 0 : 1 << (7 + lvl)
-		let req: UInt32 = lvl == 0 ? 256 : UInt32(zero)
-		let has = exp > zero ? exp - zero : 0
-		return min(9, UInt8(clamping: UInt32(has) * 10 / req))
+		guard lvl < Self.maxLvl else { return 0 }
+		let start = Self.minimumExp(for: lvl)
+		let span = Self.minimumExp(for: lvl + 1) - start
+		return UInt8(UInt16(exp - start) * 10 / UInt16(span))
 	}
 
 	func atk(_ dst: Unit) -> UInt8 {

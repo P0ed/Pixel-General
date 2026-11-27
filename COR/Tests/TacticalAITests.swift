@@ -290,14 +290,17 @@ struct TacticalAITests {
 
 	@Test func survivalHeuristicTurnsRemainBounded() {
 		var sim = TacticalSim(
-			players: [
-				Player(country: .fin, type: .ai, prestige: .poor),
-				Player(country: .isr, type: .ai, prestige: .poor),
-			],
-			units: .base(.fin),
-			seed: 1,
-			objective: .survive(.axis, day: 40),
-			forts: 1
+			new: Scenario(
+				players: [
+					Player(country: .fin, type: .ai, prestige: .poor),
+					Player(country: .isr, type: .ai, prestige: .poor),
+				],
+				units: .base(.fin),
+				fortLevel: 1,
+				seed: 1,
+				objective: .survive(.axis, day: 40),
+				mapType: .land
+			)
 		)
 		var ai = AI.Plan()
 		var actions = 0
