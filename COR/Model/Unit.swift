@@ -181,7 +181,7 @@ public extension Unit {
 	}
 
 	var value: UInt16 {
-		(typeValue + traitValue + statsValue) * UInt16(lvl) / 8
+		(typeValue + traitValue + statsValue) * UInt16(2 + lvl) / 3
 	}
 
 	private var typeValue: UInt16 {

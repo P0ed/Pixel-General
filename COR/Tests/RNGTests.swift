@@ -73,6 +73,23 @@ struct RNGTests {
 		print(md)
 	}
 
+	@Test func damagingLevelZeroUnitCanLevelUpAttacker() {
+		var sim = TacticalSim.xs
+		var attacker = Unit(model: .mars, country: .den)
+		var defender = Unit(model: .regular, country: .usa)
+		attacker.reset()
+		defender.reset()
+		attacker.exp = 15
+		let src = sim.spawn(attacker, at: XY(1, 1))
+		let dst = sim.spawn(defender, at: XY(2, 2))
+		sim.refreshVision()
+
+		_ = sim.reduce(.attack(src, dst))
+
+		#expect(sim.units[dst].hp < defender.hp)
+		#expect(sim.units[src].lvl == 1)
+	}
+
 	@Test func damageCalculation() {
 		var report = "Damage table:"
 		var sim = TacticalSim.xs
