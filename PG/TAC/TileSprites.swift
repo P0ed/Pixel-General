@@ -5,13 +5,10 @@ import GFX
 
 enum TileSurface: CaseIterable, Hashable {
 	case field, forest, rough, mountain, water, sea
-	case port(Turn)
-
-	static let allCases: [Self] = [.field, .forest, .rough, .mountain, .water, .sea] + Turn.allCases.map(Self.port)
 
 	var color: SKColor {
 		switch self {
-		case .field, .port: .fieldSurface
+		case .field: .fieldSurface
 		case .forest: .forestSurface
 		case .rough: .roughSurface
 		case .mountain: .mountainSurface
@@ -29,12 +26,6 @@ enum TileSurface: CaseIterable, Hashable {
 			return image?.noised(with: CGImage.harshNoise[variant.rawValue])
 		case .forest, .rough:
 			return image?.noised(with: CGImage.strongNoise[variant.rawValue])
-		case .port(let turn):
-			let bay = CGImage.draw(size: .tile3D) { ctx in
-				ctx.drawTile(image)
-				ctx.drawTile(CGImage.portWater[Int(turn.rawValue)])
-			}
-			return bay.noised(with: CGImage.noise[variant.rawValue])
 		case .field, .water, .sea:
 			return image?.noised(with: CGImage.noise[variant.rawValue])
 		}
@@ -69,27 +60,26 @@ extension XY {
 
 extension Terrain {
 
-	func tileSurface(portTurn: Turn = .none) -> TileSurface {
+	var tileSurface: TileSurface {
 		switch self {
 		case .forest: .forest
 		case .rough: .rough
 		case .mountain: .mountain
 		case .river, .bridgeWE, .bridgeSN: .water
 		case .sea: .sea
-		case .port: .port(portTurn)
 		default: .field
 		}
 	}
 
 	/// Compass names map onto GFX axes the way `XY.point` puts them on screen:
 	/// E is `xPlus`, N `yMinus`, W `xMinus`, S `yPlus`.
-	func decoration(variant: Tiles.Variant = .first, portTurn: Turn = .none) -> CGImage.Decoration? {
+	func decoration(variant: Tiles.Variant = .first, turn: Turn = .none) -> CGImage.Decoration? {
 		switch self {
 		case .none, .river, .sea, .field, .forest, .rough, .mountain: nil
 		case .city: .city(variant)
 		case .fort: .fort(variant)
 		case .airfield: .airfield
-		case .port: .port(portTurn)
+		case .port: .port(turn)
 		case .bridgeWE: .bridge(.x)
 		case .bridgeSN: .bridge(.y)
 		case .roadNW: .road([.yMinus, .xMinus])
@@ -176,10 +166,6 @@ extension SKTileGroup {
 @MainActor
 private extension CGImage {
 
-	static let portWater = Turn.allCases.map { turn in
-		Renderer.tile.fill(Settlements.portWater.rotated(turn)).cgImage?.tinted(TileSurface.sea.color.cgColor)
-	}
-
 	/// Stable tile-sized speckle, rendered once — noising a surface is then a
 	/// single masked draw instead of a per-pixel fill on every texture build.
 	static let noise = Tiles.Variant.allCases.map { variant in
@@ -223,7 +209,7 @@ private extension CGImage {
 	}
 }
 
-private extension CGContext {
+extension CGContext {
 
 	func drawTile(_ image: CGImage?) {
 		guard let image else { return }
@@ -293,7 +279,7 @@ extension SKTexture {
 	static func tile(_ terrain: Terrain) -> SKTexture {
 		if let texture = tileCache[terrain] { return texture }
 		let texture = SKTexture(cgImage: ImageBuffer.tile.draw { ctx in
-			ctx.drawTile(terrain.tileSurface().image())
+			ctx.drawTile(terrain.tileSurface.image())
 			ctx.drawTile(terrain.decoration().map(CGImage.decoration))
 			ctx.drawTile(.frame)
 		})

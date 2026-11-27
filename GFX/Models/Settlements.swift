@@ -44,19 +44,18 @@ public enum Settlements {
 
 	public static var portWater: Model {
 		Model(
-			portStrip(6..<8, 0..<1),
-			portStrip(5..<9, 1..<4),
-			portStrip(0..<14, 4..<5),
-			portStrip(4..<10, 5..<6)
+			portStrip(5..<9, 1..<16),
+			portStrip(1..<14, 11..<13),
+			portStrip(4..<11, 13..<16),
 		)
 	}
 
 	public static var port: Model {
 		let quays = [
-			portStrip(3..<5, 1..<4, height: 1, tone: Roads.Tone.bed),
-			portStrip(9..<11, 1..<4, height: 1, tone: Roads.Tone.bed),
-			portStrip(3..<4, 5..<6, height: 1, tone: Roads.Tone.bed),
-			portStrip(10..<11, 5..<6, height: 1, tone: Roads.Tone.bed),
+			portStrip(3..<5, 1..<11, height: 1, tone: Roads.Tone.bed),
+			portStrip(9..<11, 1..<11, height: 1, tone: Roads.Tone.bed),
+			portStrip(4..<5, 13..<16, height: 1, tone: Roads.Tone.bed),
+			portStrip(10..<11, 13..<16, height: 1, tone: Roads.Tone.bed),
 		]
 		let warehouses = house(x: 8, y: 18, length: 4.5, width: 13, walls: 3, roof: 2, ridge: .y)
 			+ house(x: 39, y: 23, length: 6, width: 12, walls: 3, roof: 2, ridge: .y)
@@ -71,7 +70,7 @@ public enum Settlements {
 			.#######.
 			..#...#..
 			..#...#..
-			.######..
+			#######..
 			....#....
 			....#....
 			..######.
@@ -84,10 +83,10 @@ public enum Settlements {
 			...#####.
 			....#..#.
 			#####..##
-			.#######.
+			.#.#####.
 			.#.......
-			.###.....
-			.........
+			.#####...
+			....#....
 			"""
 		case .third:
 			"""
@@ -157,11 +156,11 @@ public enum Settlements {
 private extension Settlements {
 
 	static func portStrip(_ columns: Range<Int>, _ rows: Range<Int>, height: Float = 0, tone: UInt8 = .max) -> Solid {
-		let width = Volume.footprint / 14
-		let depth = Volume.footprint / 6
+		let width = Volume.footprint / 16
+		let depth = Volume.footprint / 16
 		return .box(
-			from: V3(Float(columns.lowerBound) * width, Float(rows.lowerBound) * depth, 0),
-			to: V3(Float(columns.upperBound) * width, min(Float(rows.upperBound) * depth, Volume.footprint - height), height),
+			from: V3(Float(columns.lowerBound) * width + 0.5, Float(rows.lowerBound) * depth - 0.5, 0),
+			to: V3(Float(columns.upperBound) * width + 0.5, min(Float(rows.upperBound) * depth - 0.5, Volume.footprint - height), height),
 			tone: tone
 		)
 	}

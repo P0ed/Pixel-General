@@ -44,11 +44,11 @@ extension MapNodes {
 
 	func setTile(from map: borrowing Map<64, Terrain>, at xy: XY) {
 		let tile = map[xy]
-		let portTurn = tile == .port ? map.portTurn(at: xy) : .none
 		let variant = xy.tileVariant
-		terrain.setTileGroup(.terrain(surface: tile.tileSurface(portTurn: portTurn), variant: variant), at: xy)
+		terrain.setTileGroup(.terrain(surface: tile.tileSurface, variant: variant), at: xy)
 		if decorations.parent != nil {
-			let decoration = tile.decoration(variant: variant, portTurn: portTurn)
+			let turn = tile == .port ? map.portTurn(at: xy) : .none
+			let decoration = tile.decoration(variant: variant, turn: turn)
 			decorations.setTileGroup(decoration.map(SKTileGroup.decoration), at: xy)
 		}
 	}
