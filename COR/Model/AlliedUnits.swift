@@ -17,7 +17,7 @@ extension UnitStats {
 	)
 	static let delta = UnitStats(
 		type: .inf,
-		tier: 3,
+		tier: 2,
 		mov: 4,
 		rng: 1,
 		ammo: 6,
@@ -29,13 +29,13 @@ extension UnitStats {
 		groundDef: 9,
 		airDef: 8,
 		traits: .elite,
-		cost: 285
+		cost: 330
 	)
 
 	// MARK: IFV
 	static let m2A2 = UnitStats(
 		type: .lightTrack,
-		tier: 1,
+		tier: 2,
 		mov: 7,
 		rng: 1,
 		ammo: 6,
@@ -47,7 +47,7 @@ extension UnitStats {
 		groundDef: 10,
 		airDef: 7,
 		traits: .transport,
-		cost: 334
+		cost: 390
 	)
 	static let m113 = UnitStats(
 		type: .lightTrack,
@@ -62,7 +62,7 @@ extension UnitStats {
 		groundDef: 8,
 		airDef: 6,
 		traits: .transport,
-		cost: 238
+		cost: 240
 	)
 
 	// MARK: Tanks
@@ -77,7 +77,7 @@ extension UnitStats {
 		navAtk: 4,
 		groundDef: 11,
 		airDef: 6,
-		cost: 267
+		cost: 270
 	)
 	static let m1A1 = UnitStats(
 		type: .heavyTrack,
@@ -106,7 +106,7 @@ extension UnitStats {
 		groundDef: 13,
 		airDef: 7,
 		traits: .elite,
-		cost: 392
+		cost: 399
 	)
 
 	// MARK: Art
@@ -122,7 +122,7 @@ extension UnitStats {
 		navAtk: 5,
 		groundDef: 5,
 		airDef: 4,
-		cost: 233
+		cost: 220
 	)
 	static let m109A7 = UnitStats(
 		type: .trackArt,
@@ -136,11 +136,11 @@ extension UnitStats {
 		navAtk: 5,
 		groundDef: 5,
 		airDef: 4,
-		cost: 289
+		cost: 330
 	)
 	static let m147 = UnitStats(
 		type: .wheelArt,
-		tier: 1,
+		tier: 2,
 		mov: 7,
 		rng: 5,
 		ammo: 3,
@@ -151,7 +151,7 @@ extension UnitStats {
 		groundDef: 5,
 		airDef: 4,
 		traits: [.elite, .noRetaliation],
-		cost: 413
+		cost: 470
 	)
 
 	// MARK: AA
@@ -166,7 +166,7 @@ extension UnitStats {
 		groundDef: 4,
 		airDef: 8,
 		traits: .radar,
-		cost: 312
+		cost: 330
 	)
 
 	// MARK: Air
@@ -200,7 +200,7 @@ extension UnitStats {
 		groundDef: 9,
 		airDef: 9,
 		traits: .radar,
-		cost: 498
+		cost: 499
 	)
 	static let f35 = UnitStats(
 		type: .fighter,
@@ -216,7 +216,7 @@ extension UnitStats {
 		groundDef: 11,
 		airDef: 11,
 		traits: .radar,
-		cost: 570
+		cost: 599
 	)
 	static let mq9 = UnitStats(
 		type: .heli,
@@ -229,6 +229,6 @@ extension UnitStats {
 		groundDef: 7,
 		airDef: 6,
 		traits: .optics,
-		cost: 321
+		cost: 330
 	)
 }

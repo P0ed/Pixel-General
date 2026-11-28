@@ -62,7 +62,7 @@ extension Shop {
 
 	var fpv1: Unit? {
 		switch country.team {
-		case .axis, .soviet: Unit(model: .fpv, country: country)
+		case .soviet: Unit(model: .fpv, country: country)
 		default: nil
 		}
 	}

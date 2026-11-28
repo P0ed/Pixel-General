@@ -16,7 +16,7 @@ extension UnitStats {
 	)
 	static let speznas = UnitStats(
 		type: .inf,
-		tier: 2,
+		tier: 1,
 		mov: 4,
 		rng: 1,
 		ammo: 6,
@@ -29,6 +29,21 @@ extension UnitStats {
 		airDef: 7,
 		traits: .elite,
 		cost: 180
+	)
+	static let fpv = UnitStats(
+		type: .inf,
+		tier: 2,
+		mov: 3,
+		rng: 4,
+		ammo: 4,
+		ini: 5,
+		softAtk: 8,
+		hardAtk: 11,
+		navAtk: 5,
+		groundDef: 6,
+		airDef: 5,
+		traits: [.noRetaliation],
+		cost: 249
 	)
 
 	// MARK: IFV
@@ -102,7 +117,7 @@ extension UnitStats {
 		navAtk: 5,
 		groundDef: 12,
 		airDef: 6,
-		cost: 303
+		cost: 339
 	)
 
 	// MARK: Art

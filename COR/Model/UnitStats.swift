@@ -31,8 +31,8 @@ public extension Traits {
 	static var radar: Self { .init(rawValue: 1 << 4) }
 	static var noRetaliation: Self { .init(rawValue: 1 << 5) }
 	static var pillage: Self { .init(rawValue: 1 << 6) }
-	static var bash: Self { .init(rawValue: 1 << 6) }
-	static var slow: Self { .init(rawValue: 1 << 7) }
+	static var bash: Self { .init(rawValue: 1 << 7) }
+	static var slow: Self { .init(rawValue: 1 << 8) }
 }
 
 public extension UnitStats {
@@ -76,21 +76,6 @@ public extension UnitStats {
 		traits: .engineer,
 		cost: 220
 	)
-	static let fpv = UnitStats(
-		type: .art,
-		tier: 2,
-		mov: 3,
-		rng: 4,
-		ammo: 4,
-		ini: 5,
-		softAtk: 8,
-		hardAtk: 11,
-		navAtk: 5,
-		groundDef: 6,
-		airDef: 5,
-		traits: [.noRetaliation],
-		cost: 249
-	)
 	static let art155 = UnitStats(
 		type: .art,
 		tier: 1,
@@ -110,7 +95,7 @@ public extension UnitStats {
 		tier: 1,
 		mov: 6,
 		ini: 1,
-		groundDef: 5,
+		groundDef: 4,
 		airDef: 3,
 		traits: .transport,
 		cost: 270
