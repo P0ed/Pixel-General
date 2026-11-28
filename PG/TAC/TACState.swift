@@ -181,7 +181,7 @@ extension TacticalState {
 	private mutating func zoom(_ direction: Direction) -> InputReaction {
 		switch direction {
 		case .up: ui.scale = min(3, ui.scale + 1)
-		case .down: ui.scale = max(0, ui.scale - 1)
+		case .down: ui.scale = max(1, ui.scale - 1)
 		case .left, .right: break
 		}
 		return .none
