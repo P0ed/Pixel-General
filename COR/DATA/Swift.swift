@@ -51,20 +51,3 @@ public func decode<A: ~Copyable>(_ data: Data) -> A? {
 			.move()
 	}
 }
-
-@propertyWrapper
-public struct IO<A> {
-	private var get: () -> A
-	private var set: (A) -> Void
-
-	public var wrappedValue: A {
-		get { get() }
-		nonmutating set { set(newValue) }
-	}
-
-	public init(wrappedValue: A) {
-		var closure = wrappedValue
-		get = { closure }
-		set = { newValue in closure = newValue }
-	}
-}

@@ -15,48 +15,53 @@ extension InputModifiers {
 }
 
 @MainActor
-struct HIDController {
-	@IO private var lifetime: Any?
-	@IO var send: (Input) -> Void = ø
-	@IO var up: (Input) -> Void = ø
-	@IO private var modifiers: InputModifiers = []
-	@IO private var usedModifiers: InputModifiers = []
+final class HIDController {
+	private var lifetime: Any?
+	var send: (Input) -> Void = ø
+	var up: (Input) -> Void = ø
+	private var modifiers: InputModifiers = []
+	private var usedModifiers: InputModifiers = []
 
 	init() {
 		lifetime = NotificationCenter.default.addMainActorObserver(
 			forName: .GCControllerDidBecomeCurrent,
-			using: { [_send, _up, _modifiers, _usedModifiers] notification in
-				_modifiers.wrappedValue = []
-				_usedModifiers.wrappedValue = []
+			using: { [weak self] notification in
+				guard let self else { return }
+				modifiers = []
+				usedModifiers = []
 				guard let gamepad = (notification.object as? GCController)?.extendedGamepad
 				else { return }
 
-				let send = { input in
-					if !controller.gamepadHandler(input) { _send.wrappedValue(input) }
+				let sendInput: (Input) -> Void = { [weak self] input in
+					if !controller.gamepadHandler(input) { self?.send(input) }
 				}
-				let sendDirection = { direction in
-					let current = _modifiers.wrappedValue
-					_usedModifiers.wrappedValue.formUnion(current)
-					send(.direction(direction, modifiers: current))
+				let sendDirection: (Direction?) -> Void = { [weak self] direction in
+					guard let self else { return }
+					let current = modifiers
+					usedModifiers.formUnion(current)
+					sendInput(.direction(direction, modifiers: current))
 				}
-				let sendAction = { action in
-					let current = _modifiers.wrappedValue
-					_usedModifiers.wrappedValue.formUnion(current)
-					send(.action(action, modifiers: current))
+				let sendAction: (InputAction) -> Void = { [weak self] action in
+					guard let self else { return }
+					let current = modifiers
+					usedModifiers.formUnion(current)
+					sendInput(.action(action, modifiers: current))
 				}
-				let releaseAction = { action in
-					_up.wrappedValue(.action(action, modifiers: _modifiers.wrappedValue))
+				let releaseAction = { [weak self] action in
+					guard let self else { return }
+					up(.action(action, modifiers: modifiers))
 				}
-				let shoulder = { modifier, target, pressed in
+				let shoulder = { [weak self] modifier, target, pressed in
+					guard let self else { return }
 					if pressed {
-						_modifiers.wrappedValue.insert(modifier)
-						_usedModifiers.wrappedValue.remove(modifier)
+						modifiers.insert(modifier)
+						usedModifiers.remove(modifier)
 					} else {
-						let used = _usedModifiers.wrappedValue.contains(modifier)
-						_modifiers.wrappedValue.remove(modifier)
-						_usedModifiers.wrappedValue.remove(modifier)
-						_up.wrappedValue(.action(nil, modifiers: modifier))
-						if !used { send(.target(target)) }
+						let used = usedModifiers.contains(modifier)
+						modifiers.remove(modifier)
+						usedModifiers.remove(modifier)
+						up(.action(nil, modifiers: modifier))
+						if !used { sendInput(.target(target)) }
 					}
 				}
 
@@ -96,7 +101,7 @@ struct HIDController {
 				}
 				gamepad.buttonMenu.pressedChangedHandler = { _, _, pressed in
 					guard pressed else { return }
-					send(.menu)
+					sendInput(.menu)
 				}
 			}
 		)

@@ -2,13 +2,29 @@ import SpriteKit
 import COR
 
 @MainActor
-struct TacticalNodes {
+final class TacticalNodes {
 	weak var scene: TACScene?
 	var camera: SKCameraNode
 	var map: MapNodes
-	@IO var units: [192 of SKNode?] = .init(repeating: nil)
-	@IO var lit: SetXY = .empty
-	@IO var overlayKey: OverlayKey = .terrain
+	var units: [192 of SKNode?]
+	var lit: SetXY
+	var overlayKey: OverlayKey
+
+	init(
+		scene: TACScene? = nil,
+		camera: SKCameraNode,
+		map: MapNodes,
+		units: [192 of SKNode?] = .init(repeating: nil),
+		lit: SetXY = .empty,
+		overlayKey: OverlayKey = .terrain
+	) {
+		self.scene = scene
+		self.camera = camera
+		self.map = map
+		self.units = units
+		self.lit = lit
+		self.overlayKey = overlayKey
+	}
 
 	enum OverlayKey: Equatable {
 		case terrain
@@ -21,9 +37,9 @@ struct TacticalNodes {
 
 extension TacticalNodes {
 
-	init(scene: TACScene) {
+	convenience init(scene: TACScene) {
 		let lit = scene.state.litTiles
-		self = TacticalNodes(
+		self.init(
 			scene: scene,
 			camera: Self.addCamera(root: scene),
 			map: Self.addMap(root: scene, state: scene.state, lit: lit)
