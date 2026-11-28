@@ -88,10 +88,6 @@ public extension Shop {
 		]
 	}
 
-	/// Models `unit` may upgrade into: the other members of its family that the
-	/// current tier unlocks, ammo topped up for the new platform to match
-	/// `units`. The unit's own model — and any tier-locked sibling — is omitted.
-	/// Returns `[]` when the unit has no family (supply) or no unlocked sibling.
 	func upgrades(for unit: Unit) -> [Unit] {
 		guard let family = families.first(where: { fam in
 			fam.contains { $0?.model == unit.model }
