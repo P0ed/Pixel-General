@@ -126,27 +126,17 @@ extension Country {
 	var flag: SKTexture {
 		switch self {
 		case .usa: .usa
-		case .swe: .swe
 		case .ukr: .ukr
 		case .irn: .irn
 		case .isr: .isr
 		case .rus: .rus
 		case .pak: .pak
 		case .ind: .ind
-		case .den: .den
 		case .ned: .ned
 		case .nor: .nor
-		case .fin: .fin
 		case .ger: .ger
-		case .est: .est
-		case .lva: .lva
-		case .ltu: .ltu
-		case .pol: .pol
 		case .bel: .bel
-		case .svk: .svk
-		case .rom: .rom
 		case .hun: .hun
-		case .mol: .mol
 		case .none: .clear
 		}
 	}

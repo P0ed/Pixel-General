@@ -141,7 +141,7 @@ extension Shop {
 
 	var ifv3: Unit? {
 		switch country {
-		case .swe: Unit(model: .strf90, country: country)
+		case .nor: Unit(model: .strf90, country: country)
 		case .ger: Unit(model: .kf41, country: country)
 		default: switch country.team {
 		case .axis: Unit(model: .cv9035, country: country)
@@ -174,7 +174,7 @@ extension Shop {
 
 	var tank3: Unit? {
 		switch country {
-		case .swe: Unit(model: .strv122, country: country)
+		case .nor: Unit(model: .strv122, country: country)
 		case .pak: nil
 		case .irn, .ind: nil
 		default: switch country.team {

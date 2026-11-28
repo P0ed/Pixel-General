@@ -44,7 +44,7 @@ extension Team {
 
 	var color: SKColor {
 		switch self {
-		case .axis: Country.swe.color
+		case .axis: Country.nor.color
 		case .allies: Country.isr.color
 		case .soviet: Country.rus.color
 		case .none: Country.none.color
@@ -56,28 +56,13 @@ extension Country {
 
 	var color: SKColor {
 		switch self {
-			// Nordics
-		case .swe: .hex(0x3F7FD6) // flag blue
-		case .nor: .hex(0xD2695E) // flag red, salmon (clear of crimson rus)
-		case .fin: .hex(0xA6C6DF) // white field, blue cross — pale steel
-		case .den: .hex(0xD22E4B) // flag red, bright crimson
-			// Baltics
-		case .est: .hex(0x47828F) // flag blue + black — steel teal
-		case .lva: .hex(0x93445C) // flag carmine, wine
-		case .ltu: .hex(0xC08A2E) // flag yellow stripe, ochre gold
-			// West & Central
+		case .nor: .hex(0xA6C6DF) // white field, blue cross — pale steel
 		case .ned: .hex(0xD96A24) // royal orange
 		case .ger: .hex(0x4E545E) // flag black stripe — field gray
-		case .pol: .hex(0xC75B78) // white-red — rose
-		case .svk: .hex(0x8CA9D6) // flag blue, pale periwinkle
 		case .hun: .hex(0x4E8047) // flag green
-			// East
 		case .ukr: .hex(0xE3BC3F) // flag yellow
 		case .bel: .hex(0x7FA33B) // flag green, chartreuse lean
-		case .mol: .hex(0xA94A2E) // flag red, brick
-		case .rom: .hex(0x4053A8) // flag cobalt blue
 		case .rus: .hex(0x992A24) // flag red, dark soviet crimson
-			// Off-map
 		case .usa: .hex(0x4A5578) // flag navy, slate
 		case .isr: .hex(0x62B7D9) // flag blue on white, light azure
 		case .pak: .hex(0x275E43) // flag deep green

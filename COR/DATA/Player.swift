@@ -30,8 +30,8 @@ public struct Player {
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
 	case none
-	case swe, den, nor, fin, ned, ger, est, lva, ltu, pol, ukr
-	case rus, irn, bel, svk, rom, hun, mol, ind
+	case ned, nor, ger, ukr
+	case rus, irn, bel, hun, ind
 	case usa, isr, pak
 }
 
@@ -41,13 +41,13 @@ public struct Player {
 
 public extension Country {
 
-	static var `default`: Self { .swe }
+	static var `default`: Self { .ned }
 
 	var team: Team {
 		switch self {
 		case .none: .none
-		case .den, .ned, .swe, .ukr, .ger, .pol, .nor, .fin, .est, .lva, .ltu: .axis
-		case .ind, .irn, .rus, .bel, .rom, .mol, .svk, .hun: .soviet
+		case .ned, .ukr, .ger, .nor: .axis
+		case .ind, .irn, .rus, .bel, .hun: .soviet
 		case .isr, .pak, .usa: .allies
 		}
 	}

@@ -251,7 +251,7 @@ extension UnitStats {
 	static let lvkv90 = UnitStats(
 		type: .trackAA,
 		tier: 2,
-		mov: 7,
+		mov: 8,
 		rng: 1,
 		ammo: 5,
 		ini: 9,
