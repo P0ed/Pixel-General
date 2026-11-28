@@ -129,7 +129,7 @@ public extension UnitStats {
 		groundDef: 8,
 		airDef: 9,
 		traits: [.radar, .optics],
-		cost: 680
+		cost: 560
 	)
 	static let cruiser = UnitStats(
 		type: .cruiser,

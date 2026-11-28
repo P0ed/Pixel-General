@@ -69,7 +69,10 @@ public struct Scenario {
 			coreCounts[unit.country, default: 0] += 1
 			return true
 		}
-		let fleet: [UnitModel] = mapType != .land ? [.cruiser, .destroyer, .destroyer, .cargo, .cargo] : []
+		let fleet: [UnitModel] = mapType == .land ? [] : [
+			.cruiser, .cruiser, .destroyer, .destroyer,
+			.cargo, .cargo, .cargo, .cargo,
+		]
 		return Self.fittingAux(to: roster, for: active, fleet: fleet)
 	}
 
