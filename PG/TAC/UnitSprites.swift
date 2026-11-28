@@ -135,7 +135,6 @@ extension Country {
 		case .ind: .ind
 		case .den: .den
 		case .ned: .ned
-		case .aut: .aut
 		case .nor: .nor
 		case .fin: .fin
 		case .ger: .ger
@@ -144,7 +143,6 @@ extension Country {
 		case .ltu: .ltu
 		case .pol: .pol
 		case .bel: .bel
-		case .cze: .cze
 		case .svk: .svk
 		case .rom: .rom
 		case .hun: .hun

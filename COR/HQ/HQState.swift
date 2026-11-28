@@ -1,4 +1,4 @@
-public struct HQSim: ~Copyable {
+public struct HQState: ~Copyable {
 	public var map: Map<4, Terrain>
 	public var player: Player
 	public var units: [16 of Unit]
@@ -14,7 +14,7 @@ public struct HQSim: ~Copyable {
 	}
 }
 
-public extension HQSim {
+public extension HQState {
 
 	var country: Country { player.country }
 

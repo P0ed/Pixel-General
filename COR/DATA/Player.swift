@@ -1,17 +1,10 @@
 public struct Player {
 	public var country: Country
-	// Save slots store the native layout. Keep the original byte and map
-	// the former remote seat (1) to AI when loading those saves.
-	private var typeCode: UInt8
+	public var type: PlayerType
 	public var prestige: UInt16
 	public var baseLevel: UInt8
 	public var tier: UInt8
 	public var alive: Bool
-
-	public var type: PlayerType {
-		get { PlayerType(rawValue: typeCode) ?? .ai }
-		set { typeCode = newValue.rawValue }
-	}
 
 	public init(
 		country: Country = .default,
@@ -22,7 +15,7 @@ public struct Player {
 		alive: Bool = true
 	) {
 		self.country = country
-		self.typeCode = type.rawValue
+		self.type = type
 		self.prestige = prestige
 		self.baseLevel = baseLevel
 		self.tier = tier
@@ -37,7 +30,7 @@ public struct Player {
 
 @frozen public enum Country: UInt8, Hashable, CaseIterable, Sendable {
 	case none
-	case swe, den, ned, nor, fin, ger, est, lva, ltu, pol, cze, aut, ukr
+	case swe, den, nor, fin, ned, ger, est, lva, ltu, pol, ukr
 	case rus, irn, bel, svk, rom, hun, mol, ind
 	case usa, isr, pak
 }
@@ -53,7 +46,7 @@ public extension Country {
 	var team: Team {
 		switch self {
 		case .none: .none
-		case .den, .ned, .swe, .ukr, .ger, .pol, .cze, .aut, .nor, .fin, .est, .lva, .ltu: .axis
+		case .den, .ned, .swe, .ukr, .ger, .pol, .nor, .fin, .est, .lva, .ltu: .axis
 		case .ind, .irn, .rus, .bel, .rom, .mol, .svk, .hun: .soviet
 		case .isr, .pak, .usa: .allies
 		}

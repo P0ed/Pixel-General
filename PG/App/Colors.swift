@@ -69,9 +69,7 @@ extension Country {
 		case .ned: .hex(0xD96A24) // royal orange
 		case .ger: .hex(0x4E545E) // flag black stripe — field gray
 		case .pol: .hex(0xC75B78) // white-red — rose
-		case .cze: .hex(0x2568A6) // flag triangle blue, cerulean
 		case .svk: .hex(0x8CA9D6) // flag blue, pale periwinkle
-		case .aut: .hex(0xBEB6A6) // white stripe — silver
 		case .hun: .hex(0x4E8047) // flag green
 			// East
 		case .ukr: .hex(0xE3BC3F) // flag yellow

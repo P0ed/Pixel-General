@@ -11,7 +11,7 @@
 	case remove(UID)
 }
 
-public extension HQSim {
+public extension HQState {
 
 	mutating func reduce(_ action: HQAction) -> [HQEvent] {
 		var events: [HQEvent] = []

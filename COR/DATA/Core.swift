@@ -1,11 +1,9 @@
-/// Persistent root state. HQ owns the player's roster and treasury between
-/// scenarios; Tactical owns the running battle.
 public struct Core: ~Copyable {
-	public internal(set) var hq: HQSim
+	public internal(set) var hq: HQState
 	public internal(set) var tactical: TACState
 
 	public init(
-		hq: consuming HQSim,
+		hq: consuming HQState,
 		tactical: consuming TACState
 	) {
 		self.hq = hq
@@ -17,7 +15,7 @@ public extension Core {
 
 	static func new(country: Country) -> Core {
 		Core(
-			hq: HQSim(
+			hq: HQState(
 				player: Player(country: country, type: .human),
 				units: .init(
 					head: modifying(.base(country)) { base in
@@ -30,12 +28,12 @@ public extension Core {
 		)
 	}
 
-	mutating func store(_ sim: borrowing HQSim) {
-		hq = clone(sim)
+	mutating func store(_ state: borrowing HQState) {
+		hq = clone(state)
 	}
 
-	mutating func store(_ sim: borrowing TACState) {
-		tactical = clone(sim)
+	mutating func store(_ state: borrowing TACState) {
+		tactical = clone(state)
 	}
 
 	mutating func complete(_ sim: borrowing TACState) {

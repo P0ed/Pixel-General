@@ -65,9 +65,7 @@ extension SKTexture {
 	static let value3 = pixels(.value3)
 
 	// Flags
-	static let aut = pixels(.aut)
 	static let bel = pixels(.bel)
-	static let cze = pixels(.cze)
 	static let den = pixels(.den)
 	static let est = pixels(.est)
 	static let fin = pixels(.fin)

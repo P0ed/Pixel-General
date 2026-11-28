@@ -10,22 +10,6 @@ final class TacticalNodes {
 	var lit: SetXY
 	var overlayKey: OverlayKey
 
-	init(
-		scene: TACScene? = nil,
-		camera: SKCameraNode,
-		map: MapNodes,
-		units: [192 of SKNode?] = .init(repeating: nil),
-		lit: SetXY = .empty,
-		overlayKey: OverlayKey = .terrain
-	) {
-		self.scene = scene
-		self.camera = camera
-		self.map = map
-		self.units = units
-		self.lit = lit
-		self.overlayKey = overlayKey
-	}
-
 	enum OverlayKey: Equatable {
 		case terrain
 		case team(UInt32)
@@ -33,19 +17,16 @@ final class TacticalNodes {
 		case supply(SupplySources, MoveType)
 		case defense(UnitType)
 	}
-}
 
-extension TacticalNodes {
-
-	convenience init(scene: TACScene) {
+	init(scene: TACScene) {
 		let lit = scene.state.litTiles
-		self.init(
-			scene: scene,
-			camera: Self.addCamera(root: scene),
-			map: Self.addMap(root: scene, state: scene.state, lit: lit)
-		)
+		let map = Self.addMap(root: scene, state: scene.state, lit: lit)
+		self.scene = scene
+		self.camera = Self.addCamera(root: scene)
+		self.map = map
 		self.lit = lit
-		units = .init(
+		self.overlayKey = .terrain
+		self.units = .init(
 			head: scene.state.tac.units.map { i, u in
 				guard u.alive else { return nil }
 				let sprite = u.sprite
