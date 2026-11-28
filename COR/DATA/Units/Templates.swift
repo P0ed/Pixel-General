@@ -103,13 +103,8 @@ extension Shop {
 
 	var fpv1: Unit? {
 		switch country.team {
-		case .soviet: Unit(model: .fpv, country: country)
-		default: nil
-		}
-	}
-	var fpv2: Unit? {
-		switch country.team {
 		case .axis: Unit(model: .p1sun, country: country)
+		case .soviet: Unit(model: .fpv, country: country)
 		default: nil
 		}
 	}
@@ -277,6 +272,15 @@ extension Shop {
 		case .axis: Unit(model: .nasams, country: country)
 		case .allies: Unit(model: .patriot, country: country)
 		case .soviet: Unit(model: .neva, country: country)
+		case .none: nil
+		}
+	}
+
+	var aa4: Unit? {
+		switch country.team {
+		case .axis: nil
+		case .allies: nil
+		case .soviet: Unit(model: .s300, country: country)
 		case .none: nil
 		}
 	}

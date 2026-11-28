@@ -159,7 +159,7 @@ extension UnitStats {
 		airAtk: 12,
 		groundDef: 4,
 		airDef: 7,
-		cost: 170
+		cost: 180
 	)
 	static let s300 = UnitStats(
 		type: .wheelAA,
@@ -172,7 +172,7 @@ extension UnitStats {
 		groundDef: 4,
 		airDef: 8,
 		traits: .radar,
-		cost: 268
+		cost: 270
 	)
 	static let tunguska = UnitStats(
 		type: .trackAA,
@@ -186,7 +186,7 @@ extension UnitStats {
 		navAtk: 3,
 		groundDef: 8,
 		airDef: 8,
-		cost: 263
+		cost: 240
 	)
 
 	// MARK: Air

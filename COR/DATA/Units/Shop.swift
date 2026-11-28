@@ -33,7 +33,6 @@ public extension Shop {
 			inf2,
 			inf3,
 			fpv1,
-			fpv2,
 
 			recon1,
 			ifv1,
@@ -52,6 +51,7 @@ public extension Shop {
 			aa1,
 			aa2,
 			aa3,
+			aa4,
 
 			air1,
 			air2,
@@ -79,11 +79,11 @@ public extension Shop {
 	private var families: [[Unit?]] {
 		[
 			[inf1, inf2, inf3],
-			[fpv1, fpv2],
+			[fpv1],
 			[recon1, ifv1, ifv2, ifv3],
 			[tank1, tank2, tank3, tank4],
 			[art1, art2],
-			[aa1, aa2, aa3],
+			[aa1, aa2, aa3, aa4],
 			[air1, air2, air3, air4],
 		]
 	}
