@@ -1,4 +1,4 @@
-public struct TacticalSim: ~Copyable {
+public struct TACState: ~Copyable {
 	public var map: Map<64, Terrain>
 	public var control: Map<64, Country>
 	public var unitsMap: Map<64, UID>
@@ -27,7 +27,7 @@ public struct TacticalSim: ~Copyable {
 	}
 }
 
-public extension TacticalSim {
+public extension TACState {
 
 	init(
 		map: consuming Map<64, Terrain>,
@@ -135,8 +135,8 @@ public extension TacticalSim {
 		place(index.uid, at: xy)
 	}
 
-	static var empty: TacticalSim {
-		var state = TacticalSim(
+	static var empty: TACState {
+		var state = TACState(
 			map: Map<64, Terrain>(seed: Int.random(in: 0 ..< Int.max)),
 			players: [.none],
 			cities: [],

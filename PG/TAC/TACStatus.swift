@@ -1,27 +1,27 @@
 import COR
 
-extension TacticalState {
+extension TACSceneState {
 
 	@MainActor
 	var status: Status {
-		if sim.isFinished {
+		if tac.isFinished {
 			Status(flag: core.hq.country.flag)
-		} else if sim.player.type == .ai {
-			Status(flag: sim.player.country.flag)
+		} else if tac.player.type == .ai {
+			Status(flag: tac.player.country.flag)
 		} else if ui.selectedUnit != .none {
 			Status(
-				text: sim.units[ui.selectedUnit].status(
-					friendly: sim.units[ui.selectedUnit].country.team == sim.player.country.team,
-					cargo: sim.cargo[ui.selectedUnit] != .none
-						? sim.units[sim.cargo[ui.selectedUnit]].typeDescription
+				text: tac.units[ui.selectedUnit].status(
+					friendly: tac.units[ui.selectedUnit].country.team == tac.player.country.team,
+					cargo: tac.cargo[ui.selectedUnit] != .none
+						? tac.units[tac.cargo[ui.selectedUnit]].typeDescription
 						: nil
 				),
-				flag: sim.units[ui.selectedUnit].country.flag
+				flag: tac.units[ui.selectedUnit].country.flag
 			)
 		} else {
 			Status(
-				text: "day \(sim.day)\n\(sim.map[ui.cursor])",
-				flag: sim.control[ui.cursor].flag
+				text: "day \(tac.day)\n\(tac.map[ui.cursor])",
+				flag: tac.control[ui.cursor].flag
 			)
 		}
 	}

@@ -5,19 +5,6 @@ import COR
 final class HQMenu {
 	private(set) var hq = clone(core.hq)
 
-	private func newGameMenu() -> Menu {
-		Menu(
-			items: Country.playable.map { country in
-				.close(icon: country.flag, status: "\(country)") {
-					core = .new(country: country)
-					core.save()
-					view.present(.tactical)
-				}
-			},
-			leftButtons: [.back, .space, .space, .space]
-		)
-	}
-
 	func menu(cursor: Int = 0) -> Menu {
 		Menu(
 			items: hq.units.indices.map { slot in
@@ -43,6 +30,19 @@ final class HQMenu {
 				.space, .space, .space,
 			],
 			cursor: cursor
+		)
+	}
+
+	private func newGameMenu() -> Menu {
+		Menu(
+			items: Country.playable.map { country in
+				.close(icon: country.flag, status: "\(country)") {
+					core = .new(country: country)
+					core.save()
+					view.present(TACScene())
+				}
+			},
+			leftButtons: [.back, .space, .space, .space]
 		)
 	}
 

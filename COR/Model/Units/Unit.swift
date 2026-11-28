@@ -330,7 +330,7 @@ public extension UnitType {
 
 	// Axis
 	case ksk, p1sun, fennek, boxer, marder, cv9035, strf90, kf41, pzh, mars,
-		 leo1, leo2a4, leo2a7, strv103, strv122, kf51,
+		 leo1a5, leo2a4, leo2a7, strv122, kf51,
 		 bofors, nasams, lvkv90, skeldar, skeldarm, nh90, gripen
 
 	// Soviet

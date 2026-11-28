@@ -61,7 +61,7 @@ extension Terrain {
 	}
 }
 
-public extension TacticalSim {
+public extension TACState {
 
 	func supplySources(for country: Country) -> SupplySources {
 		let vision = vision(for: country)
@@ -100,7 +100,7 @@ public extension TacticalSim {
 	}
 }
 
-extension TacticalSim {
+extension TACState {
 
 	public func canResupply(unit id: UID) -> Bool {
 		let unit = units[id]
@@ -146,7 +146,7 @@ extension TacticalSim {
 		}
 		if serviced, unit.untouched, !endOfTurn {
 			let healed = unit.heal(UInt8(clamping: level + 3))
-			unit.exp.decrement(by: (healed << unit.lvl) >> 2)
+			unit.exp.decrement(by: healed * (unit.lvl + 1))
 			self[unit.country].prestige.decrement(by: UInt16(healed) * unit.stats.cost / 32)
 		}
 		if endOfTurn, unit[.regen], serviced {

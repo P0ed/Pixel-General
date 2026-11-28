@@ -1,4 +1,4 @@
-extension TacticalSim {
+extension TACState {
 
 	static let coreUnitLimit = 16
 	static let totalUnitLimit = 48

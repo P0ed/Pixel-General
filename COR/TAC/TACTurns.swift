@@ -1,4 +1,4 @@
-extension TacticalSim {
+extension TACState {
 
 	public var day: Int { Int(turn) / players.count + 1 }
 

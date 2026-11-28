@@ -37,7 +37,7 @@ extension UnitStats {
 	// MARK: IFV
 	static let fennek = UnitStats(
 		type: .lightWheel,
-		mov: 8,
+		mov: 9,
 		rng: 1,
 		ammo: 6,
 		ini: 7,
@@ -53,7 +53,7 @@ extension UnitStats {
 	static let boxer = UnitStats(
 		type: .lightWheel,
 		tier: 1,
-		mov: 8,
+		mov: 9,
 		rng: 1,
 		ammo: 6,
 		ini: 7,
@@ -84,7 +84,7 @@ extension UnitStats {
 	static let strf90 = UnitStats(
 		type: .lightTrack,
 		tier: 2,
-		mov: 7,
+		mov: 8,
 		rng: 1,
 		ammo: 6,
 		ini: 8,
@@ -100,7 +100,7 @@ extension UnitStats {
 	static let cv9035 = UnitStats(
 		type: .lightTrack,
 		tier: 2,
-		mov: 7,
+		mov: 8,
 		rng: 1,
 		ammo: 6,
 		ini: 8,
@@ -116,7 +116,7 @@ extension UnitStats {
 	static let kf41 = UnitStats(
 		type: .lightTrack,
 		tier: 2,
-		mov: 7,
+		mov: 8,
 		rng: 1,
 		ammo: 6,
 		ini: 9,
@@ -162,7 +162,7 @@ extension UnitStats {
 	)
 
 	// MARK: Tanks
-	static let leo1 = UnitStats(
+	static let leo1a5 = UnitStats(
 		type: .heavyTrack,
 		mov: 6,
 		rng: 1,
@@ -185,47 +185,19 @@ extension UnitStats {
 		softAtk: 9,
 		hardAtk: 14,
 		navAtk: 5,
-		groundDef: 12,
+		groundDef: 13,
 		airDef: 7,
 		cost: 390
 	)
 	static let leo2a7 = UnitStats(
 		type: .heavyTrack,
 		tier: 2,
-		mov: 6,
+		mov: 7,
 		rng: 1,
 		ammo: 6,
 		ini: 8,
 		softAtk: 10,
-		hardAtk: 15,
-		navAtk: 5,
-		groundDef: 13,
-		airDef: 8,
-		traits: .elite,
-		cost: 470
-	)
-	static let strv103 = UnitStats(
-		type: .heavyTrack,
-		mov: 6,
-		rng: 1,
-		ammo: 6,
-		ini: 6,
-		softAtk: 7,
-		hardAtk: 13,
-		navAtk: 4,
-		groundDef: 11,
-		airDef: 7,
-		cost: 270
-	)
-	static let strv122 = UnitStats(
-		type: .heavyTrack,
-		tier: 2,
-		mov: 6,
-		rng: 1,
-		ammo: 6,
-		ini: 9,
-		softAtk: 10,
-		hardAtk: 15,
+		hardAtk: 16,
 		navAtk: 5,
 		groundDef: 14,
 		airDef: 8,
@@ -239,8 +211,8 @@ extension UnitStats {
 		rng: 1,
 		ammo: 5,
 		ini: 9,
-		softAtk: 12,
-		hardAtk: 16,
+		softAtk: 13,
+		hardAtk: 17,
 		navAtk: 6,
 		groundDef: 14,
 		airDef: 8,

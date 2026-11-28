@@ -1,7 +1,7 @@
 public extension Units {
 
 	/// Leopard 1: cast turret, exposed suspension and a narrow gun mantlet.
-	static var leo1: Model {
+	static var leo1a5: Model {
 		tankChassis(length: 37.5, width: 21, wheels: 7, deck: 9.3)
 		+ Model([
 			tankPlate(length: 36, width: 18.75, z: 6.15 ... 9.3,

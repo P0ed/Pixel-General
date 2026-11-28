@@ -3,7 +3,7 @@ import Testing
 
 struct TacticalAITests {
 
-	private static func plannedSim(objective: Objective = .none) -> TacticalSim {
+	private static func plannedSim(objective: Objective = .none) -> TACState {
 		var map = Map<64, Terrain>(zero: .field)
 		map[XY(1, 1)] = .city
 		map[XY(5, 1)] = .city
@@ -15,7 +15,7 @@ struct TacticalAITests {
 		]
 		var units = players.map { Unit(model: .regular, country: $0.country) }
 		units.modifyEach { u in u.reset() }
-		var sim = TacticalSim(
+		var sim = TACState(
 			map: consume map,
 			players: players,
 			cities: [(XY(1, 1), .ger), (XY(5, 1), .fin), (XY(8, 8), .usa)],
@@ -34,12 +34,12 @@ struct TacticalAITests {
 		units: [COR.Unit],
 		at positions: [XY],
 		fullVision: Bool = true
-	) -> TacticalSim {
+	) -> TACState {
 		var map = Map<64, Terrain>(zero: .field)
 		for (xy, _) in cities { map[xy] = .city }
 		var units = units
 		units.modifyEach { u in u.reset() }
-		var sim = TacticalSim(
+		var sim = TACState(
 			map: consume map,
 			players: [
 				Player(country: .ger, type: .ai, prestige: .poor),
@@ -94,7 +94,7 @@ struct TacticalAITests {
 		var air = Unit(model: .skeldar, country: .ger)
 		ground.reset(); air.reset()
 		ground.hp = 2; air.hp = 2
-		var sim = TacticalSim(
+		var sim = TACState(
 			map: consume map,
 			players: players,
 			cities: [(XY(1, 1), .ger), (XY(1, 4), .ger), (XY(8, 8), .usa)],
@@ -172,7 +172,7 @@ struct TacticalAITests {
 	}
 
 	@Test func hiddenSupportDoesNotChangeHeuristicAction() {
-		func make(_ includeSupport: Bool) -> TacticalSim {
+		func make(_ includeSupport: Bool) -> TACState {
 			var units = [
 				Unit(model: .f35, country: .ger),
 				Unit(model: .militia, country: .usa),
@@ -206,7 +206,7 @@ struct TacticalAITests {
 		map[XY(0, 0)] = .city
 		map[enemyCity] = .city
 		map[airfield] = .airfield
-		var sim = TacticalSim(
+		var sim = TACState(
 			map: map,
 			players: [Player(country: .ger, prestige: 0), Player(country: .usa)],
 			cities: [(XY(0, 0), .ger), (enemyCity, .usa)],
@@ -289,7 +289,7 @@ struct TacticalAITests {
 	}
 
 	@Test func survivalHeuristicTurnsRemainBounded() {
-		var sim = TacticalSim(
+		var sim = TACState(
 			new: Scenario(
 				players: [
 					Player(country: .fin, type: .ai, prestige: .poor),

@@ -7,8 +7,8 @@ import COR
 	didSet { UserDefaults.standard.settings = settings }
 }
 @MainActor let sounds = Sounds()
-@MainActor let view = View()
 @MainActor let controller = ViewController()
+@MainActor let view = View()
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -43,7 +43,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		win.makeKeyAndVisible()
 		window = win
 
-		view.present(.tactical)
+		view.present(TACScene())
 		_ = sounds
 	}
 }

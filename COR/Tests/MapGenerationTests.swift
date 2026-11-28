@@ -17,7 +17,7 @@ struct MapGenerationTests {
 		core.reset()
 		var ship = Unit(model: .destroyer, country: .ger).aux
 		ship.reset()
-		let sim = TacticalSim(
+		let sim = TACState(
 			map: map, players: [Player(country: .ger)], cities: cities,
 			units: [core.aux, core, core.aux, core, core.aux, ship, core], homes: [.ger: spawn]
 		)
@@ -36,7 +36,7 @@ struct MapGenerationTests {
 		map[home] = .city
 		var core = Unit(model: .regular, country: .ger)
 		core.reset()
-		let sim = TacticalSim(
+		let sim = TACState(
 			map: map, players: [Player(country: .ger)], cities: [(home, .ger)],
 			units: [core.aux, core], homes: [.ger: home]
 		)

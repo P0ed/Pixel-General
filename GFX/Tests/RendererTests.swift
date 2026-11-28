@@ -243,7 +243,7 @@ struct RendererTests {
 	}
 
 	@Test func silhouetteOutlineNeverGrowsTheSprite() {
-		let model = Units.leo1
+		let model = Units.leo1a5
 		let plain = flat.render(model)
 		let outlined = Renderer(canvas: .unit, outline: .unit).render(model)
 

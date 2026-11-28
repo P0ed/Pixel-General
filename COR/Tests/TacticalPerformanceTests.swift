@@ -27,7 +27,7 @@ struct TacticalPerformanceTests {
 		let clock = ContinuousClock()
 
 		for seed in 0..<Self.runs {
-			var sim = TacticalSim(
+			var sim = TACState(
 				new: Scenario(
 					players: Self.countries.map { c in
 						Player(
@@ -77,7 +77,7 @@ struct TacticalPerformanceTests {
 
 		let secs = totalDuration.seconds
 		unsafe print("""
-		── TacticalSim AI-battle performance ──
+		── TACState AI-battle performance ──
 		  match-up:      \(Self.countries.map(String.init(describing:)).joined(separator: " vs "))
 		  map:           64×64, \(Self.runs) runs
 		  resolved:      \(resolvedCount)/\(Self.runs)

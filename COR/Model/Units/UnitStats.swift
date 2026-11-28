@@ -180,11 +180,9 @@ public extension UnitStats {
 		case .cv9035: .cv9035
 		case .pzh: .pzh
 		case .mars: .mars
-		case .leo1: .leo1
+		case .leo1a5: .leo1a5
 		case .leo2a4: .leo2a4
-		case .leo2a7: .leo2a7
-		case .strv103: .strv103
-		case .strv122: .strv122
+		case .leo2a7, .strv122: .leo2a7
 		case .kf51: .kf51
 		case .bofors: .bofors
 		case .nasams: .nasams

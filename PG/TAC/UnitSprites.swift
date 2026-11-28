@@ -45,12 +45,11 @@ extension Unit {
 		case .delta, .ksk, .speznas: .special
 		case .fpv, .p1sun: .fpv
 
-		case .art155:
-			switch country.team {
-			case .soviet: .d20
-			case .allies: .m198
-			default: .fh70
-			}
+		case .art155: switch country.team {
+		case .soviet: .d20
+		case .allies: .m198
+		default: .fh70
+		}
 		case .m777: .m777
 		case .art105: .d30
 		case .sp105: .akatsiya
@@ -85,8 +84,7 @@ extension Unit {
 		case .leo2a4: .leo2a4
 		case .leo2a7: .leo2a7
 		case .strv122: .strv122
-		case .leo1: .leo1
-		case .strv103: .strv103
+		case .leo1a5: .leo1a5
 		case .t55: .t55
 		case .t72: .t72
 		case .t90m: .t90m

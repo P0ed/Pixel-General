@@ -17,7 +17,7 @@ final class TACScene: SKScene {
 	var pressedSlot: MenuSlot? { didSet { didSetPressedSlot(oldValue) } }
 	var chordModifier: InputModifiers?
 	private var hoveredSlot: MenuSlot? { didSet { if hoveredSlot != oldValue { updateStatus() } } }
-	var state: TacticalState { didSet { didSetState() } }
+	private(set) var state: TACSceneState { didSet { didSetState() } }
 	private let ai = AI.heuristic
 	private(set) var baseNodes: BaseNodes?
 	private(set) var nodes: TacticalNodes?
@@ -25,9 +25,13 @@ final class TACScene: SKScene {
 	private var panRecognizer: UIPanGestureRecognizer?
 	private var hoverRecognizer: UIHoverGestureRecognizer?
 
-	init(state: consuming TacticalState, size: CGSize = .scene) {
+	init(state: consuming TACSceneState, size: CGSize = .scene) {
 		self.state = state
 		super.init(size: size)
+	}
+
+	convenience override init() {
+		self.init(state: TACSceneState(tac: clone(core.tactical)))
 	}
 
 	required init?(coder aDecoder: NSCoder) { fatalError() }
@@ -51,7 +55,7 @@ final class TACScene: SKScene {
 		hid.up = { [weak self] input in self?.releaseInput(input) }
 
 		didSetState()
-		showMenu(state.sim.isFinished ? HQMenu().menu() : nil)
+		showMenu(state.tac.isFinished ? HQMenu().menu() : nil)
 	}
 
 	isolated deinit {
@@ -159,7 +163,7 @@ final class TACScene: SKScene {
 		if let input = pending {
 			pending = nil
 			apply(input)
-		} else if let action = state.auto ? ai(state.sim) : nil {
+		} else if let action = state.auto ? ai(state.tac) : nil {
 			react(.action(action))
 		}
 	}
@@ -175,7 +179,7 @@ final class TACScene: SKScene {
 	}
 
 	func saveState() {
-		core.store(state.sim)
+		core.store(state.tac)
 		core.save()
 	}
 

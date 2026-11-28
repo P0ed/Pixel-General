@@ -50,7 +50,7 @@ public struct Scenario {
 		self.objective = objective
 	}
 
-	public func makeSim() -> TacticalSim { TacticalSim(new: self) }
+	public func makeSim() -> TACState { TACState(new: self) }
 
 	public func availableSpawns(for seat: Int) -> [XY] {
 		Array(Self.spawnOptions).filter { option in
@@ -65,7 +65,7 @@ public struct Scenario {
 		let roster = units.filter { unit in
 			guard countries.contains(unit.country) else { return false }
 			if unit[.aux] { return true }
-			guard coreCounts[unit.country, default: 0] < TacticalSim.coreUnitLimit else { return false }
+			guard coreCounts[unit.country, default: 0] < TACState.coreUnitLimit else { return false }
 			coreCounts[unit.country, default: 0] += 1
 			return true
 		}
@@ -102,7 +102,7 @@ public struct Scenario {
 			}
 
 			let total = result.count { $0.country == player.country } + additions.count
-			var overflow = max(0, total - TacticalSim.totalUnitLimit)
+			var overflow = max(0, total - TACState.totalUnitLimit)
 			while overflow > 0, let last = result.lastIndex(where: { unit in
 				isAux(unit) && currentCounts[unit.model, default: 0] > desiredCounts[unit.model, default: 0]
 			}) {
@@ -160,7 +160,7 @@ public extension XY {
 	}
 }
 
-public extension TacticalSim {
+public extension TACState {
 
 	/// Non-auxiliary survivors of `country`, reset for the HQ roster.
 	func survivingRoster(for country: Country) -> [16 of Unit] {

@@ -111,13 +111,8 @@ extension Shop {
 
 	var tank1: Unit? {
 		switch country {
-		case .swe: Unit(model: .strv103, country: country)
-		case .usa, .isr: Unit(model: .m48, country: country)
-		case .pak: Unit(model: .m48, country: country)
-		case .rus: Unit(model: .t55, country: country)
-		case .irn, .ind: Unit(model: .t55, country: country)
 		default: switch country.team {
-		case .axis: Unit(model: .leo1, country: country)
+		case .axis: Unit(model: .leo1a5, country: country)
 		case .allies: Unit(model: .m48, country: country)
 		case .soviet: Unit(model: .t55, country: country)
 		case .none: nil
@@ -127,8 +122,6 @@ extension Shop {
 
 	var tank2: Unit? {
 		switch country {
-		case .usa, .isr: Unit(model: .m1A1, country: country)
-		case .pak: Unit(model: .m1A1, country: country)
 		default: switch country.team {
 		case .axis: Unit(model: .leo2a4, country: country)
 		case .allies: Unit(model: .m1A1, country: country)
@@ -141,7 +134,6 @@ extension Shop {
 	var tank3: Unit? {
 		switch country {
 		case .swe: Unit(model: .strv122, country: country)
-		case .usa, .isr: Unit(model: .m1A2, country: country)
 		case .pak: nil
 		case .irn, .ind: nil
 		default: switch country.team {

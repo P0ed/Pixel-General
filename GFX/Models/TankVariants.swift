@@ -48,21 +48,6 @@ public extension Units {
 		+ tankGun(from: 5.7, length: 22.8, z: 14.1, caliber: 1.8)
 	}
 
-	/// Strv 103: no turret; the fixed gun emerges from the sharply sloped hull.
-	static var strv103: Model {
-		tankChassis(length: 36, width: 21, wheels: 4, deck: 8.1)
-		+ Model([
-			armour(length: 34.5, width: 19.5, z: 5.1 ... 11.4, front: 13.5, rear: 3,
-				side: 1.05, corner: 1.5, tone: Tone.body),
-			box(length: 1.5, width: 20.25, z: 0.9 ... 4.5, x: 16.5, tone: Tone.turret),
-			hatch(x: -6.75, y: 3.45, z: 11.4, radius: 2.4),
-			hatch(x: -6.75, y: -3.45, z: 11.4),
-			cylinder(at: at(-7.5, 3.45, 12.6), radius: 1.95, length: 1.65, axis: .z, tone: Tone.turret),
-		], lines: grille(x: -12.45, z: 11.475, length: 5.25, width: 10.5) + sides(9.6) { y in
-			Line(from: at(-13.5, y, 8.4), to: at(10.5, y, 8.4), tone: 100, dash: 2.25)
-		}) + tankGun(from: 4.5, length: 24, z: 10.2, caliber: 1.95)
-	}
-
 	/// KF51 Panther demonstrator: wide turret cheeks, a deep rear bustle and a tall roof sight.
 	static var kf51: Model {
 		tankChassis(length: 39, width: 22.5, wheels: 7, deck: 9.6)

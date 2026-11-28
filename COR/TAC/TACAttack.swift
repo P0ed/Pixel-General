@@ -1,4 +1,4 @@
-extension TacticalSim {
+extension TACState {
 
 	func canAttack(src: UID, dst: UID) -> Bool {
 		let (su, du) = (units[src], units[dst])

@@ -30,11 +30,11 @@ extension TacticalNodes {
 		)
 		self.lit = lit
 		units = .init(
-			head: scene.state.sim.units.map { i, u in
+			head: scene.state.tac.units.map { i, u in
 				guard u.alive else { return nil }
 				let sprite = u.sprite
-				let xy = scene.state.sim.position[i]
-				sprite.position = scene.state.sim.map.point(at: xy)
+				let xy = scene.state.tac.position[i]
+				sprite.position = scene.state.tac.map.point(at: xy)
 				sprite.zPosition = map.zPosition(at: xy)
 				sprite.isHidden = !scene.state.showsUnit(i.uid)
 				scene.addChild(sprite)
@@ -44,16 +44,16 @@ extension TacticalNodes {
 		)
 	}
 
-	private static func addMap(root: SKNode, state: borrowing TacticalState, lit: SetXY) -> MapNodes {
+	private static func addMap(root: SKNode, state: borrowing TACSceneState, lit: SetXY) -> MapNodes {
 		let map = MapNodes.make(
 			root: root,
-			size: state.sim.map.size,
+			size: state.tac.map.size,
 			decorations: .decorations,
 			overlay: .overlay,
 			fog: .fog
 		)
-		state.sim.map.indices.forEach { xy in
-			map.setTile(from: state.sim.map, at: xy)
+		state.tac.map.indices.forEach { xy in
+			map.setTile(from: state.tac.map, at: xy)
 			if !lit[xy] { map.setShading(nil, fogged: true, at: xy) }
 		}
 		return map
@@ -66,18 +66,18 @@ extension TacticalNodes {
 		return camera
 	}
 
-	func updateUnits(_ state: borrowing TacticalState) {
-		state.sim.units.forEachAlive { i, u in
+	func updateUnits(_ state: borrowing TACSceneState) {
+		state.tac.units.forEachAlive { i, u in
 			units[i]?.update(hp: u.hp)
 		}
 	}
 
-	func update(_ state: borrowing TacticalState) {
+	func update(_ state: borrowing TACSceneState) {
 		updateView(state)
 		updateShadingIfNeeded(state: state)
 	}
 
-	private func updateView(_ state: borrowing TacticalState) {
+	private func updateView(_ state: borrowing TACSceneState) {
 		let cameraPosition = state.ui.camera.point
 		if scene?.cameraTracking != true, camera.position != cameraPosition {
 			camera.run(
@@ -91,20 +91,20 @@ extension TacticalNodes {
 		}
 		map.update(
 			cursor: state.ui.cursor,
-			selected: state.ui.selectedUnit == .none ? nil : state.sim.position[state.ui.selectedUnit]
+			selected: state.ui.selectedUnit == .none ? nil : state.tac.position[state.ui.selectedUnit]
 		)
 	}
 
-	private func updateShadingIfNeeded(state: borrowing TacticalState) {
+	private func updateShadingIfNeeded(state: borrowing TACSceneState) {
 		let type = Self.selectedType(state)
 		let key: OverlayKey = switch state.ui.mapMode {
 		case .terrain: .terrain
-		case .team: .team(state.sim.turn)
-		case .country: .country(state.sim.turn)
+		case .team: .team(state.tac.turn)
+		case .country: .country(state.tac.turn)
 		case .supply:
 			.supply(
-				type.isNaval && state.sim.player.type == .human
-					? state.sim.supplySources(for: state.sim.country) : state.sim.humanSupply,
+				type.isNaval && state.tac.player.type == .human
+					? state.tac.supplySources(for: state.tac.country) : state.tac.humanSupply,
 				type.isNaval ? .naval : type.isAir ? .air : .leg
 			)
 		case .defense: .defense(type)
@@ -118,24 +118,24 @@ extension TacticalNodes {
 		self.lit = lit
 		overlayKey = key
 
-		for xy in state.sim.map.indices where overlayChanged || lit[xy] != previousLit[xy] {
+		for xy in state.tac.map.indices where overlayChanged || lit[xy] != previousLit[xy] {
 			map.setShading(overlay(for: state, at: xy, key: key), fogged: !lit[xy], at: xy)
 		}
 		if fogChanged {
-			state.sim.units.forEachAlive { i, u in
+			state.tac.units.forEachAlive { i, u in
 				units[i]?.isHidden = !state.showsUnit(i.uid)
 			}
 		}
 	}
 
-	private static func selectedType(_ state: borrowing TacticalState) -> UnitType {
+	private static func selectedType(_ state: borrowing TACSceneState) -> UnitType {
 		guard state.ui.selectedUnit != .none else { return .inf }
-		let unit = state.sim.units[state.ui.selectedUnit]
+		let unit = state.tac.units[state.ui.selectedUnit]
 		return unit.alive ? unit.type : .inf
 	}
 
 	private func overlay(
-		for state: borrowing TacticalState,
+		for state: borrowing TACSceneState,
 		at xy: XY,
 		key: OverlayKey
 	) -> TileOverlay? {
@@ -143,19 +143,19 @@ extension TacticalNodes {
 		case .terrain:
 			return nil
 		case .team:
-			return .team(state.sim.control[xy].team)
+			return .team(state.tac.control[xy].team)
 		case .country:
-			return .country(state.sim.control[xy])
+			return .country(state.tac.control[xy])
 		case .supply(let supply, let moveType):
 			let value: Int8 = switch moveType {
 			case .air: supply.airfields[xy] ? supply.airLevel(at: xy) : .min
 			case .naval: supply.ports[xy] ? supply.navalLevel(at: xy) : .min
-			default: supply.level(at: xy, terrain: state.sim.map[xy])
+			default: supply.level(at: xy, terrain: state.tac.map[xy])
 			}
 			let level = UInt8(min(7, max(0, value + 3)))
 			return .level(level)
 		case .defense(let defense):
-			let terrain = state.sim.map[xy]
+			let terrain = state.tac.map[xy]
 			let value = defense.isAir
 				? 0 : Int(terrain.def(defense)) + Int(terrain.baseEntrenchment)
 			return .level(UInt8(clamping: (value + 5) * 7 / 11))
@@ -173,17 +173,17 @@ extension TacticalNodes {
 	}
 }
 
-extension TacticalState {
+extension TACSceneState {
 
 	var auto: Bool {
-		!sim.isFinished && (sim.player.type == .ai || ui.autoBattle)
+		!tac.isFinished && (tac.player.type == .ai || ui.autoBattle)
 	}
 
 	var litTiles: SetXY {
-		sim.isFinished ? .full : ui.selectable ?? sim.visibleToHuman
+		tac.isFinished ? .full : ui.selectable ?? tac.visibleToHuman
 	}
 
 	func showsUnit(_ uid: UID) -> Bool {
-		sim.isFinished ? !sim.offMap(unit: uid) : sim.isVisibleToHuman(uid)
+		tac.isFinished ? !tac.offMap(unit: uid) : tac.isVisibleToHuman(uid)
 	}
 }

@@ -6,6 +6,7 @@
 	case resupply(UID)
 	case purchase(Int, XY, aux: Bool = false)
 	case end
+	case abandon
 }
 
 @frozen public enum Event {
@@ -17,7 +18,7 @@
 	case end
 }
 
-extension TacticalSim {
+extension TACState {
 
 	/// Applies `action` — the only mutation of deterministic state.
 	///
@@ -33,6 +34,7 @@ extension TacticalSim {
 		case .resupply(let u): resupply(unit: u, into: &events)
 		case .purchase(let idx, let xy, let aux): buy(idx, at: xy, aux: aux, into: &events)
 		case .end: endTurn(into: &events)
+		case .abandon: break
 		}
 		return events
 	}

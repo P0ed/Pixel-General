@@ -32,6 +32,6 @@ final class PixelView: SKView {
 extension SKView {
 
 	func present(_ scene: SKScene) {
-		presentScene(scene, transition: .moveIn(with: .up, duration: 0.47))
+		presentScene(scene, transition: .crossFade(withDuration: 0.33))
 	}
 }

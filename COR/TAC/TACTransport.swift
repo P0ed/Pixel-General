@@ -1,4 +1,4 @@
-extension TacticalSim {
+extension TACState {
 
 	public func canEmbark(unit: UID, transport: UID) -> Bool {
 		let u = units[unit]

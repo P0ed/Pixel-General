@@ -2,11 +2,11 @@
 /// scenarios; Tactical owns the running battle.
 public struct Core: ~Copyable {
 	public internal(set) var hq: HQSim
-	public internal(set) var tactical: TacticalSim
+	public internal(set) var tactical: TACState
 
 	public init(
 		hq: consuming HQSim,
-		tactical: consuming TacticalSim
+		tactical: consuming TACState
 	) {
 		self.hq = hq
 		self.tactical = tactical
@@ -34,11 +34,11 @@ public extension Core {
 		hq = clone(sim)
 	}
 
-	mutating func store(_ sim: borrowing TacticalSim) {
+	mutating func store(_ sim: borrowing TACState) {
 		tactical = clone(sim)
 	}
 
-	mutating func complete(_ sim: borrowing TacticalSim) {
+	mutating func complete(_ sim: borrowing TACState) {
 		let country = hq.player.country
 		hq.player.prestige.increment(by: sim.winner == hq.player.country.team ? 600 : 0)
 		hq.units = sim.survivingRoster(for: country)

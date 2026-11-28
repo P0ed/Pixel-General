@@ -3,9 +3,9 @@ import COR
 
 extension TacticalNodes {
 
-	func processMenu(_ state: borrowing TacticalState) {
+	func processMenu(_ state: borrowing TACSceneState) {
 		guard let scene else { return }
-		if state.sim.isFinished {
+		if state.tac.isFinished {
 			scene.showMenu(HQMenu().menu())
 			return
 		}
@@ -19,11 +19,9 @@ extension TacticalNodes {
 			],
 			rightButtons: [
 				.close(icon: .arrowRight, status: "End turn", action: .end),
-				.apply(icon: .prestige1, status: "Prestige: \(state.sim.player.prestige)"),
+				.apply(icon: .prestige1, status: "Prestige: \(state.tac.player.prestige)"),
 				.load { [weak scene] in scene?.saveState() },
-				.init(icon: .HQ, status: Status(text: "Abandon scenario")) { [weak scene] stack, _ in
-					guard let scene else { return }
-					scene.state.abandon()
+				.init(icon: .HQ, status: Status(text: "Abandon scenario"), action: .abandon) { stack, _ in
 					stack = [HQMenu().menu()]
 				}
 			]

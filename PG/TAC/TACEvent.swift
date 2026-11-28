@@ -3,7 +3,7 @@ import COR
 
 extension TacticalNodes {
 
-	func process(_ event: Event, _ state: borrowing TacticalState) async {
+	func process(_ event: Event, _ state: borrowing TACSceneState) async {
 		switch event {
 		case let .spawn(uid): processSpawn(uid, state)
 		case let .move(uid, path): await processMove(uid, path, state)
@@ -14,32 +14,32 @@ extension TacticalNodes {
 		}
 	}
 
-	func present(_ intent: PresentationIntent, _ state: borrowing TacticalState) async {
+	func present(_ intent: PresentationIntent, _ state: borrowing TACSceneState) async {
 		switch intent {
 		case .shop: processShop(state)
 		case .menu: processMenu(state)
 		}
 	}
 
-	func endGame(_ state: borrowing TacticalState) {
-		core.complete(state.sim)
+	func endGame(_ state: borrowing TACSceneState) {
+		core.complete(state.tac)
 		core.save()
-		view.present(.tactical)
+		view.present(TACScene())
 	}
 }
 
 private extension TacticalNodes {
 
-	func processSpawn(_ uid: UID, _ state: borrowing TacticalState) {
-		let sprite = state.sim.units[uid].sprite
-		let xy = state.sim.position[uid]
-		sprite.position = state.sim.map.point(at: xy)
+	func processSpawn(_ uid: UID, _ state: borrowing TACSceneState) {
+		let sprite = state.tac.units[uid].sprite
+		let xy = state.tac.position[uid]
+		sprite.position = state.tac.map.point(at: xy)
 		sprite.zPosition = map.zPosition(at: xy)
-		sprite.isHidden = !state.sim.isVisibleToHuman(uid)
+		sprite.isHidden = !state.tac.isVisibleToHuman(uid)
 		addUnit(uid, node: sprite)
 	}
 
-	func processMove(_ uid: UID, _ path: Path, _ state: borrowing TacticalState) async {
+	func processMove(_ uid: UID, _ path: Path, _ state: borrowing TACSceneState) async {
 		guard let node = units[uid], path.count > 0 else { return }
 
 		let dst = path[path.count - 1]
@@ -47,28 +47,28 @@ private extension TacticalNodes {
 			z = max(z, map.zPosition(at: xy))
 		}
 
-		let onMap = state.sim.unitsMap[state.sim.position[uid]] == uid || !node.isHidden
-		let anyVisible = onMap && path.contains { xy in state.sim.isVisibleToHuman(xy) }
+		let onMap = state.tac.unitsMap[state.tac.position[uid]] == uid || !node.isHidden
+		let anyVisible = onMap && path.contains { xy in state.tac.isVisibleToHuman(xy) }
 		guard anyVisible else {
-			node.position = state.sim.map.point(at: dst)
+			node.position = state.tac.map.point(at: dst)
 			node.zPosition = map.zPosition(at: dst)
 			node.isHidden = true
 			return
 		}
 
 		sounds.play(.mov)
-		node.isHidden = !state.sim.isVisibleToHuman(path[0])
+		node.isHidden = !state.tac.isVisibleToHuman(path[0])
 
 		let scale = settings.animationScale
 		var actions: [SKAction] = []
 		for i in 1 ..< path.count {
 			let xy = path[i]
-			let point = state.sim.map.point(at: xy)
-			let prev = state.sim.map.point(at: path[i - 1])
+			let point = state.tac.map.point(at: xy)
+			let prev = state.tac.map.point(at: path[i - 1])
 			let duration = (prev - point).length / 400.0 * scale
 			let hidden = i == path.count - 1
-				? !state.sim.isVisibleToHuman(uid)
-				: !state.sim.isVisibleToHuman(xy)
+				? !state.tac.isVisibleToHuman(uid)
+				: !state.tac.isVisibleToHuman(xy)
 			actions.append(.move(to: point, duration: duration))
 			actions.append(.run { node.isHidden = hidden })
 		}
@@ -76,7 +76,7 @@ private extension TacticalNodes {
 		node.zPosition = map.zPosition(at: dst)
 	}
 
-	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8, state: borrowing TacticalState) async {
+	func processFire(src: UID, dst: UID, dmg: UInt8, hp: UInt8, state: borrowing TACSceneState) async {
 		defer {
 			if hp > 0 {
 				units[dst]?.update(hp: hp)
@@ -85,7 +85,7 @@ private extension TacticalNodes {
 			}
 		}
 
-		guard state.sim.isVisibleToHuman(src) || state.sim.isVisibleToHuman(dst) else { return }
+		guard state.tac.isVisibleToHuman(src) || state.tac.isVisibleToHuman(dst) else { return }
 
 		let scale = settings.animationScale
 		units[src]?.showSight(for: 0.47 * scale)
@@ -115,28 +115,28 @@ private extension TacticalNodes {
 		)
 	}
 
-	func update(_ id: UID, _ state: borrowing TacticalState) {
-		if state.sim.units[id].alive {
-			units[id]?.update(hp: state.sim.units[id].hp)
+	func update(_ id: UID, _ state: borrowing TACSceneState) {
+		if state.tac.units[id].alive {
+			units[id]?.update(hp: state.tac.units[id].hp)
 		} else {
 			removeUnit(id)
 		}
 	}
 
-	func processShop(_ state: borrowing TacticalState) {
-		guard state.sim.map[state.ui.cursor].isSettlement,
-			  state.sim.control[state.ui.cursor] == state.sim.country,
-			  state.sim.unitAt(state.ui.cursor) == nil
+	func processShop(_ state: borrowing TACSceneState) {
+		guard state.tac.map[state.ui.cursor].isSettlement,
+			  state.tac.control[state.ui.cursor] == state.tac.country,
+			  state.tac.unitAt(state.ui.cursor) == nil
 		else { return }
 
 		let xy = state.ui.cursor
 		scene?.showMenu(.shop(
-			units: state.sim.shopUnits(at: xy),
-			auxiliary: state.sim.shopUnits(at: xy, aux: true),
-			auxiliaryOnly: state.sim.map[xy] == .port,
+			units: state.tac.shopUnits(at: xy),
+			auxiliary: state.tac.shopUnits(at: xy, aux: true),
+			auxiliaryOnly: state.tac.map[xy] == .port,
 			offer: { unit, index, aux in
 				.close(
-					icon: unit.image, status: unit.purchaseStatus(prestige: state.sim.player.prestige),
+					icon: unit.image, status: unit.purchaseStatus(prestige: state.tac.player.prestige),
 					action: .purchase(index, xy, aux: aux)
 				)
 			}

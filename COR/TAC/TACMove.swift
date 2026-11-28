@@ -1,4 +1,4 @@
-public extension TacticalSim {
+public extension TACState {
 
 	func uidAt(_ xy: XY) -> UID { unitsMap[xy] }
 

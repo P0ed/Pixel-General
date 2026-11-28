@@ -4,7 +4,8 @@ enum MapMode: UInt8, Hashable {
 	case terrain, supply, country, team, defense
 }
 
-struct TacticalUI: ~Copyable {
+@MainActor
+struct TACUIState: ~Copyable {
 	var cursor: XY = .zero
 	var camera: XY = .zero
 	var selectedUnit: UID = .none
@@ -14,50 +15,40 @@ struct TacticalUI: ~Copyable {
 	var autoBattle: Bool = false
 }
 
-struct TacticalState: ~Copyable {
-	var sim: TacticalSim
-	var ui: TacticalUI
+@MainActor
+struct TACSceneState: ~Copyable {
+	var tac: TACState
+	var ui: TACUIState
 
-	init(sim: consuming TacticalSim, ui: consuming TacticalUI = TacticalUI()) {
-		self.sim = sim
+	init(tac: consuming TACState, ui: consuming TACUIState = TACUIState()) {
+		self.tac = tac
 		self.ui = ui
 	}
 
-	@MainActor
-	mutating func abandon() {
-		core.complete(sim)
-		sim.isFinished = true
-		ui.selectedUnit = .none
-		ui.selectable = nil
-		ui.autoBattle = false
-		core.save()
-	}
-
 	mutating func reduce(_ action: Action) -> [Event] {
-		if sim.isFinished { return [] }
+		if tac.isFinished { return [] }
 
-		let events = sim.reduce(action)
+		let events = tac.reduce(action)
 
 		switch action {
 		case .move(let uid, _), .attack(let uid, _):
-			if sim.player.type == .human {
-				let keep = sim.units[uid].alive && sim.units[uid].hasActions || sim.cargo[uid] != .none
+			if tac.player.type == .human {
+				let keep = tac.units[uid].alive && tac.units[uid].hasActions || tac.cargo[uid] != .none
 				ui.selectedUnit = keep ? uid : .none
 			}
-		case .embark(_, let transport) where sim.player.type == .human:
+		case .embark(_, let transport) where tac.player.type == .human:
 			ui.selectedUnit = transport
-		case .end:
-			ui.selectedUnit = .none
-		default:
-			break
+		case .end: ui.selectedUnit = .none
+		case .abandon: abandon()
+		default: break
 		}
 
-		if sim.player.type != .human, let focus = action.cameraFocus(in: sim) {
+		if tac.player.type != .human, let focus = action.cameraFocus(in: tac) {
 			let cam = ui.camera
 			let across = (focus.x + focus.y) - (cam.x + cam.y)
 			let depth = (focus.y - focus.x) - (cam.y - cam.x)
 			if abs(across) > 8 * ui.scale || abs(depth) > 10 * ui.scale {
-				ui.camera = focus.clamped(sim.map.size)
+				ui.camera = focus.clamped(tac.map.size)
 			}
 		}
 
@@ -65,15 +56,24 @@ struct TacticalState: ~Copyable {
 		return events
 	}
 
+	private mutating func abandon() {
+		core.complete(tac)
+		tac.isFinished = true
+		ui.selectedUnit = .none
+		ui.selectable = nil
+		ui.autoBattle = false
+		core.save()
+	}
+
 	private mutating func refreshSelectable() {
-		ui.selectable = ui.selectedUnit != .none && sim.units[ui.selectedUnit].canMove
-			? sim.moves(for: ui.selectedUnit).setXY : nil
+		ui.selectable = ui.selectedUnit != .none && tac.units[ui.selectedUnit].canMove
+			? tac.moves(for: ui.selectedUnit).setXY : nil
 	}
 }
 
 private extension Action {
 
-	func cameraFocus(in sim: borrowing TacticalSim) -> XY? {
+	func cameraFocus(in sim: borrowing TACState) -> XY? {
 		switch self {
 		case .move(let uid, _), .embark(let uid, _), .resupply(let uid):
 			let xy = sim.position[uid]
@@ -83,7 +83,7 @@ private extension Action {
 		case .attack(let src, let dst):
 			let s = sim.position[src], d = sim.position[dst]
 			return sim.isVisibleToHuman(s) ? s : sim.isVisibleToHuman(d) ? d : nil
-		case .purchase, .end:
+		case .purchase, .end, .abandon:
 			return nil
 		}
 	}
@@ -101,14 +101,14 @@ enum InputReaction {
 	case none
 }
 
-extension TacticalState {
+extension TACSceneState {
 
 	mutating func apply(_ input: Input) -> InputReaction {
-		if sim.isFinished {
+		if tac.isFinished {
 			switch input {
 			case .menu, .action(.a, modifiers: []): return .presentation(.menu)
 			case .tile(let xy):
-				if sim.map.contains(xy) { ui.cursor = xy }
+				if tac.map.contains(xy) { ui.cursor = xy }
 				return .none
 			case .action(let action?, modifiers: .right): return setMapMode(action)
 			case .pan, .scale, .direction: break
@@ -127,7 +127,7 @@ extension TacticalState {
 		case .tile(let xy): select(xy)
 		case .scale(let value): { ui.scale = value; return .none }()
 		case .pan(let offset):
-			{ ui.camera = ui.camera.panned(by: offset, size: sim.map.size); return .none }()
+			{ ui.camera = ui.camera.panned(by: offset, size: tac.map.size); return .none }()
 		case .menu: .presentation(.menu)
 		default: .none
 		}
@@ -188,50 +188,50 @@ extension TacticalState {
 	}
 
 	private mutating func moveCamera(_ direction: Direction) -> InputReaction {
-		ui.camera = ui.camera.diagonal(direction).clamped(sim.map.size)
+		ui.camera = ui.camera.diagonal(direction).clamped(tac.map.size)
 		return .none
 	}
 
 	private mutating func select(_ xy: XY) -> InputReaction {
-		guard sim.map.contains(xy) else { return .none }
+		guard tac.map.contains(xy) else { return .none }
 		ui.cursor = xy
-		if sim.player.type == .human { return primaryAction() }
+		if tac.player.type == .human { return primaryAction() }
 		return .none
 	}
 
 	private mutating func moveCursor(_ direction: Direction) -> InputReaction {
 		let xy = ui.cursor.neighbor(direction)
-		if sim.map.contains(xy) { ui.cursor = xy }
+		if tac.map.contains(xy) { ui.cursor = xy }
 		return .none
 	}
 
 	private mutating func primaryAction() -> InputReaction {
-		let playerCountry = sim.country
-		let playerType = sim[playerCountry].type
+		let playerCountry = tac.country
+		let playerType = tac[playerCountry].type
 
 		if ui.selectedUnit != .none {
-			let unit = sim.units[ui.selectedUnit]
+			let unit = tac.units[ui.selectedUnit]
 			let unitCountry = unit.country
 
-			if let dst = sim.unitAt(ui.cursor), sim.vision[sim.playerIndex][ui.cursor] {
+			if let dst = tac.unitAt(ui.cursor), tac.vision[tac.playerIndex][ui.cursor] {
 				if playerType == .human, unitCountry == playerCountry, dst.country.team != unitCountry.team {
-					return .action(.attack(ui.selectedUnit, sim.unitsMap[ui.cursor]))
-				} else if sim.canEmbark(unit: ui.selectedUnit, transport: sim.unitsMap[ui.cursor]), playerType == .human {
-					return .action(.embark(ui.selectedUnit, sim.unitsMap[ui.cursor]))
+					return .action(.attack(ui.selectedUnit, tac.unitsMap[ui.cursor]))
+				} else if tac.canEmbark(unit: ui.selectedUnit, transport: tac.unitsMap[ui.cursor]), playerType == .human {
+					return .action(.embark(ui.selectedUnit, tac.unitsMap[ui.cursor]))
 				} else {
-					ui.selectedUnit = dst == unit ? .none : sim.unitsMap[ui.cursor]
+					ui.selectedUnit = dst == unit ? .none : tac.unitsMap[ui.cursor]
 				}
 			} else if unitCountry == playerCountry, unit.canMove, playerType == .human {
 				return .action(.move(ui.selectedUnit, ui.cursor))
-			} else if sim.map[ui.cursor].isSettlement, sim.control[ui.cursor] == playerCountry, playerType == .human {
+			} else if tac.map[ui.cursor].isSettlement, tac.control[ui.cursor] == playerCountry, playerType == .human {
 				return .presentation(.shop)
 			} else {
 				ui.selectedUnit = .none
 			}
-		} else if sim.vision[sim.playerIndex][ui.cursor], sim.unitAt(ui.cursor) != nil {
-			ui.selectedUnit = sim.unitsMap[ui.cursor]
-		} else if sim.map[ui.cursor].isSettlement,
-			  sim.control[ui.cursor] == playerCountry,
+		} else if tac.vision[tac.playerIndex][ui.cursor], tac.unitAt(ui.cursor) != nil {
+			ui.selectedUnit = tac.unitsMap[ui.cursor]
+		} else if tac.map[ui.cursor].isSettlement,
+			  tac.control[ui.cursor] == playerCountry,
 			  playerType == .human {
 			return .presentation(.shop)
 		}
@@ -245,16 +245,16 @@ extension TacticalState {
 
 	private mutating func squareAction() -> InputReaction {
 		guard ui.selectedUnit != .none,
-			  sim.canDisembark(unit: ui.selectedUnit, to: ui.cursor),
-			  sim[sim.country].type == .human
+			  tac.canDisembark(unit: ui.selectedUnit, to: ui.cursor),
+			  tac[tac.country].type == .human
 		else { return .none }
 		return .action(.disembark(ui.selectedUnit, ui.cursor))
 	}
 
 	private mutating func triangleAction() -> InputReaction {
 		guard ui.selectedUnit != .none,
-			  sim.canResupply(unit: ui.selectedUnit),
-			  sim[sim.country].type == .human
+			  tac.canResupply(unit: ui.selectedUnit),
+			  tac[tac.country].type == .human
 		else { return .none }
 
 		defer { ui.selectedUnit = .none }
@@ -266,19 +266,19 @@ extension TacticalState {
 	}
 
 	private mutating func nextUnit(reversed: Bool = false) -> InputReaction {
-		let cnt = sim.units.count
+		let cnt = tac.units.count
 		var idx = ui.selectedUnit != .none ? ui.selectedUnit.index : (reversed ? cnt - 1 : 0)
-		let country = sim.country
+		let country = tac.country
 
-		for _ in sim.units.indices {
+		for _ in tac.units.indices {
 			idx += reversed ? -1 : 1
 			let i = (cnt + idx) % cnt
-			let u = sim.units[i]
+			let u = tac.units[i]
 
-			if u.alive, !sim.offMap(unit: i.uid), u.country == country, u.hasActions {
+			if u.alive, !tac.offMap(unit: i.uid), u.country == country, u.hasActions {
 				ui.selectedUnit = i.uid
-				ui.cursor = sim.position[i]
-				ui.camera = sim.position[i]
+				ui.cursor = tac.position[i]
+				ui.camera = tac.position[i]
 				return .none
 			}
 		}

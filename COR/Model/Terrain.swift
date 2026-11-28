@@ -148,3 +148,24 @@ public extension Terrain {
 		}
 	}
 }
+
+extension Terrain: CustomStringConvertible {
+
+	public var description: String {
+		switch self {
+		case .sea: "sea"
+		case .river: "river"
+		case .bridgeWE, .bridgeSN: "bridge"
+		case .field: "field"
+		case .forest: "forest"
+		case .rough: "hill"
+		case .mountain: "mountain"
+		case .city: "city"
+		case .airfield: "airfield"
+		case .port: "port"
+		case .fort: "trenches"
+		case _ where isRoad: "road"
+		default: ""
+		}
+	}
+}

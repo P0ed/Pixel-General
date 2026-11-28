@@ -1,4 +1,4 @@
-public extension TacticalSim {
+public extension TACState {
 
 	/// The single owner of the spatial invariant: a unit is alive, sits at
 	/// `position[uid]`, and `unitsMap[position[uid]] == uid`, with its cargo

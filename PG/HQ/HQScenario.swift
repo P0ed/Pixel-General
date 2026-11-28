@@ -135,7 +135,7 @@ extension HQMenu {
 			setup.seed = Int.random(in: 0 ..< 1024)
 			core.store(setup.makeSim())
 			core.save()
-			view.present(.tactical)
+			view.present(TACScene())
 		})
 
 		return Menu(

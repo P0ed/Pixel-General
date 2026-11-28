@@ -17,6 +17,10 @@ public struct XY: Hashable, Codable, BitwiseCopyable {
 	}
 }
 
+extension XY: CustomStringConvertible {
+	public var description: String { "[\(x), \(y)]" }
+}
+
 public extension XY {
 
 	static var zero: XY {

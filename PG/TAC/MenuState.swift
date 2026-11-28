@@ -14,6 +14,11 @@ struct Menu {
 
 enum MenuSlot: Equatable { case item(Int), left(Int), right(Int) }
 
+enum MenuDisplay {
+	case items([MenuItem])
+	case text(String)
+}
+
 extension MenuSlot {
 
 	static let back = MenuSlot.left(0)
@@ -196,7 +201,7 @@ extension MenuItem {
 				.confirm(icon: .number(UInt8(slot)) ?? .clear, status: "Slot \(slot + 1)") {
 					save()
 					core = .load(slot: slot)
-					view.present(.tactical)
+					view.present(TACScene())
 				}
 			},
 			leftButtons: [.back, .space, .space, .space]

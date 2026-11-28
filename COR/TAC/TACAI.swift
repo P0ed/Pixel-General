@@ -63,13 +63,13 @@ public enum AI {
 		public init() {}
 	}
 
-	public static var heuristic: (borrowing TacticalSim) -> Action? {
+	public static var heuristic: (borrowing TACState) -> Action? {
 		var plan = Plan()
 		return { sim in sim.run(ai: &plan) }
 	}
 }
 
-extension TacticalSim {
+extension TACState {
 
 	// MARK: - Entry point
 

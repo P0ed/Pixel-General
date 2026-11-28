@@ -74,7 +74,7 @@ struct RNGTests {
 	}
 
 	@Test func damagingLevelZeroUnitCanLevelUpAttacker() {
-		var sim = TacticalSim.xs
+		var sim = TACState.xs
 		var attacker = Unit(model: .mars, country: .den)
 		var defender = Unit(model: .regular, country: .usa)
 		attacker.reset()
@@ -92,7 +92,7 @@ struct RNGTests {
 
 	@Test func damageCalculation() {
 		var report = "Damage table:"
-		var sim = TacticalSim.xs
+		var sim = TACState.xs
 
 		var u0 = Unit(model: .regular, country: .den)
 		var u1 = Unit(model: .regular, country: .usa)
@@ -131,7 +131,7 @@ struct RNGTests {
 	}
 }
 
-extension TacticalSim {
+extension TACState {
 
 	static var xs: Self {
 		var map = Map<64, Terrain>(zero: .field)
@@ -146,7 +146,7 @@ extension TacticalSim {
 			Player(country: .usa, type: .human, prestige: .poor),
 		]
 
-		return TacticalSim(
+		return TACState(
 			map: map,
 			players: players,
 			cities: cities,

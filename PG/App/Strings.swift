@@ -1,8 +1,6 @@
-extension XY: CustomStringConvertible {
-	public var description: String { "[\(x), \(y)]" }
-}
+import COR
 
-public extension Unit {
+extension Unit {
 
 	func status(friendly: Bool = true, cargo: String? = nil) -> String {
 		.make { s in
@@ -46,7 +44,7 @@ public extension Unit {
 	}
 }
 
-public extension String {
+extension String {
 
 	mutating func pad(to length: Int) {
 		let dlen = length - count
@@ -68,7 +66,7 @@ public extension String {
 	}
 }
 
-public extension Unit {
+extension Unit {
 
 	private func equipmentName(european: String, american: String, soviet: String) -> String {
 		switch country.team {
@@ -129,10 +127,9 @@ public extension Unit {
 		case .m48: "M48"
 		case .m1A1: "M1A1"
 		case .m1A2: "M1A2"
-		case .leo1: "Leopard 1A5"
+		case .leo1a5: "Leopard 1A5"
 		case .leo2a4: "Leopard 2A4"
 		case .leo2a7: "Leopard 2A7"
-		case .strv103: "Strv 103"
 		case .strv122: "Strv 122"
 		case .kf51: "KF51"
 		case .t55: "T-55"
@@ -160,27 +157,6 @@ public extension Unit {
 		case .cargo: equipmentName(european: "Karel Doorman", american: "Bob Hope", soviet: "Ropucha")
 		case .destroyer: equipmentName(european: "Type 45", american: "Arleigh Burke", soviet: "Sovremenny")
 		case .cruiser: equipmentName(european: "De Zeven Provinciën", american: "Ticonderoga", soviet: "Slava")
-		}
-	}
-}
-
-extension Terrain: CustomStringConvertible {
-
-	public var description: String {
-		switch self {
-		case .sea: "sea"
-		case .river: "river"
-		case .bridgeWE, .bridgeSN: "bridge"
-		case .field: "field"
-		case .forest: "forest"
-		case .rough: "hill"
-		case .mountain: "mountain"
-		case .city: "city"
-		case .airfield: "airfield"
-		case .port: "port"
-		case .fort: "trenches"
-		case _ where isRoad: "road"
-		default: ""
 		}
 	}
 }

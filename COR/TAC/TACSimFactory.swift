@@ -1,4 +1,4 @@
-public extension TacticalSim {
+public extension TACState {
 
 	init(new scenario: Scenario) {
 		let players = scenario.players.filter { $0.alive }
